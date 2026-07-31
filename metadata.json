@@ -1,0 +1,6 @@
+{
+  "name": "MFCT Community Crowdfunding",
+  "description": "A modern, transparent, mobile-first NGO community fundraising platform for India with multi-role dashboards and verified support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
