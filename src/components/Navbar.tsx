@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, ChevronDown, Award, LayoutDashboard } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
+import { LanguageSelector } from './LanguageSelector';
 
 interface NavbarProps {
   currentPage: string;
@@ -23,6 +25,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,13 +40,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   const navLinks = [
-    { id: 'home', label: 'Home' },
-    { id: 'campaigns', label: 'Campaigns' },
-    { id: 'communities', label: 'Communities' },
-    { id: 'about', label: 'About' },
-    { id: 'gallery', label: 'Gallery' },
-    { id: 'testimonials', label: 'Impact Stories' },
-    { id: 'contact', label: 'Contact' },
+    { id: 'home', label: t('nav.home', 'Home') },
+    { id: 'campaigns', label: t('nav.campaigns', 'Campaigns') },
+    { id: 'communities', label: t('nav.communities', 'Communities') },
+    { id: 'about', label: t('nav.about', 'About') },
+    { id: 'gallery', label: t('nav.gallery', 'Gallery') },
+    { id: 'testimonials', label: t('nav.testimonials', 'Impact Stories') },
+    { id: 'contact', label: t('nav.contact', 'Contact') },
   ];
 
   return (
@@ -79,7 +82,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={link.id}
                 onClick={() => onPageChange(link.id)}
-                className={`px-3.5 py-2 rounded-lg transition-all ${
+                className={`px-3 py-2 rounded-lg transition-all ${
                   isActive
                     ? 'text-emerald-700 font-bold bg-emerald-50 border border-emerald-100'
                     : 'hover:text-emerald-600 hover:bg-slate-50'
@@ -91,47 +94,57 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* Action Buttons */}
-        <div className="hidden sm:flex items-center gap-3">
+        {/* Action Buttons & Language Selector */}
+        <div className="hidden sm:flex items-center gap-2.5">
+          {/* Language Selector */}
+          <LanguageSelector compact />
+
           {/* Member / Admin Portal Link */}
           <button
             onClick={onNavigateToAdmin}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200/80 shadow-sm"
+            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200/80 shadow-sm"
             title="Open Admin & Member Portal Desk"
           >
             <LayoutDashboard className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Admin Portal</span>
+            <span>{t('nav.adminPortal', 'Admin Portal')}</span>
           </button>
 
           <button
             onClick={onOpenRegister}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
           >
             <UserPlus className="w-3.5 h-3.5" />
-            <span>Join (₹50)</span>
+            <span>{t('nav.join', 'Join (₹50)')}</span>
           </button>
 
           <button
             onClick={onOpenDonate}
-            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md shadow-emerald-200 flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md shadow-emerald-200 flex items-center gap-1.5"
           >
             <Heart className="w-3.5 h-3.5 fill-current" />
-            <span>Donate Now</span>
+            <span>{t('nav.donate', 'Donate Now')}</span>
           </button>
         </div>
 
         {/* Mobile Menu Button */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-2 sm:hidden">
+          <LanguageSelector compact />
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 rounded-xl text-slate-700 hover:bg-slate-100"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-6 space-y-3 animate-fade-in shadow-lg">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <span className="text-xs font-bold text-slate-500">Language / भाषा</span>
+            <LanguageSelector />
+          </div>
           <div className="flex flex-col space-y-1">
             {navLinks.map((link) => (
               <button
@@ -159,7 +172,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className="w-full py-3 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
             >
-              <LayoutDashboard className="w-4 h-4 text-emerald-400" /> Open Admin & Member Portal (/admin)
+              <LayoutDashboard className="w-4 h-4 text-emerald-400" /> {t('nav.adminPortal', 'Open Admin Portal')} (/admin)
             </button>
             <button
               onClick={() => {
@@ -168,7 +181,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className="w-full py-3 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold flex items-center justify-center gap-2"
             >
-              <Shield className="w-4 h-4 text-emerald-600" /> View Digital ID ({currentUser.name})
+              <Shield className="w-4 h-4 text-emerald-600" /> {t('nav.myCard', 'View ID Card')} ({currentUser.name})
             </button>
             <button
               onClick={() => {
@@ -177,7 +190,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className="w-full py-3 rounded-xl bg-slate-100 text-slate-900 text-xs font-bold flex items-center justify-center gap-2"
             >
-              <UserPlus className="w-4 h-4" /> Become Member (₹50)
+              <UserPlus className="w-4 h-4" /> {t('nav.join', 'Become Member (₹50)')}
             </button>
             <button
               onClick={() => {
@@ -186,7 +199,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className="w-full py-3 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20"
             >
-              <Heart className="w-4 h-4 fill-current" /> Donate Now
+              <Heart className="w-4 h-4 fill-current" /> {t('nav.donate', 'Donate Now')}
             </button>
           </div>
         </div>
@@ -194,3 +207,4 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
+

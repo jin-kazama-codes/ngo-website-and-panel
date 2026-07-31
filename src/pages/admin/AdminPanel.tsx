@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { UserRole, User, Campaign, Donation } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
+import { LanguageSelector } from '../../components/LanguageSelector';
 import {
   LayoutDashboard,
   CreditCard,
@@ -109,52 +111,53 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [aidRequested, setAidRequested] = useState<boolean>(false);
+  const { t, isHindi } = useLanguage();
 
   // Role metadata for badge styling
   const roleBadges: Record<UserRole, { label: string; color: string; icon: React.ReactNode }> = {
-    member: { label: 'Member', color: 'bg-emerald-100 text-emerald-800 border-emerald-300', icon: <Heart className="w-3.5 h-3.5 text-emerald-600" /> },
-    premium_donor: { label: 'Premium Donor', color: 'bg-amber-100 text-amber-800 border-amber-300', icon: <Award className="w-3.5 h-3.5 text-amber-600" /> },
-    community_admin: { label: 'Community Admin', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: <Users className="w-3.5 h-3.5 text-blue-600" /> },
-    executive: { label: 'Executive Officer', color: 'bg-purple-100 text-purple-800 border-purple-300', icon: <UserCheck className="w-3.5 h-3.5 text-purple-600" /> },
+    member: { label: t('admin.memberDonor', 'Member'), color: 'bg-emerald-100 text-emerald-800 border-emerald-300', icon: <Heart className="w-3.5 h-3.5 text-emerald-600" /> },
+    premium_donor: { label: t('admin.premDonor', 'Premium Donor'), color: 'bg-amber-100 text-amber-800 border-amber-300', icon: <Award className="w-3.5 h-3.5 text-amber-600" /> },
+    community_admin: { label: t('admin.commAdmin', 'Community Admin'), color: 'bg-blue-100 text-blue-800 border-blue-300', icon: <Users className="w-3.5 h-3.5 text-blue-600" /> },
+    executive: { label: t('admin.execAdmin', 'Executive Officer'), color: 'bg-purple-100 text-purple-800 border-purple-300', icon: <UserCheck className="w-3.5 h-3.5 text-purple-600" /> },
     super_admin: { label: 'Super Admin', color: 'bg-slate-800 text-white border-slate-700', icon: <Shield className="w-3.5 h-3.5 text-emerald-400" /> },
   };
 
   // Build menu items dynamically based on current selected role
   const getSidebarMenus = () => {
     const commonMenus = [
-      { id: 'overview', label: 'Dashboard Overview', icon: LayoutDashboard },
+      { id: 'overview', label: t('admin.tabOverview', 'Dashboard Overview'), icon: LayoutDashboard },
     ];
 
     let roleMenus: { id: string; label: string; icon: any; badge?: string }[] = [];
 
     if (currentRole === 'member' || currentRole === 'premium_donor') {
       roleMenus = [
-        { id: 'my_donations', label: 'My Donations & Receipts', icon: CreditCard, badge: '5' },
-        { id: 'emergency_aid', label: 'Request Emergency Aid', icon: AlertTriangle },
-        { id: 'community_hub', label: 'Community Network', icon: Building2 },
+        { id: 'my_donations', label: t('admin.myReceipts', 'My Donations & Receipts'), icon: CreditCard, badge: '5' },
+        { id: 'emergency_aid', label: isHindi ? 'आपातकालीन सहायता हेतु आवेदन' : 'Request Emergency Aid', icon: AlertTriangle },
+        { id: 'community_hub', label: t('sec.communityTitle', 'Community Network'), icon: Building2 },
       ];
       if (currentRole === 'premium_donor') {
-        roleMenus.push({ id: 'hasanat_certificate', label: 'Hasanat Certificate', icon: Award, badge: 'VIP' });
+        roleMenus.push({ id: 'hasanat_certificate', label: isHindi ? 'हसनात सम्मान प्रमाणपत्र' : 'Hasanat Certificate', icon: Award, badge: 'VIP' });
       }
     } else if (currentRole === 'community_admin') {
       roleMenus = [
-        { id: 'campaigns', label: 'Manage Campaigns', icon: PlusCircle, badge: campaignsList.length.toString() },
-        { id: 'community_members', label: 'Members Directory', icon: Users, badge: '1,240' },
-        { id: 'beneficiary_verification', label: 'On-site Verifications', icon: FileCheck },
-        { id: 'chapter_settings', label: 'Chapter Settings', icon: Settings },
+        { id: 'campaigns', label: t('admin.tabCampaigns', 'Manage Campaigns'), icon: PlusCircle, badge: campaignsList.length.toString() },
+        { id: 'community_members', label: t('admin.tabMembers', 'Members Directory'), icon: Users, badge: '1,240' },
+        { id: 'beneficiary_verification', label: isHindi ? 'स्थानीय सत्यापन रिपोर्ट' : 'On-site Verifications', icon: FileCheck },
+        { id: 'chapter_settings', label: isHindi ? 'इकाई सेटिंग्स' : 'Chapter Settings', icon: Settings },
       ];
     } else if (currentRole === 'executive') {
       roleMenus = [
-        { id: 'kyc_queue', label: 'Aadhaar KYC Queue', icon: UserCheck, badge: '3 Pending' },
-        { id: 'utr_audit', label: 'UTR Payment Desk', icon: ShieldCheck },
-        { id: 'escrow_verification', label: 'Hospital Escrow Logs', icon: FileText },
+        { id: 'kyc_queue', label: isHindi ? 'केवाईसी सत्यापन कतार' : 'Aadhaar KYC Queue', icon: UserCheck, badge: '3 Pending' },
+        { id: 'utr_audit', label: isHindi ? 'यूटीआर भुगतान डेस्क' : 'UTR Payment Desk', icon: ShieldCheck },
+        { id: 'escrow_verification', label: isHindi ? 'हॉस्पिटल एस्क्रो लॉग्स' : 'Hospital Escrow Logs', icon: FileText },
       ];
     } else if (currentRole === 'super_admin') {
       roleMenus = [
-        { id: 'financial_analytics', label: 'Financial Analytics', icon: TrendingUp },
-        { id: 'kyc_queue', label: 'KYC & Compliance Queue', icon: UserCheck, badge: '3' },
-        { id: 'community_members', label: 'National Member Base', icon: Users, badge: '6,680' },
-        { id: 'system_settings', label: 'System & Role Config', icon: Settings },
+        { id: 'financial_analytics', label: isHindi ? 'वित्तीय विश्लेषण' : 'Financial Analytics', icon: TrendingUp },
+        { id: 'kyc_queue', label: isHindi ? 'अनुपालन कतार' : 'KYC & Compliance Queue', icon: UserCheck, badge: '3' },
+        { id: 'community_members', label: isHindi ? 'राष्ट्रीय सदस्य आधार' : 'National Member Base', icon: Users, badge: '6,680' },
+        { id: 'system_settings', label: isHindi ? 'सिस्टम सेटिंग्स' : 'System & Role Config', icon: Settings },
       ];
     }
 
@@ -182,7 +185,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <div className={!sidebarOpen ? 'lg:hidden' : 'block'}>
                 <h1 className="font-extrabold text-base text-white leading-none">MFCT Portal</h1>
                 <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block mt-0.5">
-                  Management Desk
+                  {t('admin.title', 'Management Desk')}
                 </span>
               </div>
             </div>
@@ -198,7 +201,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           {/* Role Switcher Widget inside Sidebar */}
           <div className={`p-4 border-b border-slate-800/80 bg-slate-900/60 ${!sidebarOpen ? 'lg:hidden' : 'block'}`}>
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-              Select Active Role View:
+              {t('admin.switchRole', 'Select Active Role View:')}
             </span>
             <select
               value={currentRole}
@@ -208,10 +211,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               }}
               className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-emerald-500"
             >
-              <option value="member">👤 Member (Regular Donor)</option>
-              <option value="premium_donor">⭐ Premium Donor (Hasanat)</option>
-              <option value="community_admin">🏢 Community Admin</option>
-              <option value="executive">🛡️ Executive Verification Officer</option>
+              <option value="member">👤 {t('admin.memberDonor', 'Member (Regular Donor)')}</option>
+              <option value="premium_donor">⭐ {t('admin.premDonor', 'Premium Donor (Hasanat)')}</option>
+              <option value="community_admin">🏢 {t('admin.commAdmin', 'Community Admin')}</option>
+              <option value="executive">🛡️ {t('admin.execAdmin', 'Executive Verification Officer')}</option>
               <option value="super_admin">⚡ Super Admin</option>
             </select>
           </div>
@@ -248,7 +251,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-900 transition-all"
                 >
                   <QrCode className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className={!sidebarOpen ? 'lg:hidden' : 'block'}>Digital ID Card</span>
+                  <span className={!sidebarOpen ? 'lg:hidden' : 'block'}>{t('nav.myCard', 'Digital ID Card')}</span>
                 </button>
               </div>
             </div>
@@ -256,7 +259,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {/* Role Specific Navigation */}
             <div>
               <span className={`text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 mb-2 block ${!sidebarOpen ? 'lg:hidden' : ''}`}>
-                Role Capabilities
+                {isHindi ? 'भूमिका क्षमताएं' : 'Role Capabilities'}
               </span>
               <div className="space-y-1">
                 {roleMenus.map((item) => {
@@ -297,7 +300,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 font-bold text-xs border border-slate-800 transition-all"
             >
               <ExternalLink className="w-4 h-4" />
-              <span className={!sidebarOpen ? 'lg:hidden' : 'block'}>Exit to Public Website</span>
+              <span className={!sidebarOpen ? 'lg:hidden' : 'block'}>{t('admin.backToWeb', 'Exit to Public Website')}</span>
             </button>
 
             {/* Current Active User Info */}
@@ -327,7 +330,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search campaigns, UTR or members..."
+                  placeholder={isHindi ? "अभियान या सदस्य खोजें..." : "Search campaigns, UTR or members..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-emerald-500"
@@ -337,6 +340,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
             {/* Topbar Right Actions */}
             <div className="flex items-center gap-3">
+              {/* Language Switcher in Admin Panel */}
+              <LanguageSelector compact />
+
               {/* Active Role Badge Indicator */}
               <div className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold ${roleBadges[currentRole].color}`}>
                 {roleBadges[currentRole].icon}
@@ -348,8 +354,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   onClick={onOpenCreateCampaign}
                   className="py-1.5 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-sm flex items-center gap-1.5"
                 >
-                  <PlusCircle className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Create Campaign</span>
+                  <PlusCircle className="w-4 h-4" />
+                  <span>{t('admin.createNew', 'Create Campaign')}</span>
                 </button>
               )}
 
@@ -358,8 +364,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 className="py-1.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 font-bold text-xs transition-all flex items-center gap-1.5"
               >
                 <Heart className="w-3.5 h-3.5 fill-current" />
-                <span>Quick Donate</span>
+                <span>{t('nav.donate', 'Quick Donate')}</span>
               </button>
+
 
               <button
                 onClick={onOpenMembershipCard}
