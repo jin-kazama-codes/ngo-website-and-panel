@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
-import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, ChevronDown, Award, LayoutDashboard } from 'lucide-react';
+import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, ChevronDown, Award, LayoutDashboard, Calculator } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { LanguageSelector } from './LanguageSelector';
 
@@ -12,6 +12,7 @@ interface NavbarProps {
   onOpenRegister: () => void;
   onOpenMembershipCard: () => void;
   onNavigateToAdmin: () => void;
+  onOpenZakatCalc?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -22,10 +23,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenRegister,
   onOpenMembershipCard,
   onNavigateToAdmin,
+  onOpenZakatCalc,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { t } = useLanguage();
+  const { t, isHindi } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -99,6 +101,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Language Selector */}
           <LanguageSelector compact />
 
+          {/* Zakat Calculator Button */}
+          {onOpenZakatCalc && (
+            <button
+              onClick={onOpenZakatCalc}
+              className="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold transition-all flex items-center gap-1.5 border border-amber-300/80 shadow-xs"
+              title="Open Zakat Calculator"
+            >
+              <Calculator className="w-3.5 h-3.5 text-amber-700" />
+              <span>{isHindi ? 'ज़कात कैलकुलेटर' : 'Zakat Calc'}</span>
+            </button>
+          )}
+
           {/* Member / Admin Portal Link */}
           <button
             onClick={onNavigateToAdmin}
@@ -165,6 +179,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+            {onOpenZakatCalc && (
+              <button
+                onClick={() => {
+                  onOpenZakatCalc();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-3 rounded-xl bg-amber-50 text-amber-900 border border-amber-300 text-xs font-bold flex items-center justify-center gap-2 shadow-xs"
+              >
+                <Calculator className="w-4 h-4 text-amber-700" /> {isHindi ? 'ज़कात कैलकुलेटर (2.5%)' : 'Zakat Calculator (2.5%)'}
+              </button>
+            )}
             <button
               onClick={() => {
                 onNavigateToAdmin();

@@ -6,15 +6,27 @@ import confetti from 'canvas-confetti';
 
 interface DonationModalProps {
   campaign?: Campaign;
+  initialAmount?: number;
+  initialCategory?: DonationCategory;
   onClose: () => void;
   onDonationSuccess: (donation: Donation) => void;
 }
 
-export const DonationModal: React.FC<DonationModalProps> = ({ campaign, onClose, onDonationSuccess }) => {
+export const DonationModal: React.FC<DonationModalProps> = ({
+  campaign,
+  initialAmount,
+  initialCategory,
+  onClose,
+  onDonationSuccess,
+}) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [selectedCategory, setSelectedCategory] = useState<DonationCategory>(campaign?.category || 'General');
-  const [amount, setAmount] = useState<number>(2500);
-  const [customAmount, setCustomAmount] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<DonationCategory>(
+    initialCategory || campaign?.category || 'General'
+  );
+  const [amount, setAmount] = useState<number>(initialAmount || 2500);
+  const [customAmount, setCustomAmount] = useState<string>(
+    initialAmount ? initialAmount.toString() : ''
+  );
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(campaign?.id || MOCK_CAMPAIGNS[0].id);
   const [isOutsideCommunity, setIsOutsideCommunity] = useState<boolean>(false);
   const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'Bank Transfer'>('UPI');

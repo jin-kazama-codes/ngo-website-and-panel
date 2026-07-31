@@ -36,14 +36,17 @@ import {
   Shield,
   Clock,
   ThumbsUp,
-  Share2
+  Share2,
+  Calculator
 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HomePageProps {
   onDonate: (campaign?: Campaign) => void;
   onViewCampaignDetail: (campaign: Campaign) => void;
   onOpenRegister: () => void;
   onNavigatePage: (page: string) => void;
+  onOpenZakatCalc?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -51,7 +54,9 @@ export const HomePage: React.FC<HomePageProps> = ({
   onViewCampaignDetail,
   onOpenRegister,
   onNavigatePage,
+  onOpenZakatCalc,
 }) => {
+  const { t, isHindi } = useLanguage();
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -161,6 +166,15 @@ export const HomePage: React.FC<HomePageProps> = ({
                 >
                   <Heart className="w-4 h-4 fill-current" /> Donate Now
                 </button>
+                {onOpenZakatCalc && (
+                  <button
+                    onClick={onOpenZakatCalc}
+                    className="py-3.5 px-5 rounded-xl bg-amber-500 hover:bg-amber-600 text-amber-950 font-black text-sm transition-all shadow-md shadow-amber-200 flex items-center gap-2"
+                  >
+                    <Calculator className="w-4.5 h-4.5" />
+                    <span>{isHindi ? '2.5% ज़कात कैलकुलेटर' : '2.5% Zakat Calculator'}</span>
+                  </button>
+                )}
                 <button
                   onClick={() => onNavigatePage('campaigns')}
                   className="py-3.5 px-5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 font-bold text-sm transition-colors"
@@ -284,6 +298,38 @@ export const HomePage: React.FC<HomePageProps> = ({
           })}
         </div>
       </section>
+
+      {/* ZAKAT CALCULATOR HIGHLIGHT BANNER */}
+      {onOpenZakatCalc && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-gradient-to-r from-emerald-950 via-emerald-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-emerald-800/80 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="relative z-10 space-y-2 text-center md:text-left max-w-xl">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400 text-amber-950 font-extrabold text-[11px] uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5" /> 100% Shariah Compliant Calculator
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-black text-white">
+                {isHindi ? 'क्या आप अपनी इस वर्ष की ज़कात की गणना करना चाहते हैं?' : 'Calculate Your 2.5% Zakat Easily & Accurately'}
+              </h3>
+              <p className="text-emerald-100/90 text-xs sm:text-sm">
+                {isHindi
+                  ? 'सोना, चांदी, बचत, स्टॉक व देनदारियों के आधार पर अपनी सही देय ज़कात तुरंत जानें और 100% पारदर्शी अभियानों में दान करें।'
+                  : 'Enter your gold, silver, bank savings, cash & liabilities to compute your exact Zakat obligation. Direct 1-click donation to verified causes.'}
+              </p>
+            </div>
+
+            <div className="relative z-10 shrink-0">
+              <button
+                onClick={onOpenZakatCalc}
+                className="py-3.5 px-6 rounded-2xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-sm transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2 group"
+              >
+                <Calculator className="w-5 h-5 text-amber-950" />
+                <span>{isHindi ? 'मुफ़्त ज़कात कैलकुलेटर खोलें' : 'Open Instant Zakat Calculator'}</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 4. FEATURED CAMPAIGNS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">

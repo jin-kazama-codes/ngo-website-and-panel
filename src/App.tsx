@@ -10,6 +10,7 @@ import { RegistrationModal } from './components/RegistrationModal';
 import { MembershipCardModal, ReceiptModal } from './components/MembershipCardModal';
 import { CampaignDetailModal } from './components/CampaignDetailModal';
 import { CreateCampaignModal } from './components/CreateCampaignModal';
+import { ZakatCalculatorModal } from './components/ZakatCalculatorModal';
 
 // Pages
 import { HomePage } from './pages/HomePage';
@@ -35,7 +36,10 @@ export default function App() {
   // Modals
   const [showDonateModal, setShowDonateModal] = useState<boolean>(false);
   const [selectedDonateCampaign, setSelectedDonateCampaign] = useState<Campaign | undefined>(undefined);
+  const [presetDonateAmount, setPresetDonateAmount] = useState<number | undefined>(undefined);
+  const [presetDonateCategory, setPresetDonateCategory] = useState<'Zakat' | undefined>(undefined);
 
+  const [showZakatModal, setShowZakatModal] = useState<boolean>(false);
   const [showRegisterModal, setShowRegisterModal] = useState<boolean>(false);
   const [showMembershipCardModal, setShowMembershipCardModal] = useState<boolean>(false);
 
@@ -84,8 +88,10 @@ export default function App() {
   };
 
   // Open Donate Modal
-  const handleOpenDonate = (campaign?: Campaign) => {
+  const handleOpenDonate = (campaign?: Campaign, amount?: number, category?: 'Zakat') => {
     setSelectedDonateCampaign(campaign);
+    setPresetDonateAmount(amount);
+    setPresetDonateCategory(category);
     setShowDonateModal(true);
   };
 
@@ -189,6 +195,7 @@ export default function App() {
         onOpenRegister={() => setShowRegisterModal(true)}
         onOpenMembershipCard={() => setShowMembershipCardModal(true)}
         onNavigateToAdmin={navigateToAdmin}
+        onOpenZakatCalc={() => setShowZakatModal(true)}
       />
 
       {/* 2. Main Public Body Content Area */}
@@ -199,6 +206,7 @@ export default function App() {
             onViewCampaignDetail={(c) => setInspectingCampaign(c)}
             onOpenRegister={() => setShowRegisterModal(true)}
             onNavigatePage={(p) => setCurrentPage(p)}
+            onOpenZakatCalc={() => setShowZakatModal(true)}
           />
         )}
         {currentPage === 'campaigns' && (
@@ -227,11 +235,25 @@ export default function App() {
       {showDonateModal && (
         <DonationModal
           campaign={selectedDonateCampaign}
+          initialAmount={presetDonateAmount}
+          initialCategory={presetDonateCategory}
           onClose={() => {
             setShowDonateModal(false);
             setSelectedDonateCampaign(undefined);
+            setPresetDonateAmount(undefined);
+            setPresetDonateCategory(undefined);
           }}
           onDonationSuccess={handleDonationSuccess}
+        />
+      )}
+
+      {showZakatModal && (
+        <ZakatCalculatorModal
+          isOpen={showZakatModal}
+          onClose={() => setShowZakatModal(false)}
+          onDonateCalculated={(calculatedZakatAmount) => {
+            handleOpenDonate(undefined, calculatedZakatAmount, 'Zakat');
+          }}
         />
       )}
 
