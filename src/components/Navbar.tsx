@@ -1,6 +1,9 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { User, UserRole } from '../types';
-import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, ChevronDown, Award, LayoutDashboard, Calculator } from 'lucide-react';
+import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, ChevronDown, Award, LayoutDashboard, Calculator, LogIn, LogOut } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { LanguageSelector } from './LanguageSelector';
 
@@ -10,6 +13,8 @@ interface NavbarProps {
   currentUser: User;
   onOpenDonate: () => void;
   onOpenRegister: () => void;
+  onOpenLogin?: () => void;
+  onLogout?: () => void;
   onOpenMembershipCard: () => void;
   onNavigateToAdmin: () => void;
   onOpenZakatCalc?: () => void;
@@ -21,6 +26,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   onOpenDonate,
   onOpenRegister,
+  onOpenLogin,
+  onLogout,
   onOpenMembershipCard,
   onNavigateToAdmin,
   onOpenZakatCalc,
@@ -42,13 +49,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   const navLinks = [
-    { id: 'home', label: t('nav.home', 'Home') },
-    { id: 'campaigns', label: t('nav.campaigns', 'Campaigns') },
-    { id: 'communities', label: t('nav.communities', 'Communities') },
-    { id: 'about', label: t('nav.about', 'About') },
-    { id: 'gallery', label: t('nav.gallery', 'Gallery') },
-    { id: 'testimonials', label: t('nav.testimonials', 'Impact Stories') },
-    { id: 'contact', label: t('nav.contact', 'Contact') },
+    { id: 'home', label: t('nav.home', 'Home'), path: '/' },
+    { id: 'campaigns', label: t('nav.campaigns', 'Campaigns'), path: '/campaigns' },
+    { id: 'communities', label: t('nav.communities', 'Communities'), path: '/communities' },
+    { id: 'about', label: t('nav.about', 'About'), path: '/about' },
+    { id: 'gallery', label: t('nav.gallery', 'Gallery'), path: '/gallery' },
+    { id: 'testimonials', label: t('nav.testimonials', 'Impact Stories'), path: '/testimonials' },
+    { id: 'contact', label: t('nav.contact', 'Contact'), path: '/contact' },
   ];
 
   return (
@@ -59,7 +66,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Brand Logo */}
-        <div
+        <Link
+          href="/"
           onClick={() => onPageChange('home')}
           className="flex items-center gap-2.5 cursor-pointer group"
         >
@@ -74,15 +82,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               Community Platform
             </span>
           </div>
-        </div>
+        </Link>
 
         {/* Desktop Nav Links */}
         <nav className="hidden lg:flex items-center gap-1 text-xs font-semibold text-slate-500">
           {navLinks.map((link) => {
             const isActive = currentPage === link.id;
             return (
-              <button
+              <Link
                 key={link.id}
+                href={link.path}
                 onClick={() => onPageChange(link.id)}
                 className={`px-3 py-2 rounded-lg transition-all ${
                   isActive
@@ -91,7 +100,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 {link.label}
-              </button>
+              </Link>
             );
           })}
         </nav>
@@ -114,18 +123,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
 
           {/* Member / Admin Portal Link */}
-          <button
+          <Link
+            href="/admin"
             onClick={onNavigateToAdmin}
             className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200/80 shadow-sm"
             title="Open Admin & Member Portal Desk"
           >
             <LayoutDashboard className="w-3.5 h-3.5 text-emerald-600" />
             <span>{t('nav.adminPortal', 'Admin Portal')}</span>
-          </button>
+          </Link>
 
           <button
             onClick={onOpenRegister}
-            className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200/80 shadow-xs"
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>{t('nav.join', 'Join (₹50)')}</span>
@@ -138,6 +148,29 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Heart className="w-3.5 h-3.5 fill-current" />
             <span>{t('nav.donate', 'Donate Now')}</span>
           </button>
+
+          {/* Login / Logout Button */}
+          {onLogout ? (
+            <button
+              onClick={onLogout}
+              className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-rose-200/80 shadow-xs cursor-pointer"
+              title="Logout Account"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-600" />
+              <span>Logout</span>
+            </button>
+          ) : (
+            onOpenLogin && (
+              <button
+                onClick={onOpenLogin}
+                className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                title="Login with any of the 4 roles"
+              >
+                <LogIn className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Login</span>
+              </button>
+            )
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -161,8 +194,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div className="flex flex-col space-y-1">
             {navLinks.map((link) => (
-              <button
+              <Link
                 key={link.id}
+                href={link.path}
                 onClick={() => {
                   onPageChange(link.id);
                   setMobileMenuOpen(false);
@@ -174,7 +208,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 {link.label}
-              </button>
+              </Link>
             ))}
           </div>
 
@@ -190,7 +224,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Calculator className="w-4 h-4 text-amber-700" /> {isHindi ? 'ज़कात कैलकुलेटर (2.5%)' : 'Zakat Calculator (2.5%)'}
               </button>
             )}
-            <button
+            <Link
+              href="/admin"
               onClick={() => {
                 onNavigateToAdmin();
                 setMobileMenuOpen(false);
@@ -198,7 +233,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="w-full py-3 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
             >
               <LayoutDashboard className="w-4 h-4 text-emerald-400" /> {t('nav.adminPortal', 'Open Admin Portal')} (/admin)
-            </button>
+            </Link>
             <button
               onClick={() => {
                 onOpenMembershipCard();
@@ -226,6 +261,29 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Heart className="w-4 h-4 fill-current" /> {t('nav.donate', 'Donate Now')}
             </button>
+            {onLogout ? (
+              <button
+                onClick={() => {
+                  onLogout();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-3 rounded-xl bg-rose-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 text-white" /> Logout Account
+              </button>
+            ) : (
+              onOpenLogin && (
+                <button
+                  onClick={() => {
+                    onOpenLogin();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full py-3 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <LogIn className="w-4 h-4 text-emerald-400" /> Login
+                </button>
+              )
+            )}
           </div>
         </div>
       )}

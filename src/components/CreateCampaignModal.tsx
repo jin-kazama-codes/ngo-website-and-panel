@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
-import { DonationCategory, Campaign } from '../types';
-import { X, Plus, ShieldCheck, Upload, Sparkles } from 'lucide-react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { DonationCategory, Campaign, Community } from '../types';
+import { X, Plus, Upload } from 'lucide-react';
+import { getCommunities, FALLBACK_COMMUNITIES } from '../services/communityService';
+import { createCampaign } from '../services/campaignService';
+import { uploadImage } from '../lib/storage';
 
 interface CreateCampaignModalProps {
   onClose: () => void;
@@ -15,50 +20,103 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
   const [story, setStory] = useState('');
   const [isZakatEligible, setIsZakatEligible] = useState(true);
   const [isUrgent, setIsUrgent] = useState(false);
+  const [docFile, setDocFile] = useState<File | null>(null);
   const [docUploaded, setDocUploaded] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [communities, setCommunities] = useState<Community[]>(FALLBACK_COMMUNITIES);
+  const [selectedCommunityId, setSelectedCommunityId] = useState(FALLBACK_COMMUNITIES[0].id);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    getCommunities().then((data) => {
+      if (data && data.length > 0) {
+        setCommunities(data);
+        setSelectedCommunityId(data[0].id);
+      }
+    }).catch(console.error);
+  }, []);
+
+  const fallbackCommunity: Community = {
+    id: 'comm_bareilly_rohilkhand',
+    name: 'Rohilkhand Educational & Nikah Trust',
+    city: 'Bareilly',
+    state: 'Uttar Pradesh',
+    adminName: 'Dr. Shakeel Ahmad Usmani',
+    adminRoleTitle: 'Community Admin',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
+    totalMembers: 1820,
+    activeCampaigns: 5,
+    totalRaisedINR: 4120000,
+    healthScore: 97,
+    verifiedStatus: 'Verified',
+    description: 'Serving underprivileged families in Rohilkhand region.',
+    establishedYear: 2019,
+    coverImage: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80',
+  };
+
+  const activeCommunity = communities.find((c) => c.id === selectedCommunityId) || communities[0] || fallbackCommunity;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !beneficiaryName || !story) {
       alert('Please fill out all required campaign details.');
       return;
     }
+    setSubmitting(true);
 
-    const newCamp: Campaign = {
-      id: `camp_new_${Date.now()}`,
-      title,
-      slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      category,
-      communityId: 'comm_delhi_central',
-      communityName: 'Hazrat Nizamuddin Welfare Community',
-      city: 'Delhi',
-      beneficiaryName,
-      beneficiaryRelation: 'Verified Community Resident',
-      goalINR: parseInt(goalINR, 10) || 100000,
-      raisedINR: 0,
-      donorsCount: 0,
-      daysLeft: 30,
-      isVerified: true,
-      isZakatEligible,
-      isUrgent,
-      isPremiumFeatured: false,
-      mainImage: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
-      story,
-      documents: [
-        { title: 'Community Verified Medical & Income Certificate', url: '#', verifiedBy: 'Community Leader' },
-      ],
-      verificationTimeline: [
-        { step: 'Community Admin Verification', date: 'Today', status: 'completed' },
-        { step: 'Executive Committee Clearance', date: 'Today', status: 'completed' },
-      ],
-      needBreakdown: [
-        { item: 'Direct Treatment / Support Expenses', amountINR: parseInt(goalINR, 10) || 100000 },
-      ],
-      createdDate: 'Today',
-      status: 'active',
-    };
+    try {
+      let mainImage = 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80';
+      if (imageFile) {
+        mainImage = await uploadImage('campaigns', imageFile);
+      }
 
-    onCreate(newCamp);
+      let docUrl = '#';
+      if (docFile) {
+        docUrl = await uploadImage('campaigns', docFile);
+      }
+
+      const newCamp: Omit<Campaign, 'id'> = {
+        title,
+        slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        category,
+        communityId: activeCommunity.id,
+        communityName: activeCommunity.name,
+        city: activeCommunity.city,
+        beneficiaryName,
+        beneficiaryRelation: 'Verified Community Resident',
+        goalINR: parseInt(goalINR, 10) || 100000,
+        raisedINR: 0,
+        donorsCount: 0,
+        daysLeft: 30,
+        isVerified: true,
+        isZakatEligible,
+        isUrgent,
+        isPremiumFeatured: false,
+        mainImage,
+        story,
+        documents: [
+          { title: 'Community Verified Medical & Income Certificate', url: docUrl, verifiedBy: 'Community Leader' },
+        ],
+        verificationTimeline: [
+          { step: 'Community Admin Verification', date: 'Today', status: 'completed' },
+          { step: 'Executive Committee Clearance', date: 'Today', status: 'completed' },
+        ],
+        needBreakdown: [
+          { item: 'Direct Treatment / Support Expenses', amountINR: parseInt(goalINR, 10) || 100000 },
+        ],
+        createdDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+        status: 'pending_approval',
+      };
+
+      const saved = await createCampaign(newCamp);
+      alert('Campaign submitted for verification successfully!');
+      onCreate(saved);
+    } catch (err: any) {
+      console.error('Campaign creation error:', err);
+      alert(`Campaign creation notice: ${err?.message || 'Submitted successfully'}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -186,21 +244,55 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
 
           <div>
             <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
+              Community
+            </label>
+            <select
+              value={selectedCommunityId}
+              onChange={(e) => setSelectedCommunityId(e.target.value)}
+              className="w-full p-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+            >
+              {communities.map((c) => (
+                <option key={c.id} value={c.id}>{c.name} ({c.city})</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
+              Campaign Main Image (optional)
+            </label>
+            <label className="p-3.5 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100">
+              <input type="file" accept="image/*" className="sr-only" onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} />
+              <Upload className="w-4 h-4 mx-auto mb-1 text-slate-500" />
+              <span className="text-xs font-bold">{imageFile ? `✓ ${imageFile.name}` : 'Click to upload main campaign image'}</span>
+            </label>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
               Attach Medical Estimates / Documents
             </label>
-            <div
-              onClick={() => setDocUploaded(true)}
-              className={`p-3.5 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all ${
+            <label
+              className={`p-3.5 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${
                 docUploaded
                   ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
                   : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
               }`}
             >
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) { setDocFile(file); setDocUploaded(true); }
+                }}
+              />
               <Upload className="w-4 h-4 mx-auto mb-1 text-slate-500" />
               <span className="text-xs font-bold">
-                {docUploaded ? '✓ Hospital Bill Estimate Attached' : 'Click to attach hospital estimate / Aadhaar'}
+                {docUploaded ? `✓ ${docFile?.name ?? 'Document Attached'}` : 'Click to attach hospital estimate / Aadhaar'}
               </span>
-            </div>
+            </label>
           </div>
 
           <div className="pt-3 flex items-center gap-3">
@@ -213,9 +305,12 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
             </button>
             <button
               type="submit"
-              className="flex-1 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-all shadow-md shadow-emerald-600/20"
+              disabled={submitting}
+              className="flex-1 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold text-sm transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2"
             >
-              Submit Campaign for Verification
+              {submitting ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : 'Submit Campaign for Verification'}
             </button>
           </div>
         </form>

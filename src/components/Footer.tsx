@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Heart, QrCode, Phone, Mail, MapPin, ShieldCheck, ArrowRight, Check } from 'lucide-react';
 
 interface FooterProps {
@@ -29,8 +32,8 @@ export const Footer: React.FC<FooterProps> = ({ onPageChange, onOpenDonate, onNa
                 M
               </div>
               <div>
-                <span className="font-black text-xl text-white tracking-tight">MFCT</span>
-                <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                <span className="font-extrabold text-2xl tracking-tight text-white">MFCT</span>
+                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Community Platform
                 </span>
               </div>
@@ -50,49 +53,42 @@ export const Footer: React.FC<FooterProps> = ({ onPageChange, onOpenDonate, onNa
             <h4 className="font-bold text-white text-sm uppercase tracking-wider">Quick Navigation</h4>
             <ul className="space-y-2 text-slate-400 font-medium">
               <li>
-                <button
-                  onClick={() => {
-                    if (onNavigateToAdmin) {
-                      onNavigateToAdmin();
-                    } else {
-                      window.history.pushState({}, '', '/admin');
-                      window.dispatchEvent(new Event('popstate'));
-                    }
-                  }}
+                <Link
+                  href="/admin"
                   className="text-emerald-400 font-bold hover:underline flex items-center gap-1"
                 >
                   <span>Admin & Member Portal (/admin)</span>
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => onPageChange('home')} className="hover:text-emerald-400 transition-colors">
+                <Link href="/" className="hover:text-emerald-400 transition-colors">
                   Home Overview
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => onPageChange('campaigns')} className="hover:text-emerald-400 transition-colors">
+                <Link href="/campaigns" className="hover:text-emerald-400 transition-colors">
                   Verified Campaigns
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => onPageChange('communities')} className="hover:text-emerald-400 transition-colors">
+                <Link href="/communities" className="hover:text-emerald-400 transition-colors">
                   Local Communities
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => onPageChange('about')} className="hover:text-emerald-400 transition-colors">
+                <Link href="/about" className="hover:text-emerald-400 transition-colors">
                   Transparency Model
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => onPageChange('gallery')} className="hover:text-emerald-400 transition-colors">
+                <Link href="/gallery" className="hover:text-emerald-400 transition-colors">
                   Relief Gallery
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => onPageChange('testimonials')} className="hover:text-emerald-400 transition-colors">
+                <Link href="/testimonials" className="hover:text-emerald-400 transition-colors">
                   Success Stories
-                </button>
+                </Link>
               </li>
             </ul>
           </div>

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export type Language = 'en' | 'hi';
@@ -319,13 +321,18 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('mfct_lang');
-    return (saved === 'hi' || saved === 'en') ? saved : 'en';
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mfct_lang');
+      return (saved === 'hi' || saved === 'en') ? saved : 'en';
+    }
+    return 'en';
   });
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('mfct_lang', lang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mfct_lang', lang);
+    }
   };
 
   const toggleLanguage = () => {

@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { User, Donation } from '../types';
 import { ShieldCheck, Download, CheckCircle2, QrCode, X, Sparkles, Building2 } from 'lucide-react';

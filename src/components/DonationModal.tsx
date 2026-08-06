@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
-import { Campaign, DonationCategory, Donation } from '../types';
-import { MOCK_CAMPAIGNS } from '../data/mockData';
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { Campaign, DonationCategory, Donation, User } from '../types';
 import { X, Check, QrCode, Upload, ArrowRight, ShieldCheck, Heart, Sparkles, Building2, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { getCampaigns } from '../services/campaignService';
+import { createDonation } from '../services/donationService';
+import { updateCampaignRaised } from '../services/campaignService';
+import { uploadImage } from '../lib/storage';
 
 interface DonationModalProps {
   campaign?: Campaign;
   initialAmount?: number;
   initialCategory?: DonationCategory;
+  currentUser?: User;
   onClose: () => void;
   onDonationSuccess: (donation: Donation) => void;
 }
@@ -16,6 +22,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   campaign,
   initialAmount,
   initialCategory,
+  currentUser,
   onClose,
   onDonationSuccess,
 }) => {
@@ -27,21 +34,32 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const [customAmount, setCustomAmount] = useState<string>(
     initialAmount ? initialAmount.toString() : ''
   );
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string>(campaign?.id || MOCK_CAMPAIGNS[0].id);
+  const [campaigns, setCampaigns] = useState<Campaign[]>(campaign ? [campaign] : []);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>(campaign?.id || '');
   const [isOutsideCommunity, setIsOutsideCommunity] = useState<boolean>(false);
   const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'Bank Transfer'>('UPI');
   const [utrNumber, setUtrNumber] = useState<string>('');
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotUploaded, setScreenshotUploaded] = useState<boolean>(false);
-  const [donorName, setDonorName] = useState<string>('Aarif Khan');
+  const [donorName, setDonorName] = useState<string>(currentUser?.name || 'Generous Member');
   const [createdDonation, setCreatedDonation] = useState<Donation | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const activeCampaign = MOCK_CAMPAIGNS.find((c) => c.id === selectedCampaignId) || MOCK_CAMPAIGNS[0];
+  useEffect(() => {
+    if (!campaign) {
+      getCampaigns({ status: 'active' }).then((data) => {
+        setCampaigns(data);
+        if (data.length > 0 && !selectedCampaignId) setSelectedCampaignId(data[0].id);
+      }).catch(console.error);
+    }
+  }, [campaign, selectedCampaignId]);
+
+  const activeCampaign = campaigns.find((c) => c.id === selectedCampaignId) || campaigns[0];
 
   // Zakat Rule check
   const isZakatSelected = selectedCategory === 'Zakat';
-  const filteredCampaigns = isZakatSelected
-    ? MOCK_CAMPAIGNS.filter((c) => c.isZakatEligible)
-    : MOCK_CAMPAIGNS;
+  const filteredCampaigns = isZakatSelected ? campaigns.filter((c) => c.isZakatEligible) : campaigns;
 
   const handleAmountClick = (val: number) => {
     setAmount(val);
@@ -56,52 +74,62 @@ export const DonationModal: React.FC<DonationModalProps> = ({
     }
   };
 
-  const handleSubmitPayment = (e: React.FormEvent) => {
+  const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!utrNumber && !screenshotUploaded) {
       alert('Please enter a valid 12-digit UPI UTR number or upload payment screenshot.');
       return;
     }
+    if (!activeCampaign) return;
+    setSubmitting(true);
 
-    const finalUtr = utrNumber || `UTR${Math.floor(100000000000 + Math.random() * 900000000000)}`;
-    const newDonation: Donation = {
-      id: `don_${Date.now()}`,
-      transactionId: `TXN${Math.floor(100000000 + Math.random() * 900000000)}`,
-      utrNumber: finalUtr,
-      donorName: donorName || 'Generous Member',
-      donorId: 'usr_mem_101',
-      donorRole: 'member',
-      campaignId: activeCampaign.id,
-      campaignTitle: activeCampaign.title,
-      communityName: activeCampaign.communityName,
-      amountINR: amount,
-      category: selectedCategory,
-      isOutsideCommunity,
-      paymentMethod,
-      status: 'verified',
-      date: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
-      receiptNumber: `RCP-2024-${Math.floor(1000 + Math.random() * 9000)}`,
-    };
-
-    setCreatedDonation(newDonation);
-    onDonationSuccess(newDonation);
-    setStep(3);
-
-    // Fire celebration confetti
     try {
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
-    } catch {
-      // fallback if unavailable
+      let screenshotUrl: string | undefined;
+      if (screenshotFile) {
+        screenshotUrl = await uploadImage('donations', screenshotFile);
+      }
+
+      const finalUtr = utrNumber || `UTR${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+      const donationData: Omit<Donation, 'id'> = {
+        transactionId: `TXN${Math.floor(100000000 + Math.random() * 900000000)}`,
+        utrNumber: finalUtr,
+        donorName: donorName || 'Generous Member',
+        donorId: 'usr_mem_101',
+        donorRole: 'member',
+        campaignId: activeCampaign.id,
+        campaignTitle: activeCampaign.title,
+        communityName: activeCampaign.communityName,
+        amountINR: amount,
+        category: selectedCategory,
+        isOutsideCommunity,
+        paymentMethod,
+        paymentScreenshotUrl: screenshotUrl,
+        status: 'pending_verification',
+        date: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
+        receiptNumber: `RCP-2024-${Math.floor(1000 + Math.random() * 9000)}`,
+      };
+
+      const savedDonation = await createDonation(donationData);
+      await updateCampaignRaised(activeCampaign.id, amount);
+
+      setCreatedDonation(savedDonation);
+      onDonationSuccess(savedDonation);
+      setStep(3);
+
+      try {
+        confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+      } catch { }
+    } catch (err) {
+      console.error('Donation error:', err);
+      alert('Failed to submit donation. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100 max-h-[92vh] overflow-y-auto">
+      <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100 max-h-[92vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <button
           onClick={onClose}
           className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
@@ -150,8 +178,8 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                     type="button"
                     onClick={() => {
                       setSelectedCategory(cat);
-                      if (cat === 'Zakat' && !activeCampaign.isZakatEligible) {
-                        const zakatCamp = MOCK_CAMPAIGNS.find((c) => c.isZakatEligible);
+                      if (cat === 'Zakat' && activeCampaign && !activeCampaign.isZakatEligible) {
+                        const zakatCamp = campaigns.find((c) => c.isZakatEligible);
                         if (zakatCamp) setSelectedCampaignId(zakatCamp.id);
                       }
                     }}
@@ -372,21 +400,30 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                   Or Upload Payment Screenshot
                 </label>
-                <div
-                  onClick={() => setScreenshotUploaded(true)}
-                  className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all ${
+                <label
+                  className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${
                     screenshotUploaded
                       ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
                       : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  <Upload className="w-5 h-5 mx-auto mb-1 text-slate-500" />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) { setScreenshotFile(file); setScreenshotUploaded(true); }
+                    }}
+                  />
+                  <Upload className="w-5 h-5 mb-1 text-slate-500" />
                   <span className="text-xs font-bold">
                     {screenshotUploaded
-                      ? '✓ Screenshot Attached (payment_receipt_ss.png)'
+                      ? `✓ ${screenshotFile?.name ?? 'Screenshot Attached'}`
                       : 'Click to upload payment screenshot'}
                   </span>
-                </div>
+                </label>
               </div>
             </div>
 
@@ -400,9 +437,12 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="flex-1 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-600/20"
+                disabled={submitting}
+                className="flex-1 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
               >
-                Submit Payment & Generate Receipt
+                {submitting ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : 'Submit Payment & Generate Receipt'}
               </button>
             </div>
           </form>

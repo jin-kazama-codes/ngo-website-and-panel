@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { X, Calculator, Sparkles, CheckCircle2, ShieldCheck, ArrowRight, HelpCircle, RefreshCw, Heart } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';

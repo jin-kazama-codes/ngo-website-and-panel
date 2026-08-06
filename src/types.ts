@@ -46,6 +46,7 @@ export interface User {
   hasanatCounter?: number;
   givingStreakMonths?: number;
   communityRank?: number;
+  passwordHash?: string;
 }
 
 export interface Community {

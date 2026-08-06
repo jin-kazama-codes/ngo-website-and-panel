@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Campaign } from '../types';
 import { X, ShieldCheck, Sparkles, FileText, CheckCircle2, Clock, Users, Building2, Heart, QrCode, Share2 } from 'lucide-react';
