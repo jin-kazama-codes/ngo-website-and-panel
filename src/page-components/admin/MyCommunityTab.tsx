@@ -29,9 +29,19 @@ export const MyCommunityTab: React.FC<MyCommunityTabProps> = ({ activeUser }) =>
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <div className="w-10 h-10 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
-        <p className="text-slate-400 text-sm font-medium">{isHindi ? 'डेटा लोड हो रहा है...' : 'Loading community data...'}</p>
+      <div className="space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="bg-slate-200 dark:bg-slate-800 rounded-2xl h-28 w-full" />
+        
+        {/* Info Cards Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-slate-200 dark:bg-slate-800 rounded-2xl h-24 w-full" />
+          ))}
+        </div>
+
+        {/* Announcements Skeleton */}
+        <div className="bg-slate-200 dark:bg-slate-800 rounded-2xl h-48 w-full mt-6" />
       </div>
     );
   }

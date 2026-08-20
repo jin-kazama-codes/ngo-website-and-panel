@@ -54,9 +54,17 @@ export const CommunityMembersTab: React.FC<CommunityMembersTabProps> = ({ active
 
       <div className="space-y-2">
         {loading ? (
-          <div className="flex items-center justify-center p-8 text-slate-500 dark:text-slate-400">
-            <Loader2 className="w-6 h-6 animate-spin" />
-            <span className="ml-2">Loading members...</span>
+          <div className="space-y-2 animate-pulse">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="p-3 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 h-16 w-full flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/4" />
+                  <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded w-1/3" />
+                </div>
+                <div className="w-20 h-5 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
+              </div>
+            ))}
           </div>
         ) : members.length === 0 ? (
           <div className="flex items-center justify-center p-8 text-slate-500 dark:text-slate-500 text-sm">
