@@ -87,7 +87,7 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
         <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-slate-900 text-white p-6 sm:p-7 relative">
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
+            className="cursor-pointer absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
           >
             <X className="w-5 h-5" />
           </button>
@@ -131,7 +131,7 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setNisabStandard('silver')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     nisabStandard === 'silver'
                       ? 'bg-emerald-700 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -142,7 +142,7 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setNisabStandard('gold')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     nisabStandard === 'gold'
                       ? 'bg-emerald-700 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -187,7 +187,7 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
               <button
                 type="button"
                 onClick={handleReset}
-                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                className="cursor-pointer text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
               >
                 <RefreshCw className="w-3 h-3" /> {isHindi ? 'रीसेट करें' : 'Reset Fields'}
               </button>
@@ -399,7 +399,7 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
               <button
                 type="button"
                 onClick={handleProceedToDonate}
-                className="w-full py-3.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 group"
+                className="cursor-pointer w-full py-3.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 group"
               >
                 <Heart className="w-4 h-4 fill-current text-slate-950" />
                 <span>
@@ -416,7 +416,7 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
                   onDonateCalculated(1000); // optional general sadaqah
                   onClose();
                 }}
-                className="w-full py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition-all flex items-center justify-center gap-2 border border-slate-700"
+                className="cursor-pointer w-full py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition-all flex items-center justify-center gap-2 border border-slate-700"
               >
                 <Heart className="w-4 h-4 text-emerald-400" />
                 <span>

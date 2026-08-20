@@ -172,7 +172,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
       
       <button
         onClick={onClose}
-        className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors mb-6"
+        className="cursor-pointer flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors mb-6"
       >
         <ArrowLeft className="w-4 h-4" /> Back to Campaigns
       </button>
@@ -382,14 +382,14 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
           <button
             type="button"
             onClick={onClose}
-            className="py-3.5 px-6 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition-colors"
+            className="cursor-pointer py-3.5 px-6 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-base transition-colors shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none"
+            className="cursor-pointer px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-base transition-colors shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none"
           >
             {submitting ? 'Saving...' : initialCampaign ? 'Update Campaign' : 'Submit for Verification'}
           </button>

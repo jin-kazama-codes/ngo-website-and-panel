@@ -183,6 +183,9 @@ export function AppStateProvider({
   };
 
   const handleLogout = () => {
+    setIsAuthenticated(false);
+    setActiveUser(USER_MEMBER);
+    setCurrentRole('member');
     if (typeof window !== 'undefined') {
       localStorage.removeItem('mfct_is_logged_in');
       localStorage.removeItem('mfct_user_role');

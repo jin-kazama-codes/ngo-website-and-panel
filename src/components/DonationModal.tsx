@@ -155,7 +155,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+          className="cursor-pointer absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -206,7 +206,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                         if (zakatCamp) setSelectedCampaignId(zakatCamp.id);
                       }
                     }}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all text-left flex items-center justify-between ${selectedCategory === cat
+                    className={`cursor-pointer py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all text-left flex items-center justify-between ${selectedCategory === cat
                       ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]'
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                       }`}
@@ -283,7 +283,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                     key={val}
                     type="button"
                     onClick={() => handleAmountClick(val)}
-                    className={`py-3 rounded-xl font-bold text-sm border transition-all ${amount === val && !customAmount
+                    className={`cursor-pointer py-3 rounded-xl font-bold text-sm border transition-all ${amount === val && !customAmount
                       ? 'bg-slate-900 text-white border-slate-900 shadow-md'
                       : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
                       }`}
@@ -308,7 +308,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+              className="cursor-pointer w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
             >
               <span>Proceed to Payment (₹{amount.toLocaleString('en-IN')})</span>
               <ArrowRight className="w-5 h-5" />
@@ -336,7 +336,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               <button
                 type="button"
                 onClick={() => setPaymentMethod('UPI')}
-                className={`py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'UPI' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
+                className={`cursor-pointer py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'UPI' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
                   }`}
               >
                 Instant UPI / QR Scan
@@ -344,7 +344,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               <button
                 type="button"
                 onClick={() => setPaymentMethod('Bank Transfer')}
-                className={`py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'Bank Transfer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
+                className={`cursor-pointer py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'Bank Transfer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
                   }`}
               >
                 Direct Bank NEFT / RTGS
@@ -453,14 +453,14 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="py-3.5 px-5 rounded-2xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 transition-colors"
+                className="cursor-pointer py-3.5 px-5 rounded-2xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 transition-colors"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+                className="cursor-pointer flex-1 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -501,7 +501,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 py-3.5 rounded-2xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-colors"
+                className="cursor-pointer flex-1 py-3.5 rounded-2xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-colors"
               >
                 Return to Platform
               </button>
