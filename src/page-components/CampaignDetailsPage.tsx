@@ -10,7 +10,7 @@ import { useAppState } from '../providers/AppStateProvider';
 export const CampaignDetailsPage: React.FC = () => {
   const params = useParams();
   const router = useRouter();
-  const { onOpenDonate } = useAppState();
+  const { handleOpenDonate } = useAppState();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
@@ -218,7 +218,7 @@ export const CampaignDetailsPage: React.FC = () => {
 
           <div className="pt-3 flex flex-col sm:flex-row items-center gap-3">
             <button
-              onClick={() => onOpenDonate(campaign)}
+              onClick={() => handleOpenDonate(campaign)}
               className="w-full sm:flex-1 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all"
             >
               <Heart className="w-5 h-5 fill-current" /> Donate to This Cause

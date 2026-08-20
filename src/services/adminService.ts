@@ -38,7 +38,7 @@ export async function approveVerification(id: string, reviewerName: string): Pro
   await createAuditLog({
     action: 'Verification Approved',
     performedBy: reviewerName,
-    role: 'executive',
+    role: 'executive_admin',
     details: `Approved verification item #${id}`,
     ipAddress: 'system',
   });
@@ -53,7 +53,7 @@ export async function rejectVerification(id: string, reviewerName: string): Prom
   await createAuditLog({
     action: 'Verification Rejected',
     performedBy: reviewerName,
-    role: 'executive',
+    role: 'executive_admin',
     details: `Rejected verification item #${id}`,
     ipAddress: 'system',
   });

@@ -11,6 +11,7 @@ interface UtrAuditTabProps {
 export const UtrAuditTab: React.FC<UtrAuditTabProps> = ({ activeUser, currentRole }) => {
   const [donations, setDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
@@ -53,6 +54,7 @@ export const UtrAuditTab: React.FC<UtrAuditTabProps> = ({ activeUser, currentRol
 
   const executeAction = async () => {
     if (!confirmAction) return;
+    setProcessing(true);
     const { id, type } = confirmAction;
     try {
       await updateDonationStatus(id, type === 'verify' ? 'verified' : 'rejected');
@@ -63,6 +65,7 @@ export const UtrAuditTab: React.FC<UtrAuditTabProps> = ({ activeUser, currentRol
       console.error(err);
       showToast(`Failed to ${type} payment.`);
     } finally {
+      setProcessing(false);
       setConfirmAction(null);
     }
   };

@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Campaign, DonationCategory, Donation, User } from '../types';
+import { Campaign, DonationCategory, Donation, User, AccountDetails } from '../types';
 import { X, Check, QrCode, Upload, ArrowRight, ShieldCheck, Heart, Sparkles, Building2, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCampaigns } from '../services/campaignService';
 import { createDonation } from '../services/donationService';
 import { updateCampaignRaised } from '../services/campaignService';
 import { uploadImage } from '../lib/storage';
+import { getAccountDetails } from '../services/adminService';
 
 interface DonationModalProps {
   campaign?: Campaign;
@@ -46,6 +47,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [accountDetails, setAccountDetails] = useState<AccountDetails | null>(null);
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToastMessage({ message, type });
@@ -59,6 +61,11 @@ export const DonationModal: React.FC<DonationModalProps> = ({
         if (data.length > 0 && !selectedCampaignId) setSelectedCampaignId(data[0].id);
       }).catch(console.error);
     }
+    getAccountDetails().then((data) => {
+      if (data && data.length > 0) {
+        setAccountDetails(data[0]);
+      }
+    }).catch(console.error);
   }, [campaign, selectedCampaignId]);
 
   const activeCampaign = campaigns.find((c) => c.id === selectedCampaignId) || campaigns[0];
@@ -200,8 +207,8 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                       }
                     }}
                     className={`py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all text-left flex items-center justify-between ${selectedCategory === cat
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                       }`}
                   >
                     <span>{cat}</span>
@@ -277,8 +284,8 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                     type="button"
                     onClick={() => handleAmountClick(val)}
                     className={`py-3 rounded-xl font-bold text-sm border transition-all ${amount === val && !customAmount
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-md'
-                        : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+                      : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
                       }`}
                   >
                     ₹{val.toLocaleString('en-IN')}
@@ -347,12 +354,16 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             {paymentMethod === 'UPI' ? (
               <div className="p-6 bg-slate-900 text-white rounded-3xl text-center space-y-4">
                 <div className="bg-white p-3 rounded-2xl inline-block shadow-lg">
-                  <QrCode className="w-36 h-36 text-slate-900 mx-auto" />
+                  {accountDetails?.qr_code_url ? (
+                    <img src={accountDetails.qr_code_url} alt="QR Code" className="w-36 h-36 object-contain mx-auto" />
+                  ) : (
+                    <QrCode className="w-36 h-36 text-slate-900 mx-auto" />
+                  )}
                 </div>
                 <div>
                   <p className="text-xs text-slate-400 uppercase tracking-wider">UPI ID for Direct Escrow</p>
                   <p className="font-mono text-emerald-400 font-bold text-lg select-all">
-                    mfct@okicici
+                    {accountDetails?.upi_id || 'mfct@okicici'}
                   </p>
                   <p className="text-[11px] text-slate-400 mt-1">
                     Scan using Google Pay, PhonePe, Paytm, or BHIM UPI
@@ -361,21 +372,21 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               </div>
             ) : (
               <div className="p-5 bg-slate-900 text-white rounded-3xl space-y-3 text-xs font-mono">
-                <div className="flex justify-between border-b border-slate-800 pb-2">
+                {/* <div className="flex justify-between border-b border-slate-800 pb-2">
                   <span className="text-slate-400">Account Name:</span>
                   <span className="text-emerald-400 font-bold">SevaSangam Relief Escrow Trust</span>
-                </div>
+                </div> */}
                 <div className="flex justify-between border-b border-slate-800 pb-2">
                   <span className="text-slate-400">Bank Name:</span>
-                  <span className="text-slate-200">ICICI Bank Ltd</span>
+                  <span className="text-slate-200">{accountDetails?.bank_name || 'ICICI Bank Ltd'}</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-800 pb-2">
                   <span className="text-slate-400">Account Number:</span>
-                  <span className="text-emerald-300 font-bold select-all">000405018892</span>
+                  <span className="text-emerald-300 font-bold select-all">{accountDetails?.account_number || '000405018892'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">IFSC Code:</span>
-                  <span className="text-emerald-300 font-bold select-all">ICIC0000004</span>
+                  <span className="text-emerald-300 font-bold select-all">{accountDetails?.ifsc_code || 'ICIC0000004'}</span>
                 </div>
               </div>
             )}
@@ -414,8 +425,8 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 </label>
                 <label
                   className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${screenshotUploaded
-                      ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
-                      : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
+                    ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
+                    : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
                     }`}
                 >
                   <input

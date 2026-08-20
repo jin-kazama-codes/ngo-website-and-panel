@@ -44,6 +44,7 @@ export interface User {
   paymentMethod?: string;
   paymentUtr?: string;
   paymentScreenshotUrl?: string;
+  familiesHelped?: number;
 }
 
 export interface Community {

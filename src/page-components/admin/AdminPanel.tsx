@@ -43,7 +43,6 @@ import {
 } from 'lucide-react';
 
 import { MemberDashboard } from '../dashboards/MemberDashboard';
-import { PremiumDonorDashboard } from '../dashboards/PremiumDonorDashboard';
 import { CommunityAdminDashboard } from '../dashboards/CommunityAdminDashboard';
 import { ExecutiveDashboard } from '../dashboards/ExecutiveDashboard';
 import { SuperAdminDashboard } from '../dashboards/SuperAdminDashboard';
@@ -471,13 +470,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     onSelectDonationReceipt={onSelectDonationReceipt}
                   />
                 )}
-                {normalizedRole === 'premium_donor' && (
-                  <PremiumDonorDashboard
-                    user={activeUser}
-                    onOpenDonate={() => onOpenDonate()}
-                    onSelectDonationReceipt={onSelectDonationReceipt}
-                  />
-                )}
+
                 {normalizedRole === 'community_admin' && (
                   <CommunityAdminDashboard
                     activeUser={activeUser}
@@ -522,7 +515,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             )}
 
             {activeTab === 'create_campaign' && (
-              <CreateCampaignTab 
+              <CreateCampaignTab
                 onClose={() => {
                   setActiveTab('campaigns');
                   setEditingCampaign(undefined);

@@ -178,7 +178,7 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
           <div>
             <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Funds Raised</p>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 mb-1">₹{(community?.totalRaisedInr || 0).toLocaleString('en-IN')}</h3>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 mb-1">₹{(community?.totalRaisedINR || 0).toLocaleString('en-IN')}</h3>
             <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Escrow Audited</p>
           </div>
           <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -281,10 +281,3 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
   );
 };
 
-function ShieldCheckIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
-}

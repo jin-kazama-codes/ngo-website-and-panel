@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Campaign, Testimonial, CommunityStory, Donation, Community } from '../types';
+import { Campaign, Testimonial, CommunityStory, Donation, Community, AccountDetails } from '../types';
 import { getCampaigns, getEmergencyCampaigns } from '../services/campaignService';
 import { getTestimonials } from '../services/testimonialService';
 import { getCommunityStories } from '../services/storiesService';
@@ -9,6 +9,7 @@ import { getRecentDonations } from '../services/donationService';
 import { getCommunities } from '../services/communityService';
 import { subscribeNewsletter, submitContactMessage } from '../services/contactService';
 import { getUsers } from '../services/userService';
+import { getAccountDetails } from '../services/adminService';
 import { CampaignCard } from '../components/CampaignCard';
 import { CampaignSkeleton } from '../components/CampaignSkeleton';
 import { MembershipBanner } from '../components/MembershipBanner';
@@ -83,6 +84,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [communities, setCommunities] = useState<Community[]>([]);
   const [realTotalMembers, setRealTotalMembers] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [accountDetails, setAccountDetails] = useState<AccountDetails | null>(null);
 
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
@@ -97,14 +99,18 @@ export const HomePage: React.FC<HomePageProps> = ({
       getRecentDonations(5),
       getCommunities(),
       getUsers(),
+      getAccountDetails(),
     ])
-      .then(([cData, tData, sData, dData, commData, uData]) => {
+      .then(([cData, tData, sData, dData, commData, uData, accData]) => {
         setCampaigns(cData);
         setTestimonials(tData);
         setStories(sData);
         setRecentDonations(dData);
         setCommunities(commData);
         setRealTotalMembers(uData.length);
+        if (accData && accData.length > 0) {
+          setAccountDetails(accData[0]);
+        }
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -294,12 +300,16 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <div className="absolute inset-0 flex flex-col items-center justify-end p-6 pb-6">
                   <div className="flex flex-col items-center gap-5 w-full max-w-xs mx-auto pb-4">
                     <div className="bg-white p-3 rounded-2xl shadow-xl shrink-0">
-                      <QrCode className="w-32 h-32 text-slate-900" />
+                      {accountDetails?.qr_code_url ? (
+                        <img src={accountDetails.qr_code_url} alt="QR Code" className="w-32 h-32 object-contain" />
+                      ) : (
+                        <QrCode className="w-32 h-32 text-slate-900" />
+                      )}
                     </div>
                     <div className="text-center flex flex-col items-center gap-1.5 w-full">
 
                       <p className="font-mono text-white font-bold text-2xl select-all tracking-wider py-1">
-                        mfct@okicici
+                        {accountDetails?.upi_id || 'mfct@okicici'}
                       </p>
                       <p className="text-[10px] text-emerald-400 uppercase tracking-widest font-bold">
                         Scan using Google Pay, PhonePe, Paytm

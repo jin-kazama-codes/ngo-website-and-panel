@@ -8,7 +8,6 @@ function HomeContent() {
   const router = useRouter();
   const {
     handleOpenDonate,
-    handleViewCampaignDetail,
     handleOpenRegister,
     handleOpenZakatCalc,
   } = useAppState();

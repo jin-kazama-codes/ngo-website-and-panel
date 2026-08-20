@@ -32,6 +32,7 @@ interface AppStateContextType {
   handleRoleChange: (role: UserRole) => void;
   handleLogin: (role: UserRole, email?: string, customUser?: User) => void;
   handleLogout: () => void;
+  handleCampaignCreated: (newCampaign: Campaign) => void;
   handleCampaignUpdated: (updatedCamp: Campaign) => void;
   handleDonationSuccess: (donation: Donation) => void;
   handleUserRegistered: (user: User) => void;
