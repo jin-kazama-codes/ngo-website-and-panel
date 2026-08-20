@@ -20,7 +20,7 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ currentRole, onRoleC
       desc: 'Full platform financial oversight & system audit logs',
     },
     {
-      id: 'executive',
+      id: 'executive_admin',
       label: 'Executive Admin',
       email: 'executive@sevasangam.org',
       icon: <UserCheck className="w-3.5 h-3.5 text-purple-400" />,

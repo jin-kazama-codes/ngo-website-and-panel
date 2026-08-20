@@ -1,14 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Campaign, Community } from '../../types';
-import { Users, Plus, Megaphone, CheckCircle2 } from 'lucide-react';
+import { Campaign, Community, User } from '../../types';
+import { Users, Plus, Megaphone, CheckCircle2, Heart, ShieldCheck as ShieldCheckIcon, IndianRupee, Activity, UserCheck, PlusCircle, Banknote } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { broadcastAnnouncement, getPendingVerifications, approveVerification, rejectVerification } from '../../services/adminService';
 import { getCommunities } from '../../services/communityService';
-import { PendingVerificationItem } from '../../types';
+import { getUnverifiedUsers } from '../../services/userService';
+import { getDonations } from '../../services/donationService';
 
 interface CommunityAdminDashboardProps {
+  activeUser: User;
   onOpenCreateCampaign: () => void;
   campaignsList: Campaign[];
 }
@@ -21,6 +23,7 @@ const pieData = [
 ];
 
 export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = ({
+  activeUser,
   onOpenCreateCampaign,
   campaignsList,
 }) => {
@@ -28,39 +31,42 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
   const [announcementText, setAnnouncementText] = useState('');
   const [announcementSent, setAnnouncementSent] = useState(false);
   const [broadcasting, setBroadcasting] = useState(false);
-  const [pendingMembers, setPendingMembers] = useState<PendingVerificationItem[]>([]);
+  const [pendingKycCount, setPendingKycCount] = useState(0);
+  const [pendingUtrCount, setPendingUtrCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getCommunities()
-      .then((comms) => {
-        if (comms.length > 0) setCommunity(comms[0]);
-      })
-      .catch(console.error);
+    setLoading(true);
+    Promise.all([
+      getCommunities()
+        .then((comms) => {
+          if (comms.length > 0) {
+            const userCommunity = comms.find(c => c.id === activeUser.communityId);
+            setCommunity(userCommunity || null);
+          }
+        })
+        .catch(console.error),
+      getUnverifiedUsers()
+        .then((users) => {
+          const communityUsers = users.filter(u => u.communityId === activeUser.communityId || u.communityName === activeUser.communityName);
+          setPendingKycCount(communityUsers.length);
+        })
+        .catch(console.error),
+      getDonations()
+        .then((donations) => {
+          const communityDonations = donations.filter(d =>
+            d.status === 'pending_verification' &&
+            (d.communityName === activeUser.communityName)
+          );
+          setPendingUtrCount(communityDonations.length);
+        })
+        .catch(console.error)
+    ]).finally(() => setLoading(false));
+  }, [activeUser.communityId, activeUser.communityName]);
 
-    getPendingVerifications()
-      .then((items) => {
-        setPendingMembers(items.filter((i) => i.type === 'kyc'));
-      })
-      .catch(console.error);
-  }, []);
+  const pendingCampaignsCount = campaignsList.filter(c => c.status === 'pending' || c.status === 'pending_approval').length;
 
-  const handleApproveMember = async (id: string) => {
-    try {
-      await approveVerification(id, community?.adminName || 'Community Admin');
-      setPendingMembers((prev) => prev.filter((m) => m.id !== id));
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
-  const handleRejectMember = async (id: string) => {
-    try {
-      await rejectVerification(id, community?.adminName || 'Community Admin');
-      setPendingMembers((prev) => prev.filter((m) => m.id !== id));
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const handleBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,110 +91,168 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
     }
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-8 animate-pulse">
+        {/* Top Banner Skeleton */}
+        <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-3xl w-full" />
+
+        {/* Metrics Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800" />
+          ))}
+        </div>
+
+        {/* Pending Actions Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-28 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800" />
+          ))}
+        </div>
+
+        {/* Charts & Actions Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 h-80 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800" />
+          <div className="h-80 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-emerald-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-emerald-900/30">
+      <div className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-900 dark:from-slate-900 dark:via-slate-950 dark:to-emerald-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-emerald-100/30 dark:border-emerald-900/30">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30 mb-2">
-              <ShieldCheckIcon className="w-4 h-4 text-emerald-400" /> Community Administrator
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/20 dark:bg-emerald-500/20 text-emerald-100 dark:text-emerald-300 text-xs font-bold border border-emerald-100/30 dark:border-emerald-500/30 mb-2">
+              <ShieldCheckIcon className="w-4 h-4 text-emerald-100 dark:text-emerald-400" /> Community Admin
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
               {community?.name || 'Community Admin Hub'}
             </h1>
-            <p className="text-xs text-slate-300 mt-1">
-              Admin: <strong className="text-emerald-400">{community?.adminName || 'Admin'}</strong> • {community?.city || 'City'} Chapter
+            <p className="text-xs text-emerald-50 dark:text-slate-300 mt-1">
+              Admin: <strong className="text-emerald-200 dark:text-emerald-400">{community?.adminName || 'Admin'}</strong> • {community?.city || 'City'} Chapter
             </p>
           </div>
 
-          <button
-            onClick={onOpenCreateCampaign}
-            className="py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-lg shadow-emerald-600/30 flex items-center gap-2 self-start sm:self-auto"
-          >
-            <Plus className="w-4 h-4" /> Create Cause Campaign
-          </button>
-        </div>
-      </div>
-
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Members</span>
-          <p className="text-2xl font-black text-slate-900 mt-1">{community?.totalMembers.toLocaleString('en-IN') || 0}</p>
-          <span className="text-[11px] text-emerald-600 font-semibold mt-1 block">Active Registered</span>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Active Causes</span>
-          <p className="text-2xl font-black text-slate-900 mt-1">{campaignsList.length}</p>
-          <span className="text-[11px] text-slate-500 mt-1 block">Live Campaign Causes</span>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Funds Raised</span>
-          <p className="text-2xl font-black text-emerald-700 mt-1">₹{(community?.totalRaisedINR || 0).toLocaleString('en-IN')}</p>
-          <span className="text-[11px] text-emerald-600 font-semibold mt-1 block">Escrow Audited</span>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Community Health</span>
-          <p className="text-2xl font-black text-emerald-600 mt-1">{community?.healthScore || 100}%</p>
-          <span className="text-[11px] text-slate-500 mt-1 block">Grade A Transparency</span>
-        </div>
-      </div>
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pending Approvals */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
-          <h3 className="font-extrabold text-lg text-slate-900">Pending Member KYC Approvals</h3>
-          {pendingMembers.length === 0 ? (
-            <div className="text-center py-8 text-slate-400">
-              <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
-              <p className="font-bold text-slate-700">No Pending KYC Verification Requests</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {pendingMembers.map((m) => (
-                <div key={m.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-                  <div>
-                    <h4 className="font-bold text-slate-900">{m.title}</h4>
-                    <p className="text-slate-500">{m.details} • {m.date}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleApproveMember(m.id)}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => handleRejectMember(m.id)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-200 text-slate-700 font-bold hover:bg-slate-300"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Broadcast Announcement Form */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
-          <div className="flex items-center gap-2">
-            <Megaphone className="w-5 h-5 text-emerald-600" />
-            <h3 className="font-extrabold text-base text-slate-900">Broadcast Announcement</h3>
+          <div className="flex items-center shrink-0 mt-2 sm:mt-0">
+            <button
+              onClick={onOpenCreateCampaign}
+              className="px-5 py-3 rounded-xl bg-white text-emerald-800 dark:bg-emerald-500 dark:text-white font-bold text-sm shadow-lg hover:bg-emerald-50 dark:hover:bg-emerald-400 transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <PlusCircle className="w-5 h-5" />
+              Create Campaign
+            </button>
           </div>
-          <p className="text-xs text-slate-500">Send an urgent SMS / WhatsApp alert to all active members in your chapter.</p>
+        </div>
+      </div>
+      {/* Metrics Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Members */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Members</p>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 mb-1">{community?.totalMembers || 0}</h3>
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Active Registered</p>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <Users className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+          </div>
+        </div>
+
+        {/* Active Campaigns */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Causes</p>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 mb-1">{community?.activeCampaigns || 0}</h3>
+            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Live Campaign Causes</p>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <Heart className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          </div>
+        </div>
+
+        {/* Total Funds Raised */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Funds Raised</p>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 mb-1">₹{(community?.totalRaisedInr || 0).toLocaleString('en-IN')}</h3>
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Escrow Audited</p>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <IndianRupee className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+          </div>
+        </div>
+
+        {/* Health Score */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Community Health</p>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 mb-1">{community?.healthScore || 100}%</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Grade A Transparency</p>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <Activity className="w-6 h-6 text-slate-600 dark:text-slate-300" />
+          </div>
+        </div>
+      </div>
+
+      {/* Pending Actions Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pending KYC Approvals</p>
+            <h4 className="text-2xl font-black text-slate-900 dark:text-white mt-1">{pendingKycCount}</h4>
+            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-1">Requires admin review</p>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
+            <UserCheck className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pending Campaigns</p>
+            <h4 className="text-2xl font-black text-slate-900 dark:text-white mt-1">{pendingCampaignsCount}</h4>
+            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-1">Awaiting approval</p>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
+            <PlusCircle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pending UTR Verification</p>
+            <h4 className="text-2xl font-black text-slate-900 dark:text-white mt-1">{pendingUtrCount}</h4>
+            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-1">Manual bank transfers</p>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
+            <Banknote className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Broadcast Announcement */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <Megaphone className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-slate-900 dark:text-white">Broadcast Announcement</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Send an alert to all members of your community</p>
+            </div>
+          </div>
 
           {announcementSent ? (
-            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-1">
-              <CheckCircle2 className="w-6 h-6 text-emerald-600 mx-auto" />
-              <p className="font-bold text-xs text-emerald-950">Broadcast Dispatched!</p>
-              <p className="text-[10px] text-emerald-800">Sent via WhatsApp &amp; SMS gateway.</p>
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-2xl text-center space-y-1">
+              <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400 mx-auto" />
+              <p className="font-bold text-xs text-emerald-800 dark:text-emerald-400">Broadcast Dispatched!</p>
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-500/80">Sent via WhatsApp &amp; SMS gateway.</p>
             </div>
           ) : (
             <form onSubmit={handleBroadcast} className="space-y-3">
@@ -198,12 +262,12 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
                 placeholder="Type urgent community broadcast message..."
                 value={announcementText}
                 onChange={(e) => setAnnouncementText(e.target.value)}
-                className="w-full p-3 text-xs rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-300 outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400 dark:placeholder:text-slate-600"
               />
               <button
                 type="submit"
                 disabled={broadcasting}
-                className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-bold text-xs flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer"
               >
                 {broadcasting ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -211,23 +275,6 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
               </button>
             </form>
           )}
-
-          {/* Pie Chart breakdown */}
-          <div className="pt-4 border-t border-slate-100">
-            <h4 className="font-bold text-xs text-slate-700 mb-2">Category Funds Breakdown</h4>
-            <div className="h-40 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={50}>
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
         </div>
       </div>
     </div>

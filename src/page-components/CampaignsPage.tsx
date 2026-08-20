@@ -1,17 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Campaign, DonationCategory } from '../types';
 import { getCampaigns } from '../services/campaignService';
 import { CampaignCard } from '../components/CampaignCard';
+import { CampaignSkeleton } from '../components/CampaignSkeleton';
 import { Search, Grid, List } from 'lucide-react';
+import { MembershipBanner } from '../components/MembershipBanner';
 
 interface CampaignsPageProps {
-  onDonate: (campaign?: Campaign) => void;
-  onViewCampaignDetail: (campaign: Campaign) => void;
+  onDonate: (campaign: Campaign) => void;
 }
 
-export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate, onViewCampaignDetail }) => {
+export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedCity, setSelectedCity] = useState<string>('All');
@@ -19,13 +20,15 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate, onViewCa
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 6;
 
   useEffect(() => {
     async function load() {
       try {
         setLoading(true);
-        const data = await getCampaigns({ status: 'active' });
-        setCampaigns(data);
+        const cData = await getCampaigns({ status: 'active' });
+        setCampaigns(cData);
       } catch (err) {
         console.error(err);
         setError('Failed to load campaigns. Please try again.');
@@ -47,6 +50,26 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate, onViewCa
     const matchesCity = selectedCity === 'All' || c.city === selectedCity;
     return matchesSearch && matchesCat && matchesCity;
   });
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedCategory, selectedCity]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedCampaigns = filtered.slice(0, currentPage * ITEMS_PER_PAGE);
+
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && currentPage < totalPages) {
+        setCurrentPage(prevPage => prevPage + 1);
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [loading, currentPage, totalPages]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
@@ -84,7 +107,6 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate, onViewCa
               <option value="Marriage">Marriage</option>
               <option value="Food">Food</option>
               <option value="Janazah">Janazah</option>
-              <option value="Emergency Relief">Emergency Relief</option>
             </select>
 
             <select
@@ -119,9 +141,10 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate, onViewCa
       </div>
 
       {loading ? (
-        <div className="text-center py-16">
-          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-slate-500 font-medium">Loading verified campaigns...</p>
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <CampaignSkeleton key={i} />
+          ))}
         </div>
       ) : error ? (
         <div className="text-center py-16 bg-white rounded-3xl border border-red-100 p-8">
@@ -139,16 +162,23 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate, onViewCa
         </div>
       ) : (
         <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
-          {filtered.map((camp) => (
+          {paginatedCampaigns.map((camp) => (
             <CampaignCard
               key={camp.id}
               campaign={camp}
               onDonate={onDonate}
-              onViewDetail={onViewCampaignDetail}
             />
           ))}
         </div>
       )}
+
+      {!loading && !error && filtered.length > 0 && currentPage < totalPages && (
+        <div ref={lastElementRef} className="w-full flex justify-center py-8">
+          <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
+
+      <MembershipBanner />
     </div>
   );
 };

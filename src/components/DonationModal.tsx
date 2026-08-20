@@ -44,7 +44,13 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const [donorName, setDonorName] = useState<string>(currentUser?.name || 'Generous Member');
   const [createdDonation, setCreatedDonation] = useState<Donation | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const showToast = (message: string, type: 'error' | 'success' = 'error') => {
+    setToastMessage({ message, type });
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   useEffect(() => {
     if (!campaign) {
@@ -77,7 +83,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!utrNumber && !screenshotUploaded) {
-      alert('Please enter a valid 12-digit UPI UTR number or upload payment screenshot.');
+      showToast('Please enter a valid 12-digit UPI UTR number or upload payment screenshot.');
       return;
     }
     if (!activeCampaign) return;
@@ -94,8 +100,8 @@ export const DonationModal: React.FC<DonationModalProps> = ({
         transactionId: `TXN${Math.floor(100000000 + Math.random() * 900000000)}`,
         utrNumber: finalUtr,
         donorName: donorName || 'Generous Member',
-        donorId: 'usr_mem_101',
-        donorRole: 'member',
+        donorId: currentUser?.id || 'anonymous',
+        donorRole: currentUser?.role || 'member',
         campaignId: activeCampaign.id,
         campaignTitle: activeCampaign.title,
         communityName: activeCampaign.communityName,
@@ -115,13 +121,14 @@ export const DonationModal: React.FC<DonationModalProps> = ({
       setCreatedDonation(savedDonation);
       onDonationSuccess(savedDonation);
       setStep(3);
+      showToast('Donation submitted successfully!', 'success');
 
       try {
         confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
       } catch { }
     } catch (err) {
       console.error('Donation error:', err);
-      alert('Failed to submit donation. Please try again.');
+      showToast('Failed to submit donation. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -130,6 +137,15 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
       <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100 max-h-[92vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+
+        {/* Toast Notification */}
+        {toastMessage && (
+          <div className={`fixed top-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-[60] text-sm font-bold text-white transition-all transform duration-300 ease-out ${toastMessage.type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'
+            }`}>
+            {toastMessage.message}
+          </div>
+        )}
+
         <button
           onClick={onClose}
           className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
@@ -183,11 +199,10 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                         if (zakatCamp) setSelectedCampaignId(zakatCamp.id);
                       }
                     }}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all text-left flex items-center justify-between ${
-                      selectedCategory === cat
+                    className={`py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all text-left flex items-center justify-between ${selectedCategory === cat
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]'
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
+                      }`}
                   >
                     <span>{cat}</span>
                     {cat === 'Zakat' && (
@@ -261,11 +276,10 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                     key={val}
                     type="button"
                     onClick={() => handleAmountClick(val)}
-                    className={`py-3 rounded-xl font-bold text-sm border transition-all ${
-                      amount === val && !customAmount
+                    className={`py-3 rounded-xl font-bold text-sm border transition-all ${amount === val && !customAmount
                         ? 'bg-slate-900 text-white border-slate-900 shadow-md'
                         : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
-                    }`}
+                      }`}
                   >
                     ₹{val.toLocaleString('en-IN')}
                   </button>
@@ -315,18 +329,16 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               <button
                 type="button"
                 onClick={() => setPaymentMethod('UPI')}
-                className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  paymentMethod === 'UPI' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
-                }`}
+                className={`py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'UPI' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
+                  }`}
               >
                 Instant UPI / QR Scan
               </button>
               <button
                 type="button"
                 onClick={() => setPaymentMethod('Bank Transfer')}
-                className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  paymentMethod === 'Bank Transfer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
-                }`}
+                className={`py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'Bank Transfer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
+                  }`}
               >
                 Direct Bank NEFT / RTGS
               </button>
@@ -340,7 +352,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 <div>
                   <p className="text-xs text-slate-400 uppercase tracking-wider">UPI ID for Direct Escrow</p>
                   <p className="font-mono text-emerald-400 font-bold text-lg select-all">
-                    sevasangam@okicici
+                    mfct@okicici
                   </p>
                   <p className="text-[11px] text-slate-400 mt-1">
                     Scan using Google Pay, PhonePe, Paytm, or BHIM UPI
@@ -401,11 +413,10 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                   Or Upload Payment Screenshot
                 </label>
                 <label
-                  className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${
-                    screenshotUploaded
+                  className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${screenshotUploaded
                       ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
                       : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
-                  }`}
+                    }`}
                 >
                   <input
                     ref={fileInputRef}

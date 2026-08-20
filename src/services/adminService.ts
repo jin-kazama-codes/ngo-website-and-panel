@@ -136,6 +136,23 @@ export async function getEmergencyAidRequests(): Promise<Record<string, unknown>
   return data ?? [];
 }
 
+export async function updateEmergencyAidStatus(id: string | number, status: 'approved' | 'rejected'): Promise<void> {
+  const res = await fetch('/api/emergency-campaigns', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, status }),
+  });
+  
+  if (!res.ok) {
+    throw new Error(`HTTP error ${res.status}`);
+  }
+  
+  const json = await res.json();
+  if (!json.success) {
+    throw new Error(json.error || `Failed to update: No record found with id ${id}`);
+  }
+}
+
 // ─── Announcements ────────────────────────────────────────────────────────────
 export async function broadcastAnnouncement(ann: {
   communityId: string;
@@ -205,4 +222,49 @@ export async function getMonthlyDonationStats(userId: string): Promise<MonthlyDo
     year: row.year as number,
     amount: row.amount_inr as number,
   }));
+}
+
+// ─── Account Details ──────────────────────────────────────────────────────────
+import { AccountDetails } from '../types';
+
+export async function getAccountDetails(): Promise<AccountDetails[]> {
+  try {
+    const res = await fetch('/api/account-details');
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const json = await res.json();
+    return json.data || [];
+  } catch (err) {
+    console.error('getAccountDetails error:', err);
+    return [];
+  }
+}
+
+export async function createAccountDetails(details: Omit<AccountDetails, 'id' | 'created_at' | 'updated_at'>): Promise<AccountDetails> {
+  const res = await fetch('/api/account-details', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(details),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error || 'Failed to create account details');
+  return json.data;
+}
+
+export async function updateAccountDetails(details: Partial<AccountDetails> & { id: string }): Promise<AccountDetails> {
+  const res = await fetch('/api/account-details', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(details),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error || 'Failed to update account details');
+  return json.data;
+}
+
+export async function deleteAccountDetails(id: string): Promise<void> {
+  const res = await fetch(`/api/account-details?id=${id}`, {
+    method: 'DELETE',
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error || 'Failed to delete account details');
 }

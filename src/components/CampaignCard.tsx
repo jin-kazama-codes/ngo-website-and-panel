@@ -4,14 +4,15 @@ import React from 'react';
 import { Campaign } from '../types';
 import { ShieldCheck, Sparkles, Clock, Heart, Users, Building2, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useRouter } from 'next/navigation';
 
 interface CampaignCardProps {
   campaign: Campaign;
   onDonate: (campaign: Campaign) => void;
-  onViewDetail: (campaign: Campaign) => void;
 }
 
-export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate, onViewDetail }) => {
+export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate }) => {
+  const router = useRouter();
   const { t, isHindi } = useLanguage();
   const percentRaised = Math.min(100, Math.round((campaign.raisedINR / campaign.goalINR) * 100));
 
@@ -77,7 +78,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate, 
       <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
         <div>
           <h3
-            onClick={() => onViewDetail(campaign)}
+            onClick={() => router.push(`/campaigns/${campaign.id}`)}
             className="font-bold text-slate-900 text-base leading-snug hover:text-emerald-600 transition-colors cursor-pointer line-clamp-2"
           >
             {campaign.title}
@@ -120,14 +121,14 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate, 
         {/* Action Buttons */}
         <div className="pt-2 flex items-center gap-2">
           <button
-            onClick={() => onViewDetail(campaign)}
-            className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex-1"
+            onClick={() => router.push(`/campaigns/${campaign.id}`)}
+            className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex-1 cursor-pointer"
           >
             {t('card.viewDetail', 'Read Story & Docs')}
           </button>
           <button
             onClick={() => onDonate(campaign)}
-            className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center gap-1.5"
+            className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer"
           >
             <Heart className="w-3.5 h-3.5 fill-current" /> {t('card.donateNow', 'Donate')}
           </button>

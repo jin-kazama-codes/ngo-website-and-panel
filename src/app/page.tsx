@@ -16,7 +16,6 @@ function HomeContent() {
   return (
     <HomePage
       onDonate={(c) => handleOpenDonate(c)}
-      onViewCampaignDetail={handleViewCampaignDetail}
       onOpenRegister={handleOpenRegister}
       onNavigatePage={(page: string) => {
         const routes: Record<string, string> = {

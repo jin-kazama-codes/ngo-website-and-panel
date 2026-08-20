@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { User, UserRole } from '../types';
-import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, ChevronDown, Award, LayoutDashboard, Calculator, LogIn, LogOut } from 'lucide-react';
+import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, ChevronDown, Award, LayoutDashboard, Calculator, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { LanguageSelector } from './LanguageSelector';
+import { label } from 'motion/react-client';
 
 interface NavbarProps {
   currentPage: string;
@@ -34,6 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const { t, isHindi } = useLanguage();
 
   useEffect(() => {
@@ -54,15 +56,15 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'communities', label: t('nav.communities', 'Communities'), path: '/communities' },
     { id: 'about', label: t('nav.about', 'About'), path: '/about' },
     { id: 'gallery', label: t('nav.gallery', 'Gallery'), path: '/gallery' },
-    { id: 'testimonials', label: t('nav.testimonials', 'Impact Stories'), path: '/testimonials' },
     { id: 'contact', label: t('nav.contact', 'Contact'), path: '/contact' },
+    { id: 'testimonials', label: t('nav.testimonials', 'Impact Stories'), path: '/testimonials' },
+
   ];
 
   return (
     <header
-      className={`sticky top-0 z-50 bg-white transition-all duration-200 border-b border-slate-200 ${
-        isScrolled ? 'shadow-md py-3' : 'py-3.5'
-      }`}
+      className={`sticky top-0 z-50 bg-white transition-all duration-200 border-b border-slate-200 ${isScrolled ? 'shadow-md py-3' : 'py-3.5'
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Brand Logo */}
@@ -93,11 +95,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 key={link.id}
                 href={link.path}
                 onClick={() => onPageChange(link.id)}
-                className={`px-3 py-2 rounded-lg transition-all ${
-                  isActive
-                    ? 'text-emerald-700 font-bold bg-emerald-50 border border-emerald-100'
-                    : 'hover:text-emerald-600 hover:bg-slate-50'
-                }`}
+                className={`px-3 py-2 rounded-lg transition-colors duration-150 cursor-pointer ${isActive
+                  ? 'text-emerald-700 font-bold bg-emerald-50 border border-emerald-100'
+                  : 'hover:text-emerald-600 hover:bg-slate-50'
+                  }`}
               >
                 {link.label}
               </Link>
@@ -107,58 +108,117 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Action Buttons & Language Selector */}
         <div className="hidden sm:flex items-center gap-2.5">
-          {/* Language Selector */}
-          <LanguageSelector compact />
 
           {/* Zakat Calculator Button */}
-          {onOpenZakatCalc && (
+          {/* {onOpenZakatCalc && (
             <button
               onClick={onOpenZakatCalc}
-              className="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold transition-all flex items-center gap-1.5 border border-amber-300/80 shadow-xs"
+              className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200/80 shadow-sm cursor-pointer"
               title="Open Zakat Calculator"
             >
               <Calculator className="w-3.5 h-3.5 text-amber-700" />
-              <span>{isHindi ? 'ज़कात कैलकुलेटर' : 'Zakat Calc'}</span>
+              <span>{isHindi ? 'ज़कात कैलकुलेटर' : 'Zakat Calcu'}</span>
             </button>
-          )}
+          )} */}
 
           {/* Member / Admin Portal Link */}
           <Link
             href="/admin"
             onClick={onNavigateToAdmin}
-            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200/80 shadow-sm"
+            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200/80 shadow-sm cursor-pointer"
             title="Open Admin & Member Portal Desk"
           >
             <LayoutDashboard className="w-3.5 h-3.5 text-emerald-600" />
-            <span>{t('nav.adminPortal', 'Admin Portal')}</span>
+            <span>{isHindi ? 'एडमिन पोर्टल' : 'Admin/Member Portal'}</span>
           </Link>
 
-          <button
+          {/* <button
             onClick={onOpenRegister}
-            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200/80 shadow-xs"
+            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200/80 shadow-sm cursor-pointer"
           >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>{t('nav.join', 'Join (₹50)')}</span>
-          </button>
+            <UserPlus className="" />
+            <span>{isHindi ? 'सदस्य बनें' : 'Become a Member'}</span>
+          </button> */}
 
-          <button
+          {/* <button
             onClick={onOpenDonate}
-            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md shadow-emerald-200 flex items-center gap-1.5"
+            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200/80 shadow-sm cursor-pointer"
           >
             <Heart className="w-3.5 h-3.5 fill-current" />
             <span>{t('nav.donate', 'Donate Now')}</span>
-          </button>
+          </button> */}
 
-          {/* Login / Logout Button */}
+          {/* Language Selector */}
+          <LanguageSelector compact />
+
+          {/* Login / User Profile Button */}
           {onLogout ? (
-            <button
-              onClick={onLogout}
-              className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-rose-200/80 shadow-xs cursor-pointer"
-              title="Logout Account"
-            >
-              <LogOut className="w-3.5 h-3.5 text-rose-600" />
-              <span>Logout</span>
-            </button>
+            <div className="relative ml-1">
+              <button
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className="flex items-center gap-1.5 p-1 pr-2 rounded-full hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-colors cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200 shadow-sm">
+                  {currentUser.avatar && currentUser.avatar !== 'https://via.placeholder.com/150' ? (
+                    <img
+                      src={currentUser.avatar}
+                      alt={currentUser.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <UserIcon className="w-4 h-4 text-slate-500" />
+                  )}
+                </div>
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              </button>
+
+              {profileMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setProfileMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
+                    <div className="p-3 border-b border-slate-800 bg-slate-950/50">
+                      <p className="text-sm font-bold text-white truncate">{currentUser.name || "No name"}</p>
+                      <p className="text-xs text-slate-400 truncate">{currentUser.email || 'No email provided'}</p>
+                    </div>
+                    <div className="p-2">
+                      <div className="px-2 py-1.5 mb-2 rounded-lg bg-slate-800/50 flex items-center gap-2 border border-slate-800">
+                        {(() => {
+                          let icon = <Heart className="w-3.5 h-3.5 text-emerald-400" />;
+                          let label = 'Member / Volunteer';
+                          if (currentUser.role === 'super_admin') { icon = <Shield className="w-3.5 h-3.5 text-indigo-400" />; label = 'Super Admin'; }
+                          else if (currentUser.role === 'executive_admin') { icon = <Building2 className="w-3.5 h-3.5 text-blue-400" />; label = 'NGO Admin'; }
+                          else if (currentUser.role === 'community_admin') { icon = <Award className="w-3.5 h-3.5 text-purple-400" />; label = 'Community Admin'; }
+                          else if (currentUser.role === 'premium_donor') { icon = <Sparkles className="w-3.5 h-3.5 text-amber-400" />; label = 'Premium Donor'; }
+                          return (
+                            <>
+                              {icon}
+                              <span className="text-xs font-bold text-slate-300">{label}</span>
+                            </>
+                          );
+                        })()}
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setProfileMenuOpen(false);
+                          onLogout();
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-rose-400 hover:bg-rose-950/50 hover:text-rose-300 transition-colors text-xs font-bold text-left cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           ) : (
             onOpenLogin && (
               <button
@@ -201,11 +261,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onPageChange(link.id);
                   setMobileMenuOpen(false);
                 }}
-                className={`text-left px-4 py-2.5 rounded-xl font-bold text-sm ${
-                  currentPage === link.id
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : 'text-slate-700 hover:bg-slate-50'
-                }`}
+                className={`text-left px-4 py-2.5 rounded-xl font-bold text-sm transition-colors duration-150 cursor-pointer ${currentPage === link.id
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : 'text-slate-700 hover:bg-slate-50'
+                  }`}
               >
                 {link.label}
               </Link>
@@ -219,7 +278,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onOpenZakatCalc();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full py-3 rounded-xl bg-amber-50 text-amber-900 border border-amber-300 text-xs font-bold flex items-center justify-center gap-2 shadow-xs"
+                className="w-full py-3 rounded-xl bg-amber-50 text-amber-900 border border-amber-300 text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
               >
                 <Calculator className="w-4 h-4 text-amber-700" /> {isHindi ? 'ज़कात कैलकुलेटर (2.5%)' : 'Zakat Calculator (2.5%)'}
               </button>
@@ -230,7 +289,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onNavigateToAdmin();
                 setMobileMenuOpen(false);
               }}
-              className="w-full py-3 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
+              className="w-full py-3 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
             >
               <LayoutDashboard className="w-4 h-4 text-emerald-400" /> {t('nav.adminPortal', 'Open Admin Portal')} (/admin)
             </Link>
@@ -239,7 +298,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onOpenMembershipCard();
                 setMobileMenuOpen(false);
               }}
-              className="w-full py-3 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
             >
               <Shield className="w-4 h-4 text-emerald-600" /> {t('nav.myCard', 'View ID Card')} ({currentUser.name})
             </button>
@@ -248,16 +307,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onOpenRegister();
                 setMobileMenuOpen(false);
               }}
-              className="w-full py-3 rounded-xl bg-slate-100 text-slate-900 text-xs font-bold flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl bg-slate-100 text-slate-900 text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
             >
-              <UserPlus className="w-4 h-4" /> {t('nav.join', 'Become Member (₹50)')}
+              <UserPlus className="w-4 h-4" /> {t('nav.join', 'Become a Member')}
             </button>
             <button
               onClick={() => {
                 onOpenDonate();
                 setMobileMenuOpen(false);
               }}
-              className="w-full py-3 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20"
+              className="w-full py-3 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 cursor-pointer"
             >
               <Heart className="w-4 h-4 fill-current" /> {t('nav.donate', 'Donate Now')}
             </button>

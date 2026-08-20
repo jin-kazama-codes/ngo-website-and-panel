@@ -1,10 +1,12 @@
 import { Campaign, DonationCategory } from '../types';
 
 function mapRow(row: Record<string, unknown>): Campaign {
+  const rawMainImage = (row.mainImage || row.main_image || '') as string;
+  const splitImages = rawMainImage ? rawMainImage.split(',') : [];
+
   return {
     id: (row.id as string) || `camp_${Date.now()}`,
     title: (row.title as string) || '',
-    slug: (row.slug as string) || '',
     category: (row.category as DonationCategory) || 'Medical',
     communityId: (row.communityId || row.community_id) as string,
     communityName: (row.communityName || row.community_name) as string,
@@ -18,71 +20,15 @@ function mapRow(row: Record<string, unknown>): Campaign {
     isVerified: Boolean(row.isVerified ?? row.is_verified ?? true),
     isZakatEligible: Boolean(row.isZakatEligible ?? row.is_zakat_eligible ?? true),
     isUrgent: Boolean(row.isUrgent ?? row.is_urgent ?? false),
-    isPremiumFeatured: Boolean(row.isPremiumFeatured ?? row.is_premium_featured ?? false),
-    mainImage: (row.mainImage || row.main_image) as string,
+    mainImage: splitImages[0] || 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
+    galleryImages: splitImages.slice(1) || [],
     story: (row.story as string) || '',
     documents: ((row.documents ?? row.documents) as Campaign['documents']) || [],
-    verificationTimeline: ((row.verificationTimeline ?? row.verification_timeline) as Campaign['verificationTimeline']) || [],
-    needBreakdown: ((row.needBreakdown ?? row.need_breakdown) as Campaign['needBreakdown']) || [],
     createdDate: (row.createdDate || row.created_date) as string,
-    status: (row.status as Campaign['status']) || 'active',
+    createdBy: (row.createdBy || row.created_by) as string,
+    status: row.status === 'approved' ? 'active' : row.status === 'pending' ? 'pending_approval' : (row.status as Campaign['status']) || 'active',
   };
 }
-
-const FALLBACK_CAMPAIGNS: Campaign[] = [
-  {
-    id: 'camp_med_01',
-    title: 'Urgent Kidney Transplant for 8-Year-Old Zoya in AIIMS Delhi',
-    slug: 'kidney-transplant-zoya-aiims',
-    category: 'Medical',
-    communityId: 'comm_delhi_central',
-    communityName: 'Hazrat Nizamuddin Welfare Community',
-    city: 'Delhi',
-    beneficiaryName: 'Zoya Siddiqui (8 yrs)',
-    beneficiaryRelation: 'Father: Imran Siddiqui (Daily wage carpenter)',
-    goalINR: 450000,
-    raisedINR: 320000,
-    donorsCount: 184,
-    daysLeft: 8,
-    isVerified: true,
-    isZakatEligible: true,
-    isUrgent: true,
-    isPremiumFeatured: true,
-    mainImage: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=800&q=80',
-    story: 'Little Zoya was diagnosed with end-stage renal disease 4 months ago.',
-    documents: [],
-    verificationTimeline: [],
-    needBreakdown: [],
-    createdDate: '15 Jul 2024',
-    status: 'active',
-  },
-  {
-    id: 'camp_edu_02',
-    title: 'Higher Education Scholarship Fund for 15 Orphan Girls in Bareilly',
-    slug: 'orphan-girls-higher-education-bareilly',
-    category: 'Education',
-    communityId: 'comm_bareilly_rohilkhand',
-    communityName: 'Rohilkhand Educational & Nikah Trust',
-    city: 'Bareilly',
-    beneficiaryName: '15 Student Scholars',
-    beneficiaryRelation: 'Care of Bareilly Orphan Care Trust',
-    goalINR: 300000,
-    raisedINR: 215000,
-    donorsCount: 96,
-    daysLeft: 14,
-    isVerified: true,
-    isZakatEligible: true,
-    isUrgent: false,
-    isPremiumFeatured: true,
-    mainImage: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=80',
-    story: '15 bright young girls who cleared Class 12 exams need college fee support.',
-    documents: [],
-    verificationTimeline: [],
-    needBreakdown: [],
-    createdDate: '10 Jun 2024',
-    status: 'active',
-  },
-];
 
 export async function getCampaigns(filters?: {
   category?: string;
@@ -101,16 +47,38 @@ export async function getCampaigns(filters?: {
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const json = await res.json();
     const mapped = (json.data || []).map(mapRow);
-    return mapped.length > 0 ? mapped : FALLBACK_CAMPAIGNS;
+    return mapped;
   } catch (err) {
     console.error('getCampaigns error:', err);
-    return FALLBACK_CAMPAIGNS;
+    return [];
   }
 }
 
 export async function getCampaignById(id: string): Promise<Campaign | null> {
-  const campaigns = await getCampaigns({ status: 'all' });
-  return campaigns.find((c) => c.id === id) || null;
+  const [campaigns, emergencyCampaigns] = await Promise.all([
+    getCampaigns({ status: 'all' }),
+    getEmergencyCampaigns({ status: 'all' })
+  ]);
+  const allCampaigns = [...campaigns, ...emergencyCampaigns];
+  return allCampaigns.find((c) => c.id === id) || null;
+}
+
+export async function getEmergencyCampaigns(filters?: { status?: string }): Promise<Campaign[]> {
+  try {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+
+    const url = `/api/emergency-campaigns${params.toString() ? '?' + params.toString() : ''}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const json = await res.json();
+    const data = json.data || [];
+
+    return data.map(mapEmergencyRow);
+  } catch (err) {
+    console.error('getEmergencyCampaigns error:', err);
+    return [];
+  }
 }
 
 export async function createCampaign(campaign: Omit<Campaign, 'id'>): Promise<Campaign> {
@@ -122,9 +90,22 @@ export async function createCampaign(campaign: Omit<Campaign, 'id'>): Promise<Ca
   if (!res.ok) throw new Error(`HTTP error ${res.status}`);
   const json = await res.json();
   if (!json.success && !json.data) throw new Error(json.error || 'Failed to create campaign');
+  if (json.warning) throw new Error(json.warning);
   return mapRow(json.data);
 }
-
+export async function updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign> {
+  const payload = { id, ...updates };
+  const res = await fetch('/api/campaigns', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const json = await res.json();
+  if (!json.success && !json.data) throw new Error(json.error || 'Failed to update campaign');
+  if (json.warning) throw new Error(json.warning);
+  return mapRow(json.data);
+}
 export async function updateCampaignRaised(
   id: string,
   addedAmount: number
@@ -140,4 +121,84 @@ export async function updateCampaignRaised(
       status: 'verified',
     }),
   });
+}
+
+export async function updateCampaignStatus(
+  id: string,
+  status: string,
+  isVerified: boolean
+): Promise<Campaign> {
+  let url = '/api/campaigns';
+  let cleanId = id;
+  let isEmergency = false;
+
+  if (id.startsWith('emergency_')) {
+    url = '/api/emergency-campaigns';
+    cleanId = id.replace('emergency_', '');
+    isEmergency = true;
+
+    // Map active back to approved for emergency requests
+    if (status === 'active') status = 'approved';
+    if (status === 'rejected') status = 'rejected';
+  }
+
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: cleanId, status, is_verified: isVerified }),
+  });
+
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const json = await res.json();
+  if (!json.success && !json.data) throw new Error(json.error || 'Failed to update campaign');
+  if (json.warning) throw new Error(json.warning);
+
+  return isEmergency ? mapEmergencyRow(json.data) : mapRow(json.data);
+}
+
+function mapEmergencyRow(row: any): Campaign {
+  const rawMainImage = (row.mainImage || row.main_image || '') as string;
+  const splitImages = rawMainImage ? rawMainImage.split(',') : [];
+
+  return {
+    id: `emergency_${row.id}`,
+    title: row.description?.slice(0, 50) || `Emergency: ${row.aid_category}`,
+    category: 'Emergency Relief',
+    communityId: row.community_id,
+    communityName: row.community_name,
+    city: '',
+    beneficiaryName: row.member_name,
+    beneficiaryRelation: 'Self',
+    goalINR: row.estimated_amount_inr || 0,
+    raisedINR: 0,
+    donorsCount: 0,
+    daysLeft: 7,
+    isVerified: row.status === 'approved',
+    isZakatEligible: true,
+    isUrgent: true,
+    mainImage: splitImages[0],
+    galleryImages: splitImages.slice(1) || [],
+    story: row.description || '',
+    documents: [],
+    createdBy: row.member_id,
+    createdDate: row.created_at || new Date().toISOString(),
+    status: row.status === 'approved' ? 'active' : row.status === 'pending' ? 'pending_approval' : row.status
+  };
+}
+
+export async function deleteCampaign(id: string): Promise<void> {
+  const isEmergency = id.startsWith('emergency_');
+
+  if (isEmergency) {
+    // Currently no DELETE for emergency campaigns API, so let's mock it or just return
+    return Promise.resolve();
+  }
+
+  const res = await fetch(`/api/campaigns?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error || 'Failed to delete campaign');
 }

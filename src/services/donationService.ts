@@ -31,7 +31,7 @@ export async function getDonations(donorId?: string): Promise<Donation[]> {
     const json = await res.json();
     return (json.data || []).map(mapRow);
   } catch (err) {
-    console.error('getDonations error:', err);
+    console.warn('getDonations warning:', err);
     return [];
   }
 }
@@ -43,7 +43,7 @@ export async function getRecentDonations(limit = 10): Promise<Donation[]> {
     const json = await res.json();
     return (json.data || []).map(mapRow);
   } catch (err) {
-    console.error('getRecentDonations error:', err);
+    console.warn('getRecentDonations warning:', err);
     return [];
   }
 }
@@ -64,9 +64,10 @@ export async function updateDonationStatus(
   id: string,
   status: Donation['status']
 ): Promise<void> {
-  await fetch('/api/donations', {
-    method: 'POST',
+  const res = await fetch('/api/donations', {
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id, status }),
   });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
 }

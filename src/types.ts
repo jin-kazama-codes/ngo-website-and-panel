@@ -1,11 +1,11 @@
-export type UserRole = 
+export type UserRole =
   | 'super_admin'
   | 'community_admin'
-  | 'executive'
+  | 'executive_admin'
   | 'member'
   | 'premium_donor';
 
-export type DonationCategory = 
+export type DonationCategory =
   | 'General'
   | 'Sadakah'
   | 'Zakat'
@@ -29,6 +29,8 @@ export interface User {
   name: string;
   email: string;
   phone: string;
+  city: string;
+  state: string;
   role: UserRole;
   avatar: string;
   communityId: string;
@@ -37,16 +39,11 @@ export interface User {
   isVerified: boolean;
   isPremium: boolean;
   joinDate: string;
-  city: string;
-  state: string;
-  totalDonatedINR: number;
-  donationsCount: number;
-  lifeImpactScore?: number;
-  familiesHelped?: number;
-  hasanatCounter?: number;
-  givingStreakMonths?: number;
-  communityRank?: number;
   passwordHash?: string;
+  documentUrl?: string;
+  paymentMethod?: string;
+  paymentUtr?: string;
+  paymentScreenshotUrl?: string;
 }
 
 export interface Community {
@@ -70,7 +67,6 @@ export interface Community {
 export interface Campaign {
   id: string;
   title: string;
-  slug: string;
   category: DonationCategory;
   communityId: string;
   communityName: string;
@@ -84,14 +80,13 @@ export interface Campaign {
   isVerified: boolean;
   isZakatEligible: boolean;
   isUrgent: boolean;
-  isPremiumFeatured: boolean;
   mainImage: string;
+  galleryImages?: string[];
   story: string;
   documents: { title: string; url: string; verifiedBy: string }[];
-  verificationTimeline: { step: string; date: string; status: 'completed' | 'in_progress' | 'pending' }[];
-  needBreakdown: { item: string; amountINR: number }[];
   createdDate: string;
-  status: 'active' | 'pending_approval' | 'completed' | 'rejected';
+  createdBy: string;
+  status: 'active' | 'pending' | 'completed' | 'rejected' | 'pending_approval';
 }
 
 export interface Donation {
@@ -125,6 +120,8 @@ export interface PendingVerificationItem {
   documentUrl?: string;
   amountINR?: number;
   utr?: string;
+  paymentMethod?: string;
+  paymentScreenshotUrl?: string;
 }
 
 export interface AuditLog {
@@ -147,6 +144,9 @@ export interface Testimonial {
   campaignTitle?: string;
   amountReceivedINR?: number;
   videoThumbnail?: string;
+  createdBy?: string;
+  communityId?: string;
+  status?: 'pending' | 'approved' | 'rejected';
 }
 
 export interface CommunityStory {
@@ -158,4 +158,24 @@ export interface CommunityStory {
   image: string;
   summary: string;
   impactMetric: string;
+}
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  created_at: string;
+}
+
+export interface AccountDetails {
+  id: string;
+  bank_name: string;
+  account_number: string;
+  ifsc_code: string;
+  upi_id: string;
+  qr_code_url?: string;
+  created_at?: string;
+  updated_at?: string;
 }

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useContext, createContext, ReactNode } from
 import { useRouter } from 'next/navigation';
 import { UserRole, User, Campaign, Donation } from '../types';
 import { USER_SUPER_ADMIN, USER_EXECUTIVE_ADMIN, USER_COMMUNITY_ADMIN, USER_MEMBER, CURRENT_USER_PREMIUM } from '../data/mockData';
-import { getCampaigns } from '../services/campaignService';
+import { getCampaigns, getEmergencyCampaigns } from '../services/campaignService';
 
 // Components & Modals
 import { Navbar } from '../components/Navbar';
@@ -12,14 +12,13 @@ import { Footer } from '../components/Footer';
 import { DonationModal } from '../components/DonationModal';
 import { RegistrationModal } from '../components/RegistrationModal';
 import { MembershipCardModal, ReceiptModal } from '../components/MembershipCardModal';
-import { CampaignDetailModal } from '../components/CampaignDetailModal';
-import { CreateCampaignModal } from '../components/CreateCampaignModal';
 import { ZakatCalculatorModal } from '../components/ZakatCalculatorModal';
 import { LoginModal } from '../components/LoginModal';
 
 // ─── Context Types ───────────────────────────────────────────────────────────
 
 interface AppStateContextType {
+  isInitialized: boolean;
   isAuthenticated: boolean;
   currentRole: UserRole;
   activeUser: User;
@@ -28,14 +27,12 @@ interface AppStateContextType {
   handleOpenRegister: () => void;
   handleOpenMembershipCard: () => void;
   handleOpenZakatCalc: () => void;
-  handleOpenCreateCampaign: () => void;
   handleOpenLogin: () => void;
   handleSelectDonationReceipt: (d: Donation) => void;
-  handleViewCampaignDetail: (c: Campaign) => void;
   handleRoleChange: (role: UserRole) => void;
-  handleLogin: (role: UserRole, email?: string) => void;
+  handleLogin: (role: UserRole, email?: string, customUser?: User) => void;
   handleLogout: () => void;
-  handleCampaignCreated: (camp: Campaign) => void;
+  handleCampaignUpdated: (updatedCamp: Campaign) => void;
   handleDonationSuccess: (donation: Donation) => void;
   handleUserRegistered: (user: User) => void;
 }
@@ -67,26 +64,66 @@ export function AppStateProvider({
   const router = useRouter();
 
   // ─── Global State ─────────────────────────────────────────────────────────
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('mfct_is_logged_in') === 'true';
-    }
-    return false;
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [currentRole, setCurrentRole] = useState<UserRole>('member');
   const [activeUser, setActiveUser] = useState<User>(USER_MEMBER);
   const [campaignsList, setCampaignsList] = useState<Campaign[]>([]);
 
   useEffect(() => {
-    getCampaigns({ status: 'all' }).then(setCampaignsList).catch(console.error);
+    Promise.all([
+      getCampaigns({ status: 'all' })
+    ]).then(([cData]) => {
+      setCampaignsList([...cData]);
+    }).catch(console.error);
   }, []);
 
-  // Restore active user mapping from localStorage if saved
+  // Restore active user mapping and auth from localStorage if saved
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const isLoggedIn = localStorage.getItem('mfct_is_logged_in') === 'true';
+      if (isLoggedIn) {
+        setIsAuthenticated(true);
+      }
+
+      const savedId = localStorage.getItem('id');
       const savedRole = localStorage.getItem('mfct_user_role') as UserRole | null;
-      if (savedRole) {
-        handleRoleChange(savedRole);
+      const savedEmail = localStorage.getItem('email') || '';
+      const savedName = localStorage.getItem('name') || '';
+      const savedAvatar = localStorage.getItem('avatar') || '';
+
+      const restoreMockUser = (role: UserRole) => {
+        const mockUser = getUserForRole(role);
+        setActiveUser({ 
+          ...mockUser, 
+          email: savedEmail || mockUser.email || '',
+          name: savedName || mockUser.name || '',
+          avatar: savedAvatar || mockUser.avatar || ''
+        });
+        setCurrentRole(role);
+      };
+
+      if (savedId) {
+        import('../services/userService').then(({ getUserById }) => {
+          getUserById(savedId).then((realUser) => {
+            if (realUser) {
+              setActiveUser(realUser);
+              setCurrentRole(realUser.role);
+            } else if (savedRole) {
+              restoreMockUser(savedRole);
+            }
+            setIsInitialized(true);
+          }).catch((err) => {
+            console.error('Failed to fetch user on load:', err);
+            if (savedRole) restoreMockUser(savedRole);
+            setIsInitialized(true);
+          });
+        });
+      } else {
+        if (savedRole) {
+          restoreMockUser(savedRole);
+        }
+        setIsInitialized(true);
       }
     }
   }, []);
@@ -103,12 +140,10 @@ export function AppStateProvider({
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showMembershipCardModal, setShowMembershipCardModal] = useState(false);
   const [selectedReceiptDonation, setSelectedReceiptDonation] = useState<Donation | null>(null);
-  const [inspectingCampaign, setInspectingCampaign] = useState<Campaign | null>(null);
-  const [showCreateCampaignModal, setShowCreateCampaignModal] = useState(false);
 
   const getUserForRole = (role: UserRole): User => {
     if (role === 'super_admin') return USER_SUPER_ADMIN;
-    if (role === 'executive') return USER_EXECUTIVE_ADMIN;
+    if (role === 'executive_admin') return USER_EXECUTIVE_ADMIN;
     if (role === 'community_admin') return USER_COMMUNITY_ADMIN;
     if (role === 'premium_donor') return CURRENT_USER_PREMIUM;
     return USER_MEMBER;
@@ -128,6 +163,8 @@ export function AppStateProvider({
         role: userToSet.role,
         id: userWithEmail.id,
         email: userEmail,
+        name: userWithEmail.name,
+        avatar: userWithEmail.avatar,
         community_id: userWithEmail.communityId,
       };
 
@@ -136,6 +173,8 @@ export function AppStateProvider({
       localStorage.setItem('role', userToSet.role);
       localStorage.setItem('id', userWithEmail.id);
       localStorage.setItem('email', userEmail);
+      localStorage.setItem('name', userWithEmail.name);
+      localStorage.setItem('avatar', userWithEmail.avatar);
       localStorage.setItem('community_id', userWithEmail.communityId);
       localStorage.setItem('login_info', JSON.stringify(loginInfo));
       localStorage.setItem('mfct_user_info', JSON.stringify(loginInfo));
@@ -143,19 +182,18 @@ export function AppStateProvider({
   };
 
   const handleLogout = () => {
-    setIsAuthenticated(false);
-    setCurrentRole('member');
-    setActiveUser(USER_MEMBER);
-
     if (typeof window !== 'undefined') {
       localStorage.removeItem('mfct_is_logged_in');
       localStorage.removeItem('mfct_user_role');
       localStorage.removeItem('role');
       localStorage.removeItem('id');
       localStorage.removeItem('email');
+      localStorage.removeItem('name');
+      localStorage.removeItem('avatar');
       localStorage.removeItem('community_id');
       localStorage.removeItem('login_info');
       localStorage.removeItem('mfct_user_info');
+      router.push('/');
     }
   };
 
@@ -189,14 +227,41 @@ export function AppStateProvider({
   const handleUserRegistered = (newUser: User) => {
     setActiveUser(newUser);
     setIsAuthenticated(true);
+    setCurrentRole(newUser.role);
     if (typeof window !== 'undefined') {
+      const loginInfo = {
+        role: newUser.role,
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+        avatar: newUser.avatar,
+        community_id: newUser.communityId,
+      };
       localStorage.setItem('mfct_is_logged_in', 'true');
+      localStorage.setItem('mfct_user_role', newUser.role);
+      localStorage.setItem('role', newUser.role);
+      localStorage.setItem('id', newUser.id);
+      localStorage.setItem('email', newUser.email);
+      localStorage.setItem('name', newUser.name);
+      localStorage.setItem('avatar', newUser.avatar);
+      localStorage.setItem('community_id', newUser.communityId);
+      localStorage.setItem('login_info', JSON.stringify(loginInfo));
+      localStorage.setItem('mfct_user_info', JSON.stringify(loginInfo));
     }
   };
 
-  const handleCampaignCreated = (newCamp: Campaign) => {
-    setCampaignsList((prev) => [newCamp, ...prev]);
-    setShowCreateCampaignModal(false);
+  const handleCampaignCreated = (newCampaign: Campaign) => {
+    setCampaignsList(prev => {
+      const exists = prev.find(c => c.id === newCampaign.id);
+      if (exists) {
+        return prev.map(c => c.id === newCampaign.id ? newCampaign : c);
+      }
+      return [newCampaign, ...prev];
+    });
+  };
+
+  const handleCampaignUpdated = (updatedCamp: Campaign) => {
+    setCampaignsList((prev) => prev.map((c) => (c.id === updatedCamp.id ? updatedCamp : c)));
   };
 
   const handleRoleChange = (role: UserRole) => {
@@ -206,7 +271,7 @@ export function AppStateProvider({
     }
     if (role === 'super_admin') {
       setActiveUser(USER_SUPER_ADMIN);
-    } else if (role === 'executive') {
+    } else if (role === 'executive_admin') {
       setActiveUser(USER_EXECUTIVE_ADMIN);
     } else if (role === 'community_admin') {
       setActiveUser(USER_COMMUNITY_ADMIN);
@@ -238,15 +303,14 @@ export function AppStateProvider({
   const handleOpenLogin = () => setShowLoginModal(true);
   const handleOpenMembershipCard = () => setShowMembershipCardModal(true);
   const handleOpenZakatCalc = () => setShowZakatModal(true);
-  const handleOpenCreateCampaign = () => setShowCreateCampaignModal(true);
   const handleSelectDonationReceipt = (d: Donation) => setSelectedReceiptDonation(d);
-  const handleViewCampaignDetail = (c: Campaign) => setInspectingCampaign(c);
 
   // ─── Navigation ──────────────────────────────────────────────────────────
 
   const pageToPath: Record<string, string> = {
     home: '/',
     campaigns: '/campaigns',
+    emergency: '/emergency',
     communities: '/communities',
     about: '/about',
     gallery: '/gallery',
@@ -263,10 +327,6 @@ export function AppStateProvider({
   const handleNavigateToAdmin = () => {
     router.push('/admin');
     window.scrollTo(0, 0);
-  };
-
-  const handleNavigateToWebsite = (page: string = 'home') => {
-    handlePageChange(page);
   };
 
   // ─── Shared Modals ────────────────────────────────────────────────────────
@@ -311,9 +371,10 @@ export function AppStateProvider({
         <LoginModal
           onClose={() => setShowLoginModal(false)}
           currentRole={currentRole}
-          onLoginRole={(role, email) => {
-            handleLogin(role, email);
+          onLoginRole={(role, email, customUser) => {
+            handleLogin(role, email, customUser);
           }}
+          onOpenRegister={handleOpenRegister}
         />
       )}
 
@@ -330,30 +391,13 @@ export function AppStateProvider({
           onClose={() => setSelectedReceiptDonation(null)}
         />
       )}
-
-      {inspectingCampaign && (
-        <CampaignDetailModal
-          campaign={inspectingCampaign}
-          onClose={() => setInspectingCampaign(null)}
-          onDonate={(c) => {
-            setInspectingCampaign(null);
-            handleOpenDonate(c);
-          }}
-        />
-      )}
-
-      {showCreateCampaignModal && (
-        <CreateCampaignModal
-          onClose={() => setShowCreateCampaignModal(false)}
-          onCreate={handleCampaignCreated}
-        />
-      )}
     </>
   );
 
   // ─── Context Value ───────────────────────────────────────────────────────
 
   const contextValue: AppStateContextType = {
+    isInitialized,
     isAuthenticated,
     currentRole,
     activeUser,
@@ -362,14 +406,13 @@ export function AppStateProvider({
     handleOpenRegister,
     handleOpenMembershipCard,
     handleOpenZakatCalc,
-    handleOpenCreateCampaign,
     handleOpenLogin,
     handleSelectDonationReceipt,
-    handleViewCampaignDetail,
     handleRoleChange,
     handleLogin,
     handleLogout,
     handleCampaignCreated,
+    handleCampaignUpdated,
     handleDonationSuccess,
     handleUserRegistered,
   };

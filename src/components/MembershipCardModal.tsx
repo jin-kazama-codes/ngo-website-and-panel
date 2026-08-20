@@ -1,15 +1,36 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Donation } from '../types';
 import { ShieldCheck, Download, CheckCircle2, QrCode, X, Sparkles, Building2 } from 'lucide-react';
+import { getUserById } from '../services/userService';
 
 interface MembershipCardModalProps {
   user: User;
   onClose: () => void;
 }
 
-export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user, onClose }) => {
+export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: initialUser, onClose }) => {
+  const [user, setUser] = useState<User>(initialUser);
+  const [loading, setLoading] = useState(true);
+
+  console.log("initial user from card modal", initialUser);
+
+  useEffect(() => {
+    let isMounted = true;
+    getUserById(initialUser.id)
+      .then((realUser) => {
+        if (isMounted && realUser) {
+          setUser(realUser);
+        }
+      })
+      .catch(console.error)
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+    return () => { isMounted = false; };
+  }, [initialUser.id]);
+
   const handlePrint = () => {
     window.print();
   };
@@ -29,25 +50,29 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user, 
             <ShieldCheck className="w-4 h-4 text-emerald-600" /> Government Recognized NGO Card
           </div>
           <h3 className="text-2xl font-bold text-slate-900">Digital Membership Card</h3>
-          <p className="text-sm text-slate-500">Official SevaSangam Community ID</p>
+          <p className="text-sm text-slate-500">Official MFCT Community ID</p>
         </div>
 
         {/* Digital Card Preview */}
-        <div className={`p-6 rounded-2xl text-white shadow-xl relative overflow-hidden transition-all ${
-          user.isPremium 
-            ? 'bg-gradient-to-br from-amber-800 via-amber-900 to-slate-950 border border-amber-400/40' 
-            : 'bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 border border-emerald-500/30'
-        }`}>
+        <div className={`p-6 rounded-2xl text-white shadow-xl relative overflow-hidden transition-all ${user.isPremium
+          ? 'bg-gradient-to-br from-amber-800 via-amber-900 to-slate-950 border border-amber-400/40'
+          : 'bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 border border-emerald-500/30'
+          }`}>
+          {loading && (
+            <div className="absolute inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-10">
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
           {/* Card Glass Accent */}
           <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl"></div>
 
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center font-bold text-white text-lg shadow-md">
-                S
+                M
               </div>
               <div>
-                <h4 className="font-bold text-base tracking-tight text-white leading-none">SevaSangam</h4>
+                <h4 className="font-bold text-base tracking-tight text-white leading-none">MFCT</h4>
                 <span className="text-[10px] text-slate-300 tracking-wider uppercase font-medium">Community Network</span>
               </div>
             </div>
@@ -63,30 +88,30 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user, 
             )}
           </div>
 
-          <div className="flex items-start gap-4 mb-6">
+          <div className="flex items-start gap-4 mb-6 relative z-10">
             <img
-              src={user.avatar}
+              src={user.avatar || 'https://via.placeholder.com/150'}
               alt={user.name}
-              className="w-16 h-16 rounded-2xl object-cover ring-2 ring-white/20 shadow-md"
+              className="w-16 h-16 rounded-2xl object-cover ring-2 ring-white/20 shadow-md bg-slate-800"
             />
             <div className="flex-1 min-w-0">
               <h5 className="font-bold text-lg text-white truncate">{user.name}</h5>
               <p className="text-xs text-slate-300 flex items-center gap-1 mt-0.5">
                 <Building2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="truncate">{user.communityName}</span>
+                <span className="truncate">{user.communityName || 'Unassigned Community'}</span>
               </p>
-              <p className="text-[11px] text-slate-400 mt-1">{user.city}, {user.state}</p>
+              <p className="text-[11px] text-slate-400 mt-1">{user.city || 'Unknown City'}, {user.state || 'Unknown State'}</p>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs">
+          <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs relative z-10">
             <div>
               <span className="text-[10px] uppercase text-slate-400 block tracking-wider">Member ID</span>
               <span className="font-mono font-bold text-emerald-300">{user.membershipId}</span>
             </div>
             <div>
               <span className="text-[10px] uppercase text-slate-400 block tracking-wider">Member Since</span>
-              <span className="font-semibold text-slate-200">{user.joinDate}</span>
+              <span className="font-semibold text-slate-200">{user.joinDate || 'N/A'}</span>
             </div>
             <div className="bg-white p-1 rounded-lg">
               <QrCode className="w-8 h-8 text-slate-900" />
@@ -136,7 +161,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, onClose })
               S
             </div>
             <div>
-              <h3 className="font-bold text-xl text-slate-900 leading-tight">SevaSangam Foundation</h3>
+              <h3 className="font-bold text-xl text-slate-900 leading-tight">MFCT Foundation</h3>
               <p className="text-xs text-slate-500">Regd NGO under Section 8 | 80G Tax Exempted</p>
             </div>
           </div>

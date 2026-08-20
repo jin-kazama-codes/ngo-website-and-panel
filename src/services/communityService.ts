@@ -2,7 +2,7 @@ import { Community } from '../types';
 
 function mapRow(row: Record<string, unknown>): Community {
   return {
-    id: (row.id as string) || `comm_${Date.now()}`,
+    id: (row.id as string),
     name: (row.name as string) || '',
     city: (row.city as string) || '',
     state: (row.state as string) || '',
@@ -20,76 +20,7 @@ function mapRow(row: Record<string, unknown>): Community {
   };
 }
 
-export const FALLBACK_COMMUNITIES: Community[] = [
-  {
-    id: 'comm_bareilly_rohilkhand',
-    name: 'Rohilkhand Educational & Nikah Trust',
-    city: 'Bareilly',
-    state: 'Uttar Pradesh',
-    adminName: 'Dr. Shakeel Ahmad Usmani',
-    adminRoleTitle: 'Community Admin',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
-    totalMembers: 1820,
-    activeCampaigns: 5,
-    totalRaisedINR: 4120000,
-    healthScore: 97,
-    verifiedStatus: 'Verified',
-    description: 'Serving Qutubkhana and Rohilkhand University area through collective Nikah assistance, widow pensions, and orphan schooling.',
-    establishedYear: 2019,
-    coverImage: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'comm_bareilly_hq',
-    name: 'Bareilly Central Care Society (Headquarters)',
-    city: 'Bareilly',
-    state: 'Uttar Pradesh',
-    adminName: 'Maulana Hafiz Ziauddin Bareillvi',
-    adminRoleTitle: 'Headquarters Administrator',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80',
-    totalMembers: 3450,
-    activeCampaigns: 12,
-    totalRaisedINR: 9850000,
-    healthScore: 99,
-    verifiedStatus: 'Verified',
-    description: 'Headquarters of SevaSangam in Civil Lines, Bareilly.',
-    establishedYear: 2017,
-    coverImage: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'comm_delhi_central',
-    name: 'Hazrat Nizamuddin Welfare Community',
-    city: 'Delhi',
-    state: 'Delhi NCR',
-    adminName: 'Maulana Salman Farooqui',
-    adminRoleTitle: 'Community Administrator',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    totalMembers: 1240,
-    activeCampaigns: 6,
-    totalRaisedINR: 4250000,
-    healthScore: 98,
-    verifiedStatus: 'Verified',
-    description: 'Providing medical, educational, and food kit assistance in Central Delhi.',
-    establishedYear: 2018,
-    coverImage: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'comm_lko_chowk',
-    name: 'Chowk Heritage Community Foundation',
-    city: 'Lucknow',
-    state: 'Uttar Pradesh',
-    adminName: 'Syed Tariq Husain',
-    adminRoleTitle: 'Community Administrator',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
-    totalMembers: 1190,
-    activeCampaigns: 4,
-    totalRaisedINR: 3290000,
-    healthScore: 95,
-    verifiedStatus: 'Verified',
-    description: 'Focusing on education, medical aid, and emergency surgeries in Lucknow.',
-    establishedYear: 2020,
-    coverImage: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
-  },
-];
+
 
 export async function getCommunities(): Promise<Community[]> {
   try {
@@ -97,10 +28,10 @@ export async function getCommunities(): Promise<Community[]> {
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const json = await res.json();
     const mapped = (json.data || []).map(mapRow);
-    return mapped.length > 0 ? mapped : FALLBACK_COMMUNITIES;
+    return mapped;
   } catch (err) {
     console.error('getCommunities error:', err);
-    return FALLBACK_COMMUNITIES;
+    return [];
   }
 }
 
@@ -115,11 +46,67 @@ export async function updateCommunityStats(
 ) {
   try {
     await fetch('/api/communities', {
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, ...patch }),
+      body: JSON.stringify({ id, total_members: patch.totalMembers, total_raised_inr: patch.totalRaisedINR, active_campaigns: patch.activeCampaigns }),
     });
   } catch (err) {
     console.error('updateCommunityStats error:', err);
+  }
+}
+
+function mapToDb(community: Partial<Community>): Record<string, any> {
+  const mapped: Record<string, any> = {
+    id: community.id,
+    name: community.name,
+    city: community.city,
+    state: community.state,
+    admin_name: community.adminName,
+    admin_role_title: community.adminRoleTitle,
+    avatar: community.avatar,
+    total_members: community.totalMembers,
+    active_campaigns: community.activeCampaigns,
+    total_raised_inr: community.totalRaisedINR,
+    health_score: community.healthScore,
+    verified_status: community.verifiedStatus,
+    description: community.description,
+    established_year: community.establishedYear,
+    cover_image: community.coverImage,
+  };
+  Object.keys(mapped).forEach(key => mapped[key] === undefined && delete mapped[key]);
+  return mapped;
+}
+
+export async function createCommunity(community: Omit<Community, 'id'>): Promise<Community> {
+  const payload = mapToDb({ ...community, id: `comm_${Date.now()}` });
+  const res = await fetch('/api/communities', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Failed to create community');
+  const json = await res.json();
+  return mapRow(json.data);
+}
+
+export async function updateCommunity(id: string, updates: Partial<Community>): Promise<Community> {
+  const payload = mapToDb({ id, ...updates });
+  const res = await fetch('/api/communities', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Failed to update community');
+  const json = await res.json();
+  return mapRow(json.data);
+}
+
+export async function deleteCommunity(id: string): Promise<void> {
+  const res = await fetch(`/api/communities?id=${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to delete community');
   }
 }

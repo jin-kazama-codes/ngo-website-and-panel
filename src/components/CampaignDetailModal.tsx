@@ -19,7 +19,7 @@ export const CampaignDetailModal: React.FC<CampaignDetailModalProps> = ({ campai
         title: campaign.title,
         text: `Support this verified campaign on SevaSangam: ${campaign.title}`,
         url: window.location.href,
-      }).catch(() => {});
+      }).catch(() => { });
     } else {
       navigator.clipboard.writeText(window.location.href);
       alert('Campaign link copied to clipboard!');
@@ -31,15 +31,16 @@ export const CampaignDetailModal: React.FC<CampaignDetailModalProps> = ({ campai
       <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100 max-h-[92vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors z-10"
+          className="absolute top-4 right-4 p-2 bg-white/80 hover:bg-white text-slate-700 rounded-full shadow-sm transition-colors z-20 backdrop-blur-sm"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Hero Image & Tags */}
-        <div className="relative h-64 sm:h-72 rounded-2xl overflow-hidden mb-6 bg-slate-100 shadow-md">
+        <div className="relative h-64 sm:h-72 rounded-2xl overflow-hidden mb-6 bg-slate-100 shadow-md mt-8">
           <img
             src={campaign.mainImage}
+            onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1584515933487-779824d29309?w=800&auto=format&fit=crop&q=60' }}
             alt={campaign.title}
             className="w-full h-full object-cover"
           />
@@ -145,14 +146,7 @@ export const CampaignDetailModal: React.FC<CampaignDetailModalProps> = ({ campai
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {campaign.needBreakdown.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50">
-                      <td className="p-3 font-medium text-slate-800">{item.item}</td>
-                      <td className="p-3 text-right font-bold text-slate-900">
-                        ₹{item.amountINR.toLocaleString('en-IN')}
-                      </td>
-                    </tr>
-                  ))}
+
                   <tr className="bg-emerald-50/60 font-bold text-emerald-900">
                     <td className="p-3">Total Verified Goal</td>
                     <td className="p-3 text-right text-sm">
@@ -166,25 +160,28 @@ export const CampaignDetailModal: React.FC<CampaignDetailModalProps> = ({ campai
 
           {/* Verification Documents */}
           <div>
-            <h3 className="text-base font-bold text-slate-900 border-b border-slate-200 pb-2 mb-3">
+            <h3 className="text-base font-bold text-slate-900 border-b border-slate-200 pb-2 mb-4">
               Verified Documents & Proofs
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-6">
               {campaign.documents.map((doc, idx) => (
-                <div
-                  key={idx}
-                  className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <FileText className="w-5 h-5 text-emerald-600 shrink-0" />
-                    <div>
-                      <p className="text-xs font-bold text-slate-900">{doc.title}</p>
-                      <p className="text-[10px] text-slate-500">Verified by: {doc.verifiedBy}</p>
-                    </div>
+                <div key={idx} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-slate-900">{doc.title}</p>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">
+                      Verified by {doc.verifiedBy}
+                    </span>
                   </div>
-                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">
-                    Verified
-                  </span>
+                  {doc.url && (
+                    <div className="w-full h-48 sm:h-64 rounded-2xl overflow-hidden bg-slate-100 shadow-md">
+                      <img 
+                        src={doc.url} 
+                        alt={doc.title}
+                        onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1584515933487-779824d29309?w=800&auto=format&fit=crop&q=60' }}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -196,17 +193,7 @@ export const CampaignDetailModal: React.FC<CampaignDetailModalProps> = ({ campai
               Audit & Verification Progress
             </h3>
             <div className="space-y-3">
-              {campaign.verificationTimeline.map((step, idx) => (
-                <div key={idx} className="flex items-start gap-3 text-xs">
-                  <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">{step.step}</p>
-                    <p className="text-[11px] text-slate-400">{step.date}</p>
-                  </div>
-                </div>
-              ))}
+
             </div>
           </div>
         </div>

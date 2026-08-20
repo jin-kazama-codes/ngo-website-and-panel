@@ -2,242 +2,168 @@
 
 import React, { useState } from 'react';
 import { UserRole, User } from '../types';
-import { X, Shield, UserCheck, Users, Heart, LogIn, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { X, Shield, UserCheck, Users, Heart, LogIn, ArrowRight, Sparkles, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { authenticateUser } from '../services/userService';
 
 interface LoginModalProps {
   onClose: () => void;
   onLoginRole: (role: UserRole, email?: string, userObj?: User) => void;
   currentRole: UserRole;
+  onOpenRegister?: () => void;
 }
 
-export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, currentRole }) => {
+export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, currentRole, onOpenRegister }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole>(currentRole);
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [authenticating, setAuthenticating] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
-
-  const roleConfigs: {
-    id: UserRole;
-    title: string;
-    email: string;
-    icon: React.ReactNode;
-    badgeColor: string;
-    desc: string;
-    permissions: string[];
-  }[] = [
-    {
-      id: 'super_admin',
-      title: 'Super Admin',
-      email: 'superadmin@sevasangam.org',
-      icon: <Shield className="w-5 h-5 text-amber-500" />,
-      badgeColor: 'bg-amber-100 text-amber-900 border-amber-300',
-      desc: 'Full platform oversight, fraud risk matrices & immutable audit logs.',
-      permissions: ['Master Financial Overview', 'System Security Audit Logs', 'All Chapter Oversight'],
-    },
-    {
-      id: 'executive',
-      title: 'Executive Admin',
-      email: 'executive@sevasangam.org',
-      icon: <UserCheck className="w-5 h-5 text-purple-600" />,
-      badgeColor: 'bg-purple-100 text-purple-900 border-purple-300',
-      desc: 'Verification officer inspecting KYC Aadhaar documents & hospital bills.',
-      permissions: ['KYC Aadhaar Inspections', 'Hospital Bill Audit', 'UTR Payment Matching'],
-    },
-    {
-      id: 'community_admin',
-      title: 'Community Admin',
-      email: 'communityadmin@sevasangam.org',
-      icon: <Users className="w-5 h-5 text-blue-600" />,
-      badgeColor: 'bg-blue-100 text-blue-900 border-blue-300',
-      desc: 'Chapter leader managing local causes, member onboarding & broadcasts.',
-      permissions: ['Create Verified Causes', 'Member Directory Management', 'Broadcast SMS/WhatsApp'],
-    },
-    {
-      id: 'member',
-      title: 'Member / Volunteer',
-      email: 'member@sevasangam.org',
-      icon: <Heart className="w-5 h-5 text-emerald-600" />,
-      badgeColor: 'bg-emerald-100 text-emerald-900 border-emerald-300',
-      desc: 'Verified ₹50 community member eligible for emergency aid & 80G receipts.',
-      permissions: ['Digital Membership ID Card', '80G Tax Receipts', 'Apply for Emergency Aid'],
-    },
-  ];
-
-  const activeConfig = roleConfigs.find((r) => r.id === selectedRole) || roleConfigs[3];
-
-  const handleSelectRole = (rId: UserRole, rEmail: string) => {
-    setSelectedRole(rId);
-    setEmail(rEmail);
-    setAuthError('');
-  };
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
     setAuthenticating(true);
 
-    const targetEmail = email || activeConfig.email;
-
     try {
-      if (password) {
-        const result = await authenticateUser(targetEmail, password);
-        if (result.success && result.user) {
-          setLoggedInUser(result.user);
-          onLoginRole(result.user.role, result.user.email, result.user);
-          setLoggedIn(true);
-          setTimeout(() => onClose(), 1200);
-          return;
-        } else if (result.error && !activeConfig.email.includes(targetEmail)) {
-          setAuthError(result.error);
-          setAuthenticating(false);
-          return;
-        }
+      if (!phone || !password) {
+        setAuthError('Phone number and password are required.');
+        setAuthenticating(false);
+        return;
       }
 
-      onLoginRole(selectedRole, targetEmail);
-      setLoggedIn(true);
-      setTimeout(() => onClose(), 1200);
+      const result = await authenticateUser(phone, password);
+      if (result.success && result.user) {
+        setLoggedInUser(result.user);
+        onLoginRole(result.user.role, result.user.email || result.user.phone, result.user);
+        setLoggedIn(true);
+        setTimeout(() => onClose(), 1200);
+      } else {
+        setAuthError(result.error || 'Authentication failed. Please check your credentials.');
+      }
     } catch (err) {
       console.error('Login error:', err);
-      onLoginRole(selectedRole, targetEmail);
-      setLoggedIn(true);
-      setTimeout(() => onClose(), 1200);
+      setAuthError('An error occurred during login. Please try again.');
     } finally {
       setAuthenticating(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100 max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
+      <div className="bg-white rounded-[2rem] max-w-md w-full p-8 shadow-2xl shadow-emerald-900/20 relative overflow-hidden border border-white/20">
+        {/* Decorative background blur */}
+        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-emerald-50/80 to-transparent -z-10" />
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-100 rounded-full blur-3xl opacity-60 -z-10" />
+
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 bg-white/50 hover:bg-slate-100 rounded-full backdrop-blur-sm transition-all shadow-sm"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold mb-2">
-            <LogIn className="w-3.5 h-3.5 text-emerald-600" /> Account Authentication Desk
-          </div>
-          <h2 className="text-2xl font-black text-slate-900">Login to MFCT SevaSangam</h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Select your role account below to access your role-based dashboard &amp; permissions.
-          </p>
+        <div className="mb-8 text-center">
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Welcome Back</h2>
+          <p className="text-sm text-slate-500 mt-2 font-medium">Log in to your MFCT SevaSangam account</p>
         </div>
 
         {loggedIn ? (
-          <div className="text-center py-8 space-y-3 animate-fade-in">
-            <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto" />
-            <h3 className="text-xl font-bold text-slate-900">Logged in successfully as {activeConfig.title}!</h3>
-            <p className="text-xs text-slate-500">Redirecting to your customized role dashboard...</p>
+          <div className="text-center py-8 space-y-4 animate-fade-in">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 mb-2">
+              <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900">Successfully Logged In!</h3>
+            <p className="text-sm text-slate-500 font-medium">Redirecting to your dashboard...</p>
           </div>
         ) : (
           <div className="space-y-6">
-            {/* 4 Role Selection Cards */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                1. Select Account Role
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {roleConfigs.map((r) => {
-                  const isSelected = selectedRole === r.id;
-                  return (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => handleSelectRole(r.id, r.email)}
-                      className={`p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3 ${
-                        isSelected
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-emerald-500/40 scale-[1.02]'
-                          : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      <div className="p-2 rounded-xl bg-white/10 shrink-0 mt-0.5">{r.icon}</div>
-                      <div>
-                        <h4 className="font-bold text-xs">{r.title}</h4>
-                        <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-slate-300' : 'text-slate-500'}`}>
-                          {r.email}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Role Details Preview */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-900">{activeConfig.title} Privileges</span>
-                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${activeConfig.badgeColor}`}>
-                  {activeConfig.id}
-                </span>
-              </div>
-              <p className="text-slate-600 text-[11px] leading-relaxed">{activeConfig.desc}</p>
-              <ul className="grid grid-cols-1 sm:grid-cols-3 gap-1 pt-1 text-[10px] text-slate-500 font-semibold">
-                {activeConfig.permissions.map((p, idx) => (
-                  <li key={idx} className="flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-emerald-500 shrink-0" /> {p}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Login Form */}
-            <form onSubmit={handleFormSubmit} className="space-y-4">
+            <form onSubmit={handleFormSubmit} className="space-y-5">
               {authError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-semibold">
-                  ⚠️ {authError}
+                <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-600 text-sm font-medium flex items-center gap-2">
+                  <span className="shrink-0 text-rose-500">⚠️</span> {authError}
                 </div>
               )}
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Email Address
+              <div className="space-y-1.5">
+                <label className="block text-sm font-semibold text-slate-700 ml-1">
+                  Phone Number
                 </label>
-                <input
-                  type="email"
-                  required
-                  value={email || activeConfig.email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-emerald-500 outline-none"
-                />
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-phone"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                  </div>
+                  <input
+                    type="tel"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Enter your phone number"
+                    className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm font-medium focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-400"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              <div className="space-y-1.5">
+                <label className="block text-sm font-semibold text-slate-700 ml-1">
                   Password
                 </label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Enter your account password..."
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-emerald-500 outline-none"
-                />
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-lock"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-11 pr-12 py-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm font-medium focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={authenticating}
-                className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+                className="w-full mt-2 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-70 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 flex items-center justify-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0"
               >
                 {authenticating ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
-                    <span>Login as {loggedInUser?.name || activeConfig.title}</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <span>Sign In</span>
+                    <ArrowRight className="w-4 h-4 ml-1 opacity-80" />
                   </>
                 )}
               </button>
+
+              {onOpenRegister && (
+                <div className="mt-5 text-center">
+                  <p className="text-sm text-slate-500 font-medium">
+                    Don't have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onOpenRegister();
+                      }}
+                      className="text-emerald-600 hover:text-emerald-700 font-bold transition-colors underline decoration-2 underline-offset-4"
+                    >
+                      Please sign up
+                    </button>
+                  </p>
+                </div>
+              )}
             </form>
           </div>
         )}

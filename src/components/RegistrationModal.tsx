@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Community } from '../types';
-import { X, Upload, ArrowRight, UserCheck, Sparkles, Lock, Eye, EyeOff } from 'lucide-react';
+import { X, Upload, ArrowRight, UserCheck, Sparkles, Lock, Eye, EyeOff, QrCode } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCommunities } from '../services/communityService';
 import { createUser } from '../services/userService';
@@ -26,13 +26,26 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [city, setCity] = useState('Delhi');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
   const [communities, setCommunities] = useState<Community[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState('');
   const [kycFile, setKycFile] = useState<File | null>(null);
   const [kycUploaded, setKycUploaded] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarUploaded, setAvatarUploaded] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'Bank Transfer'>('UPI');
+  const [utrNumber, setUtrNumber] = useState('');
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotUploaded, setScreenshotUploaded] = useState(false);
   const [isFeePaid, setIsFeePaid] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  const showToast = (message: string, type: 'error' | 'success' = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
     getCommunities().then((data) => {
@@ -48,6 +61,16 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     if (file) { setKycFile(file); setKycUploaded(true); }
   };
 
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) { setAvatarFile(file); setAvatarUploaded(true); }
+  };
+
+  const handleScreenshotFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) { setScreenshotFile(file); setScreenshotUploaded(true); }
+  };
+
   const handleFinishRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeCommunity) return;
@@ -58,35 +81,46 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
         kycUrl = await uploadImage('users', kycFile);
       }
 
+      let avatarUrl = 'https://images.unsplash.com/photo-153452874';
+      if (avatarFile) {
+        avatarUrl = await uploadImage('users', avatarFile);
+      }
+
+      let screenshotUrl: string | undefined;
+      if (screenshotFile) {
+        screenshotUrl = await uploadImage('receipts', screenshotFile);
+      }
+
       const hashedPassword = await hashPassword(password);
 
       const newMember: User = {
         id: `usr_new_${Date.now()}`,
-        name: fullName || 'New Community Member',
-        email: email || `member_${Date.now()}@sevasangam.org`,
-        phone: phone || '+91 98765 00000',
+        name: fullName,
+        email: email,
+        phone: phone,
+        city,
+        state: state,
         role: 'member',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+        avatar: avatarUrl,
         communityId: activeCommunity.id,
         communityName: activeCommunity.name,
         membershipId: `SS-${city.substring(0, 3).toUpperCase()}-2024-${Math.floor(1000 + Math.random() * 9000)}`,
-        isVerified: true,
+        isVerified: false,
         isPremium: false,
         joinDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-        city,
-        state: activeCommunity.state,
-        totalDonatedINR: 50,
-        donationsCount: 1,
         passwordHash: hashedPassword,
+        paymentMethod: paymentMethod,
+        paymentUtr: utrNumber || undefined,
+        paymentScreenshotUrl: screenshotUrl,
       };
 
       await createUser({ ...newMember, kycDocumentUrl: kycUrl });
       onRegistered(newMember);
       setStep(3);
-      try { confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } }); } catch {}
+      try { confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } }); } catch { }
     } catch (err) {
       console.error('Registration error:', err);
-      alert('Registration failed. Please try again.');
+      showToast('Registration failed. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -101,6 +135,13 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
         >
           <X className="w-5 h-5" />
         </button>
+
+        {toast && (
+          <div className={`fixed top-10 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition-all z-[100] flex items-center gap-2 animate-fade-in ${toast.type === 'error' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+            }`}>
+            <span>{toast.message}</span>
+          </div>
+        )}
 
         <div className="mb-6">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold mb-2">
@@ -128,7 +169,27 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                   className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
                 />
               </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Mobile Number
+                </label>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={10}
+                  required
+                  placeholder="+91 98765 43210"
+                  value={phone}
+                  onChange={(e) =>
+                    setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
+                  }
+                  className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                />
+              </div>
+            </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                   Email Address
@@ -142,9 +203,6 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                   className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                   Create Password
@@ -167,90 +225,114 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                   </button>
                 </div>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Mobile Number (OTP Verified)
-                </label>
-                <input
-                  type="tel"
-                  required
-                  placeholder="+91 98765 43210"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
-                />
-              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  City / Town
+                  State
                 </label>
-                <select
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Maharashtra"
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
                   className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
-                >
-                  <option value="Delhi">Delhi</option>
-                  <option value="Lucknow">Lucknow</option>
-                  <option value="Hyderabad">Hyderabad</option>
-                  <option value="Bareilly">Bareilly</option>
-                  <option value="Mumbai">Mumbai</option>
-                  <option value="Bhopal">Bhopal</option>
-                  <option value="Jaipur">Jaipur</option>
-                </select>
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Select Your Local Community
+                  City / Town
                 </label>
-                <select
-                  value={selectedCommunityId}
-                  onChange={(e) => setSelectedCommunityId(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 truncate"
-                >
-                  {communities.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.city} - Managed by {c.adminName})
-                    </option>
-                  ))}
-                </select>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Mumbai"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                />
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Identity Document (Aadhaar / Voter ID)
+                Select Your Local Community
               </label>
-              <label
-                className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${
-                  kycUploaded
+              <select
+                value={selectedCommunityId}
+                onChange={(e) => setSelectedCommunityId(e.target.value)}
+                className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 truncate"
+              >
+                {communities.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.city} - Managed by {c.adminName})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Profile Picture
+                </label>
+                <label
+                  className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${avatarUploaded
                     ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
                     : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <input type="file" accept="image/*,.pdf" className="sr-only" onChange={handleKycFileChange} />
-                <Upload className="w-5 h-5 mb-1 text-slate-500" />
-                <span className="text-xs font-bold">
-                  {kycUploaded
-                    ? `✓ ${kycFile?.name ?? 'Document Attached'}`
-                    : 'Click to upload photo of Aadhaar or ID'}
-                </span>
-              </label>
+                    }`}
+                >
+                  <input type="file" accept="image/*" className="sr-only" onChange={handleAvatarFileChange} />
+                  <Upload className="w-5 h-5 mb-1 text-slate-500" />
+                  <span className="text-xs font-bold">
+                    {avatarUploaded
+                      ? `✓ ${avatarFile?.name ?? 'Photo Attached'}`
+                      : 'Click to upload photo'}
+                  </span>
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Identity Document (Aadhaar / Voter ID)
+                </label>
+                <label
+                  className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${kycUploaded
+                    ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
+                    : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
+                    }`}
+                >
+                  <input type="file" accept="image/*,.pdf" className="sr-only" onChange={handleKycFileChange} />
+                  <Upload className="w-5 h-5 mb-1 text-slate-500" />
+                  <span className="text-xs font-bold">
+                    {kycUploaded
+                      ? `✓ ${kycFile?.name ?? 'Document Attached'}`
+                      : 'Click to upload Aadhaar'}
+                  </span>
+                </label>
+              </div>
             </div>
 
             <button
               type="button"
               onClick={() => {
-                if (!fullName || !phone || !email || !password) {
-                  alert('Please fill out your Full Name, Email Address, Password, and Mobile Number.');
+                const missingFields = [];
+                if (!fullName) missingFields.push('Full Name');
+                if (!email) missingFields.push('Email');
+                if (!password) missingFields.push('Password');
+                if (!phone) missingFields.push('Mobile Number');
+                if (!state) missingFields.push('State');
+                if (!city) missingFields.push('City');
+
+                if (missingFields.length > 0) {
+                  showToast(`Please fill out: ${missingFields.join(', ')}`);
                   return;
                 }
                 if (password.length < 6) {
-                  alert('Password must be at least 6 characters long.');
+                  showToast('Password must be at least 6 characters long.');
                   return;
                 }
                 setStep(2);
@@ -276,12 +358,100 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               </p>
             </div>
 
-            <div className="p-5 bg-slate-900 text-white rounded-2xl text-center space-y-3">
-              <span className="text-xs text-slate-400 uppercase tracking-wider block">Scan UPI QR to Pay ₹50</span>
-              <div className="w-28 h-28 bg-white p-2 rounded-xl mx-auto shadow-md flex items-center justify-center text-slate-900 font-bold text-xs">
-                QR CODE ₹50
+            {/* Payment Method Tabs */}
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('UPI')}
+                className={`py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'UPI' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
+                  }`}
+              >
+                Instant UPI / QR Scan
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('Bank Transfer')}
+                className={`py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'Bank Transfer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
+                  }`}
+              >
+                Direct Bank NEFT / RTGS
+              </button>
+            </div>
+
+            {paymentMethod === 'UPI' ? (
+              <div className="p-6 bg-slate-900 text-white rounded-3xl text-center space-y-4">
+                <div className="bg-white p-3 rounded-2xl inline-block shadow-lg">
+                  <QrCode className="w-36 h-36 text-slate-900 mx-auto" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 uppercase tracking-wider">UPI ID for Direct Escrow</p>
+                  <p className="font-mono text-emerald-400 font-bold text-lg select-all">
+                    sevasangam.membership@okicici
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Scan using Google Pay, PhonePe, Paytm, or BHIM UPI
+                  </p>
+                </div>
               </div>
-              <p className="font-mono text-emerald-400 font-bold text-sm">sevasangam.membership@okicici</p>
+            ) : (
+              <div className="p-5 bg-slate-900 text-white rounded-3xl space-y-3 text-xs font-mono">
+                <div className="flex justify-between border-b border-slate-800 pb-2">
+                  <span className="text-slate-400">Account Name:</span>
+                  <span className="text-emerald-400 font-bold">SevaSangam Relief Escrow Trust</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-800 pb-2">
+                  <span className="text-slate-400">Bank Name:</span>
+                  <span className="text-slate-200">ICICI Bank Ltd</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-800 pb-2">
+                  <span className="text-slate-400">Account Number:</span>
+                  <span className="text-emerald-300 font-bold select-all">000405018892</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">IFSC Code:</span>
+                  <span className="text-emerald-300 font-bold select-all">ICIC0000004</span>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  12-Digit Bank UTR / Transaction Ref No
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 420199381029"
+                  value={utrNumber}
+                  onChange={(e) => setUtrNumber(e.target.value)}
+                  className="w-full p-3 rounded-xl border border-slate-200 font-mono text-sm font-semibold focus:ring-2 focus:ring-emerald-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Or Upload Payment Screenshot
+                </label>
+                <label
+                  className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${screenshotUploaded
+                      ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
+                      : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
+                    }`}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleScreenshotFileChange}
+                  />
+                  <Upload className="w-5 h-5 mb-1 text-slate-500" />
+                  <span className="text-xs font-bold">
+                    {screenshotUploaded
+                      ? `✓ ${screenshotFile?.name ?? 'Screenshot Attached'}`
+                      : 'Click to upload payment screenshot'}
+                  </span>
+                </label>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">

@@ -3,29 +3,39 @@
 import React, { useState, useEffect } from 'react';
 import { DonationCategory, Campaign, Community } from '../types';
 import { X, Plus, Upload } from 'lucide-react';
-import { getCommunities, FALLBACK_COMMUNITIES } from '../services/communityService';
-import { createCampaign } from '../services/campaignService';
+import { useAppState } from '../providers/AppStateProvider';
+import { getCommunities } from '../services/communityService';
+import { createCampaign, updateCampaign } from '../services/campaignService';
 import { uploadImage } from '../lib/storage';
 
 interface CreateCampaignModalProps {
   onClose: () => void;
   onCreate: (campaign: Campaign) => void;
+  initialCampaign?: Campaign;
 }
 
-export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClose, onCreate }) => {
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<DonationCategory>('Medical');
-  const [beneficiaryName, setBeneficiaryName] = useState('');
-  const [goalINR, setGoalINR] = useState('250000');
-  const [story, setStory] = useState('');
-  const [isZakatEligible, setIsZakatEligible] = useState(true);
-  const [isUrgent, setIsUrgent] = useState(false);
+export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClose, onCreate, initialCampaign }) => {
+  const { activeUser } = useAppState();
+  const [title, setTitle] = useState(initialCampaign?.title || '');
+  const [category, setCategory] = useState<DonationCategory>(initialCampaign?.category || 'Medical');
+  const [beneficiaryName, setBeneficiaryName] = useState(initialCampaign?.beneficiaryName || '');
+  const [beneficiaryRelation, setBeneficiaryRelation] = useState(initialCampaign?.beneficiaryRelation || '');
+  const [goalINR, setGoalINR] = useState(initialCampaign?.goalINR?.toString() || '250000');
+  const [story, setStory] = useState(initialCampaign?.story || '');
+  const [isZakatEligible, setIsZakatEligible] = useState(initialCampaign?.isZakatEligible ?? true);
+  const [isUrgent, setIsUrgent] = useState(initialCampaign?.isUrgent ?? false);
   const [docFile, setDocFile] = useState<File | null>(null);
-  const [docUploaded, setDocUploaded] = useState(false);
+  const [docUploaded, setDocUploaded] = useState(!!initialCampaign?.documents?.length);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [communities, setCommunities] = useState<Community[]>(FALLBACK_COMMUNITIES);
-  const [selectedCommunityId, setSelectedCommunityId] = useState(FALLBACK_COMMUNITIES[0].id);
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [selectedCommunityId, setSelectedCommunityId] = useState(initialCampaign?.communityId || '');
   const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  const showToast = (message: string, type: 'error' | 'success' = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
     getCommunities().then((data) => {
@@ -59,61 +69,80 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !beneficiaryName || !story) {
-      alert('Please fill out all required campaign details.');
+      showToast('Please fill out all required campaign details.', 'error');
       return;
     }
     setSubmitting(true);
 
     try {
-      let mainImage = 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80';
+      let mainImage = initialCampaign?.mainImage || 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80';
       if (imageFile) {
         mainImage = await uploadImage('campaigns', imageFile);
       }
 
-      let docUrl = '#';
+      let docUrl = initialCampaign?.documents?.[0]?.url || '#';
       if (docFile) {
         docUrl = await uploadImage('campaigns', docFile);
       }
 
-      const newCamp: Omit<Campaign, 'id'> = {
-        title,
-        slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        category,
-        communityId: activeCommunity.id,
-        communityName: activeCommunity.name,
-        city: activeCommunity.city,
-        beneficiaryName,
-        beneficiaryRelation: 'Verified Community Resident',
-        goalINR: parseInt(goalINR, 10) || 100000,
-        raisedINR: 0,
-        donorsCount: 0,
-        daysLeft: 30,
-        isVerified: true,
-        isZakatEligible,
-        isUrgent,
-        isPremiumFeatured: false,
-        mainImage,
-        story,
-        documents: [
-          { title: 'Community Verified Medical & Income Certificate', url: docUrl, verifiedBy: 'Community Leader' },
-        ],
-        verificationTimeline: [
-          { step: 'Community Admin Verification', date: 'Today', status: 'completed' },
-          { step: 'Executive Committee Clearance', date: 'Today', status: 'completed' },
-        ],
-        needBreakdown: [
-          { item: 'Direct Treatment / Support Expenses', amountINR: parseInt(goalINR, 10) || 100000 },
-        ],
-        createdDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-        status: 'pending_approval',
-      };
+      if (initialCampaign) {
+        const updateData: Partial<Campaign> = {
+          title,
+          category,
+          communityId: activeCommunity.id,
+          communityName: activeCommunity.name,
+          city: activeCommunity.city,
+          beneficiaryName,
+          beneficiaryRelation,
+          goalINR: parseInt(goalINR, 10) || initialCampaign.goalINR,
+          isZakatEligible,
+          isUrgent,
+          mainImage,
+          story,
+          documents: [
+            { title: 'Community document', url: docUrl, verifiedBy: 'Community Leader' },
+          ],
+        };
+        const saved = await updateCampaign(initialCampaign.id, updateData);
+        showToast('Campaign updated successfully!', 'success');
+        setTimeout(() => {
+          onCreate({ ...initialCampaign, ...updateData });
+        }, 1500);
+      } else {
+        const newCamp: Omit<Campaign, 'id'> = {
+          title,
+          category,
+          communityId: activeCommunity.id,
+          communityName: activeCommunity.name,
+          city: activeCommunity.city,
+          beneficiaryName,
+          beneficiaryRelation,
+          goalINR: parseInt(goalINR, 10) || 100000,
+          raisedINR: 0,
+          donorsCount: 0,
+          daysLeft: 30,
+          isVerified: false,
+          isZakatEligible,
+          isUrgent,
+          mainImage,
+          story,
+          documents: [
+            { title: 'Community document', url: docUrl, verifiedBy: 'Community Leader' },
+          ],
+          createdBy: activeUser.id,
+          createdDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+          status: 'pending',
+        };
 
-      const saved = await createCampaign(newCamp);
-      alert('Campaign submitted for verification successfully!');
-      onCreate(saved);
+        const saved = await createCampaign(newCamp);
+        showToast('Campaign submitted for verification successfully!', 'success');
+        setTimeout(() => {
+          onCreate(saved);
+        }, 1500);
+      }
     } catch (err: any) {
-      console.error('Campaign creation error:', err);
-      alert(`Campaign creation notice: ${err?.message || 'Submitted successfully'}`);
+      console.error('Campaign save error:', err);
+      showToast(`Campaign save notice: ${err?.message || 'Saved successfully'}`, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -122,6 +151,11 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
       <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100 max-h-[92vh] overflow-y-auto">
+        {toast && (
+          <div className={`absolute top-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition-all z-50 flex items-center gap-2 animate-fade-in ${toast.type === 'error' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'}`}>
+            <span>{toast.message}</span>
+          </div>
+        )}
         <button
           onClick={onClose}
           className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
@@ -133,9 +167,9 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold mb-2">
             <Plus className="w-3.5 h-3.5" /> Community Admin Portal
           </div>
-          <h2 className="text-2xl font-bold text-slate-900">Create Verified Community Campaign</h2>
+          <h2 className="text-2xl font-bold text-slate-900">{initialCampaign ? 'Edit Campaign' : 'Create Verified Community Campaign'}</h2>
           <p className="text-sm text-slate-500 mt-1">
-            Submit cause details for local member support. Requires verified beneficiary documents.
+            {initialCampaign ? 'Update campaign details and beneficiary information.' : 'Submit cause details for local member support. Requires verified beneficiary documents.'}
           </p>
         </div>
 
@@ -167,9 +201,8 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
                 <option value="Marriage">Marriage</option>
                 <option value="Food">Food</option>
                 <option value="Janazah">Janazah</option>
-                <option value="Emergency Relief">Emergency Relief</option>
-                <option value="Widow Support">Widow Support</option>
-                <option value="Orphan Support">Orphan Support</option>
+                {/* <option value="Widow Support">Widow Support</option>
+                <option value="Orphan Support">Orphan Support</option> */}
               </select>
             </div>
             <div>
@@ -186,18 +219,33 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
             </div>
           </div>
 
-          <div>
-            <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
-              Beneficiary Name & Relation
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Master Rahul (Son of Daily Wage Labourer)"
-              value={beneficiaryName}
-              onChange={(e) => setBeneficiaryName(e.target.value)}
-              className="w-full p-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
+                Beneficiary Name
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Master Rahul"
+                value={beneficiaryName}
+                onChange={(e) => setBeneficiaryName(e.target.value)}
+                className="w-full p-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
+                Beneficiary Relation
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Son of Daily Wage Labourer"
+                value={beneficiaryRelation}
+                onChange={(e) => setBeneficiaryRelation(e.target.value)}
+                className="w-full p-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+            </div>
           </div>
 
           <div>
@@ -273,11 +321,10 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
               Attach Medical Estimates / Documents
             </label>
             <label
-              className={`p-3.5 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${
-                docUploaded
-                  ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
-                  : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
-              }`}
+              className={`p-3.5 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${docUploaded
+                ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
+                : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
+                }`}
             >
               <input
                 type="file"
@@ -306,11 +353,9 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold text-sm transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2"
+              className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-colors shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : 'Submit Campaign for Verification'}
+              {submitting ? 'Saving...' : initialCampaign ? 'Update Campaign' : 'Submit for Verification'}
             </button>
           </div>
         </form>

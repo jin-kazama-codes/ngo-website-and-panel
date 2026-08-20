@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       try {
         const { data: campaign } = await supabaseAdmin
           .from('campaigns')
-          .select('raised_inr, donors_count')
+          .select('raised_inr, donors_count, community_id')
           .eq('id', newDonation.campaign_id)
           .single();
 
@@ -71,9 +71,35 @@ export async function POST(request: Request) {
               donors_count: (campaign.donors_count || 0) + 1,
             })
             .eq('id', newDonation.campaign_id);
+
+          if (campaign.community_id) {
+            const { data: community } = await supabaseAdmin
+              .from('communities')
+              .select('total_raised_inr, campaign_details')
+              .eq('id', campaign.community_id)
+              .single();
+
+            if (community) {
+              const currentTotal = community.total_raised_inr || 0;
+              const currentDetails = community.campaign_details || [];
+              const newDetail = {
+                campaign_id: newDonation.campaign_id,
+                donor_id: newDonation.donor_id,
+                campaign_amount: newDonation.amount_inr,
+              };
+
+              await supabaseAdmin
+                .from('communities')
+                .update({
+                  total_raised_inr: currentTotal + newDonation.amount_inr,
+                  campaign_details: [...currentDetails, newDetail],
+                })
+                .eq('id', campaign.community_id);
+            }
+          }
         }
       } catch (cErr) {
-        console.error('Error updating campaign stats:', cErr);
+        console.error('Error updating campaign and community stats:', cErr);
       }
     }
 
@@ -81,5 +107,33 @@ export async function POST(request: Request) {
   } catch (err: any) {
     console.error('Error in POST /api/donations:', err);
     return NextResponse.json({ success: false, error: err?.message || 'Failed to process donation' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, status } = body;
+    
+    if (!id || !status) {
+      return NextResponse.json({ success: false, error: 'Missing id or status' }, { status: 400 });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('donations')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase error updating donation:', error);
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (err: any) {
+    console.error('Error in PATCH /api/donations:', err);
+    return NextResponse.json({ success: false, error: err?.message || 'Failed to update donation' }, { status: 500 });
   }
 }

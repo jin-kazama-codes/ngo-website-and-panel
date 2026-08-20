@@ -1,19 +1,38 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getGalleryPhotos, GalleryPhoto } from '../services/galleryService';
 import { MapPin } from 'lucide-react';
+import { CardSkeleton } from '../components/Skeletons';
+import { MembershipBanner } from '../components/MembershipBanner';
 
 export const GalleryPage: React.FC = () => {
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 6;
 
   useEffect(() => {
     getGalleryPhotos()
-      .then(setPhotos)
+      .then(data => setPhotos(data.filter(p => !p.status || p.status === 'approved')))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  const totalPages = Math.ceil(photos.length / ITEMS_PER_PAGE);
+  const paginatedPhotos = photos.slice(0, currentPage * ITEMS_PER_PAGE);
+
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && currentPage < totalPages) {
+        setCurrentPage(prevPage => prevPage + 1);
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [loading, currentPage, totalPages]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
@@ -25,13 +44,14 @@ export const GalleryPage: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-16">
-          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-slate-500 font-medium">Loading gallery...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <CardSkeleton key={i} />
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-          {photos.map((p) => (
+          {paginatedPhotos.map((p) => (
             <div key={p.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden group">
               <div className="relative h-64 overflow-hidden bg-slate-100">
                 <img
@@ -55,6 +75,14 @@ export const GalleryPage: React.FC = () => {
           ))}
         </div>
       )}
+
+      {!loading && photos.length > 0 && currentPage < totalPages && (
+        <div ref={lastElementRef} className="w-full flex justify-center py-8">
+          <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
+
+      <MembershipBanner />
     </div>
   );
 };
