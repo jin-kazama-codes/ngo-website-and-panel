@@ -5,11 +5,11 @@ import { User, UserRole, Community } from '../../types';
 import { getUsers, createUser, deleteUser, updateUser } from '../../services/userService';
 import { getCommunities } from '../../services/communityService';
 import { hashPassword } from '../../lib/auth';
-import { PlusCircle, Edit2, X, Users, CheckCircle2, Search, Upload, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit2, X, Users, CheckCircle2, Search, Upload, Trash2, Mail, Phone, MapPin } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
 
-// Interactive Dynamic User Row with real-time language conversion
+// Interactive Dynamic User Row with real-time language conversion for Desktop Table
 const UserRow: React.FC<{
   user: User;
   onEdit: (u: User) => void;
@@ -65,7 +65,7 @@ const UserRow: React.FC<{
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 hidden md:table-cell">
+      <td className="px-4 py-3">
         <p className="text-xs text-slate-700 dark:text-slate-300 font-mono">{user.email || '-'}</p>
         <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{user.phone || '-'}</p>
       </td>
@@ -84,26 +84,139 @@ const UserRow: React.FC<{
           {getRoleLabel(user.role)}
         </span>
       </td>
-      <td className="px-4 py-3 hidden lg:table-cell text-xs text-slate-600 dark:text-slate-400">
+      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
         {locationText}
       </td>
-      <td className="px-4 py-3 text-right flex items-center justify-end gap-1.5">
+      <td className="px-4 py-3 text-right">
+        <div className="flex items-center justify-end gap-1.5">
+          <button
+            onClick={() => onEdit(user)}
+            className="cursor-pointer p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors inline-flex"
+            title={tr('संपादित करें', 'ترمیم', 'Edit User')}
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => onDelete(user.id)}
+            className="cursor-pointer p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 transition-colors inline-flex"
+            title={tr('हटाएं', 'حذف کریں', 'Delete User')}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+};
+
+// Mobile-Optimized User Card
+const UserMobileCard: React.FC<{
+  user: User;
+  onEdit: (u: User) => void;
+  onDelete: (id: string) => void;
+}> = ({ user, onEdit, onDelete }) => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
+  const displayName = useDynamicTranslatedText(user.name, language);
+  const displayCity = useDynamicTranslatedText(user.city, language);
+  const displayState = useDynamicTranslatedText(user.state, language);
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'super_admin':
+        return tr('सुपर एडमिन', 'سپر ایڈمن', 'SUPER ADMIN');
+      case 'executive_admin':
+        return tr('कार्यकारी एडमिन', 'ایگزیکٹو ایڈمن', 'EXECUTIVE ADMIN');
+      case 'community_admin':
+        return tr('सामुदायिक एडमिन', 'کمیونٹی ایڈمن', 'COMMUNITY ADMIN');
+      case 'premium_donor':
+        return tr('प्रीमियम दानदाता', 'پریمیم ڈونر', 'PREMIUM DONOR');
+      default:
+        return tr('सदस्य', 'ممبر', 'MEMBER');
+    }
+  };
+
+  const locationText = [displayCity, displayState].filter(Boolean).join(', ') || '-';
+  const safeAvatar = (user.avatar && !user.avatar.startsWith('file://'))
+    ? user.avatar
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=random`;
+
+  return (
+    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 shadow-xs space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <img
+            src={safeAvatar}
+            alt=""
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=random`;
+            }}
+            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 object-cover shrink-0 ring-1 ring-slate-200 dark:ring-slate-700"
+          />
+          <div className="min-w-0">
+            <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{displayName}</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">ID: {user.membershipId || user.id.slice(0, 8)}</p>
+          </div>
+        </div>
+
+        <span
+          className={`shrink-0 px-2.5 py-0.5 rounded text-[10px] font-extrabold ${
+            user.role === 'super_admin'
+              ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50'
+              : user.role === 'executive_admin'
+              ? 'bg-purple-50 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50'
+              : user.role === 'community_admin'
+              ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50'
+              : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+          }`}
+        >
+          {getRoleLabel(user.role)}
+        </span>
+      </div>
+
+      <div className="space-y-1.5 pt-1 text-xs text-slate-600 dark:text-slate-300">
+        {user.email && (
+          <div className="flex items-center gap-2">
+            <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="font-mono text-xs truncate">{user.email}</span>
+          </div>
+        )}
+        {user.phone && (
+          <div className="flex items-center gap-2">
+            <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="font-mono text-xs">{user.phone}</span>
+          </div>
+        )}
+        {locationText !== '-' && (
+          <div className="flex items-center gap-2">
+            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="text-xs truncate">{locationText}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/60">
         <button
           onClick={() => onEdit(user)}
-          className="cursor-pointer p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors inline-flex"
-          title={tr('संपादित करें', 'ترمیم', 'Edit User')}
+          className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
         >
-          <Edit2 className="w-3.5 h-3.5" />
+          <Edit2 className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+          <span>{tr('संपादित करें', 'ترمیم', 'Edit')}</span>
         </button>
         <button
           onClick={() => onDelete(user.id)}
-          className="cursor-pointer p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 transition-colors inline-flex"
-          title={tr('हटाएं', 'حذف کریں', 'Delete User')}
+          className="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+          <span>{tr('हटाएं', 'حذف کریں', 'Delete')}</span>
         </button>
-      </td>
-    </tr>
+      </div>
+    </div>
   );
 };
 
@@ -275,11 +388,10 @@ export const ManageUsers: React.FC = () => {
           communityId: comm?.id || '',
           communityName: comm?.name || '',
           membershipId: `MEM-${Date.now().toString().slice(-4)}`,
-          isVerified: true,
-          isPremium: false,
-          joinDate: new Date().toISOString(),
           city: formData.city || '',
           state: formData.state || '',
+          isVerified: true,
+          joinDate: new Date().toISOString(),
           passwordHash: formData.plainPassword ? await hashPassword(formData.plainPassword) : undefined,
           documentUrl: docUrl,
           paymentUtr: formData.paymentUtr || undefined,
@@ -316,7 +428,7 @@ export const ManageUsers: React.FC = () => {
   });
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4 shadow-sm flex flex-col min-h-[500px] transition-colors">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 space-y-4 shadow-sm flex flex-col min-h-[500px] transition-colors">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
           <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -327,20 +439,20 @@ export const ManageUsers: React.FC = () => {
             {tr('सभी पंजीकृत उपयोगकर्ताओं को देखें और प्रबंधित करें।', 'تمام رجسٹرڈ صارفین کو دیکھیں اور ان کا انتظام کریں۔', 'View and manage all registered platform users.')}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3">
+          <div className="relative flex-1 sm:flex-initial">
             <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder={tr('उपयोगकर्ता खोजें...', 'صارف تلاش کریں...', 'Search users...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-emerald-500 w-48 lg:w-64 transition-colors"
+              className="w-full sm:w-48 lg:w-64 pl-9 pr-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-emerald-500 transition-colors"
             />
           </div>
           <button
             onClick={handleOpenAdd}
-            className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 flex items-center gap-1.5 shrink-0 transition-all shadow-sm"
+            className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 flex items-center justify-center gap-1.5 shrink-0 transition-all shadow-sm"
           >
             <PlusCircle className="w-4 h-4" />
             <span>{tr('+ नया उपयोगकर्ता जोड़ें', '+ نیا صارف شامل کریں', '+ Add User')}</span>
@@ -348,73 +460,89 @@ export const ManageUsers: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto min-h-0">
+      <div className="flex-1 min-h-0">
         {loading ? (
-          <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden animate-pulse bg-white dark:bg-slate-900">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24"></div></th>
-                  <th className="px-4 py-3 hidden md:table-cell"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20"></div></th>
-                  <th className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-16"></div></th>
-                  <th className="px-4 py-3 hidden lg:table-cell"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24"></div></th>
-                  <th className="px-4 py-3 text-right"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-12 ml-auto"></div></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <tr key={i}>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0"></div>
-                        <div>
-                          <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-28 mb-1"></div>
-                          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-32 mb-1"></div>
-                      <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
-                    </td>
-                    <td className="px-4 py-3"><div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-20"></div></td>
-                    <td className="px-4 py-3 hidden lg:table-cell"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-32"></div></td>
-                    <td className="px-4 py-3 text-right"><div className="h-6 w-6 bg-slate-200 dark:bg-slate-800 rounded ml-auto"></div></td>
+          <div className="space-y-3">
+            <div className="md:hidden space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 animate-pulse h-28" />
+              ))}
+            </div>
+            <div className="hidden md:block border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden animate-pulse bg-white dark:bg-slate-900">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24"></div></th>
+                    <th className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20"></div></th>
+                    <th className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-16"></div></th>
+                    <th className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24"></div></th>
+                    <th className="px-4 py-3 text-right"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-12 ml-auto"></div></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <tr key={i}>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0"></div>
+                          <div>
+                            <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-28 mb-1"></div>
+                            <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-32 mb-1"></div>
+                        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
+                      </td>
+                      <td className="px-4 py-3"><div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-20"></div></td>
+                      <td className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-32"></div></td>
+                      <td className="px-4 py-3 text-right"><div className="h-6 w-6 bg-slate-200 dark:bg-slate-800 rounded ml-auto"></div></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-xs bg-slate-50 dark:bg-slate-950 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+            {tr('कोई उपयोगकर्ता नहीं मिला', 'کوئی صارف نہیں ملا', 'No users found.')}
           </div>
         ) : (
-          <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
-            <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
-              <thead className="bg-slate-50 dark:bg-slate-950 text-xs uppercase text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th className="px-4 py-3">{tr('उपयोगकर्ता', 'صارف', 'User')}</th>
-                  <th className="px-4 py-3 hidden md:table-cell">{tr('संपर्क', 'رابطہ', 'Contact')}</th>
-                  <th className="px-4 py-3">{tr('भूमिका', 'کردار', 'Role')}</th>
-                  <th className="px-4 py-3 hidden lg:table-cell">{tr('स्थान', 'مقام', 'Location')}</th>
-                  <th className="px-4 py-3 text-right">{tr('कार्रवाई', 'کارروائی', 'Actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 bg-white dark:bg-slate-900/50">
-                {filteredUsers.map((user) => (
-                  <UserRow
-                    key={user.id}
-                    user={user}
-                    onEdit={handleOpenEdit}
-                    onDelete={(id) => setDeleteConfirmId(id)}
-                  />
-                ))}
-                {filteredUsers.length === 0 && (
+          <div>
+            <div className="md:hidden space-y-3">
+              {filteredUsers.map((user) => (
+                <UserMobileCard
+                  key={user.id}
+                  user={user}
+                  onEdit={handleOpenEdit}
+                  onDelete={(id) => setDeleteConfirmId(id)}
+                />
+              ))}
+            </div>
+            <div className="hidden md:block border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden overflow-x-auto">
+              <table className="w-full min-w-[650px] text-left text-sm text-slate-700 dark:text-slate-300">
+                <thead className="bg-slate-50 dark:bg-slate-950 text-xs uppercase text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400 text-xs">
-                      {tr('कोई उपयोगकर्ता नहीं मिला', 'کوئی صارف نہیں ملا', 'No users found.')}
-                    </td>
+                    <th className="px-4 py-3">{tr('उपयोगकर्ता', 'صارف', 'User')}</th>
+                    <th className="px-4 py-3">{tr('संपर्क', 'رابطہ', 'Contact')}</th>
+                    <th className="px-4 py-3">{tr('भूमिका', 'کردار', 'Role')}</th>
+                    <th className="px-4 py-3">{tr('स्थान', 'مقام', 'Location')}</th>
+                    <th className="px-4 py-3 text-right">{tr('कार्रवाई', 'کارروائی', 'Actions')}</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 bg-white dark:bg-slate-900/50">
+                  {filteredUsers.map((user) => (
+                    <UserRow
+                      key={user.id}
+                      user={user}
+                      onEdit={handleOpenEdit}
+                      onDelete={(id) => setDeleteConfirmId(id)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

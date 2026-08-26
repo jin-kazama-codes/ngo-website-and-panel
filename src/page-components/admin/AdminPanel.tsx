@@ -103,7 +103,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     return 'overview';
   });
   const [editingCampaign, setEditingCampaign] = useState<Campaign | undefined>(undefined);
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  const [desktopSidebarExpanded, setDesktopSidebarExpanded] = useState<boolean>(true);
+  const [mobileNavOpen, setMobileNavOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchFocused, setSearchFocused] = useState<boolean>(false);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -118,6 +119,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
     return 'light';
   });
+
+  const selectTab = (tabId: string) => {
+    setActiveTab(tabId);
+    setMobileNavOpen(false);
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -141,6 +147,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Auto-close mobile nav on resize to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setMobileNavOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Compute search results
@@ -202,7 +219,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     premium_donor: { label: t('admin.premDonor', 'Premium Donor'), color: 'bg-amber-100 text-amber-800 border-amber-300', icon: <Award className="w-3.5 h-3.5 text-amber-600" /> },
     community_admin: { label: t('admin.commAdmin', 'Community Admin'), color: 'bg-blue-100 text-blue-800 border-blue-300', icon: <Users className="w-3.5 h-3.5 text-blue-600" /> },
     executive_admin: { label: t('admin.execAdmin', 'Executive Officer'), color: 'bg-purple-100 text-purple-800 border-purple-300', icon: <UserCheck className="w-3.5 h-3.5 text-purple-600" /> },
-    super_admin: { label: 'Super Admin', color: 'bg-slate-800 text-white border-slate-700', icon: <Shield className="w-3.5 h-3.5 text-emerald-400" /> },
+    super_admin: { label: t('admin.superAdmin', 'Super Admin'), color: 'bg-slate-800 text-white border-slate-700', icon: <Shield className="w-3.5 h-3.5 text-emerald-400" /> },
   };
 
   const rawRole = (currentRole as string) || 'member';
@@ -266,49 +283,82 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     <div className={`h-screen max-h-screen overflow-hidden ${theme === 'dark' ? 'dark bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'} flex flex-col font-sans selection:bg-emerald-500 selection:text-white`}>
       {/* Admin Panel Container */}
       <div className="flex flex-1 min-h-0 overflow-hidden relative">
+        {/* Mobile Backdrop Overlay */}
+        {mobileNavOpen && (
+          <div
+            onClick={() => setMobileNavOpen(false)}
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 lg:hidden animate-fade-in"
+          />
+        )}
+
         {/* SIDEBAR */}
         <aside
-          className={`bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 w-72 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300 fixed lg:sticky lg:top-0 h-full max-h-screen inset-y-0 left-0 z-50 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-20'
-            }`}
+          className={`bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300 fixed lg:sticky lg:top-0 h-full max-h-screen inset-y-0 left-0 z-50 
+            ${mobileNavOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full'} 
+            lg:translate-x-0 ${desktopSidebarExpanded ? 'lg:w-72' : 'lg:w-20'}
+          `}
         >
           {/* Brand & App Title */}
-          <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-black text-lg shadow-md shrink-0">
+          <div className={`border-b border-slate-200 dark:border-slate-800 flex items-center transition-all ${
+            desktopSidebarExpanded ? 'p-4 justify-between' : 'p-3 flex-col gap-2 justify-center'
+          }`}>
+            <div className="flex items-center gap-3" title="MFCT Portal">
+              <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-black text-lg shadow-md shrink-0 cursor-pointer">
                 M
               </div>
-              <div className={!sidebarOpen ? 'lg:hidden' : 'block'}>
-                <h1 className="font-extrabold text-base text-slate-900 dark:text-white leading-none">MFCT Portal</h1>
-                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block mt-0.5">
-                  {t('admin.title', 'Management Desk')}
-                </span>
-              </div>
+              {desktopSidebarExpanded && (
+                <div className="min-w-0">
+                  <h1 className="font-extrabold text-base text-slate-900 dark:text-white leading-none truncate">MFCT Portal</h1>
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block mt-0.5 truncate">
+                    {t('admin.title', 'Management Desk')}
+                  </span>
+                </div>
+              )}
             </div>
 
+            {/* Desktop collapse toggle */}
             <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-1 rounded-lg hover:bg-slate-800 text-slate-400"
+              onClick={() => setDesktopSidebarExpanded(!desktopSidebarExpanded)}
+              className="hidden lg:flex p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              title={desktopSidebarExpanded ? t('admin.collapseSidebar', 'Collapse Sidebar') : t('admin.expandSidebar', 'Expand Sidebar')}
             >
-              <ChevronRight className={`w-5 h-5 transition-transform ${sidebarOpen ? 'rotate-180' : ''}`} />
+              <ChevronRight className={`w-5 h-5 transition-transform duration-200 ${desktopSidebarExpanded ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Mobile close button */}
+            <button
+              onClick={() => setMobileNavOpen(false)}
+              className="lg:hidden p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              title={t('common.close', 'Close')}
+            >
+              <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Active Logged-in Role Display (Read-Only) */}
-          <div className={`p-3 py-2.5 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/60 ${!sidebarOpen ? 'lg:hidden' : 'block'}`}>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
-              {t('admin.activeRole', 'Active Logged-in Role:')}
-            </span>
-            <div className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-2 select-none shadow-sm dark:shadow-inner">
-              {roleBadge.icon}
-              <span className="text-slate-900 dark:text-white font-extrabold">{roleBadge.label}</span>
+          {desktopSidebarExpanded ? (
+            <div className="p-3 py-2.5 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/60" title={roleBadge.label}>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
+                {t('admin.activeRole', 'Active Logged-in Role:')}
+              </span>
+              <div className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-2 select-none shadow-sm dark:shadow-inner">
+                {roleBadge.icon}
+                <span className="text-slate-900 dark:text-white font-extrabold">{roleBadge.label}</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="hidden lg:flex p-2 border-b border-slate-200 dark:border-slate-800/80 justify-center" title={roleBadge.label}>
+              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center cursor-default">
+                {roleBadge.icon}
+              </div>
+            </div>
+          )}
 
           {/* Sidebar Menu Items */}
           <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden p-2.5 space-y-3">
             {/* Common Navigation */}
             <div>
-              <span className={`text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 mb-1.5 block ${!sidebarOpen ? 'lg:hidden' : ''}`}>
+              <span className={`text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 mb-1.5 block ${!desktopSidebarExpanded ? 'lg:hidden' : ''}`}>
                 {t('admin.mainPortal', 'Main Portal')}
               </span>
               <div className="space-y-1">
@@ -318,31 +368,41 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all ${isActive
-                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-900/40 cursor-pointer'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900 cursor-pointer'
-                        }`}
+                      onClick={() => selectTab(item.id)}
+                      title={item.label}
+                      className={`w-full flex items-center ${
+                        desktopSidebarExpanded ? 'gap-3 px-3 py-2' : 'justify-center p-2.5'
+                      } rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-900/40'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900'
+                      }`}
                     >
                       <Icon className="w-4 h-4 shrink-0" />
-                      <span className={!sidebarOpen ? 'lg:hidden' : 'block'}>{item.label}</span>
+                      {desktopSidebarExpanded && <span>{item.label}</span>}
                     </button>
                   );
                 })}
 
                 <button
-                  onClick={onOpenMembershipCard}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900 cursor-pointer"
+                  onClick={() => {
+                    onOpenMembershipCard();
+                    setMobileNavOpen(false);
+                  }}
+                  title={t('nav.myCard', 'Digital ID Card')}
+                  className={`w-full flex items-center ${
+                    desktopSidebarExpanded ? 'gap-3 px-3 py-2' : 'justify-center p-2.5'
+                  } rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900 cursor-pointer transition-all`}
                 >
                   <QrCode className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className={!sidebarOpen ? 'lg:hidden' : 'block'}>{t('nav.myCard', 'Digital ID Card')}</span>
+                  {desktopSidebarExpanded && <span>{t('nav.myCard', 'Digital ID Card')}</span>}
                 </button>
               </div>
             </div>
 
             {/* Role Specific Navigation */}
             <div>
-              <span className={`text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 mb-1.5 block ${!sidebarOpen ? 'lg:hidden' : ''}`}>
+              <span className={`text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 mb-1.5 block ${!desktopSidebarExpanded ? 'lg:hidden' : ''}`}>
                 {t('admin.roleCapabilities', 'Role Capabilities')}
               </span>
               <div className="space-y-1">
@@ -352,19 +412,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${isActive
-                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-900/40 cursor-pointer'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900 cursor-pointer'
-                        }`}
+                      onClick={() => selectTab(item.id)}
+                      title={item.label}
+                      className={`w-full flex items-center ${
+                        desktopSidebarExpanded ? 'justify-between px-3 py-2' : 'justify-center p-2.5'
+                      } rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-900/40'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900'
+                      }`}
                     >
                       <div className="flex items-center gap-3 truncate">
                         <Icon className="w-4 h-4 shrink-0" />
-                        <span className={`truncate ${!sidebarOpen ? 'lg:hidden' : 'block'}`}>{item.label}</span>
+                        {desktopSidebarExpanded && <span className="truncate">{item.label}</span>}
                       </div>
-                      {item.badge && (
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 ${isActive ? 'bg-white text-emerald-900' : 'bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 border border-slate-200 dark:border-slate-700'
-                          } ${!sidebarOpen ? 'lg:hidden' : 'block'}`}>
+                      {item.badge && desktopSidebarExpanded && (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 ${
+                          isActive
+                            ? 'bg-white text-emerald-900'
+                            : 'bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 border border-slate-200 dark:border-slate-700'
+                        }`}>
                           {item.badge}
                         </span>
                       )}
@@ -378,30 +445,49 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           {/* Sidebar Footer - Exit to Public Website & Logout */}
           <div className="p-2.5 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
             <button
-              onClick={onNavigateToWebsite}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-emerald-600 dark:text-emerald-400 font-bold text-xs border border-slate-200 dark:border-slate-800 transition-all cursor-pointer"
+              onClick={() => {
+                onNavigateToWebsite();
+                setMobileNavOpen(false);
+              }}
+              title={t('admin.backToWeb', 'Exit to Public Website')}
+              className={`w-full flex items-center ${
+                desktopSidebarExpanded ? 'justify-center gap-2 py-2 px-3' : 'justify-center p-2.5'
+              } rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-emerald-600 dark:text-emerald-400 font-bold text-xs border border-slate-200 dark:border-slate-800 transition-all cursor-pointer`}
             >
-              <ExternalLink className="w-4 h-4" />
-              <span className={!sidebarOpen ? 'lg:hidden' : 'block'}>{t('admin.backToWeb', 'Exit to Public Website')}</span>
+              <ExternalLink className="w-4 h-4 shrink-0" />
+              {desktopSidebarExpanded && <span>{t('admin.backToWeb', 'Exit to Public Website')}</span>}
             </button>
 
             {onLogout && (
               <button
-                onClick={onLogout}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/80 text-rose-600 dark:text-rose-300 font-bold text-xs border border-rose-200 dark:border-rose-900/50 transition-all cursor-pointer"
+                onClick={() => {
+                  onLogout();
+                  setMobileNavOpen(false);
+                }}
+                title={t('admin.logoutAccount', 'Logout Account')}
+                className={`w-full flex items-center ${
+                  desktopSidebarExpanded ? 'justify-center gap-2 py-2 px-3' : 'justify-center p-2.5'
+                } rounded-xl bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/80 text-rose-600 dark:text-rose-300 font-bold text-xs border border-rose-200 dark:border-rose-900/50 transition-all cursor-pointer`}
               >
-                <LogOut className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                <span className={!sidebarOpen ? 'lg:hidden' : 'block'}>{t('admin.logoutAccount', 'Logout Account')}</span>
+                <LogOut className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                {desktopSidebarExpanded && <span>{t('admin.logoutAccount', 'Logout Account')}</span>}
               </button>
             )}
 
             {/* Current Active User Info */}
-            <div className={`p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center gap-2.5 ${!sidebarOpen ? 'lg:hidden' : 'flex'}`}>
-              <img src={activeUser.avatar} alt={activeUser.name} className="w-7 h-7 rounded-full object-cover ring-1 ring-emerald-500" />
-              <div className="overflow-hidden">
-                <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{activeUser.name}</p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{activeUser.communityName}</p>
-              </div>
+            <div
+              title={`${activeUser.name} (${activeUser.communityName})`}
+              className={`p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center cursor-default ${
+                desktopSidebarExpanded ? 'gap-2.5' : 'justify-center'
+              }`}
+            >
+              <img src={activeUser.avatar} alt={activeUser.name} className="w-7 h-7 rounded-full object-cover ring-1 ring-emerald-500 shrink-0" />
+              {desktopSidebarExpanded && (
+                <div className="overflow-hidden min-w-0">
+                  <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{activeUser.name}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{activeUser.communityName}</p>
+                </div>
+              )}
             </div>
           </div>
         </aside>
@@ -412,8 +498,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 py-3.5 px-4 sm:px-6 sticky top-0 z-30 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden p-2 rounded-xl bg-slate-800 text-slate-300"
+                onClick={() => setMobileNavOpen(true)}
+                className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               >
                 <Menu className="w-5 h-5" />
               </button>

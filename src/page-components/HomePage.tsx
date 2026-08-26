@@ -334,36 +334,36 @@ export const HomePage: React.FC<HomePageProps> = ({
 
               {/* Live Stats */}
               <div className="pt-4 border-t border-slate-100">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-2xl bg-white border border-slate-100 shadow-sm px-4 py-4 hover:border-emerald-200 hover:shadow-md transition-all">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  <div className="rounded-2xl bg-white border border-slate-100 shadow-sm p-2.5 sm:p-4 hover:border-emerald-200 hover:shadow-md transition-all flex flex-col justify-center overflow-hidden">
                     {loading ? (
-                      <div className="h-8 w-16 bg-slate-100 rounded animate-pulse mb-1" />
+                      <div className="h-6 sm:h-8 w-12 sm:w-16 bg-slate-100 rounded animate-pulse mb-1" />
                     ) : (
-                      <span className="text-2xl sm:text-3xl font-black text-slate-900 block tabular-nums">
+                      <span className="text-base sm:text-2xl lg:text-3xl font-black text-slate-900 block tabular-nums leading-tight truncate">
                         {totalMembers > 0 ? totalMembers.toLocaleString('en-IN') : '0'}+
                       </span>
                     )}
-                    <span className="text-[11px] text-slate-400 font-semibold mt-0.5 block">{t('home.verified_members', 'Verified Members')}</span>
+                    <span className="text-[10px] sm:text-[11px] text-slate-400 font-semibold mt-0.5 block leading-tight truncate">{t('home.verified_members', 'Verified Members')}</span>
                   </div>
 
-                  <div className="rounded-2xl bg-emerald-600 border border-emerald-500 shadow-md shadow-emerald-200/60 px-4 py-4 hover:shadow-lg transition-all">
+                  <div className="rounded-2xl bg-emerald-600 border border-emerald-500 shadow-md shadow-emerald-200/60 p-2.5 sm:p-4 hover:shadow-lg transition-all flex flex-col justify-center overflow-hidden">
                     {loading ? (
-                      <div className="h-8 w-20 bg-emerald-500/50 rounded animate-pulse mb-1" />
+                      <div className="h-6 sm:h-8 w-16 sm:w-20 bg-emerald-500/50 rounded animate-pulse mb-1" />
                     ) : (
-                      <span className="text-xl sm:text-2xl font-black text-white block tabular-nums leading-tight">
+                      <span className="text-[11px] xs:text-xs sm:text-lg lg:text-2xl font-black text-white block tabular-nums leading-tight tracking-tight truncate">
                         ₹{totalRaised > 0 ? totalRaised.toLocaleString('en-IN') : '0'}+
                       </span>
                     )}
-                    <span className="text-[11px] text-emerald-100 font-semibold mt-0.5 block">{t('home.funds_disbursed', 'Relief Disbursed')}</span>
+                    <span className="text-[10px] sm:text-[11px] text-emerald-100 font-semibold mt-0.5 block leading-tight truncate">{t('home.funds_disbursed', 'Relief Disbursed')}</span>
                   </div>
 
-                  <div className="rounded-2xl bg-white border border-slate-100 shadow-sm px-4 py-4 hover:border-emerald-200 hover:shadow-md transition-all">
+                  <div className="rounded-2xl bg-white border border-slate-100 shadow-sm p-2.5 sm:p-4 hover:border-emerald-200 hover:shadow-md transition-all flex flex-col justify-center overflow-hidden">
                     {loading ? (
-                      <div className="h-8 w-12 bg-slate-100 rounded animate-pulse mb-1" />
+                      <div className="h-6 sm:h-8 w-10 sm:w-12 bg-slate-100 rounded animate-pulse mb-1" />
                     ) : (
-                      <span className="text-2xl sm:text-3xl font-black text-slate-900 block">100%</span>
+                      <span className="text-base sm:text-2xl lg:text-3xl font-black text-slate-900 block leading-tight truncate">100%</span>
                     )}
-                    <span className="text-[11px] text-slate-400 font-semibold mt-0.5 block">{t('home.audit_receipts', 'Audit Receipts')}</span>
+                    <span className="text-[10px] sm:text-[11px] text-slate-400 font-semibold mt-0.5 block leading-tight truncate">{t('home.audit_receipts', 'Audit Receipts')}</span>
                   </div>
                 </div>
               </div>

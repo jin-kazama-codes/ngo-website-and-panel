@@ -1,17 +1,125 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { AccountDetails } from '../../types';
 import { getAccountDetails, createAccountDetails, updateAccountDetails, deleteAccountDetails } from '../../services/adminService';
 import { uploadImage } from '../../lib/storage';
 import { Save, Plus, Trash2, Edit2, Loader2, Building, Hash, Code, Smartphone, QrCode, UploadCloud, X } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
+import { useDynamicTranslatedText } from '../../lib/autoTranslate';
+
+const AccountDetailsCard: React.FC<{
+  detail: AccountDetails;
+  onEdit: (details: AccountDetails) => void;
+  onDelete: (id: string) => void;
+}> = ({ detail, onEdit, onDelete }) => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
+  const displayBankName = useDynamicTranslatedText(detail.bank_name, language);
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col relative group transition-all hover:shadow-2xl hover:shadow-emerald-900/10">
+      {/* Decorative background blur */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+
+      <div className="p-6 border-b border-slate-100 dark:border-slate-800/80 flex items-start justify-between relative z-10">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white shadow-lg shadow-emerald-900/20">
+            <Building className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+              {displayBankName}
+            </h3>
+            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              {tr('आधिकारिक बैंक खाता', 'سرکاری بینک اکاؤنٹ', 'Official Bank Account')}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onEdit(detail)}
+            className="p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-xl transition-all cursor-pointer"
+            title={tr('खाता संपादित करें', 'اکاؤنٹ میں ترمیم کریں', 'Edit Account')}
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onDelete(detail.id)}
+            className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all cursor-pointer"
+            title={tr('खाता हटाएं', 'اکاؤنٹ حذف کریں', 'Delete Account')}
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="p-6 flex-1 flex flex-col sm:flex-row gap-6 relative z-10">
+        <div className="flex-1 space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1.5">
+                <Hash className="w-3 h-3" /> {tr('खाता संख्या', 'اکاؤنٹ نمبر', 'Account Number')}
+              </p>
+              <p className="text-lg font-black text-slate-900 dark:text-white font-mono tracking-wider">
+                {detail.account_number}
+              </p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1.5">
+                <Code className="w-3 h-3" /> {tr('आईएफएससी कोड', 'IFSC کوڈ', 'IFSC Code')}
+              </p>
+              <p className="text-lg font-black text-slate-900 dark:text-white font-mono tracking-wider">
+                {detail.ifsc_code}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
+            <p className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1.5 flex items-center gap-1.5">
+              <Smartphone className="w-3 h-3" /> {tr('यूपीआई आईडी', 'UPI شناخت', 'UPI ID')}
+            </p>
+            <p className="text-base font-bold text-slate-900 dark:text-white font-mono tracking-wide">
+              {detail.upi_id}
+            </p>
+          </div>
+        </div>
+
+        {detail.qr_code_url && (
+          <div className="shrink-0 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/40 p-4 rounded-3xl border border-slate-200 dark:border-slate-700">
+            <div className="w-32 h-32 rounded-2xl overflow-hidden bg-white p-2 shadow-sm mb-3">
+              <img src={detail.qr_code_url} alt="UPI QR Code" className="w-full h-full object-contain" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
+              <QrCode className="w-3 h-3" /> {tr('भुगतान के लिए स्कैन करें', 'ادائیگی کے لیے اسکین کریں', 'Scan to Pay')}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const AccountDetailsTab: React.FC = () => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
   const [accountDetails, setAccountDetails] = useState<AccountDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [currentEditId, setCurrentEditId] = useState<string | null>(null);
-  
+
   // Form State
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
@@ -19,7 +127,6 @@ export const AccountDetailsTab: React.FC = () => {
   const [upiId, setUpiId] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
-  const [uploadingFile, setUploadingFile] = useState(false);
 
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -65,26 +172,36 @@ export const AccountDetailsTab: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this account detail?')) return;
+    const confirmText = tr(
+      'क्या आप वाकई इस खाता विवरण को हटाना चाहते हैं?',
+      'کیا آپ واقعی اس اکاؤنٹ کی تفصیل کو حذف کرنا چاہتے ہیں؟',
+      'Are you sure you want to delete this account detail?'
+    );
+    if (!window.confirm(confirmText)) return;
     try {
       await deleteAccountDetails(id);
       await fetchAccountDetails();
-      setSuccessMsg('Deleted successfully');
+      setSuccessMsg(tr('सफलतापूर्वक हटा दिया गया', 'کامیابی سے حذف ہو گیا', 'Deleted successfully'));
     } catch (err: any) {
       console.error(err);
-      setErrorMsg(err.message || 'Failed to delete');
+      setErrorMsg(err.message || tr('हटाने में विफल', 'حذف کرنے میں ناکام', 'Failed to delete'));
     }
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bankName || !accountNumber || !ifscCode || !upiId || (!qrCodeUrl && !qrCodeFile)) {
-      setErrorMsg('Please fill out all required fields and upload a QR Code');
+      setErrorMsg(
+        tr(
+          'कृपया सभी आवश्यक फ़ील्ड भरें और एक क्यूआर कोड अपलोड करें',
+          'براہ کرم تمام مطلوبہ فیلڈز کو پُر کریں اور ایک QR کوڈ اپ لوڈ کریں',
+          'Please fill out all required fields and upload a QR Code'
+        )
+      );
       return;
     }
 
     setSaving(true);
-    setUploadingFile(true);
     setErrorMsg('');
     setSuccessMsg('');
 
@@ -103,7 +220,13 @@ export const AccountDetailsTab: React.FC = () => {
           upi_id: upiId,
           qr_code_url: uploadedUrl,
         });
-        setSuccessMsg('Account details updated successfully');
+        setSuccessMsg(
+          tr(
+            'खाता विवरण सफलतापूर्वक अपडेट हो गया',
+            'اکاؤنٹ کی تفصیلات کامیابی سے اپ ڈیٹ ہو گئیں',
+            'Account details updated successfully'
+          )
+        );
       } else {
         await createAccountDetails({
           bank_name: bankName,
@@ -112,16 +235,28 @@ export const AccountDetailsTab: React.FC = () => {
           upi_id: upiId,
           qr_code_url: uploadedUrl,
         });
-        setSuccessMsg('Account details created successfully');
+        setSuccessMsg(
+          tr(
+            'खाता विवरण सफलतापूर्वक सुरक्षित हो गया',
+            'اکاؤنٹ کی تفصیلات کامیابی سے شامل ہو گئیں',
+            'Account details created successfully'
+          )
+        );
       }
       handleCancel();
       fetchAccountDetails();
     } catch (err: any) {
       console.error(err);
-      setErrorMsg(err.message || 'Failed to save account details. Check if the "account_details" table exists in Supabase.');
+      setErrorMsg(
+        err.message ||
+          tr(
+            'खाता विवरण सुरक्षित करने में विफल',
+            'اکاؤنٹ کی تفصیلات محفوظ کرنے میں ناکام',
+            'Failed to save account details'
+          )
+      );
     } finally {
       setSaving(false);
-      setUploadingFile(false);
     }
   };
 
@@ -136,7 +271,7 @@ export const AccountDetailsTab: React.FC = () => {
           <div className="h-10 w-40 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[1, 2].map(i => (
+          {[1, 2].map((i) => (
             <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 h-64"></div>
           ))}
         </div>
@@ -146,18 +281,26 @@ export const AccountDetailsTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white">Bank Account Details</h2>
-          <p className="text-sm font-bold text-slate-500 dark:text-slate-400">Manage official bank and UPI details for receiving donations.</p>
+          <h2 className="text-xl font-black text-slate-900 dark:text-white">
+            {tr('बैंक खाता विवरण', 'بینک اکاؤنٹ کی تفصیلات', 'Bank Account Details')}
+          </h2>
+          <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
+            {tr(
+              'दान प्राप्त करने के लिए आधिकारिक बैंक और यूपीआई विवरण प्रबंधित करें।',
+              'عطیات حاصل کرنے کے لیے سرکاری بینک اور UPI کی تفصیلات کا انتظام کریں۔',
+              'Manage official bank and UPI details for receiving donations.'
+            )}
+          </p>
         </div>
         {!isEditing && accountDetails.length === 0 && (
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm"
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            Add New Account
+            {tr('नया खाता जोड़ें', 'نیا اکاؤنٹ شامل کریں', 'Add New Account')}
           </button>
         )}
       </div>
@@ -178,13 +321,17 @@ export const AccountDetailsTab: React.FC = () => {
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
           <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-              {currentEditId ? 'Edit Account Details' : 'Add Account Details'}
+              {currentEditId
+                ? tr('खाता विवरण संपादित करें', 'اکاؤنٹ کی تفصیلات میں ترمیم کریں', 'Edit Account Details')
+                : tr('खाता विवरण जोड़ें', 'اکاؤنٹ کی تفصیلات شامل کریں', 'Add Account Details')}
             </h3>
           </div>
           <form onSubmit={handleSave} className="p-4 sm:p-6 space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Bank Name *</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {tr('बैंक का नाम *', 'بینک کا نام *', 'Bank Name *')}
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Building className="h-4 w-4 text-slate-400" />
@@ -195,13 +342,15 @@ export const AccountDetailsTab: React.FC = () => {
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
                     className="w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all dark:text-white"
-                    placeholder="e.g. State Bank of India"
+                    placeholder={tr('उदा. स्टेट बैंक ऑफ इंडिया', 'مثلاً اسٹیٹ بینک آف انڈیا', 'e.g. State Bank of India')}
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Account Number *</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {tr('खाता संख्या *', 'اکاؤنٹ نمبر *', 'Account Number *')}
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Hash className="h-4 w-4 text-slate-400" />
@@ -212,13 +361,15 @@ export const AccountDetailsTab: React.FC = () => {
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
                     className="w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all dark:text-white"
-                    placeholder="Enter Account Number"
+                    placeholder={tr('खाता संख्या दर्ज करें', 'اکاؤنٹ نمبر درج کریں', 'Enter Account Number')}
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">IFSC Code *</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {tr('आईएफएससी कोड *', 'IFSC کوڈ *', 'IFSC Code *')}
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Code className="h-4 w-4 text-slate-400" />
@@ -235,7 +386,9 @@ export const AccountDetailsTab: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">UPI ID *</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {tr('यूपीआई आईडी *', 'UPI شناخت *', 'UPI ID *')}
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Smartphone className="h-4 w-4 text-slate-400" />
@@ -252,7 +405,9 @@ export const AccountDetailsTab: React.FC = () => {
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">QR Code Image *</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {tr('क्यूआर कोड छवि *', 'QR کوڈ کی تصویر *', 'QR Code Image *')}
+                </label>
                 <div className="flex items-center gap-4">
                   {qrCodeUrl && !qrCodeFile ? (
                     <div className="relative w-16 h-16 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -260,18 +415,18 @@ export const AccountDetailsTab: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setQrCodeUrl('')}
-                        className="absolute top-0 right-0 p-1 bg-red-500/80 text-white hover:bg-red-600 rounded-bl-lg"
+                        className="absolute top-0 right-0 p-1 bg-red-500/80 text-white hover:bg-red-600 rounded-bl-lg cursor-pointer"
                       >
                         <X className="w-3 h-3" />
                       </button>
                     </div>
                   ) : qrCodeFile ? (
-                    <div className="relative w-16 h-16 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-100 flex items-center justify-center">
+                    <div className="relative w-16 h-16 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                       <QrCode className="w-6 h-6 text-emerald-500" />
                       <button
                         type="button"
                         onClick={() => setQrCodeFile(null)}
-                        className="absolute top-0 right-0 p-1 bg-red-500/80 text-white hover:bg-red-600 rounded-bl-lg"
+                        className="absolute top-0 right-0 p-1 bg-red-500/80 text-white hover:bg-red-600 rounded-bl-lg cursor-pointer"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -282,12 +437,14 @@ export const AccountDetailsTab: React.FC = () => {
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <UploadCloud className="w-6 h-6 mb-2 text-slate-400" />
                         <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                          {qrCodeFile ? qrCodeFile.name : 'Click to upload QR Code'}
+                          {qrCodeFile
+                            ? qrCodeFile.name
+                            : tr('क्यूआर कोड अपलोड करने के लिए क्लिक करें', 'QR کوڈ اپ لوڈ کرنے کے لیے کلک کریں', 'Click to upload QR Code')}
                         </p>
                       </div>
-                      <input 
-                        type="file" 
-                        className="hidden" 
+                      <input
+                        type="file"
+                        className="hidden"
                         accept="image/*"
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
@@ -305,18 +462,27 @@ export const AccountDetailsTab: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
                 disabled={saving}
               >
-                Cancel
+                {tr('रद्द करें', 'منسوخ کریں', 'Cancel')}
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-emerald-900/20 disabled:opacity-70"
+                className="flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-emerald-900/20 disabled:opacity-70 cursor-pointer"
               >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {saving ? 'Saving...' : 'Save Details'}
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{tr('सुरक्षित हो रहा है...', 'محفوظ ہو رہا ہے...', 'Saving...')}</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>{tr('विवरण सुरक्षित करें', 'تفصیلات محفوظ کریں', 'Save Details')}</span>
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -328,89 +494,32 @@ export const AccountDetailsTab: React.FC = () => {
               <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
                 <Building className="w-8 h-8 text-slate-400" />
               </div>
-              <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">No Account Details</h3>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">
+                {tr('कोई खाता विवरण नहीं', 'کوئی اکاؤنٹ تفصیلات نہیں', 'No Account Details')}
+              </h3>
               <p className="text-slate-500 dark:text-slate-400 text-sm font-bold mb-6 max-w-md mx-auto">
-                Add bank account and UPI details to allow members to securely transfer donations directly to the organisation.
+                {tr(
+                  'सदस्यों को सीधे संगठन में सुरक्षित रूप से दान स्थानांतरित करने की अनुमति देने के लिए बैंक खाता और यूपीआई विवरण जोड़ें।',
+                  'ممبران کو براہ راست تنظیم کو محفوظ طریقے سے عطیات منتقل کرنے کی اجازت دینے کے لیے بینک اکاؤنٹ اور UPI تفصیلات شامل کریں۔',
+                  'Add bank account and UPI details to allow members to securely transfer donations directly to the organisation.'
+                )}
               </p>
               <button
                 onClick={() => setIsEditing(true)}
-                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-emerald-900/20"
+                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-emerald-900/20 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                Add Account Details
+                {tr('खाता विवरण जोड़ें', 'اکاؤنٹ کی تفصیلات شامل کریں', 'Add Account Details')}
               </button>
             </div>
           ) : (
             accountDetails.map((detail) => (
-              <div key={detail.id} className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col relative group transition-all hover:shadow-2xl hover:shadow-emerald-900/10">
-                {/* Decorative background blur */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-                
-                <div className="p-6 border-b border-slate-100 dark:border-slate-800/80 flex items-start justify-between relative z-10">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white shadow-lg shadow-emerald-900/20">
-                      <Building className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{detail.bank_name}</h3>
-                      <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Official Bank Account</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleEdit(detail)}
-                      className="p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-xl transition-all"
-                      title="Edit Account"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(detail.id)}
-                      className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all"
-                      title="Delete Account"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="p-6 flex-1 flex flex-col sm:flex-row gap-6 relative z-10">
-                  <div className="flex-1 space-y-5">
-                    <div className="grid grid-cols-2 gap-5">
-                      <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
-                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1.5"><Hash className="w-3 h-3"/> Account Number</p>
-                        <p className="text-lg font-black text-slate-900 dark:text-white font-mono tracking-wider">
-                          {detail.account_number}
-                        </p>
-                      </div>
-                      <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
-                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1.5"><Code className="w-3 h-3"/> IFSC Code</p>
-                        <p className="text-lg font-black text-slate-900 dark:text-white font-mono tracking-wider">
-                          {detail.ifsc_code}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
-                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1.5 flex items-center gap-1.5"><Smartphone className="w-3 h-3" /> UPI ID</p>
-                      <p className="text-base font-bold text-slate-900 dark:text-white font-mono tracking-wide">
-                        {detail.upi_id}
-                      </p>
-                    </div>
-                  </div>
-
-                  {detail.qr_code_url && (
-                    <div className="shrink-0 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/40 p-4 rounded-3xl border border-slate-200 dark:border-slate-700">
-                      <div className="w-32 h-32 rounded-2xl overflow-hidden bg-white p-2 shadow-sm mb-3">
-                        <img src={detail.qr_code_url} alt="UPI QR Code" className="w-full h-full object-contain" />
-                      </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
-                        <QrCode className="w-3 h-3" /> Scan to Pay
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <AccountDetailsCard
+                key={detail.id}
+                detail={detail}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             ))
           )}
         </div>
