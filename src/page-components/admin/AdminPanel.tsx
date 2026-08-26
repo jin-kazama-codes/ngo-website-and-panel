@@ -64,7 +64,6 @@ import { FinancialAnalyticsTab } from './FinancialAnalyticsTab';
 import { ContactMessagesTab } from './ContactMessagesTab';
 import { AccountDetailsTab } from './AccountDetailsTab';
 
-import { submitEmergencyAidRequest } from '../../services/adminService';
 import { getUsers } from '../../services/userService';
 
 
@@ -129,8 +128,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   // Load users + donations for global search
   useEffect(() => {
-    getUsers().then(setAllUsers).catch(() => {});
-    getDonations().then(setAllDonations).catch(() => {});
+    getUsers().then(setAllUsers).catch(() => { });
+    getDonations().then(setAllDonations).catch(() => { });
   }, []);
 
   // Close search dropdown on outside click
@@ -148,24 +147,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const q = searchQuery.toLowerCase().trim();
   const matchedCampaigns = q.length >= 2
     ? campaignsList.filter(c =>
-        c.title.toLowerCase().includes(q) ||
-        c.city.toLowerCase().includes(q) ||
-        c.category.toLowerCase().includes(q)
-      ).slice(0, 5)
+      c.title.toLowerCase().includes(q) ||
+      c.city.toLowerCase().includes(q) ||
+      c.category.toLowerCase().includes(q)
+    ).slice(0, 5)
     : [];
   const matchedUsers = q.length >= 2
     ? allUsers.filter(u =>
-        u.name?.toLowerCase().includes(q) ||
-        u.email?.toLowerCase().includes(q) ||
-        u.communityName?.toLowerCase().includes(q)
-      ).slice(0, 4)
+      u.name?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q) ||
+      u.communityName?.toLowerCase().includes(q)
+    ).slice(0, 4)
     : [];
   const matchedDonations = q.length >= 2
     ? allDonations.filter(d =>
-        d.utrNumber?.toLowerCase().includes(q) ||
-        d.donorName?.toLowerCase().includes(q) ||
-        d.campaignTitle?.toLowerCase().includes(q)
-      ).slice(0, 4)
+      d.utrNumber?.toLowerCase().includes(q) ||
+      d.donorName?.toLowerCase().includes(q) ||
+      d.campaignTitle?.toLowerCase().includes(q)
+    ).slice(0, 4)
     : [];
   const hasResults = matchedCampaigns.length > 0 || matchedUsers.length > 0 || matchedDonations.length > 0;
   const showDropdown = searchFocused && q.length >= 2;
