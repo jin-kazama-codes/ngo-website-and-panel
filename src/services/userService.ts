@@ -57,7 +57,7 @@ export async function createUser(user: User & { kycDocumentUrl?: string }): Prom
   const insertPayload: Record<string, unknown> = {
     id: user.id,
     name: user.name,
-    email: user.email.trim().toLowerCase(),
+    email: (user.email ?? '').trim().toLowerCase(),
     phone: user.phone,
     role: user.role,
     avatar: user.avatar,
@@ -92,7 +92,7 @@ export async function createUser(user: User & { kycDocumentUrl?: string }): Prom
       const essentialPayload = {
         id: user.id,
         name: user.name,
-        email: user.email.trim().toLowerCase(),
+        email: (user.email ?? '').trim().toLowerCase(),
         phone: user.phone,
         role: user.role,
         community_id: user.communityId,

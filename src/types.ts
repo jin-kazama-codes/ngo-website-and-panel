@@ -3,6 +3,7 @@ export type UserRole =
   | 'community_admin'
   | 'executive_admin'
   | 'member'
+  | 'premium_donor'
 
 export type DonationCategory =
   | 'General'
@@ -36,6 +37,7 @@ export interface User {
   communityName: string;
   membershipId: string;
   isVerified: boolean;
+  isPremium?: boolean;
   joinDate: string;
   passwordHash?: string;
   documentUrl?: string;

@@ -173,7 +173,7 @@ export function AppStateProvider({
       localStorage.setItem('mfct_user_role', userToSet.role);
       localStorage.setItem('role', userToSet.role);
       localStorage.setItem('id', userWithEmail.id);
-      localStorage.setItem('email', userEmail);
+      localStorage.setItem('email', userEmail ?? '');
       localStorage.setItem('name', userWithEmail.name);
       localStorage.setItem('avatar', userWithEmail.avatar);
       localStorage.setItem('community_id', userWithEmail.communityId);
@@ -245,7 +245,7 @@ export function AppStateProvider({
       localStorage.setItem('mfct_user_role', newUser.role);
       localStorage.setItem('role', newUser.role);
       localStorage.setItem('id', newUser.id);
-      localStorage.setItem('email', newUser.email);
+      localStorage.setItem('email', newUser.email ?? '');
       localStorage.setItem('name', newUser.name);
       localStorage.setItem('avatar', newUser.avatar);
       localStorage.setItem('community_id', newUser.communityId);
