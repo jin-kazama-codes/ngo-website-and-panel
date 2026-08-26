@@ -15,7 +15,6 @@ function mapRow(row: Record<string, unknown>): User {
     communityName: row.community_name as string,
     membershipId: row.membership_id as string,
     isVerified: row.is_verified as boolean,
-    isPremium: row.is_premium as boolean,
     joinDate: row.join_date as string,
     city: row.city as string,
     state: row.state as string,
@@ -57,7 +56,7 @@ export async function createUser(user: User & { kycDocumentUrl?: string }): Prom
   const insertPayload: Record<string, unknown> = {
     id: user.id,
     name: user.name,
-    email: user.email.trim().toLowerCase(),
+    email: user.email ? user.email.trim().toLowerCase() : null,
     phone: user.phone,
     role: user.role,
     avatar: user.avatar,
@@ -65,7 +64,6 @@ export async function createUser(user: User & { kycDocumentUrl?: string }): Prom
     community_name: user.communityName,
     membership_id: user.membershipId,
     is_verified: user.isVerified,
-    is_premium: user.isPremium,
     join_date: user.joinDate,
     city: user.city,
     state: user.state,
@@ -92,7 +90,7 @@ export async function createUser(user: User & { kycDocumentUrl?: string }): Prom
       const essentialPayload = {
         id: user.id,
         name: user.name,
-        email: user.email.trim().toLowerCase(),
+        email: user.email ? user.email.trim().toLowerCase() : null,
         phone: user.phone,
         role: user.role,
         community_id: user.communityId,

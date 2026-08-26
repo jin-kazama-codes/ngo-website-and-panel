@@ -54,10 +54,7 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
         </div>
 
         {/* Digital Card Preview */}
-        <div className={`p-6 rounded-2xl text-white shadow-xl relative overflow-hidden transition-all ${user.isPremium
-          ? 'bg-gradient-to-br from-amber-800 via-amber-900 to-slate-950 border border-amber-400/40'
-          : 'bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 border border-emerald-500/30'
-          }`}>
+        <div className="p-6 rounded-2xl text-white shadow-xl relative overflow-hidden transition-all bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 border border-emerald-500/30">
           {loading && (
             <div className="absolute inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-10">
               <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -77,15 +74,9 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
               </div>
             </div>
 
-            {user.isPremium ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[11px] font-bold border border-amber-400/30">
-                <Sparkles className="w-3 h-3 text-amber-300" /> Premium Gold Member
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold border border-emerald-400/30">
-                <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Verified Member
-              </span>
-            )}
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold border border-emerald-400/30">
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Verified Member
+            </span>
           </div>
 
           <div className="flex items-start gap-4 mb-6 relative z-10">

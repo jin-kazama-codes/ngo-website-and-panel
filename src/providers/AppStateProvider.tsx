@@ -152,7 +152,7 @@ export function AppStateProvider({
 
   const handleLogin = (role: UserRole, email?: string, customUser?: User) => {
     const userToSet = customUser || getUserForRole(role);
-    const userEmail = email || userToSet.email;
+    const userEmail = email || userToSet.email || '';
     const userWithEmail = { ...userToSet, email: userEmail };
 
     setIsAuthenticated(true);
@@ -172,11 +172,11 @@ export function AppStateProvider({
       localStorage.setItem('mfct_is_logged_in', 'true');
       localStorage.setItem('mfct_user_role', userToSet.role);
       localStorage.setItem('role', userToSet.role);
-      localStorage.setItem('id', userWithEmail.id);
+      localStorage.setItem('id', userWithEmail.id || '');
       localStorage.setItem('email', userEmail);
-      localStorage.setItem('name', userWithEmail.name);
-      localStorage.setItem('avatar', userWithEmail.avatar);
-      localStorage.setItem('community_id', userWithEmail.communityId);
+      localStorage.setItem('name', userWithEmail.name || '');
+      localStorage.setItem('avatar', userWithEmail.avatar || '');
+      localStorage.setItem('community_id', userWithEmail.communityId || '');
       localStorage.setItem('login_info', JSON.stringify(loginInfo));
       localStorage.setItem('mfct_user_info', JSON.stringify(loginInfo));
     }
@@ -236,7 +236,7 @@ export function AppStateProvider({
       const loginInfo = {
         role: newUser.role,
         id: newUser.id,
-        email: newUser.email,
+        email: newUser.email || '',
         name: newUser.name,
         avatar: newUser.avatar,
         community_id: newUser.communityId,
@@ -244,11 +244,11 @@ export function AppStateProvider({
       localStorage.setItem('mfct_is_logged_in', 'true');
       localStorage.setItem('mfct_user_role', newUser.role);
       localStorage.setItem('role', newUser.role);
-      localStorage.setItem('id', newUser.id);
-      localStorage.setItem('email', newUser.email);
-      localStorage.setItem('name', newUser.name);
-      localStorage.setItem('avatar', newUser.avatar);
-      localStorage.setItem('community_id', newUser.communityId);
+      localStorage.setItem('id', newUser.id || '');
+      localStorage.setItem('email', newUser.email || '');
+      localStorage.setItem('name', newUser.name || '');
+      localStorage.setItem('avatar', newUser.avatar || '');
+      localStorage.setItem('community_id', newUser.communityId || '');
       localStorage.setItem('login_info', JSON.stringify(loginInfo));
       localStorage.setItem('mfct_user_info', JSON.stringify(loginInfo));
     }

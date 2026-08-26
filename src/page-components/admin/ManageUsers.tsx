@@ -159,7 +159,6 @@ export const ManageUsers: React.FC = () => {
           communityName: comm?.name || '',
           membershipId: `MEM-${Date.now().toString().slice(-4)}`,
           isVerified: true,
-          isPremium: false,
           joinDate: new Date().toISOString(),
           city: formData.city || '',
           state: formData.state || '',
@@ -186,7 +185,7 @@ export const ManageUsers: React.FC = () => {
 
   const filteredUsers = users.filter(u =>
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.phone.includes(searchQuery)
   );
 
