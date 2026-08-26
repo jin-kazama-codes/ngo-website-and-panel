@@ -5,6 +5,9 @@ import { PlusCircle, Eye, Edit, Trash2, Check, X, Clock, Flame } from 'lucide-re
 import { useAppState } from '../../providers/AppStateProvider';
 import { updateCampaignStatus, deleteCampaign } from '../../services/campaignService';
 
+import { useLanguage } from '../../context/LanguageContext';
+import { translateCampaignTitle, translateCategory } from '../../lib/translateEntity';
+
 interface CampaignsTabProps {
   campaignsList: Campaign[];
   onOpenCreateCampaign: (campaign?: Campaign) => void;
@@ -15,6 +18,13 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
   onOpenCreateCampaign,
 }) => {
   const { currentRole, handleCampaignUpdated } = useAppState();
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
   const router = useRouter();
   const [processingId, setProcessingId] = React.useState<string | null>(null);
   const [toastMessage, setToastMessage] = React.useState<{ message: string; type: 'error' | 'success' } | null>(null);
@@ -29,14 +39,14 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
     try {
       setProcessingId(id);
       await deleteCampaign(id);
-      showToast('Campaign deleted successfully. Please refresh the page to see changes.', 'success');
+      showToast(tr('अभियान सफलतापूर्वक हटा दिया गया', 'مہم کامیابی سے حذف کر دی گئی', 'Campaign deleted successfully.'), 'success');
       setDeleteConfirmId(null);
       setTimeout(() => {
         window.location.reload();
-      }, 2000);
+      }, 1500);
     } catch (err) {
       console.error('Delete error:', err);
-      showToast('Failed to delete campaign.');
+      showToast(tr('हटाने में त्रुटि', 'حذف کرنے میں خرابی', 'Failed to delete campaign.'));
     } finally {
       setProcessingId(null);
     }
@@ -49,10 +59,15 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
       const isVerified = isApprove;
       const updated = await updateCampaignStatus(id, newStatus, isVerified);
       handleCampaignUpdated(updated);
-      showToast(`Campaign ${isApprove ? 'approved' : 'rejected'} successfully`, 'success');
+      showToast(
+        isApprove
+          ? tr('अभियान स्वीकृत कर दिया गया', 'مہم منظور کر لی گئی', 'Campaign approved successfully')
+          : tr('अभियान अस्वीकृत कर दिया गया', 'مہم مسترد کر دی گئی', 'Campaign rejected successfully'),
+        'success'
+      );
     } catch (err) {
       console.error('Failed to update campaign:', err);
-      showToast('Failed to update campaign status.');
+      showToast(tr('स्थिति अपडेट करने में त्रुटि', 'اسٹیٹس اپ ڈیٹ میں خرابی', 'Failed to update campaign status.'));
     } finally {
       setProcessingId(null);
     }
@@ -62,16 +77,21 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4 shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white">Community Campaign Manager</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Review and publish verified community fundraising causes.</p>
+          <h2 className="text-xl font-black text-slate-900 dark:text-white">
+            {tr('सामुदायिक अभियान प्रबंधक', 'کمیونٹی مہمات کا انتظام', 'Community Campaign Manager')}
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {tr('सत्यापित सामुदायिक अभियानों की समीक्षा करें और प्रकाशित करें।', 'تصدیق شدہ کمیونٹی مہمات کا جائزہ لیں اور شائع کریں۔', 'Review and publish verified community fundraising causes.')}
+          </p>
         </div>
         <button
           onClick={() => onOpenCreateCampaign()}
-          className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 flex items-center gap-1.5 cursor-pointer"
+          className="cursor-pointer px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 flex items-center gap-1.5 self-start sm:self-auto transition-all shadow-sm"
         >
-          <PlusCircle className="w-4 h-4" /> Create New Campaign
+          <PlusCircle className="w-4 h-4" />
+          <span>{tr('+ नया अभियान बनाएं', '+ نئی مہم شامل کریں', '+ Create New Campaign')}</span>
         </button>
       </div>
 
@@ -92,26 +112,32 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex gap-2 items-center">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-                    {c.category}
+                    {translateCategory(c.category, language)}
                   </span>
-                  {(c.status === 'pending_approval') && (
+                  {(c.status === 'pending_approval' || c.status === 'pending') && (
                     <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800 flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> Pending
+                      <Clock className="w-3 h-3" />
+                      <span>{tr('स्वीकृति लंबित', 'زیر التواء', 'Pending')}</span>
                     </span>
                   )}
                   {c.isUrgent && (
                     <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-950 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-800 flex items-center gap-1">
-                      <Flame className="w-3 h-3" /> Urgent
+                      <Flame className="w-3 h-3" />
+                      <span>{tr('अति आवश्यक', 'اہم', 'Urgent')}</span>
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{c.daysLeft} days left</span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                  {c.daysLeft} {tr('दिन शेष', 'دن باقی', 'days left')}
+                </span>
               </div>
-              <h4 className="font-bold text-sm text-slate-900 dark:text-white capitalize">{c.title}</h4>
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white capitalize">
+                {translateCampaignTitle(c.title, language)}
+              </h4>
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between text-slate-500 dark:text-slate-400">
-                  <span>Raised: ₹{(c.raisedINR || 0).toLocaleString()}</span>
-                  <span>Goal: ₹{c.goalINR.toLocaleString()}</span>
+                  <span>{tr('एकत्रित:', 'جمع شدہ:', 'Raised:')} ₹{(c.raisedINR || 0).toLocaleString('en-IN')}</span>
+                  <span>{tr('लक्ष्य:', 'ہدف:', 'Goal:')} ₹{c.goalINR.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
@@ -121,42 +147,47 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
                 </div>
               </div>
               <div className="pt-3 mt-auto border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-end gap-2">
-                {isAdmin && (c.status === 'pending_approval') && (
+                {isAdmin && (c.status === 'pending_approval' || c.status === 'pending') && (
                   <>
                     <button
                       onClick={() => handleAction(c.id, true)}
                       disabled={processingId === c.id}
-                      className="px-3 py-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-white dark:hover:text-white bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-500 dark:hover:bg-emerald-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50 border border-emerald-200 dark:border-transparent cursor-pointer"
+                      className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-white dark:hover:text-white bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-500 dark:hover:bg-emerald-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50 border border-emerald-200 dark:border-transparent"
                     >
-                      <Check className="w-3.5 h-3.5" /> Approve
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{tr('स्वीकार करें', 'منظور کریں', 'Approve')}</span>
                     </button>
                     <button
                       onClick={() => handleAction(c.id, false)}
                       disabled={processingId === c.id}
-                      className="px-3 py-1.5 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-white bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-500 dark:hover:bg-rose-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50 border border-rose-200 dark:border-transparent cursor-pointer"
+                      className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-white bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-500 dark:hover:bg-rose-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50 border border-rose-200 dark:border-transparent"
                     >
-                      <X className="w-3.5 h-3.5" /> Reject
+                      <X className="w-3.5 h-3.5" />
+                      <span>{tr('अस्वीकार करें', 'مسترد کریں', 'Reject')}</span>
                     </button>
                   </>
                 )}
                 <button
                   onClick={() => router.push(`/campaigns/${c.id}`)}
-                  className="px-3 py-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+                  className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg flex items-center gap-1 transition-colors"
                 >
-                  <Eye className="w-3.5 h-3.5" /> View Details
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>{tr('विवरण देखें', 'تفصیلات دیکھیں', 'View Details')}</span>
                 </button>
                 <button
                   onClick={() => onOpenCreateCampaign(c)}
-                  className="px-3 py-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+                  className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg flex items-center gap-1 transition-colors"
                 >
-                  <Edit className="w-3.5 h-3.5" /> Edit
+                  <Edit className="w-3.5 h-3.5" />
+                  <span>{tr('संपादित करें', 'ترمیم', 'Edit')}</span>
                 </button>
                 <button
                   onClick={() => setDeleteConfirmId(c.id)}
                   disabled={processingId === c.id}
-                  className="px-3 py-1.5 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
+                  className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50"
                 >
-                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>{tr('हटाएं', 'حذف کریں', 'Delete')}</span>
                 </button>
               </div>
             </div>

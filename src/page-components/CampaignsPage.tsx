@@ -2,17 +2,20 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Campaign, DonationCategory } from '../types';
-import { getCampaigns } from '../services/campaignService';
+import { getCampaigns, sortCampaignsByLatest } from '../services/campaignService';
 import { CampaignCard } from '../components/CampaignCard';
 import { CampaignSkeleton } from '../components/CampaignSkeleton';
 import { Search, Grid, List } from 'lucide-react';
 import { MembershipBanner } from '../components/MembershipBanner';
+import { useLanguage } from '../context/LanguageContext';
+import { translateCity, translateCategory } from '../lib/translateEntity';
 
 interface CampaignsPageProps {
   onDonate: (campaign: Campaign) => void;
 }
 
 export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
+  const { t, language } = useLanguage();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedCity, setSelectedCity] = useState<string>('All');
@@ -28,10 +31,10 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
       try {
         setLoading(true);
         const cData = await getCampaigns({ status: 'active' });
-        setCampaigns(cData);
+        setCampaigns(sortCampaignsByLatest(cData));
       } catch (err) {
         console.error(err);
-        setError('Failed to load campaigns. Please try again.');
+        setError(t('campaigns.load_error', 'Failed to load campaigns. Please try again.'));
       } finally {
         setLoading(false);
       }
@@ -51,7 +54,6 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
     return matchesSearch && matchesCat && matchesCity;
   });
 
-  // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [search, selectedCategory, selectedCity]);
@@ -71,12 +73,16 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
     if (node) observer.current.observe(node);
   }, [loading, currentPage, totalPages]);
 
+  const availableCities = Array.from(
+    new Set(['Delhi', 'Lucknow', 'Hyderabad', 'Bareilly', 'Mumbai', ...campaigns.map((c) => c.city).filter(Boolean)])
+  );
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-black text-slate-900">Explore Verified Campaigns</h1>
+        <h1 className="text-3xl font-black text-slate-900">{t('campaigns.page_title', 'Explore Verified Campaigns')}</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Every campaign is verified on-site by local administrators and executive officers.
+          {t('campaigns.page_desc', 'Every campaign is verified on-site by local administrators and executive officers.')}
         </p>
       </div>
 
@@ -87,7 +93,7 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             <input
               type="text"
-              placeholder="Search by patient name, city or cause..."
+              placeholder={t('campaigns.search_placeholder', 'Search by patient name, city or cause...')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-500"
@@ -100,13 +106,13 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="p-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 outline-none"
             >
-              <option value="All">All Categories</option>
-              <option value="Zakat">Zakat Eligible Only</option>
-              <option value="Medical">Medical</option>
-              <option value="Education">Education</option>
-              <option value="Marriage">Marriage</option>
-              <option value="Food">Food</option>
-              <option value="Janazah">Janazah</option>
+              <option value="All">{t('cat.all', 'All Categories')}</option>
+              <option value="Zakat">{t('cat.zakat', 'Zakat Eligible')}</option>
+              <option value="Medical">{translateCategory('Medical', language)}</option>
+              <option value="Education">{translateCategory('Education', language)}</option>
+              <option value="Marriage">{translateCategory('Marriage', language)}</option>
+              <option value="Food">{translateCategory('Food', language)}</option>
+              <option value="Janazah">{translateCategory('Janazah', language)}</option>
             </select>
 
             <select
@@ -114,12 +120,12 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
               onChange={(e) => setSelectedCity(e.target.value)}
               className="p-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 outline-none"
             >
-              <option value="All">All Indian Cities</option>
-              <option value="Delhi">Delhi</option>
-              <option value="Lucknow">Lucknow</option>
-              <option value="Hyderabad">Hyderabad</option>
-              <option value="Bareilly">Bareilly</option>
-              <option value="Mumbai">Mumbai</option>
+              <option value="All">{t('campaigns.all_cities', 'All Indian Cities')}</option>
+              {availableCities.map((city) => (
+                <option key={city} value={city}>
+                  {translateCity(city, language)}
+                </option>
+              ))}
             </select>
 
             <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl">
@@ -152,12 +158,12 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-slate-400 bg-white rounded-3xl border border-slate-100 p-8">
-          <p className="font-bold text-slate-700">No campaigns found matching your search filters.</p>
+          <p className="font-bold text-slate-700">{t('campaigns.no_results', 'No campaigns found matching your search filters.')}</p>
           <button
             onClick={() => { setSearch(''); setSelectedCategory('All'); setSelectedCity('All'); }}
             className="mt-3 px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700"
           >
-            Clear Filters
+            {t('btn.clear', 'Clear Filters')}
           </button>
         </div>
       ) : (

@@ -7,10 +7,10 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import { getAuditLogs } from '../../services/adminService';
 import { getCommunities } from '../../services/communityService';
 import { getCampaigns } from '../../services/campaignService';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface DashboardProps {
   activeUser: User;
-
 }
 
 
@@ -22,6 +22,7 @@ const categoryData = [
 ];
 
 export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) => {
+  const { t, language } = useLanguage();
   const [communities, setCommunities] = useState<Community[]>([]);
   const [campaignsList, setCampaignsList] = useState<Campaign[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -45,9 +46,6 @@ export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) =>
   const totalMembers = communities.reduce((sum, c) => sum + c.totalMembers, 0);
   const totalRaised = communities.reduce((sum, c) => sum + c.totalRaisedINR, 0);
   const totalCampaign = campaignsList.length;
-  const avgHealth = communities.length
-    ? Math.round(communities.reduce((sum, c) => sum + c.healthScore, 0) / communities.length)
-    : 0;
 
   const communityGrowth = [...communities]
     .sort((a, b) => b.totalRaisedINR - a.totalRaisedINR)
@@ -56,6 +54,13 @@ export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) =>
       name: c.city,
       raised: parseFloat((c.totalRaisedINR / 100000).toFixed(1)),
     }));
+
+  const categoryData = [
+    { name: t('cat.medical', 'Medical'), value: 45, color: '#059669' },
+    { name: t('cat.education', 'Education'), value: 25, color: '#2563eb' },
+    { name: t('cat.food', 'Food Relief'), value: 18, color: '#d97706' },
+    { name: t('cat.marriage', 'Marriage'), value: 12, color: '#9333ea' },
+  ];
 
   if (loading) {
     return (
@@ -107,19 +112,19 @@ export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) =>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-xs font-bold border border-slate-700 mb-2">
-              <Shield className="w-4 h-4 text-emerald-400" /> {activeUser.role} Portal
+              <Shield className="w-4 h-4 text-emerald-400" /> {t('admin.superAdmin', 'Super Admin')}
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-              Platform Master Analytics &amp; Oversight
+              {t('admin.platformMasterTitle', 'Platform Master Analytics & Oversight')}
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Full system financial analytics, fraud risk matrices, audit logs &amp; community health tracking.
+              {t('admin.platformMasterDesc', 'Full system financial analytics, fraud risk matrices, audit logs & community health tracking.')}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30 flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" /> All Systems 100% Operational
+              <CheckCircle2 className="w-3.5 h-3.5" /> {t('admin.systemsOperational', 'All Systems 100% Operational')}
             </span>
           </div>
         </div>
@@ -128,34 +133,34 @@ export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) =>
       {/* Analytics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
-          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block truncate">Total Funds Raised</span>
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block truncate">{t('admin.statTotalRaised', 'Total Funds Raised')}</span>
           <p className="text-2xl xl:text-3xl font-black text-emerald-600 dark:text-emerald-500 mt-1 truncate">₹{totalRaised.toLocaleString('en-IN')}</p>
-          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block truncate">Total Raised</span>
+          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block truncate">{t('card.raised', 'Total Raised')}</span>
         </div>
 
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
-          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block truncate">Total Active Members</span>
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block truncate">{t('admin.statActiveMembers', 'Total Active Members')}</span>
           <p className="text-2xl xl:text-3xl font-black text-slate-900 dark:text-white mt-1 truncate">{totalMembers.toLocaleString('en-IN')}</p>
-          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block truncate">Total Members</span>
+          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block truncate">{t('admin.tabMembers', 'Members')}</span>
         </div>
 
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
-          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block truncate">Active Communities</span>
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block truncate">{t('admin.statActiveCommunities', 'Active Communities')}</span>
           <p className="text-2xl xl:text-3xl font-black text-slate-900 dark:text-white mt-1 truncate">{communities.length}</p>
-          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block truncate">Communities</span>
+          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block truncate">{t('nav.communities', 'Communities')}</span>
         </div>
 
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
-          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block truncate">Total Compaigns</span>
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block truncate">{t('admin.statTotalCampaigns', 'Total Campaigns')}</span>
           <p className="text-2xl xl:text-3xl font-black text-slate-900 dark:text-white mt-1 truncate">{totalCampaign}</p>
-          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block truncate">Compaigns</span>
+          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block truncate">{t('nav.campaigns', 'Campaigns')}</span>
         </div>
       </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm transition-colors">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-6">Top 5 Communities by Funds (Lakhs INR)</h3>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-6">{t('admin.top5Communities', 'Top 5 Communities by Funds (Lakhs INR)')}</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={communityGrowth} barCategoryGap="15%">
@@ -173,7 +178,7 @@ export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) =>
         </div>
 
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm transition-colors">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-6">Category Donation Distribution (%)</h3>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-6">{t('admin.categoryDistribution', 'Category Donation Distribution (%)')}</h3>
           <div className="h-64 flex flex-col items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -197,36 +202,6 @@ export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) =>
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
               </PieChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-
-      {/* Top Campaigns */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm transition-colors overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-emerald-500" />
-            Top 5 Performing Campaigns
-          </h3>
-        </div>
-        <div className="p-0 flex-1 overflow-y-auto min-h-[300px]">
-          <div className="divide-y divide-slate-200 dark:divide-slate-800">
-            {campaignsList
-              .sort((a, b) => b.raisedINR - a.raisedINR)
-              .slice(0, 5)
-              .map((camp) => (
-                <div key={camp.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-center justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{camp.title}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">{camp.communityName} • {camp.city}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">₹{camp.raisedINR.toLocaleString('en-IN')}</p>
-                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1">{Math.round((camp.raisedINR / camp.goalINR) * 100)}% Funded</p>
-                  </div>
-                </div>
-              ))}
           </div>
         </div>
       </div>

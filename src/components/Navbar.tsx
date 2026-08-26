@@ -129,7 +129,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             title="Open Admin & Member Portal Desk"
           >
             <LayoutDashboard className="w-3.5 h-3.5 text-emerald-600" />
-            <span>{isHindi ? 'एडमिन पोर्टल' : 'ایڈمن پورٹل'}</span>
+            <span>{t('nav.adminPortal', 'Admin Portal')}</span>
           </Link>
 
           {/* <button
@@ -149,7 +149,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button> */}
 
           {/* Language Selector */}
-          <LanguageSelector compact />
+          <LanguageSelector compact mode="website" />
 
           {/* Login / User Profile Button */}
           {onLogout ? (
@@ -235,7 +235,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Mobile Menu Button */}
         <div className="flex items-center gap-2 sm:hidden">
-          <LanguageSelector compact />
+          <LanguageSelector compact mode="website" />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 rounded-xl text-slate-700 hover:bg-slate-100"
@@ -250,7 +250,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="lg:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-6 space-y-3 animate-fade-in shadow-lg">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <span className="text-xs font-bold text-slate-500">Language / भाषा</span>
-            <LanguageSelector />
+            <LanguageSelector mode="website" />
           </div>
           <div className="flex flex-col space-y-1">
             {navLinks.map((link) => (
@@ -280,7 +280,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
                 className="w-full py-3 rounded-xl bg-amber-50 text-amber-900 border border-amber-300 text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
               >
-                <Calculator className="w-4 h-4 text-amber-700" /> {isHindi ? 'ज़कात कैलकुलेटर (2.5%)' : 'زکوٰۃ کیلکولیٹر (2.5%)'}
+                <Calculator className="w-4 h-4 text-amber-700" /> {t('nav.zakatCalc', 'Zakat Calculator (2.5%)')}
               </button>
             )}
             <Link
@@ -291,7 +291,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className="w-full py-3 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
             >
-              <LayoutDashboard className="w-4 h-4 text-emerald-400" /> {t('nav.adminPortal', 'Open Admin Portal')} (/admin)
+              <LayoutDashboard className="w-4 h-4 text-emerald-400" /> {t('nav.adminPortal', 'Admin Portal')} (/admin)
             </Link>
             <button
               onClick={() => {
@@ -328,7 +328,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
                 className="w-full py-3 rounded-xl bg-rose-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
               >
-                <LogOut className="w-4 h-4 text-white" /> Logout Account
+                <LogOut className="w-4 h-4 text-white" /> {t('admin.logoutAccount', 'Logout Account')}
               </button>
             ) : (
               onOpenLogin && (
@@ -339,7 +339,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   }}
                   className="w-full py-3 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
                 >
-                  <LogIn className="w-4 h-4 text-emerald-400" /> Login
+                  <LogIn className="w-4 h-4 text-emerald-400" /> {t('nav.login', 'Login')}
                 </button>
               )
             )}

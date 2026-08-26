@@ -4,18 +4,36 @@ import React, { useState, useEffect } from 'react';
 import { Community } from '../../types';
 import { getCommunities, createCommunity, updateCommunity, deleteCommunity } from '../../services/communityService';
 import { PlusCircle, Edit2, Trash2, X, Building2, CheckCircle2 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
+import { translateCommunityName, translateCity } from '../../lib/translateEntity';
 
 export const SuperAdminCommunities: React.FC = () => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<Partial<Community>>({
-    name: '', city: '', state: '', adminName: '', adminRoleTitle: '',
-    avatar: '', totalMembers: 0, activeCampaigns: 0, totalRaisedINR: 0,
-    healthScore: 100, verifiedStatus: 'Verified', description: '',
-    establishedYear: new Date().getFullYear(), coverImage: ''
+    name: '',
+    establishedYear: new Date().getFullYear(),
+    city: '',
+    state: 'Uttar Pradesh',
+    adminName: '',
+    adminRoleTitle: 'Community Administrator',
+    description: '',
+    totalMembers: 0,
+    activeCampaigns: 0,
+    totalRaisedINR: 0,
+    healthScore: 100,
+    verifiedStatus: 'Verified',
   });
 
   useEffect(() => {
@@ -37,10 +55,18 @@ export const SuperAdminCommunities: React.FC = () => {
   const handleOpenAdd = () => {
     setEditingId(null);
     setFormData({
-      name: '', city: '', state: '', adminName: '', adminRoleTitle: '',
-      avatar: '', totalMembers: 0, activeCampaigns: 0, totalRaisedINR: 0,
-      healthScore: 100, verifiedStatus: 'Verified', description: '',
-      establishedYear: new Date().getFullYear(), coverImage: ''
+      name: '',
+      establishedYear: new Date().getFullYear(),
+      city: '',
+      state: 'Uttar Pradesh',
+      adminName: '',
+      adminRoleTitle: 'Community Administrator',
+      description: '',
+      totalMembers: 0,
+      activeCampaigns: 0,
+      totalRaisedINR: 0,
+      healthScore: 100,
+      verifiedStatus: 'Verified',
     });
     setIsModalOpen(true);
   };
@@ -52,19 +78,20 @@ export const SuperAdminCommunities: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this community?')) {
+    if (window.confirm(tr('क्या आप इस समुदाय को हटाना चाहते हैं?', 'کیا آپ اس کمیونٹی کو حذف کرنا چاہتے ہیں؟', 'Are you sure you want to delete this community?'))) {
       try {
         await deleteCommunity(id);
         fetchData();
       } catch (err: any) {
         console.error(err);
-        alert(err.message || 'Failed to delete community');
+        alert(err.message || tr('हटाने में त्रुटि', 'حذف کرنے میں خرابی', 'Failed to delete community'));
       }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       if (editingId) {
         await updateCommunity(editingId, formData);
@@ -75,7 +102,9 @@ export const SuperAdminCommunities: React.FC = () => {
       fetchData();
     } catch (err) {
       console.error(err);
-      alert('Failed to save community');
+      alert(tr('सुरक्षित करने में त्रुटि', 'محفوظ کرنے میں خرابی', 'Failed to save community'));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -89,19 +118,22 @@ export const SuperAdminCommunities: React.FC = () => {
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
           <h2 className="text-xl font-black text-white flex items-center gap-2">
             <Building2 className="w-5 h-5 text-emerald-400" />
-            Manage Communities
+            <span>{tr('सभी समुदायों का प्रबंधन (Super Admin)', 'تمام کمیونٹیز کا انتظام (Super Admin)', 'Manage All Communities (Super Admin)')}</span>
           </h2>
-          <p className="text-xs text-slate-400">Add, edit, or remove communities from the platform.</p>
+          <p className="text-xs text-slate-400">
+            {tr('समग्र प्रणाली में सभी पंजीकृत समुदायों और अध्यायों को नियंत्रित करें।', 'پورے سسٹم میں رجسٹرڈ کمیونٹیز اور چیپٹرز کو کنٹرول کریں۔', 'Full oversight of all registered NGO communities across the state.')}
+          </p>
         </div>
         <button
           onClick={handleOpenAdd}
-          className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 flex items-center gap-1.5"
+          className="cursor-pointer px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 flex items-center gap-1.5 self-start sm:self-auto transition-all shadow-sm"
         >
-          <PlusCircle className="w-4 h-4" /> Add Community
+          <PlusCircle className="w-4 h-4" />
+          <span>{tr('+ नया समुदाय जोड़ें', '+ نئی کمیونٹی شامل کریں', '+ Add Community')}</span>
         </button>
       </div>
 
@@ -112,25 +144,29 @@ export const SuperAdminCommunities: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {communities.map((c) => (
-            <div key={c.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col justify-between space-y-4">
+            <div key={c.id} className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4 flex flex-col justify-between hover:border-slate-700 transition-colors">
               <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <img src={c.avatar || 'https://via.placeholder.com/150'} alt={c.name} className="w-12 h-12 rounded-xl object-cover border border-slate-700" />
-                  <div>
-                    <h4 className="font-bold text-sm text-white line-clamp-1" title={c.name}>{c.name}</h4>
-                    <p className="text-xs text-slate-400">{c.city}, {c.state}</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-950/60 text-emerald-400 flex items-center justify-center font-bold text-lg border border-emerald-900/40">
+                    {c.name.charAt(0)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-sm text-white line-clamp-1" title={c.name}>
+                      {translateCommunityName(c.name, language)}
+                    </h4>
+                    <p className="text-xs text-slate-400">{translateCity(c.city, language)}, {c.state}</p>
                   </div>
                 </div>
                 <div className="text-xs text-slate-400 space-y-1">
-                  <p><strong className="text-slate-300">Admin:</strong> {c.adminName} ({c.adminRoleTitle})</p>
-                  <p><strong className="text-slate-300">Members:</strong> {c.totalMembers.toLocaleString()}</p>
-                  <p><strong className="text-slate-300">Raised:</strong> ₹{c.totalRaisedINR.toLocaleString()}</p>
-                  <p><strong className="text-slate-300">Status:</strong> 
-                    <span className={`ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                      c.verifiedStatus === 'Verified' ? 'bg-emerald-900/50 text-emerald-400' :
-                      c.verifiedStatus === 'Pending' ? 'bg-amber-900/50 text-amber-400' : 'bg-rose-900/50 text-rose-400'
+                  <p><strong className="text-slate-300">{tr('प्रशासक:', 'ایڈمن:', 'Admin:')}</strong> {c.adminName} ({c.adminRoleTitle})</p>
+                  <p><strong className="text-slate-300">{tr('सदस्य:', 'ممبران:', 'Members:')}</strong> {c.totalMembers.toLocaleString('en-IN')}</p>
+                  <p><strong className="text-slate-300">{tr('एकत्रित:', 'جمع شدہ:', 'Raised:')}</strong> ₹{c.totalRaisedINR.toLocaleString('en-IN')}</p>
+                  <p><strong className="text-slate-300">{tr('स्थिति:', 'حیثیت:', 'Status:')}</strong> 
+                    <span className={`ml-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                      c.verifiedStatus === 'Verified' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/50' :
+                      c.verifiedStatus === 'Pending' ? 'bg-amber-950/60 text-amber-400 border border-amber-800/50' : 'bg-rose-950/60 text-rose-400 border border-rose-800/50'
                     }`}>
-                      {c.verifiedStatus}
+                      {c.verifiedStatus === 'Verified' ? tr('सत्यापित', 'تصدیق شدہ', 'Verified') : c.verifiedStatus === 'Pending' ? tr('लंबित', 'زیر التواء', 'Pending') : tr('अस्वीकृत', 'مسترد', 'Rejected')}
                     </span>
                   </p>
                 </div>
@@ -138,15 +174,17 @@ export const SuperAdminCommunities: React.FC = () => {
               <div className="flex items-center gap-2 pt-3 border-t border-slate-800">
                 <button
                   onClick={() => handleOpenEdit(c)}
-                  className="flex-1 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
+                  className="cursor-pointer flex-1 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
                 >
-                  <Edit2 className="w-3.5 h-3.5" /> Edit
+                  <Edit2 className="w-3.5 h-3.5" />
+                  <span>{tr('संपादित करें', 'ترمیم', 'Edit')}</span>
                 </button>
                 <button
                   onClick={() => handleDelete(c.id)}
-                  className="flex-1 py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
+                  className="cursor-pointer flex-1 py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
                 >
-                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>{tr('हटाएं', 'حذف کریں', 'Delete')}</span>
                 </button>
               </div>
             </div>
@@ -261,11 +299,12 @@ export const SuperAdminCommunities: React.FC = () => {
             </div>
 
             <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-end gap-3">
-              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded-xl text-slate-300 font-bold text-sm hover:bg-slate-800 transition-all">
-                Cancel
+              <button onClick={() => setIsModalOpen(false)} className="cursor-pointer px-4 py-2 rounded-xl text-slate-300 font-bold text-sm hover:bg-slate-800 transition-all">
+                {tr('रद्द करें', 'منسوخ کریں', 'Cancel')}
               </button>
-              <button type="submit" form="community-form" className="px-6 py-2 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-500 transition-all flex items-center gap-2 shadow-lg shadow-emerald-900/20">
-                <CheckCircle2 className="w-4 h-4" /> Save Community
+              <button type="submit" form="community-form" className="cursor-pointer px-6 py-2 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-500 transition-all flex items-center gap-2 shadow-lg shadow-emerald-900/20">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{tr('समुदाय सुरक्षित करें', 'کمیونٹی محفوظ کریں', 'Save Community')}</span>
               </button>
             </div>
           </div>

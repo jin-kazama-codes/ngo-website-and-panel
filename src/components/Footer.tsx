@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { Phone, MapPin, ShieldCheck, QrCode } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -12,7 +12,7 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = () => {
-  const { isHindi } = useLanguage();
+  const { t } = useLanguage();
 
   return (
     <footer className="bg-slate-950 text-slate-300 pt-16 pb-8 border-t border-slate-800">
@@ -27,62 +27,57 @@ export const Footer: React.FC<FooterProps> = () => {
               <div>
                 <span className="font-extrabold text-2xl tracking-tight text-white">MFCT</span>
                 <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  {isHindi ? 'सामुदायिक मंच' : 'کمیونٹی پلیٹ فارم'}
+                  {t('footer.platform_label', 'Community Platform')}
                 </span>
               </div>
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
-              {isHindi
-                ? 'MFCT भारत का प्रमुख पारदर्शी, समावेशी सामुदायिक धन उगाहने वाला मंच है। प्रत्येक सदस्य दूसरों का समर्थन करने और सत्यापित सामुदायिक सहायता प्राप्त करने के लिए मात्र ₹50 शुल्क के साथ जुड़ता है।'
-                : 'ایم ایف سی ٹی ہندوستان کا اولین شفاف اور براہ راست فلاحی نیٹ ورک ہے۔ ہر ممبر دوسروں کی مدد کرنے اور ایمرجنسی میں امداد حاصل کرنے کے لیے صرف ₹50 فیس کے ساتھ شامل ہوتا ہے۔'}
+              {t('footer.aboutText', 'MFCT is a transparent, grassroots welfare network providing medical aid, Nikah support, education, and Janazah services.')}
             </p>
 
             <div className="flex items-center gap-2 text-xs text-emerald-400 font-semibold pt-1">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" /> {isHindi ? 'धारा 8 पंजीकृत एनजीओ | 80G कर छूट प्रमाणित' : 'سیکشن 8 رجسٹرڈ این جی او | 80G ٹیکس چھوٹ تصدیق شدہ'}
+              <ShieldCheck className="w-4 h-4 text-emerald-500" /> {t('footer.ngo_badge', 'Section 8 Registered NGO | 80G Tax Exemption Certified')}
             </div>
           </div>
 
           {/* Col 2: Quick Links */}
           <div className="space-y-3 text-xs">
-            <h4 className="font-bold text-white text-sm uppercase tracking-wider">{isHindi ? 'त्वरित नेविगेशन' : 'فوری لنکس'}</h4>
+            <h4 className="font-bold text-white text-sm uppercase tracking-wider">{t('footer.quickLinks', 'Quick Navigation')}</h4>
             <ul className="space-y-2 text-slate-400 font-medium">
               <li>
-                <Link
-                  href="/admin"
-                  className="text-emerald-400 font-bold hover:underline flex items-center gap-1"
-                >
-                  <span>{isHindi ? 'व्यवस्थापक और सदस्य पोर्टल (/admin)' : 'ایڈمن اور ممبر پورٹل (/admin)'}</span>
+                <Link href="/admin" className="text-emerald-400 font-bold hover:underline flex items-center gap-1">
+                  <span>{t('footer.admin_portal', 'Admin & Member Portal (/admin)')}</span>
                 </Link>
               </li>
               <li>
                 <Link href="/" className="hover:text-emerald-400 transition-colors">
-                  {isHindi ? 'होम मुख्य पृष्ठ' : 'مرکزی صفحہ'}
+                  {t('nav.home', 'Home')}
                 </Link>
               </li>
               <li>
                 <Link href="/campaigns" className="hover:text-emerald-400 transition-colors">
-                  {isHindi ? 'सत्यापित अभियान' : 'تصدیق شدہ مہمات'}
+                  {t('nav.campaigns', 'Verified Campaigns')}
                 </Link>
               </li>
               <li>
                 <Link href="/communities" className="hover:text-emerald-400 transition-colors">
-                  {isHindi ? 'स्थानीय समुदाय' : 'مقامی کمیونٹیز'}
+                  {t('nav.communities', 'Local Communities')}
                 </Link>
               </li>
               <li>
                 <Link href="/about" className="hover:text-emerald-400 transition-colors">
-                  {isHindi ? 'पारदर्शिता मॉडल' : 'ہمارے بارے میں'}
+                  {t('nav.about', 'About Us')}
                 </Link>
               </li>
               <li>
                 <Link href="/gallery" className="hover:text-emerald-400 transition-colors">
-                  {isHindi ? 'राहत गैलरी' : 'تصویری گیلری'}
+                  {t('nav.gallery', 'Gallery')}
                 </Link>
               </li>
               <li>
                 <Link href="/testimonials" className="hover:text-emerald-400 transition-colors">
-                  {isHindi ? 'सफलता की कहानियाँ' : 'اثرات کی کہانیاں'}
+                  {t('nav.testimonials', 'Impact Stories')}
                 </Link>
               </li>
             </ul>
@@ -90,27 +85,27 @@ export const Footer: React.FC<FooterProps> = () => {
 
           {/* Col 3: Categories & Causes */}
           <div className="space-y-3 text-xs">
-            <h4 className="font-bold text-white text-sm uppercase tracking-wider">{isHindi ? 'सहायता श्रेणियाँ' : 'امدادی شعبے'}</h4>
+            <h4 className="font-bold text-white text-sm uppercase tracking-wider">{t('footer.causes', 'Aid Categories')}</h4>
             <ul className="space-y-2 text-slate-400 font-medium">
-              <li>{isHindi ? 'चिकित्सा और आपातकालीन सहायता' : 'طبی اور ہنگامی سرجری امداد'}</li>
-              <li>{isHindi ? 'उच्च शिक्षा और अनाथ बच्चे' : 'اعلیٰ تعلیم اور یتیم طلباء'}</li>
-              <li>{isHindi ? 'गरिमापूर्ण विवाह सहायता' : 'باعزت نکاح و شادی امداد'}</li>
-              <li>{isHindi ? 'ज़कात पात्र सत्यापित कारण' : 'شرعی زکوٰۃ مستحقین'}</li>
-              <li>{isHindi ? 'सदका और सामान्य राहत' : 'صدقہ اور عمومی امداد'}</li>
-              <li>{isHindi ? 'जनाज़ा और क़ब्रिस्तान सेवा' : 'جنازہ، کفن اور میت ایمبولینس'}</li>
+              <li>{t('cat.medical', 'Medical Aid')}</li>
+              <li>{t('cat.education', 'Education & Books')}</li>
+              <li>{t('cat.marriage', 'Marriage & Nikah Support')}</li>
+              <li>{t('cat.zakat', 'Zakat Eligible')}</li>
+              <li>{t('cat.sadakah', 'Sadaqah & General Relief')}</li>
+              <li>{t('cat.janazah', 'Janazah & Cemetery')}</li>
             </ul>
           </div>
 
           {/* Col 4: App Download & QR */}
           <div className="space-y-4 text-xs">
-            <h4 className="font-bold text-white text-sm uppercase tracking-wider">{isHindi ? 'मोबाइल ऐप और क्यूआर' : 'موبائل ایپ اور کیو آر'}</h4>
+            <h4 className="font-bold text-white text-sm uppercase tracking-wider">{t('footer.app_qr', 'Mobile App & QR')}</h4>
             <div className="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex items-center gap-3">
               <div className="bg-white p-1.5 rounded-lg shrink-0">
                 <QrCode className="w-10 h-10 text-slate-900" />
               </div>
               <div className="text-[11px]">
-                <p className="font-bold text-white">{isHindi ? 'MFCT ऐप के लिए स्कैन करें' : 'ایپ ڈاؤن لوڈ کے لیے اسکین کریں'}</p>
-                <p className="text-slate-400 text-[10px]">{isHindi ? 'Android और iOS त्वरित डाउनलोड' : 'اینڈرائیڈ اور آئی او ایس ایپ'}</p>
+                <p className="font-bold text-white">{t('footer.scan_app', 'Scan for MFCT App')}</p>
+                <p className="text-slate-400 text-[10px]">{t('footer.android_ios', 'Android & iOS quick download')}</p>
               </div>
             </div>
           </div>
@@ -119,24 +114,24 @@ export const Footer: React.FC<FooterProps> = () => {
         <div className="py-6 border-b border-slate-800 flex flex-col md:flex-row items-center justify-between text-xs text-slate-400 gap-4">
           <div className="flex items-center gap-4 flex-wrap">
             <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-              <Phone className="w-4 h-4" /> {isHindi ? 'हेल्पलाइन: +91 1800 200 MFCT (6328)' : 'ہیلپ لائن: +91 1800 200 6328'}
+              <Phone className="w-4 h-4" /> {t('footer.helpline', 'Helpline: +91 1800 200 MFCT (6328)')}
             </span>
             <span className="flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-slate-500" /> {isHindi ? 'बरेली उत्तर प्रदेश भारत' : 'بریلی، اتر پردیش، ہندوستان'}
+              <MapPin className="w-4 h-4 text-slate-500" /> {t('footer.bareillyAddress', 'Bareilly, Uttar Pradesh, India')}
             </span>
           </div>
 
           <div className="flex items-center gap-4 text-slate-500 font-medium">
-            <Link href="/privacy" className="hover:text-slate-300 cursor-pointer">{isHindi ? 'गोपनीयता नीति' : 'پرائیویسی پالیسی'}</Link>
-            <Link href="/terms" className="hover:text-slate-300 cursor-pointer">{isHindi ? 'सेवा की शर्तें' : 'شرائط و ضوابط'}</Link>
-            <Link href="/refund" className="hover:text-slate-300 cursor-pointer">{isHindi ? 'रिफंड और ऑडिट नीति' : 'ریفنڈ اور آڈٹ پالیسی'}</Link>
+            <Link href="/privacy" className="hover:text-slate-300 cursor-pointer">{t('footer.privacy', 'Privacy Policy')}</Link>
+            <Link href="/terms" className="hover:text-slate-300 cursor-pointer">{t('footer.terms', 'Terms of Service')}</Link>
+            <Link href="/refund" className="hover:text-slate-300 cursor-pointer">{t('footer.refund', 'Refund & Audit Policy')}</Link>
           </div>
         </div>
 
         {/* Bottom copyright */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500">
-          <p>{isHindi ? '© 2026 MFCT कम्युनिटी फाउंडेशन। सर्वाधिकार सुरक्षित।' : '© 2026 MFCT کمیونٹی فاؤنڈیشن۔ جملہ حقوق محفوظ ہیں۔'}</p>
-          <p className="mt-2 sm:mt-0">{isHindi ? '100% पारदर्शिता और सामुदायिक सशक्तिकरण।' : '100% شفافیت اور کمیونٹی فلاح۔'}</p>
+          <p>{t('footer.copyright', '© 2026 MFCT Community Foundation. All rights reserved.')}</p>
+          <p className="mt-2 sm:mt-0">{t('footer.rights', '100% Transparency and Community Empowerment.')}</p>
         </div>
       </div>
     </footer>
