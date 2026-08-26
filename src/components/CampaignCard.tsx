@@ -1,20 +1,47 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Campaign } from '../types';
 import { ShieldCheck, Sparkles, Clock, Heart, Users, Building2, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useRouter } from 'next/navigation';
+import { translateCampaign, translateCampaignTitle, translateCampaignStory } from '../lib/translateEntity';
+import { autoTranslateText } from '../lib/autoTranslate';
 
 interface CampaignCardProps {
   campaign: Campaign;
   onDonate: (campaign: Campaign) => void;
 }
 
-export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate }) => {
+export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign: rawCampaign, onDonate }) => {
   const router = useRouter();
-  const { t, isHindi } = useLanguage();
+  const { t, language } = useLanguage();
+  const campaign = translateCampaign(rawCampaign, language);
   const percentRaised = Math.min(100, Math.round((campaign.raisedINR / campaign.goalINR) * 100));
+
+  const [displayTitle, setDisplayTitle] = useState(campaign.title);
+  const [displayStory, setDisplayStory] = useState(campaign.story);
+
+  useEffect(() => {
+    if (language === 'en') {
+      setDisplayTitle(rawCampaign.title);
+      setDisplayStory(rawCampaign.story);
+      return;
+    }
+
+    const tTitle = translateCampaignTitle(rawCampaign.title, language);
+    const tStory = translateCampaignStory(rawCampaign.story, language);
+    setDisplayTitle(tTitle);
+    setDisplayStory(tStory);
+
+    // If still in original English (i.e. brand new custom campaign), fetch auto-translation
+    if (tTitle === rawCampaign.title && rawCampaign.title) {
+      autoTranslateText(rawCampaign.title, language).then(setDisplayTitle);
+    }
+    if (tStory === rawCampaign.story && rawCampaign.story) {
+      autoTranslateText(rawCampaign.story, language).then(setDisplayStory);
+    }
+  }, [rawCampaign.title, rawCampaign.story, language]);
 
   const categoryTranslations: Record<string, string> = {
     Medical: t('cat.medical', 'Medical Aid'),
@@ -26,7 +53,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate }
     Zakat: t('cat.zakat', 'Zakat'),
   };
 
-  const displayCategory = categoryTranslations[campaign.category] || campaign.category;
+  const displayCategory = categoryTranslations[rawCampaign.category] || campaign.category;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group">
@@ -34,7 +61,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate }
       <div className="relative h-52 overflow-hidden bg-slate-100">
         <img
           src={campaign.mainImage}
-          alt={campaign.title}
+          alt={displayTitle}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           referrerPolicy="no-referrer"
         />
@@ -81,10 +108,10 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate }
             onClick={() => router.push(`/campaigns/${campaign.id}`)}
             className="font-bold text-slate-900 text-base leading-snug hover:text-emerald-600 transition-colors cursor-pointer line-clamp-2"
           >
-            {campaign.title}
+            {displayTitle}
           </h3>
           <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
-            {campaign.story}
+            {displayStory}
           </p>
         </div>
 
@@ -96,7 +123,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate }
               <span className="text-slate-400 font-normal text-xs">{t('card.raised', 'raised')}</span>
             </span>
             <span className="text-slate-500">
-              {isHindi ? 'लक्ष्य' : 'ہدف'}: ₹{campaign.goalINR.toLocaleString('en-IN')}
+              {t('card.ofGoal', 'Goal')}: ₹{campaign.goalINR.toLocaleString('en-IN')}
             </span>
           </div>
 
@@ -127,7 +154,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate }
             {t('card.viewDetail', 'Read Story & Docs')}
           </button>
           <button
-            onClick={() => onDonate(campaign)}
+            onClick={() => onDonate(rawCampaign)}
             className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer"
           >
             <Heart className="w-3.5 h-3.5 fill-current" /> {t('card.donateNow', 'Donate')}

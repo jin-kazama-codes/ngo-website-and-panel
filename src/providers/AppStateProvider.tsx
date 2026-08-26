@@ -4,7 +4,7 @@ import React, { useState, useEffect, useContext, createContext, ReactNode } from
 import { useRouter } from 'next/navigation';
 import { UserRole, User, Campaign, Donation } from '../types';
 import { USER_SUPER_ADMIN, USER_EXECUTIVE_ADMIN, USER_COMMUNITY_ADMIN, USER_MEMBER, CURRENT_USER_PREMIUM } from '../data/mockData';
-import { getCampaigns, getEmergencyCampaigns } from '../services/campaignService';
+import { getCampaigns, getEmergencyCampaigns, sortCampaignsByLatest } from '../services/campaignService';
 
 // Components & Modals
 import { Navbar } from '../components/Navbar';
@@ -75,7 +75,7 @@ export function AppStateProvider({
     Promise.all([
       getCampaigns({ status: 'all' })
     ]).then(([cData]) => {
-      setCampaignsList([...cData]);
+      setCampaignsList(sortCampaignsByLatest([...cData]));
     }).catch(console.error);
   }, []);
 

@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Campaign, DonationCategory, Donation, User, AccountDetails } from '../types';
-import { X, Check, QrCode, Upload, ArrowRight, ShieldCheck, Heart, Sparkles, Building2, CheckCircle2 } from 'lucide-react';
+import { X, QrCode, Upload, ArrowRight, ShieldCheck, Sparkles, Building2, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCampaigns } from '../services/campaignService';
 import { createDonation } from '../services/donationService';
 import { updateCampaignRaised } from '../services/campaignService';
 import { uploadImage } from '../lib/storage';
 import { getAccountDetails } from '../services/adminService';
+import { useLanguage } from '../context/LanguageContext';
+import { translateCampaignTitle, translateCategory } from '../lib/translateEntity';
 
 interface DonationModalProps {
   campaign?: Campaign;
@@ -27,6 +29,13 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   onClose,
   onDonationSuccess,
 }) => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedCategory, setSelectedCategory] = useState<DonationCategory>(
     initialCategory || campaign?.category || 'General'
@@ -42,7 +51,9 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const [utrNumber, setUtrNumber] = useState<string>('');
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotUploaded, setScreenshotUploaded] = useState<boolean>(false);
-  const [donorName, setDonorName] = useState<string>(currentUser?.name || 'Generous Member');
+  const [donorName, setDonorName] = useState<string>(
+    currentUser?.name || tr('उदार दानदाता', 'عطیہ دہندہ', 'Generous Member')
+  );
   const [createdDonation, setCreatedDonation] = useState<Donation | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
@@ -90,7 +101,13 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!utrNumber && !screenshotUploaded) {
-      showToast('Please enter a valid 12-digit UPI UTR number or upload payment screenshot.');
+      showToast(
+        tr(
+          'कृपया 12 अंकों का यूपीआई यूटीआर नंबर दर्ज करें या भुगतान स्क्रीनशॉट अपलोड करें।',
+          'براہ کرم 12 ہندسوں کا یو پی آئی UTR نمبر درج کریں یا رسید اپلوڈ کریں۔',
+          'Please enter a valid 12-digit UPI UTR number or upload payment screenshot.'
+        )
+      );
       return;
     }
     if (!activeCampaign) return;
@@ -106,7 +123,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
       const donationData: Omit<Donation, 'id'> = {
         transactionId: `TXN${Math.floor(100000000 + Math.random() * 900000000)}`,
         utrNumber: finalUtr,
-        donorName: donorName || 'Generous Member',
+        donorName: donorName || tr('उदार दानदाता', 'عطیہ دہندہ', 'Generous Member'),
         donorId: currentUser?.id || 'anonymous',
         donorRole: currentUser?.role || 'member',
         campaignId: activeCampaign.id,
@@ -128,16 +145,39 @@ export const DonationModal: React.FC<DonationModalProps> = ({
       setCreatedDonation(savedDonation);
       onDonationSuccess(savedDonation);
       setStep(3);
-      showToast('Donation submitted successfully!', 'success');
+      showToast(
+        tr('दान सफलतापूर्वक जमा किया गया!', 'عطیہ کامیابی کے ساتھ جمع ہو گیا!', 'Donation submitted successfully!'),
+        'success'
+      );
 
       try {
         confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
       } catch { }
     } catch (err) {
       console.error('Donation error:', err);
-      showToast('Failed to submit donation. Please try again.');
+      showToast(
+        tr(
+          'दान जमा करने में विफल। कृपया पुन: प्रयास करें।',
+          'عطیہ جمع کرنے میں ناکامی۔ دوبارہ کوشش کریں۔',
+          'Failed to submit donation. Please try again.'
+        )
+      );
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const getCategoryLabel = (cat: DonationCategory) => {
+    switch (cat) {
+      case 'General': return tr('सामान्य', 'عام عطیہ', 'General');
+      case 'Sadakah': return tr('सदक़ा', 'صدقہ', 'Sadakah');
+      case 'Zakat': return tr('ज़कात', 'زکوٰۃ', 'Zakat');
+      case 'Fitrah': return tr('फ़ितरा', 'فطرہ', 'Fitrah');
+      case 'Medical': return tr('चिकित्सा', 'طبی امداد', 'Medical');
+      case 'Education': return tr('शिक्षा', 'تعلیم', 'Education');
+      case 'Marriage': return tr('विवाह', 'نکاح', 'Marriage');
+      case 'Emergency Relief': return tr('आपातकालीन राहत', 'ہنگامی امداد', 'Emergency Relief');
+      default: return cat;
     }
   };
 
@@ -165,14 +205,20 @@ export const DonationModal: React.FC<DonationModalProps> = ({
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
-              Transparent Community Escrow
+              {tr('पारदर्शी सामुदायिक एस्क्रो', 'شفاف کمیونٹی اسکرو', 'Transparent Community Escrow')}
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-            {step === 3 ? 'Donation Successful! 🎉' : 'Make a Verified Donation'}
+            {step === 3
+              ? tr('दान सफल! 🎉', 'عطیہ کامیاب! 🎉', 'Donation Successful! 🎉')
+              : tr('सत्यापित दान करें', 'تصدیق شدہ عطیہ دیں', 'Make a Verified Donation')}
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            100% of your donation directly reaches verified beneficiaries.
+            {tr(
+              'आपके दान का 100% सीधे सत्यापित लाभार्थियों तक पहुंचता है।',
+              'آپ کے عطیہ کا 100% براہ راست تصدیق شدہ مستحقین تک پہنچتا ہے۔',
+              '100% of your donation directly reaches verified beneficiaries.'
+            )}
           </p>
         </div>
 
@@ -181,7 +227,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             {/* Category Selector */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                1. Select Donation Type
+                {tr('1. दान का प्रकार चुनें', '1. عطیہ کی قسم منتخب کریں', '1. Select Donation Type')}
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {(
@@ -211,10 +257,10 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                       }`}
                   >
-                    <span>{cat}</span>
+                    <span>{getCategoryLabel(cat)}</span>
                     {cat === 'Zakat' && (
                       <span className="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-bold">
-                        Zakat
+                        {tr('ज़कात', 'زکوٰۃ', 'Zakat')}
                       </span>
                     )}
                   </button>
@@ -225,8 +271,12 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 <div className="mt-2.5 p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
                   <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold">Zakat Compliance Rule:</span> Zakat can only be donated to
-                    strictly <span className="font-bold underline">Zakat Eligible</span> verified campaigns. Non-eligible campaigns have been filtered out automatically.
+                    <span className="font-bold">{tr('ज़कात अनुपालन नियम:', 'زکوٰۃ کا اصول:', 'Zakat Compliance Rule:')}</span>{' '}
+                    {tr(
+                      'ज़कात केवल सख्ती से ज़कात-पात्र सत्यापित अभियानों में ही दी जा सकती है। अन्य अभियान स्वतः हटा दिए गए हैं।',
+                      'زکوٰۃ صرف اور صرف مستحقِ زکوٰۃ مہمات میں ہی دی جا سکتی ہے۔ غیر مستحق مہمات فلٹر کر دی گئی ہیں۔',
+                      'Zakat can only be donated to strictly Zakat Eligible verified campaigns. Non-eligible campaigns have been filtered out automatically.'
+                    )}
                   </div>
                 </div>
               )}
@@ -235,7 +285,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             {/* Campaign Selection */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                2. Target Campaign
+                {tr('2. लक्षित अभियान', '2. ہدف مہم', '2. Target Campaign')}
               </label>
               <select
                 value={selectedCampaignId}
@@ -244,7 +294,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               >
                 {filteredCampaigns.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.title} {c.isZakatEligible ? '(Zakat Eligible ✓)' : ''}
+                    {translateCampaignTitle(c.title, language)} {c.isZakatEligible ? `(${tr('ज़कात पात्र ✓', 'زکوٰۃ اہل ✓', 'Zakat Eligible ✓')})` : ''}
                   </option>
                 ))}
               </select>
@@ -255,9 +305,13 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               <div className="flex items-center gap-3">
                 <Building2 className="w-5 h-5 text-emerald-600" />
                 <div>
-                  <p className="text-xs font-bold text-slate-900">Help Outside Community</p>
+                  <p className="text-xs font-bold text-slate-900">{tr('बाहरी समुदाय की मदद करें', 'باہر کی کمیونٹی کی مدد کریں', 'Help Outside Community')}</p>
                   <p className="text-[11px] text-slate-500">
-                    Donate to campaigns outside your home community
+                    {tr(
+                      'अपने गृह समुदाय के बाहर के अभियानों में दान करें',
+                      'اپنے مقامی علاقے سے باہر کی مہمات میں عطیہ دیں',
+                      'Donate to campaigns outside your home community'
+                    )}
                   </p>
                 </div>
               </div>
@@ -275,7 +329,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             {/* Amount Presets */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                3. Choose Amount (INR ₹)
+                {tr('3. राशि चुनें (INR ₹)', '3. رقم منتخب کریں (INR ₹)', '3. Choose Amount (INR ₹)')}
               </label>
               <div className="grid grid-cols-4 gap-2 mb-3">
                 {[500, 1000, 2500, 5000].map((val) => (
@@ -296,7 +350,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 <span className="absolute left-3.5 top-3 text-slate-400 font-bold">₹</span>
                 <input
                   type="number"
-                  placeholder="Enter custom amount..."
+                  placeholder={tr('इच्छानुसार राशि दर्ज करें...', 'اپنی مرضی کی رقم درج کریں...', 'Enter custom amount...')}
                   value={customAmount}
                   onChange={handleCustomAmountChange}
                   className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -310,23 +364,23 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               onClick={() => setStep(2)}
               className="cursor-pointer w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
             >
-              <span>Proceed to Payment (₹{amount.toLocaleString('en-IN')})</span>
+              <span>{tr('भुगतान हेतु आगे बढ़ें', 'ادائیگی کے لیے آگے بڑھیں', 'Proceed to Payment')} (₹{amount.toLocaleString('en-IN')})</span>
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>
         )}
 
-        {step === 2 && (
+        {step === 2 && activeCampaign && (
           <form onSubmit={handleSubmitPayment} className="space-y-6">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between text-sm">
               <div>
-                <span className="text-slate-500 text-xs block">Selected Campaign:</span>
+                <span className="text-slate-500 text-xs block">{tr('चयनित अभियान:', 'منتخب مہم:', 'Selected Campaign:')}</span>
                 <span className="font-bold text-slate-900 truncate max-w-[280px] block">
-                  {activeCampaign.title}
+                  {translateCampaignTitle(activeCampaign.title, language)}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-slate-500 text-xs block">Total Amount:</span>
+                <span className="text-slate-500 text-xs block">{tr('कुल राशि:', 'کل رقم:', 'Total Amount:')}</span>
                 <span className="font-bold text-emerald-700 text-lg">₹{amount.toLocaleString('en-IN')}</span>
               </div>
             </div>
@@ -339,7 +393,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 className={`cursor-pointer py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'UPI' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
                   }`}
               >
-                Instant UPI / QR Scan
+                {tr('तत्काल यूपीआई / क्यूआर स्कैन', 'فوری یو پی آئی / کیو آر اسکین', 'Instant UPI / QR Scan')}
               </button>
               <button
                 type="button"
@@ -347,7 +401,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 className={`cursor-pointer py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'Bank Transfer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
                   }`}
               >
-                Direct Bank NEFT / RTGS
+                {tr('प्रत्यक्ष बैंक NEFT / RTGS', 'براہ راست بینک NEFT / RTGS', 'Direct Bank NEFT / RTGS')}
               </button>
             </div>
 
@@ -361,31 +415,31 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                   )}
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 uppercase tracking-wider">UPI ID for Direct Escrow</p>
+                  <p className="text-xs text-slate-400 uppercase tracking-wider">{tr('सीधे एस्क्रो के लिए UPI ID', 'براہ راست اسکرو کے لیے یو پی آئی آئی ڈی', 'UPI ID for Direct Escrow')}</p>
                   <p className="font-mono text-emerald-400 font-bold text-lg select-all">
                     {accountDetails?.upi_id || 'mfct@okicici'}
                   </p>
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Scan using Google Pay, PhonePe, Paytm, or BHIM UPI
+                    {tr(
+                      'Google Pay, PhonePe, Paytm या BHIM UPI द्वारा स्कैन करें',
+                      'Google Pay, PhonePe, Paytm یا BHIM ایپ سے اسکین کریں',
+                      'Scan using Google Pay, PhonePe, Paytm, or BHIM UPI'
+                    )}
                   </p>
                 </div>
               </div>
             ) : (
               <div className="p-5 bg-slate-900 text-white rounded-3xl space-y-3 text-xs font-mono">
-                {/* <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">Account Name:</span>
-                  <span className="text-emerald-400 font-bold">SevaSangam Relief Escrow Trust</span>
-                </div> */}
                 <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">Bank Name:</span>
+                  <span className="text-slate-400">{tr('बैंक का नाम:', 'بینک کا نام:', 'Bank Name:')}</span>
                   <span className="text-slate-200">{accountDetails?.bank_name || 'ICICI Bank Ltd'}</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">Account Number:</span>
+                  <span className="text-slate-400">{tr('खाता संख्या:', 'اکاؤنٹ نمبر:', 'Account Number:')}</span>
                   <span className="text-emerald-300 font-bold select-all">{accountDetails?.account_number || '000405018892'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">IFSC Code:</span>
+                  <span className="text-slate-400">{tr('IFSC कोड:', 'آئی ایف ایس سی کوڈ:', 'IFSC Code:')}</span>
                   <span className="text-emerald-300 font-bold select-all">{accountDetails?.ifsc_code || 'ICIC0000004'}</span>
                 </div>
               </div>
@@ -395,7 +449,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Your Full Name
+                  {tr('आपका पूरा नाम', 'آپ کا پورا نام', 'Your Full Name')}
                 </label>
                 <input
                   type="text"
@@ -408,11 +462,11 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  12-Digit Bank UTR / Transaction Ref No
+                  {tr('12 अंकों का बैंक UTR / संदर्भ संख्या', '12 ہندسوں کا بینک UTR / ٹرانزیکشن نمبر', '12-Digit Bank UTR / Transaction Ref No')}
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. 420199381029"
+                  placeholder={tr('उदा. 420199381029', 'مثال: 420199381029', 'e.g. 420199381029')}
                   value={utrNumber}
                   onChange={(e) => setUtrNumber(e.target.value)}
                   className="w-full p-3 rounded-xl border border-slate-200 font-mono text-sm font-semibold focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -421,7 +475,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Or Upload Payment Screenshot
+                  {tr('या भुगतान स्क्रीनशॉट अपलोड करें', 'یا ادائیگی کی رسید اپلوڈ کریں', 'Or Upload Payment Screenshot')}
                 </label>
                 <label
                   className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${screenshotUploaded
@@ -442,8 +496,8 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                   <Upload className="w-5 h-5 mb-1 text-slate-500" />
                   <span className="text-xs font-bold">
                     {screenshotUploaded
-                      ? `✓ ${screenshotFile?.name ?? 'Screenshot Attached'}`
-                      : 'Click to upload payment screenshot'}
+                      ? `✓ ${screenshotFile?.name ?? tr('स्क्रीनशॉट संलग्न है', 'رسید منسلک ہے', 'Screenshot Attached')}`
+                      : tr('भुगतान स्क्रीनशॉट अपलोड करने के लिए क्लिक करें', 'ادائیگی کی رسید اپلوڈ کریں', 'Click to upload payment screenshot')}
                   </span>
                 </label>
               </div>
@@ -455,7 +509,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 onClick={() => setStep(1)}
                 className="cursor-pointer py-3.5 px-5 rounded-2xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 transition-colors"
               >
-                Back
+                {tr('वापस', 'واپس', 'Back')}
               </button>
               <button
                 type="submit"
@@ -464,7 +518,9 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               >
                 {submitting ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : 'Submit Payment & Generate Receipt'}
+                ) : (
+                  tr('भुगतान जमा करें और रसीद प्राप्त करें', 'ادائیگی جمع کروائیں اور رسید حاصل کریں', 'Submit Payment & Generate Receipt')
+                )}
               </button>
             </div>
           </form>
@@ -477,24 +533,32 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             </div>
 
             <div>
-              <h3 className="text-xl font-bold text-slate-900">Thank You for Your Generosity!</h3>
+              <h3 className="text-xl font-bold text-slate-900">
+                {tr('आपकी उदारता के लिए धन्यवाद! 🎉', 'آپ کی سخاوت کا شکریہ! 🎉', 'Thank You for Your Generosity! 🎉')}
+              </h3>
               <p className="text-sm text-slate-600 mt-1 max-w-md mx-auto">
-                Your donation of <span className="font-bold text-emerald-700">₹{createdDonation.amountINR.toLocaleString('en-IN')}</span> has been submitted under escrow and a tax-exempt receipt has been generated.
+                {language === 'hi' ? (
+                  <>आपकी <span className="font-bold text-emerald-700">₹{createdDonation.amountINR.toLocaleString('en-IN')}</span> की दान राशि एस्क्रो के तहत दर्ज कर ली गई है और कर-छूट रसीद तैयार कर दी गई है।</>
+                ) : language === 'ur' ? (
+                  <>آپ کا <span className="font-bold text-emerald-700">₹{createdDonation.amountINR.toLocaleString('en-IN')}</span> کا عطیہ موصول ہو گیا ہے اور ٹیکس چھوٹ رسید تیار کر دی گئی ہے۔</>
+                ) : (
+                  <>Your donation of <span className="font-bold text-emerald-700">₹{createdDonation.amountINR.toLocaleString('en-IN')}</span> has been submitted under escrow and a tax-exempt receipt has been generated.</>
+                )}
               </p>
             </div>
 
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-left text-xs space-y-2">
               <div className="flex justify-between">
-                <span className="text-slate-500">Receipt No:</span>
+                <span className="text-slate-500">{tr('रसीद संख्या:', 'رسید نمبر:', 'Receipt No:')}</span>
                 <span className="font-bold font-mono text-slate-800">{createdDonation.receiptNumber}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">UTR Reference:</span>
+                <span className="text-slate-500">{tr('यूटीआर संदर्भ:', 'یو ٹی آر ریفرنس:', 'UTR Reference:')}</span>
                 <span className="font-mono text-slate-800">{createdDonation.utrNumber}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Category:</span>
-                <span className="font-semibold text-slate-800">{createdDonation.category}</span>
+                <span className="text-slate-500">{tr('श्रेणी:', 'کیٹیگری:', 'Category:')}</span>
+                <span className="font-semibold text-slate-800">{getCategoryLabel(createdDonation.category)}</span>
               </div>
             </div>
 
@@ -503,7 +567,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 onClick={onClose}
                 className="cursor-pointer flex-1 py-3.5 rounded-2xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-colors"
               >
-                Return to Platform
+                {tr('मुख्य मंच पर वापस जाएं', 'پلیٹ فارم پر واپس جائیں', 'Return to Platform')}
               </button>
             </div>
           </div>

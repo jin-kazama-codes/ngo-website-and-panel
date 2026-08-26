@@ -7,13 +7,14 @@ import { Users, MapPin } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { CardSkeleton } from '../components/Skeletons';
 import { MembershipBanner } from '../components/MembershipBanner';
+import { translateCommunity } from '../lib/translateEntity';
 
 interface CommunitiesPageProps {
   onOpenRegister: () => void;
 }
 
 export const CommunitiesPage: React.FC<CommunitiesPageProps> = ({ onOpenRegister }) => {
-  const { isHindi } = useLanguage();
+  const { t, language } = useLanguage();
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,9 +45,9 @@ export const CommunitiesPage: React.FC<CommunitiesPageProps> = ({ onOpenRegister
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-black text-slate-900">{isHindi ? 'स्थानीय सामुदायिक नेटवर्क' : 'مقامی کمیونٹی نیٹ ورک'}</h1>
+        <h1 className="text-3xl font-black text-slate-900">{t('communities.page_title', 'Local Community Network')}</h1>
         <p className="text-sm text-slate-500 mt-1">
-          {isHindi ? 'प्रत्येक समुदाय एक विश्वसनीय स्थानीय प्रशासक द्वारा प्रबंधित किया जाता है और हमारे राष्ट्रीय एकजुटता एस्क्रो द्वारा समर्थित है।' : 'ہر محلہ ایک مقامی ذمہ دار کے زیر نگرانی اور 100% شفاف فنڈنگ کے تحت کام کرتا ہے۔'}
+          {t('communities.page_desc', 'Each community is managed by a trusted local administrator and backed by our national solidarity escrow.')}
         </p>
       </div>
 
@@ -58,7 +59,8 @@ export const CommunitiesPage: React.FC<CommunitiesPageProps> = ({ onOpenRegister
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedCommunities.map((comm, index) => {
+          {paginatedCommunities.map((rawComm, index) => {
+            const comm = translateCommunity(rawComm, language);
             const isLast = index === paginatedCommunities.length - 1;
             return (
               <div
@@ -82,20 +84,20 @@ export const CommunitiesPage: React.FC<CommunitiesPageProps> = ({ onOpenRegister
 
                   <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">{isHindi ? 'प्रशासक:' : 'ایڈمن:'}</span>
+                      <span className="text-slate-500">{t('communities.admin_label', 'Admin')}:</span>
                       <span className="font-bold text-slate-800">{comm.adminName}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">{isHindi ? 'सक्रिय सदस्य:' : 'فعال ممبران:'}</span>
+                      <span className="text-slate-500">{t('communities.active_members', 'Active Members')}:</span>
                       <span className="font-bold text-slate-900">{comm.totalMembers.toLocaleString('en-IN')}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">{isHindi ? 'कुल वितरित धनराशि:' : 'کل جمع شدہ رقم:'}</span>
+                      <span className="text-slate-500">{t('communities.raised', 'Total Raised')}:</span>
                       <span className="font-bold text-emerald-700">₹{comm.totalRaisedINR.toLocaleString('en-IN')}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">{isHindi ? 'सामुदायिक स्वास्थ्य:' : 'کمیونٹی ہیلتھ:'}</span>
-                      <span className="font-bold text-emerald-600">{comm.healthScore}% {isHindi ? 'ग्रेड ए' : 'گریڈ اے'}</span>
+                      <span className="text-slate-500">{t('communities.health_score', 'Health Score')}:</span>
+                      <span className="font-bold text-emerald-600">{comm.healthScore}% {t('communities.grade_a', 'Grade A')}</span>
                     </div>
                   </div>
 
@@ -103,7 +105,7 @@ export const CommunitiesPage: React.FC<CommunitiesPageProps> = ({ onOpenRegister
                     onClick={onOpenRegister}
                     className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <Users className="w-4 h-4 text-emerald-400" /> {isHindi ? 'समुदाय से जुड़ें (₹50)' : 'کمیونٹی سے جڑیں (₹50)'}
+                    <Users className="w-4 h-4 text-emerald-400" /> {t('communities.join_btn', 'Join Community (₹50)')}
                   </button>
                 </div>
               </div>

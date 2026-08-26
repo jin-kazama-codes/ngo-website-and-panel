@@ -5,6 +5,7 @@ import { PendingVerificationItem, User, UserRole } from '../../types';
 import { UserCheck, Check, Eye, CheckCircle2, X, FileText, ShieldCheck } from 'lucide-react';
 import { DarkListSkeleton } from '../../components/Skeletons';
 import { getUnverifiedUsers, updateUser } from '../../services/userService';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface ExecutiveDashboardProps {
   activeUser?: User;
@@ -12,6 +13,7 @@ interface ExecutiveDashboardProps {
 }
 
 export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUser, currentRole }) => {
+  const { t } = useLanguage();
   const [queue, setQueue] = useState<PendingVerificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<PendingVerificationItem | null>(null);
@@ -80,8 +82,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
               <ShieldCheck className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <h3 className="font-bold text-xl text-slate-900 dark:text-white">Members Verification</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Items requiring your attention</p>
+              <h3 className="font-bold text-xl text-slate-900 dark:text-white">{t('admin.kyc_title', 'Members Verification')}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t('admin.kyc_subtitle', 'Items requiring your attention')}</p>
             </div>
           </div>
 
@@ -97,8 +99,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
               <CheckCircle2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <h4 className="font-bold text-lg text-slate-900 dark:text-white">All Caught Up!</h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm">No pending items in the queue. Great job keeping the platform verified.</p>
+              <h4 className="font-bold text-lg text-slate-900 dark:text-white">{t('admin.all_caught_up', 'All Caught Up!')}</h4>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm">{t('admin.no_pending_kyc', 'No pending KYC verification requests at this moment.')}</p>
             </div>
           </div>
         ) : (
@@ -139,7 +141,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                     onClick={() => setSelectedItem(item)}
                     className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-600 hover:border-slate-300 dark:hover:border-slate-500 flex items-center gap-2 shadow-sm transition-all"
                   >
-                    <Eye className="w-4 h-4 text-slate-500 dark:text-slate-400" /> View Details
+                    <Eye className="w-4 h-4 text-slate-500 dark:text-slate-400" /> {t('btn.viewDetails', 'View Details')}
                   </button>
                   <button
                     onClick={() => handleAction(item.id, true)}
@@ -151,7 +153,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                     ) : (
                       <Check className="w-4 h-4" />
                     )}
-                    Approve
+                    {t('btn.approve', 'Approve')}
                   </button>
                   <button
                     onClick={() => handleAction(item.id, false)}
@@ -161,7 +163,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                     {processingId === item.id && processingAction === 'reject' ? (
                       <div className="w-4 h-4 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
                     ) : null}
-                    Reject
+                    {t('btn.reject', 'Reject')}
                   </button>
                 </div>
               </div>

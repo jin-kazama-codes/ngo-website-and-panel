@@ -22,6 +22,28 @@ function mapRow(row: Record<string, unknown>): Donation {
   };
 }
 
+export function getDonationTimestamp(d: Donation | Record<string, unknown>): number {
+  const dateStr = (d.date || (d as any).created_at) as string | undefined;
+  if (dateStr) {
+    const t = new Date(dateStr).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  const idStr = String(d.id || '');
+  const match13 = idStr.match(/don_(\d{13})/);
+  if (match13) return parseInt(match13[1], 10);
+  const match10 = idStr.match(/don_(\d{10})/);
+  if (match10) return parseInt(match10[1], 10) * 1000;
+  return 0;
+}
+
+export function sortDonationsByLatest(donations: Donation[]): Donation[] {
+  return [...donations].sort((a, b) => {
+    const timeA = getDonationTimestamp(a);
+    const timeB = getDonationTimestamp(b);
+    return timeB - timeA;
+  });
+}
+
 export async function getDonations(donorId?: string): Promise<Donation[]> {
   try {
     const params = new URLSearchParams();
@@ -29,7 +51,7 @@ export async function getDonations(donorId?: string): Promise<Donation[]> {
     const res = await fetch(`/api/donations?${params.toString()}`);
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const json = await res.json();
-    return (json.data || []).map(mapRow);
+    return sortDonationsByLatest((json.data || []).map(mapRow));
   } catch (err) {
     console.warn('getDonations warning:', err);
     return [];
@@ -41,7 +63,7 @@ export async function getRecentDonations(limit = 10): Promise<Donation[]> {
     const res = await fetch(`/api/donations?limit=${limit}`);
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const json = await res.json();
-    return (json.data || []).map(mapRow);
+    return sortDonationsByLatest((json.data || []).map(mapRow));
   } catch (err) {
     console.warn('getRecentDonations warning:', err);
     return [];

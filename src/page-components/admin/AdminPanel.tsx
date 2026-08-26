@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UserRole, User, Campaign, Donation } from '../../types';
+import { getDonations } from '../../services/donationService';
 import { useLanguage } from '../../context/LanguageContext';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import {
@@ -65,9 +66,7 @@ import { AccountDetailsTab } from './AccountDetailsTab';
 
 import { submitEmergencyAidRequest } from '../../services/adminService';
 import { getUsers } from '../../services/userService';
-import { getDonations } from '../../services/donationService';
-import { MOCK_DONATIONS, CURRENT_USER_MEMBER, CURRENT_USER_PREMIUM } from '../../data/mockData';
-import { label } from 'motion/react-client';
+
 
 
 
@@ -107,6 +106,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [editingCampaign, setEditingCampaign] = useState<Campaign | undefined>(undefined);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchFocused, setSearchFocused] = useState<boolean>(false);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [allDonations, setAllDonations] = useState<Donation[]>([]);
+  const searchRef = useRef<HTMLDivElement>(null);
   const [aidRequested, setAidRequested] = useState<boolean>(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState<boolean>(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -123,6 +126,49 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       localStorage.setItem('adminActiveTab', activeTab);
     }
   }, [theme, activeTab]);
+
+  // Load users + donations for global search
+  useEffect(() => {
+    getUsers().then(setAllUsers).catch(() => {});
+    getDonations().then(setAllDonations).catch(() => {});
+  }, []);
+
+  // Close search dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Compute search results
+  const q = searchQuery.toLowerCase().trim();
+  const matchedCampaigns = q.length >= 2
+    ? campaignsList.filter(c =>
+        c.title.toLowerCase().includes(q) ||
+        c.city.toLowerCase().includes(q) ||
+        c.category.toLowerCase().includes(q)
+      ).slice(0, 5)
+    : [];
+  const matchedUsers = q.length >= 2
+    ? allUsers.filter(u =>
+        u.name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.communityName?.toLowerCase().includes(q)
+      ).slice(0, 4)
+    : [];
+  const matchedDonations = q.length >= 2
+    ? allDonations.filter(d =>
+        d.utrNumber?.toLowerCase().includes(q) ||
+        d.donorName?.toLowerCase().includes(q) ||
+        d.campaignTitle?.toLowerCase().includes(q)
+      ).slice(0, 4)
+    : [];
+  const hasResults = matchedCampaigns.length > 0 || matchedUsers.length > 0 || matchedDonations.length > 0;
+  const showDropdown = searchFocused && q.length >= 2;
 
   const { t, isHindi } = useLanguage();
 
@@ -180,36 +226,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
     if (normalizedRole === 'member') {
       roleMenus = [
-        { id: 'my_donations', label: isHindi ? 'मेरे दान' : 'My Donations Receipts', icon: CreditCard },
-        { id: 'community_hub', label: isHindi ? 'मेरा समुदाय' : 'My Community', icon: Building2 },
-        { id: "community_members", label: "Community Members", icon: Users },
-        // { id: 'campaigns', label: t('admin.tabCampaigns', 'Manage Campaigns'), icon: PlusCircle },
-        // { id: 'testimonials_manage', label: isHindi ? 'प्रभाव कहानियाँ' : 'Impact Stories', icon: MessageSquareQuote },
-        // { id: 'gallery_manage', label: isHindi ? 'गैलरी प्रबंधित करें' : 'Manage Gallery', icon: Sparkles },
+        { id: 'my_donations', label: t('admin.tabDonations', 'My Donations Receipts'), icon: CreditCard },
+        { id: 'community_hub', label: t('admin.tabCommunityHub', 'My Community'), icon: Building2 },
+        { id: "community_members", label: t('admin.tabMembers', 'Community Members'), icon: Users },
       ];
     } else if (normalizedRole === 'community_admin') {
       roleMenus = [
-        { id: 'financial_analytics', label: isHindi ? 'वित्तीय विश्लेषण' : 'Financial Analytics', icon: TrendingUp },
-        { id: 'kyc_queue', label: isHindi ? 'अनुपालन कतार' : 'KYC Approvals', icon: UserCheck, },
-        { id: 'utr_audit', label: isHindi ? 'यूटीआर भुगतान डेस्क' : 'UTR Payment Desk', icon: ShieldCheck },
+        { id: 'financial_analytics', label: t('admin.tabFinancialAnalytics', 'Financial Analytics'), icon: TrendingUp },
+        { id: 'kyc_queue', label: t('admin.tabKycQueue', 'KYC Approvals'), icon: UserCheck },
+        { id: 'utr_audit', label: t('admin.tabUtrAudit', 'UTR Payment Desk'), icon: ShieldCheck },
         { id: 'campaigns', label: t('admin.tabCampaigns', 'Manage Campaigns'), icon: PlusCircle },
-        { id: "community_members", label: "Community Members", icon: Users },
-        { id: 'testimonials_manage', label: isHindi ? 'प्रभाव कहानियाँ' : 'Impact Stories', icon: MessageSquareQuote },
-        { id: 'gallery_manage', label: isHindi ? 'गैलरी प्रबंधित करें' : 'Manage Gallery', icon: Sparkles },
+        { id: "community_members", label: t('admin.tabMembers', 'Community Members'), icon: Users },
+        { id: 'testimonials_manage', label: t('admin.tabTestimonialsManage', 'Impact Stories'), icon: MessageSquareQuote },
+        { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
+        { id: 'contact_messages', label: t('admin.tabContactMessages', 'Contact Messages'), icon: MessageSquare },
       ];
     } else if (normalizedRole === 'executive_admin' || normalizedRole === 'super_admin') {
       roleMenus = [
-        { id: 'financial_analytics', label: isHindi ? 'वित्तीय विश्लेषण' : 'Financial Analytics', icon: TrendingUp },
+        { id: 'financial_analytics', label: t('admin.tabFinancialAnalytics', 'Financial Analytics'), icon: TrendingUp },
         { id: 'campaigns', label: t('admin.tabCampaigns', 'Manage Campaigns'), icon: PlusCircle },
-        { id: 'kyc_queue', label: isHindi ? 'अनुपालन कतार' : 'KYC Approvals', icon: UserCheck },
-        { id: 'utr_audit', label: isHindi ? 'यूटीआर भुगतान डेस्क' : 'UTR Payment Desk', icon: ShieldCheck },
-        // { id: 'escrow_verification', label: isHindi ? 'हॉस्पिटल एस्क्रो लॉग्स' : 'Hospital Escrow Logs', icon: FileText },
-        { id: 'communities_manage', label: isHindi ? 'समुदाय प्रबंधित करें' : 'Manage Communities', icon: Building2 },
-        { id: 'users_manage', label: isHindi ? 'उपयोगकर्ता प्रबंधित करें' : 'Manage Users', icon: Users },
-        { id: 'testimonials_manage', label: isHindi ? 'प्रभाव कहानियाँ' : 'Impact Stories', icon: MessageSquareQuote },
-        { id: 'gallery_manage', label: isHindi ? 'गैलरी प्रबंधित करें' : 'Manage Gallery', icon: Sparkles },
-        { id: 'contact_messages', label: isHindi ? 'संपर्क संदेश' : 'Contact Messages', icon: MessageSquare },
-        { id: 'account_details', label: isHindi ? 'खाता विवरण' : 'Account Details', icon: FileCheck },
+        { id: 'kyc_queue', label: t('admin.tabKycQueue', 'KYC Approvals'), icon: UserCheck },
+        { id: 'utr_audit', label: t('admin.tabUtrAudit', 'UTR Payment Desk'), icon: ShieldCheck },
+        { id: 'communities_manage', label: t('admin.tabCommunitiesManage', 'Manage Communities'), icon: Building2 },
+        { id: 'users_manage', label: t('admin.tabUsersManage', 'Manage Users'), icon: Users },
+        { id: 'testimonials_manage', label: t('admin.tabTestimonialsManage', 'Impact Stories'), icon: MessageSquareQuote },
+        { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
+        { id: 'contact_messages', label: t('admin.tabContactMessages', 'Contact Messages'), icon: MessageSquare },
+        { id: 'account_details', label: t('admin.tabAccountDetails', 'Account Details'), icon: FileCheck },
       ];
     }
 
@@ -254,7 +297,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           {/* Active Logged-in Role Display (Read-Only) */}
           <div className={`p-3 py-2.5 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/60 ${!sidebarOpen ? 'lg:hidden' : 'block'}`}>
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
-              Active Logged-in Role:
+              {t('admin.activeRole', 'Active Logged-in Role:')}
             </span>
             <div className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-2 select-none shadow-sm dark:shadow-inner">
               {roleBadge.icon}
@@ -267,7 +310,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {/* Common Navigation */}
             <div>
               <span className={`text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 mb-1.5 block ${!sidebarOpen ? 'lg:hidden' : ''}`}>
-                Main Portal
+                {t('admin.mainPortal', 'Main Portal')}
               </span>
               <div className="space-y-1">
                 {commonMenus.map((item) => {
@@ -301,7 +344,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {/* Role Specific Navigation */}
             <div>
               <span className={`text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 mb-1.5 block ${!sidebarOpen ? 'lg:hidden' : ''}`}>
-                {isHindi ? 'भूमिका क्षमताएं' : 'Role Capabilities'}
+                {t('admin.roleCapabilities', 'Role Capabilities')}
               </span>
               <div className="space-y-1">
                 {roleMenus.map((item) => {
@@ -349,7 +392,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/80 text-rose-600 dark:text-rose-300 font-bold text-xs border border-rose-200 dark:border-rose-900/50 transition-all cursor-pointer"
               >
                 <LogOut className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                <span className={!sidebarOpen ? 'lg:hidden' : 'block'}>Logout Account</span>
+                <span className={!sidebarOpen ? 'lg:hidden' : 'block'}>{t('admin.logoutAccount', 'Logout Account')}</span>
               </button>
             )}
 
@@ -376,15 +419,106 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <Menu className="w-5 h-5" />
               </button>
 
-              <div className="relative hidden sm:block max-w-xs w-64">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <div ref={searchRef} className="relative hidden sm:block max-w-xs w-72">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder={isHindi ? "अभियान या सदस्य खोजें..." : "Search campaigns, UTR or members..."}
+                  placeholder={t('admin.searchPlaceholder', 'Search campaigns, UTR or members...')}
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-slate-200 placeholder:text-slate-500 outline-none focus:border-emerald-500"
+                  onChange={(e) => { setSearchQuery(e.target.value); setSearchFocused(true); }}
+                  onFocus={() => setSearchFocused(true)}
+                  className="w-full pl-9 pr-8 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-slate-200 placeholder:text-slate-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-all"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => { setSearchQuery(''); setSearchFocused(false); }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+
+                {/* Search Results Dropdown */}
+                {showDropdown && (
+                  <div className="absolute top-full left-0 mt-1.5 w-[340px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 overflow-hidden max-h-[420px] overflow-y-auto">
+                    {!hasResults ? (
+                      <div className="p-4 text-center text-xs text-slate-400">
+                        <Search className="w-5 h-5 mx-auto mb-2 opacity-40" />
+                        No results for &quot;{searchQuery}&quot;
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {/* Campaigns */}
+                        {matchedCampaigns.length > 0 && (
+                          <div>
+                            <p className="px-3 pt-2.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Campaigns</p>
+                            {matchedCampaigns.map(c => (
+                              <button
+                                key={c.id}
+                                onClick={() => { setActiveTab('campaigns'); setSearchQuery(''); setSearchFocused(false); }}
+                                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
+                              >
+                                <span className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0">
+                                  <PlusCircle className="w-3.5 h-3.5 text-emerald-600" />
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{c.title}</p>
+                                  <p className="text-[10px] text-slate-400 truncate">{c.category} • {c.city} • {c.status}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Members */}
+                        {matchedUsers.length > 0 && (
+                          <div>
+                            <p className="px-3 pt-2.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Members</p>
+                            {matchedUsers.map(u => (
+                              <button
+                                key={u.id}
+                                onClick={() => { setActiveTab('users_manage'); setSearchQuery(''); setSearchFocused(false); }}
+                                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
+                              >
+                                <img
+                                  src={u.avatar || 'https://via.placeholder.com/32'}
+                                  alt={u.name}
+                                  className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-emerald-400"
+                                />
+                                <div className="min-w-0">
+                                  <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{u.name}</p>
+                                  <p className="text-[10px] text-slate-400 truncate">{u.email} • {u.communityName}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* UTR / Donations */}
+                        {matchedDonations.length > 0 && (
+                          <div>
+                            <p className="px-3 pt-2.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">UTR / Payments</p>
+                            {matchedDonations.map(d => (
+                              <button
+                                key={d.id}
+                                onClick={() => { setActiveTab('utr_audit'); setSearchQuery(''); setSearchFocused(false); }}
+                                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
+                              >
+                                <span className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+                                  <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{d.donorName} — ₹{d.amountINR?.toLocaleString('en-IN')}</p>
+                                  <p className="text-[10px] text-slate-400 font-mono truncate">UTR: {d.utrNumber || 'N/A'} • {d.campaignTitle}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -400,7 +534,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </button>
 
               {/* Language Switcher in Admin Panel */}
-              <LanguageSelector compact />
+              <LanguageSelector compact mode="admin" />
 
               {/* Profile Dropdown */}
               <div className="relative">

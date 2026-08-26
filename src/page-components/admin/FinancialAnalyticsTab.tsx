@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Donation, User, UserRole } from '../../types';
 import { getDonations } from '../../services/donationService';
 import { Search, TrendingUp, IndianRupee, Users, FileText } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface FinancialAnalyticsTabProps {
   activeUser: User;
@@ -9,6 +10,7 @@ interface FinancialAnalyticsTabProps {
 }
 
 export const FinancialAnalyticsTab: React.FC<FinancialAnalyticsTabProps> = ({ activeUser, currentRole }) => {
+  const { t } = useLanguage();
   const [donations, setDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,14 +52,14 @@ export const FinancialAnalyticsTab: React.FC<FinancialAnalyticsTabProps> = ({ ac
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Financial Analytics</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Overview of all donation transactions and financial metrics.</p>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('admin.tabFinancialAnalytics', 'Financial Analytics')}</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('admin.platformMasterDesc', 'Overview of all donation transactions and financial metrics.')}</p>
         </div>
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search transactions..."
+            placeholder={t('admin.searchPlaceholder', 'Search transactions...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full sm:w-64 pl-9 pr-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-sm"
@@ -72,7 +74,7 @@ export const FinancialAnalyticsTab: React.FC<FinancialAnalyticsTabProps> = ({ ac
             <IndianRupee className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Total Raised</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{t('card.raised', 'Total Raised')}</p>
             <p className="text-xl font-black text-slate-900 dark:text-white">₹{totalAmount.toLocaleString('en-IN')}</p>
           </div>
         </div>
@@ -81,7 +83,7 @@ export const FinancialAnalyticsTab: React.FC<FinancialAnalyticsTabProps> = ({ ac
             <TrendingUp className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Total Donations</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{t('admin.statTotalCampaigns', 'Total Donations')}</p>
             <p className="text-xl font-black text-slate-900 dark:text-white">{filteredDonations.length}</p>
           </div>
         </div>
@@ -90,7 +92,7 @@ export const FinancialAnalyticsTab: React.FC<FinancialAnalyticsTabProps> = ({ ac
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Unique Donors</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{t('admin.statActiveMembers', 'Unique Donors')}</p>
             <p className="text-xl font-black text-slate-900 dark:text-white">{uniqueDonors}</p>
           </div>
         </div>

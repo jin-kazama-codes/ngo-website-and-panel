@@ -10,7 +10,7 @@ interface MyCommunityTabProps {
 }
 
 export const MyCommunityTab: React.FC<MyCommunityTabProps> = ({ activeUser }) => {
-  const { isHindi } = useLanguage();
+  const { t } = useLanguage();
   const [community, setCommunity] = useState<Community | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +60,7 @@ export const MyCommunityTab: React.FC<MyCommunityTabProps> = ({ activeUser }) =>
             </div>
             <div>
               <h2 className="text-2xl font-black text-white mb-1 tracking-tight">
-                {activeUser.communityName || (isHindi ? 'अज्ञात समुदाय' : 'Unknown Community')}
+                {activeUser.communityName || t('admin.tabCommunityHub', 'Community Hub')}
               </h2>
               <div className="flex items-center gap-2 text-slate-300 dark:text-slate-400 text-sm font-medium">
                 <MapPin className="w-4 h-4 text-emerald-400" />
@@ -70,7 +70,7 @@ export const MyCommunityTab: React.FC<MyCommunityTabProps> = ({ activeUser }) =>
           </div>
           <div className="bg-slate-800/50 dark:bg-slate-950 border border-slate-700 dark:border-slate-800 rounded-xl px-4 py-2 flex flex-col items-end shadow-inner">
             <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider">
-              {isHindi ? 'समुदाय आईडी' : 'Community ID'}
+              {t('admin.tabCommunityHub', 'Community ID')}
             </span>
             <span className="text-emerald-400 font-mono font-bold">
               #{activeUser.communityId || '---'}
@@ -96,22 +96,7 @@ export const MyCommunityTab: React.FC<MyCommunityTabProps> = ({ activeUser }) =>
           </div>
         </div>
 
-        {/* Card 2: Active Campaign */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 flex items-start gap-4 hover:border-slate-300 dark:hover:border-slate-700 transition-colors group shadow-sm">
-          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
-            <Activity className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <div>
-            <h3 className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">
-              Active Campaign
-            </h3>
-            <p className="text-slate-900 dark:text-white font-bold">
-              {community?.activeCampaigns}
-            </p>
-          </div>
-        </div>
-
-        {/* Card 3: Total Released */}
+        {/* Card 2: Total Released */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 flex items-start gap-4 hover:border-slate-300 dark:hover:border-slate-700 transition-colors group shadow-sm">
           <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
             <IndianRupee className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
@@ -179,19 +164,17 @@ export const MyCommunityTab: React.FC<MyCommunityTabProps> = ({ activeUser }) =>
             <Activity className="w-10 h-10 text-slate-400 dark:text-slate-600" />
           </div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-            {isHindi ? 'समुदाय गतिविधि' : 'Community Activity'}
+            {t('admin.tabCommunityHub', 'Community Activity')}
           </h3>
           <p className="text-slate-500 dark:text-slate-400 max-w-md text-sm leading-relaxed">
-            {isHindi
-              ? 'आपके समुदाय की नवीनतम गतिविधियां, अभियान और सूचनाएं यहां दिखाई देंगी।'
-              : 'Recent activities, campaigns, and announcements from your community will appear here.'}
+            {t('admin.no_pending_kyc', 'Recent activities, campaigns, and announcements from your community will appear here.')}
           </p>
         </div>
       ) : (
         <div className="space-y-4">
           <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
             <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            {isHindi ? 'नवीनतम सूचनाएं' : 'Recent Announcements'}
+            {t('admin.tabContactMessages', 'Recent Announcements')}
           </h3>
           <div className="grid gap-4">
             {announcements.map((announcement) => (

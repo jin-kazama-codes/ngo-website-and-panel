@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { User, Donation } from '../types';
 import { ShieldCheck, Download, CheckCircle2, QrCode, X, Sparkles, Building2 } from 'lucide-react';
 import { getUserById } from '../services/userService';
+import { useLanguage } from '../context/LanguageContext';
+import { translateCampaignTitle } from '../lib/translateEntity';
 
 interface MembershipCardModalProps {
   user: User;
@@ -11,10 +13,15 @@ interface MembershipCardModalProps {
 }
 
 export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: initialUser, onClose }) => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
   const [user, setUser] = useState<User>(initialUser);
   const [loading, setLoading] = useState(true);
-
-  console.log("initial user from card modal", initialUser);
 
   useEffect(() => {
     let isMounted = true;
@@ -40,17 +47,22 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
       <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative overflow-hidden border border-slate-100">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+          className="cursor-pointer absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" /> Government Recognized NGO Card
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            {tr('मान्यता प्राप्त डिजिटल एनजीओ कार्ड', 'تصدیق شدہ این جی او کارڈ', 'Recognized Digital NGO Card')}
           </div>
-          <h3 className="text-2xl font-bold text-slate-900">Digital Membership Card</h3>
-          <p className="text-sm text-slate-500">Official MFCT Community ID</p>
+          <h3 className="text-2xl font-bold text-slate-900">
+            {tr('डिजिटल सदस्यता कार्ड', 'ڈیجیٹل ممبرشپ کارڈ', 'Digital Membership Card')}
+          </h3>
+          <p className="text-sm text-slate-500">
+            {tr('आधिकारिक MFCT समुदाय पहचान पत्र', 'سرکاری MFCT کمیونٹی شناختی کارڈ', 'Official MFCT Community ID')}
+          </p>
         </div>
 
         {/* Digital Card Preview */}
@@ -73,17 +85,19 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
               </div>
               <div>
                 <h4 className="font-bold text-base tracking-tight text-white leading-none">MFCT</h4>
-                <span className="text-[10px] text-slate-300 tracking-wider uppercase font-medium">Community Network</span>
+                <span className="text-[10px] text-slate-300 tracking-wider uppercase font-medium">
+                  {tr('सामुदायिक नेटवर्क', 'کمیونٹی نیٹ ورک', 'Community Network')}
+                </span>
               </div>
             </div>
 
             {user.isPremium ? (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[11px] font-bold border border-amber-400/30">
-                <Sparkles className="w-3 h-3 text-amber-300" /> Premium Gold Member
+                <Sparkles className="w-3 h-3 text-amber-300" /> {tr('प्रीमियम गोल्ड सदस्य', 'پریمیم گولڈ ممبر', 'Premium Gold Member')}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold border border-emerald-400/30">
-                <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Verified Member
+                <CheckCircle2 className="w-3 h-3 text-emerald-400" /> {tr('सत्यापित सदस्य', 'تصدیق شدہ ممبر', 'Verified Member')}
               </span>
             )}
           </div>
@@ -98,19 +112,23 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
               <h5 className="font-bold text-lg text-white truncate">{user.name}</h5>
               <p className="text-xs text-slate-300 flex items-center gap-1 mt-0.5">
                 <Building2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="truncate">{user.communityName || 'Unassigned Community'}</span>
+                <span className="truncate">{user.communityName || tr('अनिर्धारित समुदाय', 'نامعلوم کمیونٹی', 'Unassigned Community')}</span>
               </p>
-              <p className="text-[11px] text-slate-400 mt-1">{user.city || 'Unknown City'}, {user.state || 'Unknown State'}</p>
+              <p className="text-[11px] text-slate-400 mt-1">{user.city || 'Bareilly'}, {user.state || 'Uttar Pradesh'}</p>
             </div>
           </div>
 
           <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs relative z-10">
             <div>
-              <span className="text-[10px] uppercase text-slate-400 block tracking-wider">Member ID</span>
+              <span className="text-[10px] uppercase text-slate-400 block tracking-wider">
+                {tr('सदस्य आईडी', 'ممبر شناختی نمبر', 'Member ID')}
+              </span>
               <span className="font-mono font-bold text-emerald-300">{user.membershipId}</span>
             </div>
             <div>
-              <span className="text-[10px] uppercase text-slate-400 block tracking-wider">Member Since</span>
+              <span className="text-[10px] uppercase text-slate-400 block tracking-wider">
+                {tr('सदस्यता तिथि', 'شمولیت کی تاریخ', 'Member Since')}
+              </span>
               <span className="font-semibold text-slate-200">{user.joinDate || 'N/A'}</span>
             </div>
             <div className="bg-white p-1 rounded-lg">
@@ -122,15 +140,15 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
         <div className="mt-6 flex items-center gap-3">
           <button
             onClick={handlePrint}
-            className="flex-1 py-3 px-4 rounded-xl bg-slate-900 text-white font-medium hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm"
+            className="cursor-pointer flex-1 py-3 px-4 rounded-xl bg-slate-900 text-white font-medium hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm"
           >
-            <Download className="w-4 h-4" /> Download / Print ID
+            <Download className="w-4 h-4" /> {tr('कार्ड डाउनलोड / प्रिंट करें', 'کارڈ ڈاؤن لوڈ / پرنٹ کریں', 'Download / Print ID')}
           </button>
           <button
             onClick={onClose}
-            className="py-3 px-5 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition-colors"
+            className="cursor-pointer py-3 px-5 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition-colors"
           >
-            Close
+            {tr('बंद करें', 'بند کریں', 'Close')}
           </button>
         </div>
       </div>
@@ -144,12 +162,19 @@ interface ReceiptModalProps {
 }
 
 export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, onClose }) => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
       <div className="bg-white rounded-3xl max-w-xl w-full p-8 shadow-2xl relative border border-slate-200 text-slate-800 overflow-y-auto max-h-[90vh]">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+          className="cursor-pointer absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -158,16 +183,18 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, onClose })
         <div className="flex items-center justify-between border-b border-slate-200 pb-5 mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center text-xl shadow-md">
-              S
+              M
             </div>
             <div>
               <h3 className="font-bold text-xl text-slate-900 leading-tight">MFCT Foundation</h3>
-              <p className="text-xs text-slate-500">Regd NGO under Section 8 | 80G Tax Exempted</p>
+              <p className="text-xs text-slate-500">
+                {tr('सेक्शन 8 पंजीकृत एनजीओ | 80G कर छूट', 'رجسٹرڈ این جی او | 80G ٹیکس چھوٹ', 'Regd NGO under Section 8 | 80G Tax Exempted')}
+              </p>
             </div>
           </div>
           <div className="text-right">
             <span className="inline-block px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 text-xs font-bold">
-              OFFICIAL RECEIPT
+              {tr('आधिकारिक रसीद', 'سرکاری رسید', 'OFFICIAL RECEIPT')}
             </span>
             <p className="text-xs font-mono text-slate-500 mt-1">{donation.receiptNumber}</p>
           </div>
@@ -176,33 +203,35 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, onClose })
         {/* Donation Summary Table */}
         <div className="bg-slate-50 rounded-2xl p-5 mb-6 border border-slate-100 text-sm space-y-3">
           <div className="flex justify-between border-b border-slate-200 pb-2">
-            <span className="text-slate-500">Donor Name:</span>
+            <span className="text-slate-500">{tr('दानदाता का नाम:', 'عطیہ دہندہ:', 'Donor Name:')}</span>
             <span className="font-semibold text-slate-900">{donation.donorName}</span>
           </div>
           <div className="flex justify-between border-b border-slate-200 pb-2">
-            <span className="text-slate-500">Campaign / Cause:</span>
-            <span className="font-semibold text-slate-900 text-right max-w-[280px]">{donation.campaignTitle}</span>
+            <span className="text-slate-500">{tr('अभियान / कारण:', 'فلاحی مہم:', 'Campaign / Cause:')}</span>
+            <span className="font-semibold text-slate-900 text-right max-w-[280px]">
+              {translateCampaignTitle(donation.campaignTitle, language)}
+            </span>
           </div>
           <div className="flex justify-between border-b border-slate-200 pb-2">
-            <span className="text-slate-500">Donation Category:</span>
+            <span className="text-slate-500">{tr('दान की श्रेणी:', 'کیٹیگری:', 'Donation Category:')}</span>
             <span className="inline-block px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-medium text-xs">
               {donation.category}
             </span>
           </div>
           <div className="flex justify-between border-b border-slate-200 pb-2">
-            <span className="text-slate-500">Transaction ID:</span>
+            <span className="text-slate-500">{tr('लेनदेन आईडी:', 'ٹرانزیکشن نمبر:', 'Transaction ID:')}</span>
             <span className="font-mono text-xs text-slate-800">{donation.transactionId}</span>
           </div>
           <div className="flex justify-between border-b border-slate-200 pb-2">
-            <span className="text-slate-500">Bank UTR Number:</span>
+            <span className="text-slate-500">{tr('बैंक यूटीआर संख्या:', 'بینک UTR نمبر:', 'Bank UTR Number:')}</span>
             <span className="font-mono text-xs text-slate-800">{donation.utrNumber}</span>
           </div>
           <div className="flex justify-between border-b border-slate-200 pb-2">
-            <span className="text-slate-500">Payment Date:</span>
+            <span className="text-slate-500">{tr('भुगतान तिथि:', 'تاریخ:', 'Payment Date:')}</span>
             <span className="text-slate-800">{donation.date}</span>
           </div>
           <div className="flex justify-between pt-2 text-base">
-            <span className="font-bold text-slate-900">Total Donated Amount:</span>
+            <span className="font-bold text-slate-900">{tr('कुल दान राशि:', 'کل عطیہ رقم:', 'Total Donated Amount:')}</span>
             <span className="font-bold text-emerald-700 text-xl">₹{donation.amountINR.toLocaleString('en-IN')}</span>
           </div>
         </div>
@@ -212,28 +241,32 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, onClose })
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-6 h-6 text-emerald-600" />
             <div>
-              <p className="text-xs font-bold text-emerald-900">Audit & Verification Complete</p>
-              <p className="text-[11px] text-emerald-700">Verified by Executive Team & Bank Escrow</p>
+              <p className="text-xs font-bold text-emerald-900">
+                {tr('ऑडिट एवं सत्यापन पूर्ण', 'آڈٹ اور تصدیق مکمل', 'Audit & Verification Complete')}
+              </p>
+              <p className="text-[11px] text-emerald-700">
+                {tr('कार्यकारी टीम व बैंक एस्क्रो द्वारा सत्यापित', 'ایگزیکٹو ٹیم و بینک اسکرو سے تصدیق شدہ', 'Verified by Executive Team & Bank Escrow')}
+              </p>
             </div>
           </div>
           <div className="text-right text-[10px] text-slate-500">
-            <span className="font-serif italic font-bold text-slate-700 text-xs block">SevaSangam Audit Seal</span>
-            <span>Digitally Signed</span>
+            <span className="font-serif italic font-bold text-slate-700 text-xs block">MFCT Audit Seal</span>
+            <span>{tr('डिजिटल रूप से हस्ताक्षरित', 'ڈیجیٹل تصدیق شدہ', 'Digitally Signed')}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => window.print()}
-            className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-all flex items-center justify-center gap-2 shadow-sm"
+            className="cursor-pointer flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-all flex items-center justify-center gap-2 shadow-sm"
           >
-            <Download className="w-4 h-4" /> Download PDF Receipt
+            <Download className="w-4 h-4" /> {tr('रसीद डाउनलोड / प्रिंट करें (PDF)', 'پی ڈی ایف رسید ڈاؤن لوڈ کریں', 'Download PDF Receipt')}
           </button>
           <button
             onClick={onClose}
-            className="py-3 px-5 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition-colors"
+            className="cursor-pointer py-3 px-5 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition-colors"
           >
-            Close
+            {tr('बंद करें', 'بند کریں', 'Close')}
           </button>
         </div>
       </div>
