@@ -117,13 +117,13 @@ export const ManageUsers: React.FC = () => {
     e.preventDefault();
     try {
       const comm = communities.find(c => c.id === formData.communityId);
-      
+
       let avatarUrl = existingAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || '')}&background=random`;
       if (avatarFile) avatarUrl = await fileToBase64(avatarFile);
-      
+
       let docUrl = existingDoc || undefined;
       if (documentFile) docUrl = await fileToBase64(documentFile);
-      
+
       let screenshotUrl = existingScreenshot || undefined;
       if (screenshotFile) screenshotUrl = await fileToBase64(screenshotFile);
 
@@ -396,51 +396,51 @@ export const ManageUsers: React.FC = () => {
                   </div>
                 </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-400 mb-1">Profile Photo</label>
-                      <label className={`p-3 rounded-xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center justify-center relative h-20 ${avatarFile || existingAvatar ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400 text-emerald-800 dark:text-emerald-400' : 'bg-slate-50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}>
-                        <input type="file" accept="image/*" className="sr-only" onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} />
-                        {existingAvatar && !existingAvatar.includes('ui-avatars') && !avatarFile && (
-                          <div className="absolute inset-0 p-1">
-                            <img src={existingAvatar} className="w-full h-full object-cover rounded-lg opacity-40" />
-                          </div>
-                        )}
-                        <Upload className="w-4 h-4 mb-1 z-10" />
-                        <span className="text-[10px] font-bold z-10">{avatarFile ? '✓ New Photo' : (existingAvatar && !existingAvatar.includes('ui-avatars')) ? 'Change Photo' : 'Upload Photo'}</span>
-                      </label>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-400 mb-1">Aadhaar/ID</label>
-                      <label className={`p-3 rounded-xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center justify-center relative h-20 ${documentFile || existingDoc ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400 text-emerald-800 dark:text-emerald-400' : 'bg-slate-50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}>
-                        <input type="file" accept="image/*,.pdf" className="sr-only" onChange={(e) => setDocumentFile(e.target.files?.[0] || null)} />
-                        {existingDoc && !documentFile && existingDoc.startsWith('http') && (
-                          <div className="absolute inset-0 p-1">
-                            {existingDoc.includes('.pdf') ? (
-                              <div className="w-full h-full bg-slate-200 dark:bg-slate-800 rounded-lg flex items-center justify-center opacity-40">PDF</div>
-                            ) : (
-                              <img src={existingDoc} className="w-full h-full object-cover rounded-lg opacity-40" />
-                            )}
-                          </div>
-                        )}
-                        <Upload className="w-4 h-4 mb-1 z-10" />
-                        <span className="text-[10px] font-bold z-10">{documentFile ? '✓ New ID' : existingDoc ? 'Change ID' : 'Upload ID'}</span>
-                      </label>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-400 mb-1">Payment Screenshot</label>
-                      <label className={`p-3 rounded-xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center justify-center relative h-20 ${screenshotFile || existingScreenshot ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400 text-emerald-800 dark:text-emerald-400' : 'bg-slate-50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}>
-                        <input type="file" accept="image/*" className="sr-only" onChange={(e) => setScreenshotFile(e.target.files?.[0] || null)} />
-                        {existingScreenshot && !screenshotFile && existingScreenshot.startsWith('http') && (
-                          <div className="absolute inset-0 p-1">
-                            <img src={existingScreenshot} className="w-full h-full object-cover rounded-lg opacity-40" />
-                          </div>
-                        )}
-                        <Upload className="w-4 h-4 mb-1 z-10" />
-                        <span className="text-[10px] font-bold z-10">{screenshotFile ? '✓ New SS' : existingScreenshot ? 'Change SS' : 'Upload SS'}</span>
-                      </label>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-400 mb-1">Profile Photo</label>
+                    <label className={`p-3 rounded-xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center justify-center relative h-20 ${avatarFile || existingAvatar ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400 text-emerald-800 dark:text-emerald-400' : 'bg-slate-50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}>
+                      <input type="file" accept="image/*" className="sr-only" onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} />
+                      {existingAvatar && !existingAvatar.includes('ui-avatars') && !avatarFile && (
+                        <div className="absolute inset-0 p-1">
+                          <img src={existingAvatar} className="w-full h-full object-cover rounded-lg opacity-40" />
+                        </div>
+                      )}
+                      <Upload className="w-4 h-4 mb-1 z-10" />
+                      <span className="text-[10px] font-bold z-10">{avatarFile ? '✓ New Photo' : (existingAvatar && !existingAvatar.includes('ui-avatars')) ? 'Change Photo' : 'Upload Photo'}</span>
+                    </label>
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-400 mb-1">Aadhaar/ID</label>
+                    <label className={`p-3 rounded-xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center justify-center relative h-20 ${documentFile || existingDoc ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400 text-emerald-800 dark:text-emerald-400' : 'bg-slate-50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}>
+                      <input type="file" accept="image/*,.pdf" className="sr-only" onChange={(e) => setDocumentFile(e.target.files?.[0] || null)} />
+                      {existingDoc && !documentFile && existingDoc.startsWith('http') && (
+                        <div className="absolute inset-0 p-1">
+                          {existingDoc.includes('.pdf') ? (
+                            <div className="w-full h-full bg-slate-200 dark:bg-slate-800 rounded-lg flex items-center justify-center opacity-40">PDF</div>
+                          ) : (
+                            <img src={existingDoc} className="w-full h-full object-cover rounded-lg opacity-40" />
+                          )}
+                        </div>
+                      )}
+                      <Upload className="w-4 h-4 mb-1 z-10" />
+                      <span className="text-[10px] font-bold z-10">{documentFile ? '✓ New ID' : existingDoc ? 'Change ID' : 'Upload ID'}</span>
+                    </label>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-400 mb-1">Payment Screenshot</label>
+                    <label className={`p-3 rounded-xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center justify-center relative h-20 ${screenshotFile || existingScreenshot ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400 text-emerald-800 dark:text-emerald-400' : 'bg-slate-50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}>
+                      <input type="file" accept="image/*" className="sr-only" onChange={(e) => setScreenshotFile(e.target.files?.[0] || null)} />
+                      {existingScreenshot && !screenshotFile && existingScreenshot.startsWith('http') && (
+                        <div className="absolute inset-0 p-1">
+                          <img src={existingScreenshot} className="w-full h-full object-cover rounded-lg opacity-40" />
+                        </div>
+                      )}
+                      <Upload className="w-4 h-4 mb-1 z-10" />
+                      <span className="text-[10px] font-bold z-10">{screenshotFile ? '✓ New SS' : existingScreenshot ? 'Change SS' : 'Upload SS'}</span>
+                    </label>
+                  </div>
+                </div>
               </form>
             </div>
 
@@ -473,9 +473,9 @@ export const ManageUsers: React.FC = () => {
               <button onClick={() => setDeleteConfirmId(null)} className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-800 transition-all cursor-pointer" disabled={deletingId !== null}>
                 Cancel
               </button>
-              <button 
-                onClick={() => handleDelete(deleteConfirmId)} 
-                disabled={deletingId !== null} 
+              <button
+                onClick={() => handleDelete(deleteConfirmId)}
+                disabled={deletingId !== null}
                 className="px-6 py-2 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-500 transition-all flex items-center gap-2 shadow-lg shadow-rose-600/20 dark:shadow-rose-900/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {deletingId === deleteConfirmId ? (
@@ -496,9 +496,8 @@ export const ManageUsers: React.FC = () => {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-[100] text-sm font-bold text-white transition-all transform duration-300 ease-out ${
-          toastMessage.type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'
-        }`}>
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-[100] text-sm font-bold text-white transition-all transform duration-300 ease-out ${toastMessage.type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'
+          }`}>
           {toastMessage.message}
         </div>
       )}

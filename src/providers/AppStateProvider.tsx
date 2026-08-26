@@ -95,8 +95,8 @@ export function AppStateProvider({
 
       const restoreMockUser = (role: UserRole) => {
         const mockUser = getUserForRole(role);
-        setActiveUser({ 
-          ...mockUser, 
+        setActiveUser({
+          ...mockUser,
           email: savedEmail || mockUser.email || '',
           name: savedName || mockUser.name || '',
           avatar: savedAvatar || mockUser.avatar || ''
@@ -177,6 +177,11 @@ export function AppStateProvider({
       localStorage.setItem('name', userWithEmail.name || '');
       localStorage.setItem('avatar', userWithEmail.avatar || '');
       localStorage.setItem('community_id', userWithEmail.communityId || '');
+      localStorage.setItem('id', userWithEmail.id);
+      localStorage.setItem('email', userEmail ?? '');
+      localStorage.setItem('name', userWithEmail.name);
+      localStorage.setItem('avatar', userWithEmail.avatar);
+      localStorage.setItem('community_id', userWithEmail.communityId);
       localStorage.setItem('login_info', JSON.stringify(loginInfo));
       localStorage.setItem('mfct_user_info', JSON.stringify(loginInfo));
     }

@@ -208,7 +208,7 @@ export async function deleteUser(id: string): Promise<void> {
   const res = await fetch(`/api/users?id=${id}`, {
     method: 'DELETE',
   });
-  
+
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || 'Failed to delete user');
