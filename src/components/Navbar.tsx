@@ -129,7 +129,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             title="Open Admin & Member Portal Desk"
           >
             <LayoutDashboard className="w-3.5 h-3.5 text-emerald-600" />
-            <span>{isHindi ? 'एडमिन पोर्टल' : 'Admin/Member Portal'}</span>
+            <span>{isHindi ? 'एडमिन पोर्टल' : 'ایڈمن پورٹل'}</span>
           </Link>
 
           {/* <button
@@ -280,7 +280,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
                 className="w-full py-3 rounded-xl bg-amber-50 text-amber-900 border border-amber-300 text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
               >
-                <Calculator className="w-4 h-4 text-amber-700" /> {isHindi ? 'ज़कात कैलकुलेटर (2.5%)' : 'Zakat Calculator (2.5%)'}
+                <Calculator className="w-4 h-4 text-amber-700" /> {isHindi ? 'ज़कात कैलकुलेटर (2.5%)' : 'زکوٰۃ کیلکولیٹر (2.5%)'}
               </button>
             )}
             <Link

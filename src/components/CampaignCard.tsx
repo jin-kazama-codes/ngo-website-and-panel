@@ -96,7 +96,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate }
               <span className="text-slate-400 font-normal text-xs">{t('card.raised', 'raised')}</span>
             </span>
             <span className="text-slate-500">
-              {isHindi ? 'लक्ष्य' : 'Goal'}: ₹{campaign.goalINR.toLocaleString('en-IN')}
+              {isHindi ? 'लक्ष्य' : 'ہدف'}: ₹{campaign.goalINR.toLocaleString('en-IN')}
             </span>
           </div>
 

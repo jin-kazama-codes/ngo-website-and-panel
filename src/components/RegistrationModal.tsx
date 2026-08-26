@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Community } from '../types';
-import { X, Upload, ArrowRight, UserCheck, Sparkles, Lock, Eye, EyeOff, QrCode } from 'lucide-react';
+import { X, Upload, ArrowRight, UserCheck, Sparkles, Eye, EyeOff, QrCode } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCommunities } from '../services/communityService';
 import { createUser } from '../services/userService';
 import { uploadImage } from '../lib/storage';
 import { hashPassword } from '../lib/auth';
+import { useLanguage } from '../context/LanguageContext';
 
 interface RegistrationModalProps {
   onClose: () => void;
@@ -20,6 +21,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   onRegistered,
   hasPendingDonation = false,
 }) => {
+  const { isHindi } = useLanguage();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -92,25 +94,25 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
       }
 
       const hashedPassword = await hashPassword(password);
+      const userCity = city.trim() || 'Bareilly';
 
       const newMember: User = {
         id: `usr_new_${Date.now()}`,
-        name: fullName,
-        email: email,
-        phone: phone,
-        city,
-        state: state,
+        name: fullName.trim(),
+        email: email.trim() ? email.trim().toLowerCase() : undefined,
+        phone: phone.trim(),
+        city: userCity,
+        state: state.trim(),
         role: 'member',
         avatar: avatarUrl,
         communityId: activeCommunity.id,
         communityName: activeCommunity.name,
-        membershipId: `SS-${city.substring(0, 3).toUpperCase()}-2024-${Math.floor(1000 + Math.random() * 9000)}`,
+        membershipId: `MFCT-${userCity.substring(0, 3).toUpperCase()}-2024-${Math.floor(1000 + Math.random() * 9000)}`,
         isVerified: false,
-        isPremium: false,
         joinDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
         passwordHash: hashedPassword,
         paymentMethod: paymentMethod,
-        paymentUtr: utrNumber || undefined,
+        paymentUtr: utrNumber.trim() || undefined,
         paymentScreenshotUrl: screenshotUrl,
       };
 
@@ -120,7 +122,10 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
       try { confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } }); } catch { }
     } catch (err) {
       console.error('Registration error:', err);
-      showToast('Registration failed. Please try again.', 'error');
+      showToast(
+        isHindi ? 'पंजीकरण विफल रहा। कृपया पुनः प्रयास करें।' : 'رجسٹریشن ناکام رہی۔ دوبارہ کوشش کریں۔',
+        'error'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -145,11 +150,16 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
         <div className="mb-6">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> ₹50 Membership solidarity program
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <span>{isHindi ? '₹50 सदस्यता एकजुटता कार्यक्रम' : '₹50 ممبرشپ یکجہتی پروگرام'}</span>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900">Become a Verified Community Member</h2>
+          <h2 className="text-2xl font-bold text-slate-900">
+            {isHindi ? 'सत्यापित समुदाय सदस्य बनें' : 'تصدیق شدہ کمیونٹی ممبر بنیں'}
+          </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Join your local community. Become both a donor and someone eligible for emergency aid.
+            {isHindi
+              ? 'अपने स्थानीय समुदाय से जुड़ें। दानकर्ता बनें और आपातकालीन सहायता के पात्र भी।'
+              : 'اپنی مقامی کمیونٹی میں شامل ہوں۔ عطیہ دہندہ بنیں اور ہنگامی امداد کے اہل بھی۔'}
           </p>
         </div>
 
@@ -158,12 +168,12 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Full Legal Name (as per Aadhaar)
+                  {isHindi ? 'पूरा नाम (आधार के अनुसार) *' : 'مکمل نام (آدھار کے مطابق) *'}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Farhan Siddiqui"
+                  placeholder={isHindi ? 'उदा. मोहम्मद तारिक' : 'مثال: محمد طارق'}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -171,7 +181,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Mobile Number
+                  {isHindi ? 'मोबाइल नंबर *' : 'موبائل نمبر *'}
                 </label>
                 <input
                   type="tel"
@@ -192,12 +202,11 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Email Address
+                  {isHindi ? 'ईमेल पता (वैकल्पिक)' : 'ای میل ایڈریس (اختیاری)'}
                 </label>
                 <input
                   type="email"
-                  required
-                  placeholder="e.g. farhan@example.com"
+                  placeholder={isHindi ? 'उदा. tariq@example.com' : 'tariq@example.com'}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -205,13 +214,13 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Create Password
+                  {isHindi ? 'पासवर्ड बनाएं *' : 'پاس ورڈ بنائیں *'}
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
-                    placeholder="Min 6 characters"
+                    placeholder={isHindi ? 'कम से कम 6 अक्षर' : 'کم از کم 6 حروف'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full p-3 pr-10 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -230,12 +239,12 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  State
+                  {isHindi ? 'राज्य *' : 'ریاست *'}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Maharashtra"
+                  placeholder={isHindi ? 'उदा. उत्तर प्रदेश' : 'مثال: اتر پردیش'}
                   value={state}
                   onChange={(e) => setState(e.target.value)}
                   className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -244,12 +253,12 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  City / Town
+                  {isHindi ? 'शहर / कस्बा *' : 'شہر / قصبہ *'}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Mumbai"
+                  placeholder={isHindi ? 'उदा. बरेली' : 'مثال: بریلی'}
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -259,7 +268,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Select Your Local Community
+                {isHindi ? 'अपना स्थानीय समुदाय चुनें' : 'اپنی مقامی کمیونٹی منتخب کریں'}
               </label>
               <select
                 value={selectedCommunityId}
@@ -268,7 +277,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               >
                 {communities.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} ({c.city} - Managed by {c.adminName})
+                    {c.name} ({c.city} - {isHindi ? 'प्रशासक:' : 'ایڈمن:'} {c.adminName})
                   </option>
                 ))}
               </select>
@@ -277,7 +286,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Profile Picture
+                  {isHindi ? 'प्रोफ़ाइल फ़ोटो (वैकल्पिक)' : 'پروفائل تصویر (اختیاری)'}
                 </label>
                 <label
                   className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${avatarUploaded
@@ -289,15 +298,15 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                   <Upload className="w-5 h-5 mb-1 text-slate-500" />
                   <span className="text-xs font-bold">
                     {avatarUploaded
-                      ? `✓ ${avatarFile?.name ?? 'Photo Attached'}`
-                      : 'Click to upload photo'}
+                      ? `✓ ${avatarFile?.name ?? (isHindi ? 'फ़ोटो संलग्न है' : 'تصویر منسلک ہے')}`
+                      : (isHindi ? 'फ़ोटो अपलोड करने के लिए क्लिक करें' : 'تصویر اپلوڈ کریں')}
                   </span>
                 </label>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Identity Document (Aadhaar / Voter ID)
+                  {isHindi ? 'पहचान दस्तावेज (आधार / वोटर आईडी) *' : 'شناختی دستاویز (آدھار / ووٹر کارڈ) *'}
                 </label>
                 <label
                   className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${kycUploaded
@@ -309,8 +318,8 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                   <Upload className="w-5 h-5 mb-1 text-slate-500" />
                   <span className="text-xs font-bold">
                     {kycUploaded
-                      ? `✓ ${kycFile?.name ?? 'Document Attached'}`
-                      : 'Click to upload Aadhaar'}
+                      ? `✓ ${kycFile?.name ?? (isHindi ? 'दस्तावेज संलग्न है' : 'دستاویز منسلک ہے')}`
+                      : (isHindi ? 'आधार या पहचान पत्र अपलोड करें *' : '* شناختی دستاویز اپلوڈ کریں')}
                   </span>
                 </label>
               </div>
@@ -320,26 +329,32 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               type="button"
               onClick={() => {
                 const missingFields = [];
-                if (!fullName) missingFields.push('Full Name');
-                if (!email) missingFields.push('Email');
-                if (!password) missingFields.push('Password');
-                if (!phone) missingFields.push('Mobile Number');
-                if (!state) missingFields.push('State');
-                if (!city) missingFields.push('City');
+                if (!fullName) missingFields.push(isHindi ? 'पूरा नाम' : 'مکمل نام');
+                if (!password) missingFields.push(isHindi ? 'पासवर्ड' : 'پاس ورڈ');
+                if (!phone) missingFields.push(isHindi ? 'मोबाइल नंबर' : 'موبائل نمبر');
+                if (!state) missingFields.push(isHindi ? 'राज्य' : 'ریاست');
+                if (!city) missingFields.push(isHindi ? 'शहर' : 'شہر');
+                if (!kycFile) missingFields.push(isHindi ? 'पहचान दस्तावेज' : 'شناختی دستاویز');
 
                 if (missingFields.length > 0) {
-                  showToast(`Please fill out: ${missingFields.join(', ')}`);
+                  showToast(
+                    isHindi
+                      ? `कृपया भरें: ${missingFields.join(', ')}`
+                      : `براہ کرم درج کریں: ${missingFields.join(', ')}`
+                  );
                   return;
                 }
                 if (password.length < 6) {
-                  showToast('Password must be at least 6 characters long.');
+                  showToast(
+                    isHindi ? 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।' : 'پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔'
+                  );
                   return;
                 }
                 setStep(2);
               }}
               className="cursor-pointer w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
             >
-              <span>Next: Pay ₹50 Membership Fee</span>
+              <span>{isHindi ? 'आगे बढ़ें: ₹50 सदस्यता शुल्क का भुगतान करें' : 'آگے بڑھیں: ₹50 ممبرشپ فیس ادا کریں'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -349,12 +364,13 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
           <form onSubmit={handleFinishRegistration} className="space-y-6">
             <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-950 space-y-2">
               <div className="flex justify-between font-bold text-base">
-                <span>Annual Membership Solidarity Fee:</span>
+                <span>{isHindi ? 'वार्षिक सदस्यता एकजुटता शुल्क:' : 'سالانہ ممبرشپ فیس:'}</span>
                 <span className="text-emerald-700">₹50</span>
               </div>
               <p className="text-xs text-emerald-800 leading-relaxed">
-                This nominal ₹50 fee activates your membership inside{' '}
-                <span className="font-semibold">{activeCommunity.name}</span>, providing full access to community emergency funds and voting rights.
+                {isHindi
+                  ? `यह नाममात्र ₹50 शुल्क आपकी सदस्यता को ${activeCommunity.name} में सक्रिय करता है और आपातकालीन सहायता व मतदान का अधिकार देता है।`
+                  : `یہ ₹50 فیس ${activeCommunity.name} میں آپ کی ممبرشپ فعال کرتی ہے اور ہنگامی امداد کی اہلیت دیتی ہے۔`}
               </p>
             </div>
 
@@ -366,7 +382,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 className={`cursor-pointer py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'UPI' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
                   }`}
               >
-                Instant UPI / QR Scan
+                {isHindi ? 'तुरंत UPI / QR स्कैन' : 'فوری UPI / کیو آر اسکین'}
               </button>
               <button
                 type="button"
@@ -374,7 +390,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 className={`cursor-pointer py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'Bank Transfer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
                   }`}
               >
-                Direct Bank NEFT / RTGS
+                {isHindi ? 'डायरेक्ट बैंक NEFT / RTGS' : 'بینک ٹرانسفر / RTGS'}
               </button>
             </div>
 
@@ -384,27 +400,29 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                   <QrCode className="w-36 h-36 text-slate-900 mx-auto" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 uppercase tracking-wider">UPI ID for Direct Escrow</p>
+                  <p className="text-xs text-slate-400 uppercase tracking-wider">
+                    {isHindi ? 'प्रत्यक्ष एस्क्रो के लिए UPI ID' : 'براہ راست ادائیگی کے لیے UPI ID'}
+                  </p>
                   <p className="font-mono text-emerald-400 font-bold text-lg select-all">
-                    sevasangam.membership@okicici
+                    mfct@okicici
                   </p>
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Scan using Google Pay, PhonePe, Paytm, or BHIM UPI
+                    {isHindi ? 'Google Pay, PhonePe, Paytm या BHIM UPI द्वारा स्कैन करें' : 'Google Pay, PhonePe, Paytm کے ذریعے اسکین کریں'}
                   </p>
                 </div>
               </div>
             ) : (
               <div className="p-5 bg-slate-900 text-white rounded-3xl space-y-3 text-xs font-mono">
                 <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">Account Name:</span>
-                  <span className="text-emerald-400 font-bold">SevaSangam Relief Escrow Trust</span>
+                  <span className="text-slate-400">{isHindi ? 'खाता नाम:' : 'کھاتہ نام:'}</span>
+                  <span className="text-emerald-400 font-bold">MFCT Community Foundation</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">Bank Name:</span>
+                  <span className="text-slate-400">{isHindi ? 'बैंक का नाम:' : 'بینک:'}</span>
                   <span className="text-slate-200">ICICI Bank Ltd</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">Account Number:</span>
+                  <span className="text-slate-400">{isHindi ? 'खाता संख्या:' : 'اکاؤنٹ نمبر:'}</span>
                   <span className="text-emerald-300 font-bold select-all">000405018892</span>
                 </div>
                 <div className="flex justify-between">
@@ -417,11 +435,11 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  12-Digit Bank UTR / Transaction Ref No
+                  {isHindi ? '12 अंकों का बैंक UTR / संदर्भ संख्या' : '12 ہندسوں کا بینک UTR / ریفرنس نمبر'}
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. 420199381029"
+                  placeholder={isHindi ? 'उदा. 420199381029' : 'مثال: 420199381029'}
                   value={utrNumber}
                   onChange={(e) => setUtrNumber(e.target.value)}
                   className="w-full p-3 rounded-xl border border-slate-200 font-mono text-sm font-semibold focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -430,12 +448,12 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Or Upload Payment Screenshot
+                  {isHindi ? 'या भुगतान स्क्रीनशॉट अपलोड करें' : 'یا ادائیگی کی رسید اپلوڈ کریں'}
                 </label>
                 <label
                   className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${screenshotUploaded
-                      ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
-                      : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
+                    ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
+                    : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
                     }`}
                 >
                   <input
@@ -447,8 +465,8 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                   <Upload className="w-5 h-5 mb-1 text-slate-500" />
                   <span className="text-xs font-bold">
                     {screenshotUploaded
-                      ? `✓ ${screenshotFile?.name ?? 'Screenshot Attached'}`
-                      : 'Click to upload payment screenshot'}
+                      ? `✓ ${screenshotFile?.name ?? (isHindi ? 'स्क्रीनशॉट संलग्न है' : 'رسید منسلک ہے')}`
+                      : (isHindi ? 'भुगतान रसीद अपलोड करने के लिए क्लिक करें' : 'ادائیگی کی رسید اپلوڈ کریں')}
                   </span>
                 </label>
               </div>
@@ -461,10 +479,12 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 required
                 checked={isFeePaid}
                 onChange={(e) => setIsFeePaid(e.target.checked)}
-                className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
+                className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer"
               />
-              <label htmlFor="feeCheck" className="text-xs text-slate-700 font-medium">
-                I have completed the ₹50 UPI payment and agree to community solidarity guidelines.
+              <label htmlFor="feeCheck" className="text-xs text-slate-700 font-medium cursor-pointer">
+                {isHindi
+                  ? 'मैंने ₹50 का UPI भुगतान पूरा कर लिया है और सामुदायिक दिशानिर्देशों से सहमत हूँ।'
+                  : 'میں نے ₹50 کی ادائیگی مکمل کر لی ہے اور فلاحی اصولوں سے متفق ہوں۔'}
               </label>
             </div>
 
@@ -474,7 +494,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 onClick={() => setStep(1)}
                 className="cursor-pointer py-3.5 px-4 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 transition-colors"
               >
-                Back
+                {isHindi ? 'वापस' : 'واپس'}
               </button>
               <button
                 type="submit"
@@ -483,7 +503,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               >
                 {submitting ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : 'Complete Membership Registration'}
+                ) : (isHindi ? 'सदस्यता पंजीकरण पूर्ण करें' : 'ممبرشپ رجسٹریشن مکمل کریں')}
               </button>
             </div>
           </form>
@@ -496,12 +516,20 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
             </div>
 
             <div>
-              <h3 className="text-2xl font-bold text-slate-900">Welcome to SevaSangam!</h3>
+              <h3 className="text-2xl font-bold text-slate-900">
+                {isHindi ? 'MFCT में आपका स्वागत है!' : 'MFCT میں خوش آمدید!'}
+              </h3>
               <p className="text-sm text-slate-600 mt-1">
-                You are now a verified member of <span className="font-bold text-emerald-700">{activeCommunity.name}</span>.
+                {isHindi ? (
+                  <>अब आप <span className="font-bold text-emerald-700">{activeCommunity.name}</span> के एक सत्यापित सदस्य हैं।</>
+                ) : (
+                  <>اب آپ <span className="font-bold text-emerald-700">{activeCommunity.name}</span> کے تصدیق شدہ ممبر بن چکے ہیں۔</>
+                )}
                 {hasPendingDonation && (
                   <span className="block text-emerald-600 font-bold mt-2 text-xs bg-emerald-50 py-1.5 px-3 rounded-lg border border-emerald-100">
-                    ✓ Verified Membership Active! Proceeding to complete your donation...
+                    {isHindi
+                      ? '✓ सत्यापित सदस्यता सक्रिय! दान पूरा करने के लिए आगे बढ़ रहे हैं...'
+                      : '✓ ممبرشپ فعال ہو گئی! عطیہ مکمل کرنے کے لیے آگے بڑھ رہے ہیں...'}
                   </span>
                 )}
               </p>
@@ -511,7 +539,11 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               onClick={onClose}
               className="cursor-pointer w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
             >
-              <span>{hasPendingDonation ? 'Proceed to Complete Donation' : 'Access Member Dashboard'}</span>
+              <span>
+                {hasPendingDonation
+                  ? (isHindi ? 'दान पूरा करने के लिए आगे बढ़ें' : 'عطیہ مکمل کریں')
+                  : (isHindi ? 'सदस्य डैशबोर्ड खोलें' : 'ممبر ڈیش بورڈ کھولیں')}
+              </span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
