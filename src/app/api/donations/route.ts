@@ -16,7 +16,23 @@ export async function GET(request: Request) {
 
     const { data, error } = await query;
     if (error) throw error;
-    return NextResponse.json({ success: true, data: data ?? [] });
+    
+    let results = data ?? [];
+    function getDonationTime(item: any): number {
+      const dateStr = item.created_at || item.date;
+      if (dateStr) {
+        const t = new Date(dateStr).getTime();
+        if (!isNaN(t) && t > 0) return t;
+      }
+      const idStr = String(item.id || '');
+      const match13 = idStr.match(/don_(\d{13})/);
+      if (match13) return parseInt(match13[1], 10);
+      return 0;
+    }
+
+    results.sort((a: any, b: any) => getDonationTime(b) - getDonationTime(a));
+
+    return NextResponse.json({ success: true, data: results });
   } catch (err: any) {
     console.error('Error in GET /api/donations:', err);
     return NextResponse.json({ success: false, error: err?.message || 'Failed to fetch donations', data: [] }, { status: 500 });
@@ -26,6 +42,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const nowIso = new Date().toISOString();
 
     const newDonation = {
       id: body.id || `don_${Date.now()}`,
@@ -44,6 +61,7 @@ export async function POST(request: Request) {
       payment_screenshot_url: body.paymentScreenshotUrl || body.payment_screenshot_url || null,
       status: body.status || 'verified',
       date: body.date || new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
+      created_at: nowIso,
       receipt_number: body.receiptNumber || body.receipt_number || `RCP-${Date.now().toString().slice(-6)}`,
     };
 

@@ -1,20 +1,47 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Campaign } from '../types';
 import { ShieldCheck, Sparkles, Clock, Heart, Users, Building2, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useRouter } from 'next/navigation';
+import { translateCampaign, translateCampaignTitle, translateCampaignStory } from '../lib/translateEntity';
+import { autoTranslateText } from '../lib/autoTranslate';
 
 interface CampaignCardProps {
   campaign: Campaign;
   onDonate: (campaign: Campaign) => void;
 }
 
-export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate }) => {
+export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign: rawCampaign, onDonate }) => {
   const router = useRouter();
-  const { t, isHindi } = useLanguage();
+  const { t, language } = useLanguage();
+  const campaign = translateCampaign(rawCampaign, language);
   const percentRaised = Math.min(100, Math.round((campaign.raisedINR / campaign.goalINR) * 100));
+
+  const [displayTitle, setDisplayTitle] = useState(campaign.title);
+  const [displayStory, setDisplayStory] = useState(campaign.story);
+
+  useEffect(() => {
+    if (language === 'en') {
+      setDisplayTitle(rawCampaign.title);
+      setDisplayStory(rawCampaign.story);
+      return;
+    }
+
+    const tTitle = translateCampaignTitle(rawCampaign.title, language);
+    const tStory = translateCampaignStory(rawCampaign.story, language);
+    setDisplayTitle(tTitle);
+    setDisplayStory(tStory);
+
+    // If still in original English (i.e. brand new custom campaign), fetch auto-translation
+    if (tTitle === rawCampaign.title && rawCampaign.title) {
+      autoTranslateText(rawCampaign.title, language).then(setDisplayTitle);
+    }
+    if (tStory === rawCampaign.story && rawCampaign.story) {
+      autoTranslateText(rawCampaign.story, language).then(setDisplayStory);
+    }
+  }, [rawCampaign.title, rawCampaign.story, language]);
 
   const categoryTranslations: Record<string, string> = {
     Medical: t('cat.medical', 'Medical Aid'),
@@ -26,28 +53,37 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate }
     Zakat: t('cat.zakat', 'Zakat'),
   };
 
-  const displayCategory = categoryTranslations[campaign.category] || campaign.category;
+  const displayCategory = categoryTranslations[rawCampaign.category] || campaign.category;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group">
+    <div
+      className="rounded-2xl transition-all duration-300 overflow-hidden flex flex-col group"
+      style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', boxShadow: 'var(--shadow-card)' }}
+    >
       {/* Card Image Banner */}
-      <div className="relative h-52 overflow-hidden bg-slate-100">
+      <div className="relative h-52 overflow-hidden" style={{ background: 'var(--mfct-warm-bg-2)' }}>
         <img
           src={campaign.mainImage}
-          alt={campaign.title}
+          alt={displayTitle}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20"></div>
 
         {/* Badges Overlay Top */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-1 flex-wrap">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md text-slate-800 text-[11px] font-bold shadow-sm">
+            <span
+              className="px-2.5 py-1 rounded-full text-[11px] font-bold shadow-sm"
+              style={{ background: 'rgba(255,255,255,0.92)', color: 'var(--mfct-dark-green)' }}
+            >
               {displayCategory}
             </span>
             {campaign.isZakatEligible && (
-              <span className="px-2.5 py-1 rounded-full bg-amber-500 text-white text-[11px] font-bold shadow-sm flex items-center gap-1">
+              <span
+                className="px-2.5 py-1 rounded-full text-[11px] font-bold shadow-sm flex items-center gap-1"
+                style={{ background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)' }}
+              >
                 <Sparkles className="w-3 h-3" /> {t('card.zakat', 'Zakat Eligible')}
               </span>
             )}
@@ -59,15 +95,18 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate }
           </div>
 
           {campaign.isVerified && (
-            <span className="px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold shadow-sm flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" /> {t('card.verified', 'Verified')}
+            <span
+              className="px-2.5 py-1 rounded-full text-[11px] font-bold shadow-sm flex items-center gap-1"
+              style={{ background: 'var(--mfct-dark-green)', color: 'var(--mfct-gold)', border: '1px solid rgba(200,168,75,0.4)' }}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> {t('card.verified', 'Verified')}
             </span>
           )}
         </div>
 
         {/* Community Title Bottom Overlay */}
         <div className="absolute bottom-3 left-3 right-3 text-white">
-          <p className="text-[11px] text-emerald-300 font-medium flex items-center gap-1">
+          <p className="text-[11px] font-medium flex items-center gap-1" style={{ color: 'var(--mfct-gold)' }}>
             <Building2 className="w-3 h-3 shrink-0" />
             <span className="truncate">{campaign.communityName} • {campaign.city}</span>
           </p>
@@ -79,42 +118,46 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate }
         <div>
           <h3
             onClick={() => router.push(`/campaigns/${campaign.id}`)}
-            className="font-bold text-slate-900 text-base leading-snug hover:text-emerald-600 transition-colors cursor-pointer line-clamp-2"
+            className="font-bold text-base leading-snug transition-colors cursor-pointer line-clamp-2"
+            style={{ color: 'var(--mfct-dark-green)' }}
           >
-            {campaign.title}
+            {displayTitle}
           </h3>
-          <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
-            {campaign.story}
+          <p className="text-xs mt-1.5 line-clamp-2 leading-relaxed" style={{ color: 'var(--mfct-text-muted)' }}>
+            {displayStory}
           </p>
         </div>
 
         {/* Progress Section */}
-        <div className="space-y-2 pt-2 border-t border-slate-100">
+        <div className="space-y-2 pt-2" style={{ borderTop: '1px solid var(--mfct-border)' }}>
           <div className="flex items-baseline justify-between text-xs font-semibold">
-            <span className="text-emerald-700 font-bold text-sm">
+            <span className="font-bold text-sm" style={{ color: 'var(--mfct-dark-green)' }}>
               ₹{campaign.raisedINR.toLocaleString('en-IN')}{' '}
-              <span className="text-slate-400 font-normal text-xs">{t('card.raised', 'raised')}</span>
+              <span className="font-normal text-xs" style={{ color: 'var(--mfct-text-muted)' }}>{t('card.raised', 'raised')}</span>
             </span>
-            <span className="text-slate-500">
-              {isHindi ? 'लक्ष्य' : 'Goal'}: ₹{campaign.goalINR.toLocaleString('en-IN')}
+            <span style={{ color: 'var(--mfct-text-muted)' }}>
+              {t('card.ofGoal', 'Goal')}: ₹{campaign.goalINR.toLocaleString('en-IN')}
             </span>
           </div>
 
-          <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+          <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: 'var(--mfct-warm-bg-2)' }}>
             <div
-              className="bg-emerald-600 h-full rounded-full transition-all duration-500"
-              style={{ width: `${percentRaised}%` }}
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${percentRaised}%`,
+                background: 'linear-gradient(90deg, var(--mfct-dark-green) 0%, var(--mfct-gold) 100%)'
+              }}
             ></div>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium pt-1">
-            <span className="flex items-center gap-1 text-slate-600">
-              <Users className="w-3.5 h-3.5 text-slate-400" /> {campaign.donorsCount} {t('card.donors', 'Donors')}
+          <div className="flex items-center justify-between text-[11px] font-medium pt-1" style={{ color: 'var(--mfct-text-muted)' }}>
+            <span className="flex items-center gap-1">
+              <Users className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> {campaign.donorsCount} {t('card.donors', 'Donors')}
             </span>
-            <span className="flex items-center gap-1 text-slate-600">
-              <Clock className="w-3.5 h-3.5 text-amber-500" /> {campaign.daysLeft} {t('card.daysLeft', 'Days Left')}
+            <span className="flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> {campaign.daysLeft} {t('card.daysLeft', 'Days Left')}
             </span>
-            <span className="font-bold text-emerald-600">{percentRaised}%</span>
+            <span className="font-bold" style={{ color: 'var(--mfct-dark-green)' }}>{percentRaised}%</span>
           </div>
         </div>
 
@@ -122,13 +165,14 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDonate }
         <div className="pt-2 flex items-center gap-2">
           <button
             onClick={() => router.push(`/campaigns/${campaign.id}`)}
-            className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex-1 cursor-pointer"
+            className="py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex-1 cursor-pointer"
+            style={{ background: 'var(--mfct-warm-bg-2)', color: 'var(--mfct-dark-green)', border: '1px solid var(--mfct-border)' }}
           >
             {t('card.viewDetail', 'Read Story & Docs')}
           </button>
           <button
-            onClick={() => onDonate(campaign)}
-            className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer"
+            onClick={() => onDonate(rawCampaign)}
+            className="mfct-btn-gold py-2.5 px-4 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
           >
             <Heart className="w-3.5 h-3.5 fill-current" /> {t('card.donateNow', 'Donate')}
           </button>

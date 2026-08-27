@@ -7,7 +7,7 @@ import { MembershipBanner } from '../components/MembershipBanner';
 import { useLanguage } from '../context/LanguageContext';
 
 export const ContactPage: React.FC = () => {
-  const { isHindi } = useLanguage();
+  const { t } = useLanguage();
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [name, setName] = useState('');
@@ -24,7 +24,7 @@ export const ContactPage: React.FC = () => {
       await submitContactMessage({ name, phone, message });
       setSubmitted(true);
     } catch {
-      setError(isHindi ? 'संदेश भेजने में विफल। कृपया पुनः प्रयास करें।' : 'Failed to send message. Please try again.');
+      setError(t('contact.send_error', 'Failed to send message. Please try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -33,23 +33,23 @@ export const ContactPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-black text-slate-900">{isHindi ? 'MFCT से संपर्क करें' : 'Get in Touch with MFCT'}</h1>
+        <h1 className="text-3xl font-black text-slate-900">{t('contact.page_title', 'Contact MFCT')}</h1>
         <p className="text-sm text-slate-500 mt-1">
-          {isHindi ? 'स्थानीय समुदाय शुरू करने या किसी कारण को सत्यापित करने के बारे में प्रश्न हैं? हमारी टीम 24/7 उपलब्ध है।' : 'Have questions about starting a local community or verifying a cause? Our team is available 24/7.'}
+          {t('contact.page_desc', 'Questions about starting a local community or verifying a cause? Our team is available 24/7.')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column Form */}
         <div className="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-          <h2 className="text-xl font-bold text-slate-900">{isHindi ? 'हमें सीधा संदेश भेजें' : 'Send Us a Direct Message'}</h2>
+          <h2 className="text-xl font-bold text-slate-900">{t('contact.form_title', 'Send Us a Message Directly')}</h2>
 
           {submitted ? (
             <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-200 text-center space-y-2">
               <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-              <h3 className="font-bold text-slate-900 text-base">{isHindi ? 'संदेश सफलतापूर्वक भेजा गया!' : 'Message Sent Successfully!'}</h3>
+              <h3 className="font-bold text-slate-900 text-base">{t('contact.success_title', 'Message sent successfully!')}</h3>
               <p className="text-xs text-slate-600">
-                {isHindi ? 'हमारी सहायता टीम आपसे' : 'Our support team will contact you at'} <span className="font-bold">{phone}</span> {isHindi ? 'पर 2 घंटे के भीतर संपर्क करेगी।' : 'within 2 hours.'}
+                {t('contact.success_desc', 'Our support team will contact you at')} <span className="font-bold">{phone}</span> {t('contact.success_within', 'within 2 hours.')}
               </p>
             </div>
           ) : (
@@ -62,22 +62,22 @@ export const ContactPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
                 <div>
-                  <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">{isHindi ? 'आपका पूरा नाम' : 'Your Full Name'}</label>
+                  <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">{t('contact.name_label', 'Your Full Name')}</label>
                   <input
                     type="text"
                     required
-                    placeholder={isHindi ? 'उदा. अनन्या दास' : 'e.g. Ananya Das'}
+                    placeholder={t('contact.name_placeholder', 'e.g. Mohammad Tariq')}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full p-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">{isHindi ? 'मोबाइल नंबर' : 'Mobile Number'}</label>
+                  <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">{t('contact.phone_label', 'Mobile Number')}</label>
                   <input
                     type="number"
                     required
-                    placeholder={isHindi ? 'उदा. 1234567890' : 'e.g. 1234567890'}
+                    placeholder={t('contact.phone_placeholder', 'e.g. 1234567890')}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="w-full p-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -86,11 +86,11 @@ export const ContactPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">{isHindi ? 'हम आपकी कैसे मदद कर सकते हैं?' : 'How can we help you?'}</label>
+                <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">{t('contact.message_label', 'How can we help you?')}</label>
                 <textarea
                   rows={4}
                   required
-                  placeholder={isHindi ? 'सदस्यता, ज़कात अनुपालन, या नया समुदाय शुरू करने के बारे में पूछें...' : 'Ask about membership, Zakat compliance, or start a new community...'}
+                  placeholder={t('contact.message_placeholder', 'Ask about membership, Zakat compliance, or starting a new community...')}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   className="w-full p-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -105,7 +105,7 @@ export const ContactPage: React.FC = () => {
                 {submitting ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <><Send className="w-4 h-4" /> {isHindi ? 'संदेश भेजें' : 'Send Message'}</>
+                  <><Send className="w-4 h-4" /> {t('contact.send_btn', 'Send Message')}</>
                 )}
               </button>
             </form>
@@ -114,30 +114,29 @@ export const ContactPage: React.FC = () => {
 
         <div className="lg:col-span-5 space-y-6">
           <div className="p-6 bg-slate-900 text-white rounded-3xl space-y-4 shadow-xl">
-            <h3 className="font-extrabold text-lg text-white">{isHindi ? 'आपातकालीन सहायता संपर्क' : 'Emergency Support Contacts'}</h3>
+            <h3 className="font-extrabold text-lg text-white">{t('contact.emergency_title', 'Emergency Support Contacts')}</h3>
 
             <div className="space-y-3 text-xs">
               <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-800/80">
                 <Phone className="w-5 h-5 text-emerald-400 shrink-0" />
                 <div>
-                  <span className="text-slate-400 text-[10px] block uppercase">{isHindi ? '24/7 टोल-फ्री हॉटलाइन' : '24/7 Toll-Free Hotline'}</span>
-                  <span className="font-bold text-white text-sm">+91 1800 200 SEVA (7382)</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-800/80">
-                <Mail className="w-5 h-5 text-emerald-400 shrink-0" />
-                <div>
-                  <span className="text-slate-400 text-[10px] block uppercase">{isHindi ? 'आधिकारिक सहायता ईमेल' : 'Official Support Email'}</span>
-                  <span className="font-bold text-white text-sm">support@sevasangam.org</span>
+                  {/* <span className="text-slate-400 text-[10px] block uppercase">{t('contact.helpline_label', '24/7 Helpline')}</span> */}
+                  <span className="font-bold text-white text-sm">+91 82180 17226</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-950 border border-emerald-500/30">
-                <MessageSquare className="w-5 h-5 text-emerald-400 shrink-0" />
+                <Phone className="w-5 h-5 text-emerald-400 shrink-0" />
                 <div>
-                  <span className="text-emerald-300 text-[10px] block uppercase font-bold">{isHindi ? 'तत्काल व्हाट्सएप डेस्क' : 'Instant WhatsApp Desk'}</span>
-                  <span className="font-bold text-white text-sm">+91 98100 12345</span>
+                  {/* <span className="text-emerald-300 text-[10px] block uppercase font-bold">{t('contact.whatsapp_label', 'Instant WhatsApp Desk')}</span> */}
+                  <span className="font-bold text-white text-sm">+91 97569 19430</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-800/80">
+                <Mail className="w-5 h-5 text-emerald-400 shrink-0" />
+                <div>
+                  <span className="text-slate-400 text-[10px] block uppercase">{t('contact.email_label', 'Official Support Email')}</span>
+                  <span className="font-bold text-white text-sm">info@mfcttrust.com</span>
                 </div>
               </div>
             </div>
@@ -145,12 +144,12 @@ export const ContactPage: React.FC = () => {
 
           <div className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm space-y-3 text-xs">
             <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-              <MapPin className="w-4 h-4 text-emerald-600" /> {isHindi ? 'राष्ट्रीय मुख्यालय' : 'National Headquarters'}
+              <MapPin className="w-4 h-4 text-emerald-600" /> {t('contact.hq_label', 'Headquarters')}
             </div>
             <p className="text-slate-600 leading-relaxed">
-              MFCT Community Foundation<br />
-              Plot 42, Central Secretariat Institutional Area<br />
-              New Delhi - 110001, India
+              Village Pipariya, Post Bilwa<br />
+              Distt. Bareilly<br />
+              Uttar Pradesh - 243202, India
             </p>
           </div>
         </div>

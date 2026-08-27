@@ -24,10 +24,32 @@ function mapRow(row: Record<string, unknown>): Campaign {
     galleryImages: splitImages.slice(1) || [],
     story: (row.story as string) || '',
     documents: ((row.documents ?? row.documents) as Campaign['documents']) || [],
-    createdDate: (row.createdDate || row.created_date) as string,
+    createdDate: (row.created_at || row.createdDate || row.created_date) as string,
     createdBy: (row.createdBy || row.created_by) as string,
     status: row.status === 'approved' ? 'active' : row.status === 'pending' ? 'pending_approval' : (row.status as Campaign['status']) || 'active',
   };
+}
+
+export function getCampaignTimestamp(c: Campaign | Record<string, unknown>): number {
+  const dateStr = (c.createdDate || (c as any).created_at || (c as any).created_date) as string | undefined;
+  if (dateStr) {
+    const t = new Date(dateStr).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  const idStr = String(c.id || '');
+  const match13 = idStr.match(/camp_(\d{13})/);
+  if (match13) return parseInt(match13[1], 10);
+  const match10 = idStr.match(/camp_(\d{10})/);
+  if (match10) return parseInt(match10[1], 10) * 1000;
+  return 0;
+}
+
+export function sortCampaignsByLatest(campaigns: Campaign[]): Campaign[] {
+  return [...campaigns].sort((a, b) => {
+    const timeA = getCampaignTimestamp(a);
+    const timeB = getCampaignTimestamp(b);
+    return timeB - timeA;
+  });
 }
 
 export async function getCampaigns(filters?: {
@@ -47,7 +69,7 @@ export async function getCampaigns(filters?: {
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const json = await res.json();
     const mapped = (json.data || []).map(mapRow);
-    return mapped;
+    return sortCampaignsByLatest(mapped);
   } catch (err) {
     console.error('getCampaigns error:', err);
     return [];

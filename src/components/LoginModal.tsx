@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { UserRole, User } from '../types';
-import { X, Shield, UserCheck, Users, Heart, LogIn, ArrowRight, Sparkles, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { X, ArrowRight, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { authenticateUser } from '../services/userService';
+import { useLanguage } from '../context/LanguageContext';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -13,7 +14,13 @@ interface LoginModalProps {
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, currentRole, onOpenRegister }) => {
-  const [selectedRole, setSelectedRole] = useState<UserRole>(currentRole);
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
@@ -29,7 +36,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
 
     try {
       if (!phone || !password) {
-        setAuthError('Phone number and password are required.');
+        setAuthError(tr('मोबाइल नंबर और पासवर्ड आवश्यक हैं।', 'موبائل نمبر اور پاس ورڈ درکار ہے۔', 'Phone number and password are required.'));
         setAuthenticating(false);
         return;
       }
@@ -41,11 +48,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
         setLoggedIn(true);
         setTimeout(() => onClose(), 1200);
       } else {
-        setAuthError(result.error || 'Authentication failed. Please check your credentials.');
+        setAuthError(result.error || tr('लॉगिन विफल रहा। कृपया विवरण जांचें।', 'لاگ ان ناکام رہا۔ تفصیلات چیک کریں۔', 'Authentication failed. Please check your credentials.'));
       }
     } catch (err) {
       console.error('Login error:', err);
-      setAuthError('An error occurred during login. Please try again.');
+      setAuthError(tr('लॉगिन के दौरान त्रुटि हुई। पुनः प्रयास करें।', 'لاگ ان کے دوران خرابی پیش آئی۔ دوبارہ کوشش کریں۔', 'An error occurred during login. Please try again.'));
     } finally {
       setAuthenticating(false);
     }
@@ -66,8 +73,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
         </button>
 
         <div className="mb-8 text-center">
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Welcome Back</h2>
-          <p className="text-sm text-slate-500 mt-2 font-medium">Log in to your MFCT SevaSangam account</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+            {tr('वापसी पर स्वागत है', 'خوش آمدید', 'Welcome Back')}
+          </h2>
+          <p className="text-sm text-slate-500 mt-2 font-medium">
+            {tr('अपने MFCT सेवा-संगम खाते में लॉगिन करें', 'اپنے MFCT سیوا سنگم اکاؤنٹ میں لاگ ان کریں', 'Log in to your MFCT account')}
+          </p>
         </div>
 
         {loggedIn ? (
@@ -75,8 +86,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 mb-2">
               <CheckCircle2 className="w-8 h-8 text-emerald-600" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900">Successfully Logged In!</h3>
-            <p className="text-sm text-slate-500 font-medium">Redirecting to your dashboard...</p>
+            <h3 className="text-xl font-bold text-slate-900">
+              {tr('सफलतापूर्वक लॉगिन हो गए!', 'کامیابی کے ساتھ لاگ ان ہو گئے!', 'Successfully Logged In!')}
+            </h3>
+            <p className="text-sm text-slate-500 font-medium">
+              {tr('डैशबोर्ड पर रीडायरेक्ट किया जा रहा है...', 'ڈیش بورڈ پر ری ڈائریکٹ کیا جا رہا ہے...', 'Redirecting to your dashboard...')}
+            </p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -89,7 +104,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
 
               <div className="space-y-1.5">
                 <label className="block text-sm font-semibold text-slate-700 ml-1">
-                  Phone Number
+                  {tr('मोबाइल नंबर', 'موبائل نمبر', 'Phone Number')}
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
@@ -100,7 +115,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Enter your phone number"
+                    placeholder={tr('अपना मोबाइल नंबर दर्ज करें', 'اپنا موبائل نمبر درج کریں', 'Enter your phone number')}
                     className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm font-medium focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-400"
                   />
                 </div>
@@ -108,7 +123,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
 
               <div className="space-y-1.5">
                 <label className="block text-sm font-semibold text-slate-700 ml-1">
-                  Password
+                  {tr('पासवर्ड', 'پاس ورڈ', 'Password')}
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
@@ -117,7 +132,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
-                    placeholder="Enter your password"
+                    placeholder={tr('अपना पासवर्ड दर्ज करें', 'اپنا پاس ورڈ درج کریں', 'Enter your password')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-11 pr-12 py-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm font-medium focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-400"
@@ -141,7 +156,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
-                    <span>Sign In</span>
+                    <span>{tr('साइन इन करें', 'سائن ان کریں', 'Sign In')}</span>
                     <ArrowRight className="w-4 h-4 ml-1 opacity-80" />
                   </>
                 )}
@@ -150,7 +165,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
               {onOpenRegister && (
                 <div className="mt-5 text-center">
                   <p className="text-sm text-slate-500 font-medium">
-                    Don't have an account?{' '}
+                    {tr('खाता नहीं है?', 'اکاؤنٹ نہیں ہے؟', "Don't have an account?")}{' '}
                     <button
                       type="button"
                       onClick={() => {
@@ -159,7 +174,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
                       }}
                       className="text-emerald-600 hover:text-emerald-700 font-bold transition-colors underline decoration-2 underline-offset-4"
                     >
-                      Please sign up
+                      {tr('कृपया सदस्य बनें / रजिस्टर करें', 'رجسٹر کریں', 'Please sign up')}
                     </button>
                   </p>
                 </div>

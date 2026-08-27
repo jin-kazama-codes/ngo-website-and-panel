@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { Heart, QrCode, Phone, Mail, MapPin, ShieldCheck, ArrowRight, Check } from 'lucide-react';
+import { Phone, MapPin, ShieldCheck, QrCode, Mail, Globe, Facebook, Youtube } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 interface FooterProps {
@@ -11,113 +11,153 @@ interface FooterProps {
   onNavigateToAdmin?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onPageChange, onOpenDonate, onNavigateToAdmin }) => {
-  const { isHindi } = useLanguage();
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
-
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newsletterEmail) {
-      setSubscribed(true);
-    }
-  };
+export const Footer: React.FC<FooterProps> = ({ onOpenDonate }) => {
+  const { t } = useLanguage();
 
   return (
-    <footer className="bg-slate-950 text-slate-300 pt-16 pb-8 border-t border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-slate-800">
-          {/* Col 1: Brand & Mission */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white font-black flex items-center justify-center text-xl shadow-md">
-                M
+    <footer style={{ background: 'var(--mfct-dark-green)', color: 'rgba(255,255,255,0.85)' }}>
+      {/* ── Membership CTA Band ── */}
+      <div style={{ background: 'rgba(0,0,0,0.25)', borderBottom: '1px solid rgba(200,168,75,0.2)' }} className="py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+            {/* Left: Member */}
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(200,168,75,0.15)', border: '2px solid rgba(200,168,75,0.4)' }}>
+                <ShieldCheck className="w-5 h-5" style={{ color: 'var(--mfct-gold)' }} />
               </div>
               <div>
-                <span className="font-extrabold text-2xl tracking-tight text-white">MFCT</span>
-                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  {isHindi ? 'सामुदायिक मंच' : 'Community Platform'}
-                </span>
+                <p className="font-bold text-white text-sm">{t('footer.become_member', 'Become a Member')}</p>
+                <p className="text-xs" style={{ color: 'rgba(200,168,75,0.7)' }}>{t('footer.member_desc', 'MFCT से जुड़ें और समाज सेवा का हिस्सा बनें।')}</p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
-              {isHindi ? 'MFCT भारत का प्रमुख पारदर्शी, समावेशी, धर्म-तटस्थ सामुदायिक धन उगाहने वाला मंच है। प्रत्येक सदस्य दूसरों का समर्थन करने और सत्यापित सामुदायिक सहायता प्राप्त करने के लिए मात्र ₹50 शुल्क के साथ जुड़ता है।' : 'MFCT is India’s premier transparent, inclusive, religion-neutral community fundraising platform. Every member joins with a nominal ₹50 fee to both support others and receive verified community aid.'}
-            </p>
+            {/* Center: Logo */}
+            <div className="flex flex-col items-center gap-2 text-center">
+              <img
+                src="/mfct-logo.jpeg"
+                alt="Mohammad Faeem Charitable Trust"
+                className="w-16 h-16 rounded-full object-cover border-2 border-[var(--mfct-gold)] shadow-lg"
+              />
+              <p className="text-xs font-medium" style={{ color: 'rgba(200,168,75,0.6)' }}>Mohammad Faeem Charitable Trust</p>
+              <p className="text-[10px]" style={{ color: 'rgba(200,168,75,0.5)' }}>Bareilly, Uttar Pradesh</p>
+            </div>
 
-            <div className="flex items-center gap-2 text-xs text-emerald-400 font-semibold pt-1">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" /> {isHindi ? 'धारा 8 पंजीकृत एनजीओ | 80G कर छूट प्रमाणित' : 'Section 8 Registered NGO | 80G Tax Exemption Certified'}
+            {/* Right: Donate */}
+            <div className="flex items-center gap-4 md:justify-end">
+              <div>
+                <p className="font-bold text-white text-sm text-right">{t('footer.support_cause', 'Support Our Cause')}</p>
+                <p className="text-xs text-right" style={{ color: 'rgba(200,168,75,0.7)' }}>{t('footer.support_desc', 'आपका छोटा सा सहयोग किसी की ज़िंदगी बदल सकता है।')}</p>
+              </div>
+              <button
+                onClick={onOpenDonate}
+                className="mfct-btn-gold px-4 py-2 rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                ♥ {t('nav.donate', 'Donate Now')}
+              </button>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Col 2: Quick Links */}
-          <div className="space-y-3 text-xs">
-            <h4 className="font-bold text-white text-sm uppercase tracking-wider">{isHindi ? 'त्वरित नेविगेशन' : 'Quick Navigation'}</h4>
-            <ul className="space-y-2 text-slate-400 font-medium">
-              <li>
-                <Link
-                  href="/admin"
-                  className="text-emerald-400 font-bold hover:underline flex items-center gap-1"
-                >
-                  <span>{isHindi ? 'व्यवस्थापक और सदस्य पोर्टल (/admin)' : 'Admin & Member Portal (/admin)'}</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/" className="hover:text-emerald-400 transition-colors">
-                  {isHindi ? 'होम अवलोकन' : 'Home Overview'}
-                </Link>
-              </li>
-              <li>
-                <Link href="/campaigns" className="hover:text-emerald-400 transition-colors">
-                  {isHindi ? 'सत्यापित अभियान' : 'Verified Campaigns'}
-                </Link>
-              </li>
-              <li>
-                <Link href="/communities" className="hover:text-emerald-400 transition-colors">
-                  {isHindi ? 'स्थानीय समुदाय' : 'Local Communities'}
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="hover:text-emerald-400 transition-colors">
-                  {isHindi ? 'पारदर्शिता मॉडल' : 'Transparency Model'}
-                </Link>
-              </li>
-              <li>
-                <Link href="/gallery" className="hover:text-emerald-400 transition-colors">
-                  {isHindi ? 'राहत गैलरी' : 'Relief Gallery'}
-                </Link>
-              </li>
-              <li>
-                <Link href="/testimonials" className="hover:text-emerald-400 transition-colors">
-                  {isHindi ? 'सफलता की कहानियाँ' : 'Success Stories'}
-                </Link>
-              </li>
-            </ul>
-          </div>
+      {/* ── Main Footer Content ── */}
+      <div className="py-10" style={{ borderBottom: '1px solid rgba(200,168,75,0.15)' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
 
-          {/* Col 3: Categories & Causes */}
-          <div className="space-y-3 text-xs">
-            <h4 className="font-bold text-white text-sm uppercase tracking-wider">{isHindi ? 'सहायता श्रेणियाँ' : 'Support Categories'}</h4>
-            <ul className="space-y-2 text-slate-400 font-medium">
-              <li>{isHindi ? 'चिकित्सा और आपातकालीन संचालन' : 'Medical & Emergency Operations'}</li>
-              <li>{isHindi ? 'उच्च शिक्षा और अनाथ लड़कियां' : 'Higher Education & Orphan Girls'}</li>
-              <li>{isHindi ? 'गरिमापूर्ण विवाह सहायता' : 'Dignified Marriage Aid'}</li>
-              <li>{isHindi ? 'ज़कात पात्र सत्यापित कारण' : 'Zakat Eligible Verified Causes'}</li>
-              <li>{isHindi ? 'सदका और सामान्य राहत' : 'Sadakah & General Relief'}</li>
-              <li>{isHindi ? 'विकलांगता और विधवा कल्याण' : 'Disability & Widow Welfare'}</li>
-            </ul>
-          </div>
-
-          {/* Col 4: App Download & Newsletter */}
-          <div className="space-y-4 text-xs">
-            <h4 className="font-bold text-white text-sm uppercase tracking-wider">{isHindi ? 'मोबाइल ऐप और क्यूआर' : 'Mobile App & QR'}</h4>
-            <div className="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex items-center gap-3">
-              <div className="bg-white p-1.5 rounded-lg shrink-0">
-                <QrCode className="w-10 h-10 text-slate-900" />
+            {/* Col 1: Brand & Mission */}
+            <div className="space-y-4 lg:col-span-1">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/mfct-logo.jpeg"
+                  alt="MFCT Logo"
+                  className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-[var(--mfct-gold)]"
+                />
+                <div>
+                  <span className="font-extrabold text-white text-sm block" style={{ fontFamily: 'serif' }}>Mohammad Faeem</span>
+                  <span className="text-xs block" style={{ color: 'var(--mfct-gold)' }}>Charitable Trust</span>
+                </div>
               </div>
-              <div className="text-[11px]">
-                <p className="font-bold text-white">{isHindi ? 'MFCT ऐप के लिए स्कैन करें' : 'Scan for MFCT App'}</p>
-                <p className="text-slate-400 text-[10px]">{isHindi ? 'Android और iOS त्वरित डाउनलोड' : 'Android & iOS Instant Download'}</p>
+              <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                {t('footer.aboutText', 'MFCT is a transparent, grassroots welfare network providing medical aid, Nikah support, education, and Janazah services.')}
+              </p>
+              <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: 'var(--mfct-gold)' }}>
+                <ShieldCheck className="w-4 h-4" /> {t('footer.ngo_badge', 'Section 8 Registered NGO')}
+              </div>
+              {/* Social Icons */}
+              <div className="flex gap-2 pt-1">
+                {[
+                  { icon: Facebook, label: 'Facebook' },
+                  { icon: Youtube, label: 'YouTube' },
+                ].map(({ icon: Icon, label }) => (
+                  <button key={label} title={label} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer" style={{ background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.25)', color: 'var(--mfct-gold)' }}>
+                    <Icon className="w-4 h-4" />
+                  </button>
+                ))}
+                {/* WhatsApp */}
+                <button title="WhatsApp" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer" style={{ background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.25)', color: 'var(--mfct-gold)' }}>
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" /><path d="M12.004 2C6.477 2 2 6.484 2 12.017c0 1.99.52 3.853 1.428 5.467L2 22l4.656-1.394C8.016 21.451 9.964 22 12.004 22 17.53 22 22 17.516 22 11.983 22 6.462 17.531 2 12.004 2zm0 18.18c-1.717 0-3.402-.462-4.877-1.338l-.35-.207-3.624 1.085 1.085-3.543-.228-.364C3.017 14.51 2.72 13.27 2.72 12c0-5.122 4.16-9.28 9.284-9.28 5.116 0 9.276 4.158 9.276 9.28 0 5.12-4.16 9.18-9.276 9.18z" /></svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Col 2: Quick Links */}
+            <div className="space-y-3 text-xs">
+              <h4 className="font-bold text-white text-sm pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
+                {t('footer.quickLinks', 'Quick Navigation')}
+              </h4>
+              <ul className="space-y-2" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                <li><Link href="/admin" className="font-bold transition-colors hover:opacity-100" style={{ color: 'var(--mfct-gold)' }}>{t('footer.admin_portal', 'Admin & Member Portal')}</Link></li>
+                <li><Link href="/" className="hover:text-white transition-colors">{t('nav.home', 'Home')}</Link></li>
+                <li><Link href="/campaigns" className="hover:text-white transition-colors">{t('nav.campaigns', 'Verified Campaigns')}</Link></li>
+                <li><Link href="/communities" className="hover:text-white transition-colors">{t('nav.communities', 'Local Communities')}</Link></li>
+                <li><Link href="/about" className="hover:text-white transition-colors">{t('nav.about', 'About Us')}</Link></li>
+                <li><Link href="/gallery" className="hover:text-white transition-colors">{t('nav.gallery', 'Gallery')}</Link></li>
+                <li><Link href="/testimonials" className="hover:text-white transition-colors">{t('nav.testimonials', 'Impact Stories')}</Link></li>
+              </ul>
+            </div>
+
+            {/* Col 3: Programs */}
+            <div className="space-y-3 text-xs">
+              <h4 className="font-bold text-white text-sm pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
+                {t('footer.causes', 'Our Programs')}
+              </h4>
+              <ul className="space-y-2" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                <li className="hover:text-white transition-colors cursor-default">{t('cat.medical', '🏥 Medical Aid')}</li>
+                <li className="hover:text-white transition-colors cursor-default">{t('cat.education', '📚 Education & Books')}</li>
+                <li className="hover:text-white transition-colors cursor-default">{t('cat.marriage', '💍 Marriage & Nikah Support')}</li>
+                <li className="hover:text-white transition-colors cursor-default">{t('cat.zakat', '🤲 Zakat Eligible')}</li>
+                <li className="hover:text-white transition-colors cursor-default">{t('cat.sadakah', '❤️ Sadaqah & General Relief')}</li>
+                <li className="hover:text-white transition-colors cursor-default">{t('cat.janazah', '🕌 Janazah & Cemetery')}</li>
+              </ul>
+            </div>
+
+            {/* Col 4: Contact */}
+            <div className="space-y-3 text-xs">
+              <h4 className="font-bold text-white text-sm pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
+                {t('footer.contact_info', 'Contact Info')}
+              </h4>
+              <div className="space-y-3" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                  <span>{t('footer.address', 'Village Pipariya, Post Bilwa, Bareilly, Uttar Pradesh – 243202, India')}</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                    <span style={{ color: 'var(--mfct-gold)' }}>+91 82180 17226</span>
+                  </div>
+                  <div className="flex items-center gap-2 pl-6">
+                    <span>+91 97569 19430</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                  <span>info@mfcttrust.com</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                  <span>www.mfcttrust.com</span>
+                </div>
               </div>
             </div>
 
@@ -142,31 +182,19 @@ export const Footer: React.FC<FooterProps> = ({ onPageChange, onOpenDonate, onNa
             </form> */}
           </div>
         </div>
+      </div>
 
-        <div className="py-6 border-b border-slate-800 flex flex-col md:flex-row items-center justify-between text-xs text-slate-400 gap-4">
-          <div className="flex items-center gap-4 flex-wrap">
-            <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-              <Phone className="w-4 h-4" /> {isHindi ? 'हेल्पलाइन: +91 1800 200 MFCT (6328)' : 'Helpline: +91 1800 200 MFCT (6328)'}
-            </span>
-            <span className="flex items-center gap-1.5">
-              {/* <Mail className="w-4 h-4 text-slate-500" /> help@mfct.org */}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-slate-500" /> {isHindi ? 'बरेली उत्तर प्रदेश भारत' : 'Bareilly Uttar Pradesh India'}
-            </span>
+      {/* ── Bottom Bar ── */}
+      <div className="py-4" style={{ background: 'rgba(0,0,0,0.3)' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <p>© 2025 Mohammad Faeem Charitable Trust (MFCT). All Rights Reserved.</p>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy" className="hover:text-white transition-colors">{t('footer.privacy', 'Privacy Policy')}</Link>
+            <span className="opacity-30">|</span>
+            <Link href="/terms" className="hover:text-white transition-colors">{t('footer.terms', 'Terms & Conditions')}</Link>
+            <span className="opacity-30">|</span>
+            <Link href="/refund" className="hover:text-white transition-colors">{t('footer.refund', 'Refund Policy')}</Link>
           </div>
-
-          <div className="flex items-center gap-4 text-slate-500 font-medium">
-            <Link href="/privacy" className="hover:text-slate-300 cursor-pointer">{isHindi ? 'गोपनीयता नीति' : 'Privacy Policy'}</Link>
-            <Link href="/terms" className="hover:text-slate-300 cursor-pointer">{isHindi ? 'सेवा की शर्तें' : 'Terms of Service'}</Link>
-            <Link href="/refund" className="hover:text-slate-300 cursor-pointer">{isHindi ? 'रिफंड और ऑडिट नीति' : 'Refund & Audit Policy'}</Link>
-          </div>
-        </div>
-
-        {/* Bottom copyright */}
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500">
-          <p>{isHindi ? '© 2026 MFCT कम्युनिटी फाउंडेशन। सर्वाधिकार सुरक्षित।' : '© 2026 MFCT Community Foundation. All Rights Reserved.'}</p>
-          <p className="mt-2 sm:mt-0">{isHindi ? 'भारतीय समुदाय सशक्तिकरण और 100% पारदर्शिता के लिए डिज़ाइन किया गया।' : 'Designed for Indian Community Empowerment & 100% Transparency.'}</p>
         </div>
       </div>
     </footer>

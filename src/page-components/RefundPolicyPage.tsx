@@ -5,47 +5,56 @@ import { useLanguage } from '../context/LanguageContext';
 
 export const RefundPolicyPage: React.FC = () => {
   const router = useRouter();
-  const { isHindi } = useLanguage();
+  const { language, t } = useLanguage();
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 animate-fade-in text-slate-800">
-      <button 
-        onClick={() => router.back()} 
-        className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors"
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
       >
-        <ArrowLeft className="w-4 h-4" /> {isHindi ? 'वापस' : 'Back'}
+        <ArrowLeft className="w-4 h-4" /> {t('btn.back', 'Back')}
       </button>
 
       <div className="space-y-4">
-        <h1 className="text-3xl font-extrabold text-slate-900">{isHindi ? 'रिफंड और ऑडिट नीति' : 'Refund & Audit Policy'}</h1>
-        <p className="text-sm text-slate-500">{isHindi ? 'अंतिम अपडेट:' : 'Last updated:'} {new Date().toLocaleDateString()}</p>
+        <h1 className="text-3xl font-extrabold text-slate-900">
+          {language === 'hi' ? 'रिफंड और ऑडिट नीति' : language === 'ur' ? 'ریفنڈ اور آڈٹ پالیسی' : 'Refund & Audit Policy'}
+        </h1>
+        <p className="text-sm text-slate-500">
+          {language === 'hi' ? 'अंतिम अपडेट:' : language === 'ur' ? 'آخری اپڈیٹ:' : 'Last Updated:'} {new Date().toLocaleDateString()}
+        </p>
       </div>
 
       <div className="space-y-6 text-sm leading-relaxed text-slate-600">
         <section className="space-y-3">
-          <h2 className="text-xl font-bold text-slate-900">{isHindi ? '1. दान वापसी नीति' : '1. Donation Refund Policy'}</h2>
+          <h2 className="text-xl font-bold text-slate-900">
+            {language === 'hi' ? '1. दान वापसी नीति' : language === 'ur' ? '1. عطیات کی واپسی کی پالیسی' : '1. Donation Refund Policy'}
+          </h2>
           <p>
-            {isHindi ? 'भारत में एक पंजीकृत गैर-लाभकारी संगठन के रूप में, MFCT कम्युनिटी फाउंडेशन उम्मीद करता है कि सभी दाता दान करते समय उचित देखभाल और परिश्रम का प्रयोग करेंगे। आम तौर पर, दान वापस नहीं किया जाता है क्योंकि उन्हें तुरंत सक्रिय अभियानों या सामुदायिक एस्क्रो को आवंटित किया जाता है।' : 'As a registered non-profit organization in India, MFCT Community Foundation expects all donors to exercise due care and diligence while making donations. Generally, donations are non-refundable since they are immediately allocated to active campaigns or the community escrow.'}
+            {language === 'hi'
+              ? 'चूंकि दान तुरंत आपातकालीन सहायता और अस्पताल के भुगतानों के लिए आवंटित किए जाते हैं, इसलिए दान आम तौर पर गैर-वापसी योग्य होते हैं। हालांकि, यदि कोई डुप्लिकेट या अनपेक्षित लेनदेन होता है, तो 7 दिनों के भीतर पूर्ण रिफंड का अनुरोध किया जा सकता है।'
+              : language === 'ur'
+                ? 'چونکہ تمام عطیات براہ راست ہنگامی امداد اور اسپتال کے واجبات میں لگائے جاتے ہیں اس لیے عام طور پر عطیات ناقابل واپسی ہوتے ہیں۔ تاہم کسی تکنیکی غلطی یا ڈپلیکیٹ ادائیگی پر 7 دنوں کے اندر ریفنڈ کی درخواست دی جا سکتی ہے۔'
+                : 'Because donations are deployed directly for critical medical emergencies and relief, donations are generally non-refundable once disbursed. However, duplicate or unauthorized transactions may be refunded if reported within 7 business days.'}
           </p>
-          <p
-            dangerouslySetInnerHTML={{
-              __html: isHindi ? 'हालाँकि, हम मानते हैं कि त्रुटियाँ हो सकती हैं। यदि कोई गलत दान किया जाता है (उदा. डुप्लिकेट प्रसंस्करण या गलत राशि), तो दाता लेनदेन के <strong>7 दिनों</strong> के भीतर धनवापसी का अनुरोध कर सकता है।' : 'However, we recognize that errors can happen. If an erroneous donation is made (e.g., duplicate processing or wrong amount), the donor may request a refund within <strong>7 days</strong> of the transaction.'
-            }}
-          />
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-xl font-bold text-slate-900">{isHindi ? '2. धनवापसी अनुरोध प्रक्रिया' : '2. Refund Request Process'}</h2>
-          <p
-            dangerouslySetInnerHTML={{
-              __html: isHindi ? 'धनवापसी का अनुरोध करने के लिए, कृपया निम्नलिखित विवरणों के साथ <strong>refunds@mfct.org</strong> पर लिखें:' : 'To request a refund, please write to <strong>refunds@mfct.org</strong> with the following details:'
-            }}
-          />
+          <h2 className="text-xl font-bold text-slate-900">
+            {language === 'hi' ? '2. धनवापसी अनुरोध प्रक्रिया' : language === 'ur' ? '2. ریفنڈ کا طریقہ کار' : '2. Refund Request Process'}
+          </h2>
+          <p>
+            {language === 'hi'
+              ? 'रिफंड अनुरोध दर्ज करने के लिए कृपया support@mfct.org पर निम्नलिखित विवरणों के साथ ईमेल करें:'
+              : language === 'ur'
+                ? 'ریفنڈ کے لیے درج ذیل تفصیلات کے ساتھ support@mfct.org پر رابطہ کریں:'
+                : 'To initiate a refund review, please email support@mfct.org with:'}
+          </p>
           <ul className="list-disc pl-5 space-y-1">
-            <li>{isHindi ? 'दान की तिथि' : 'Date of donation'}</li>
-            <li>{isHindi ? 'दान की राशि' : 'Donation amount'}</li>
-            <li>{isHindi ? 'लेनदेन आईडी / यूटीआर नंबर' : 'Transaction ID / UTR number'}</li>
-            <li>{isHindi ? 'धनवापसी अनुरोध का कारण' : 'Reason for refund request'}</li>
+            <li>{language === 'hi' ? 'दान की तिथि' : language === 'ur' ? 'عطیہ کی تاریخ' : 'Date of donation'}</li>
+            <li>{language === 'hi' ? 'दान की राशि' : language === 'ur' ? 'عطیہ کی رقم' : 'Amount donated (INR)'}</li>
+            <li>{language === 'hi' ? 'लेनदेन आईडी / यूटीआर नंबर' : language === 'ur' ? 'ٹرانزیکشن / یو ٹی آر نمبر' : 'Transaction UTR / Reference ID'}</li>
+            <li>{language === 'hi' ? 'धनवापसी अनुरोध का कारण' : language === 'ur' ? 'واپسی کی وجہ' : 'Reason for the refund request'}</li>
           </ul>
           <p>
             {isHindi ? 'यदि दान के लिए धारा 80G कर रसीद पहले ही जारी की जा चुकी है, तो धनवापसी अनुरोध अस्वीकार किया जा सकता है या रसीद अमान्य कर दी जाएगी।' : 'If a Section 80G tax receipt has already been issued for the donation, the refund request may be declined or the receipt will be invalidated.'}
@@ -53,16 +62,16 @@ export const RefundPolicyPage: React.FC = () => {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-xl font-bold text-slate-900">{isHindi ? '3. ऑडिट और पारदर्शिता नीति' : '3. Audit & Transparency Policy'}</h2>
+          <h2 className="text-xl font-bold text-slate-900">
+            {language === 'hi' ? '3. ऑडिट और पारदर्शिता नीति' : language === 'ur' ? '3. آڈٹ اور شفافیت' : '3. Audit & Transparency Standards'}
+          </h2>
           <p>
-            {isHindi ? 'MFCT कम्युनिटी फाउंडेशन सामुदायिक धन की तैनाती में 100% पारदर्शिता के लिए प्रतिबद्ध है। हमारी ऑडिट नीति के हिस्से के रूप में:' : 'MFCT Community Foundation is committed to 100% transparency in the deployment of community funds. As part of our audit policy:'}
+            {language === 'hi'
+              ? 'MFCT हर वित्तीय तिमाही में चार्टर्ड अकाउंटेंट्स द्वारा स्वतंत्र ऑडिट प्रकाशित करता है और सभी व्ययों का 100% सार्वजनिक ब्योरा बनाए रखता है।'
+              : language === 'ur'
+                ? 'ایم ایف سی ٹی ہر مالی سہ ماہی میں چارٹرڈ اکاؤنٹنٹس کے ذریعے آڈٹ شائع کرتا ہے اور تمام اخراجات کا 100 فیصد عوامی ریکارڈ رکھتا ہے۔'
+                : 'MFCT conducts independent quarterly audits with certified Chartered Accountants to ensure 100% transparent fund utilization across all city chapters.'}
           </p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>{isHindi ? 'सभी खातों का वार्षिक रूप से एक स्वतंत्र चार्टर्ड एकाउंटेंट (सीए) द्वारा ऑडिट किया जाता है।' : 'All accounts are audited annually by an independent Chartered Accountant (CA).'}</li>
-            <li>{isHindi ? 'वार्षिक ऑडिट रिपोर्ट हमारे मंच पर प्रकाशित की जाती हैं और सभी पंजीकृत सदस्यों के लिए सुलभ हैं।' : 'Annual audit reports are published on our platform and accessible to all registered members.'}</li>
-            <li>{isHindi ? 'सभी अभियानों में पारदर्शी "जुटाई गई धनराशि बनाम लक्ष्य" मेट्रिक्स सार्वजनिक रूप से दिखाई देते हैं।' : 'All campaigns have transparent "Funds Raised vs. Target" metrics visible publicly.'}</li>
-            <li>{isHindi ? 'जहाँ भी संभव हो, धन सीधे सत्यापित लाभार्थियों या विक्रेताओं को वितरित किया जाता है।' : 'Funds are disbursed directly to verified beneficiaries or vendors wherever possible.'}</li>
-          </ul>
         </section>
       </div>
     </div>
