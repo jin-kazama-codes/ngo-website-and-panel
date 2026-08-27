@@ -45,8 +45,8 @@ export const CommunitiesPage: React.FC<CommunitiesPageProps> = ({ onOpenRegister
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-black" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'Playfair Display, serif' }}>
-          {t('communities.page_title', 'Local Community Network')}
+        <h1 className="text-3xl font-black" style={{ color: 'var(--mfct-dark-green)' }}>
+          {language === 'hi' ? 'स्थानीय समुदाय एवं शाखाएं' : language === 'ur' ? 'مقامی کمیونٹیز' : 'Local Communities & Chapters'}
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--mfct-text-muted)' }}>
           {t('communities.page_desc', 'Each community is managed by a trusted local administrator and backed by our national solidarity escrow.')}

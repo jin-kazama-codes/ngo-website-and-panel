@@ -281,7 +281,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   return (
     <div className={`h-screen max-h-screen overflow-hidden ${theme === 'dark' ? 'dark' : ''} flex flex-col font-sans`}
-      style={{ background: theme === 'dark' ? '#0f1e17' : 'var(--mfct-warm-bg)', color: theme === 'dark' ? '#e2f0e8' : 'var(--mfct-text-dark)', fontFamily: "'Noto Sans', 'Noto Sans Devanagari', sans-serif" }}
+      style={{ background: theme === 'dark' ? '#0f1e17' : 'var(--mfct-warm-bg)', color: theme === 'dark' ? '#e2f0e8' : 'var(--mfct-text-dark)' }}
     >
       {/* Admin Panel Container */}
       <div className="flex flex-1 min-h-0 overflow-hidden relative">

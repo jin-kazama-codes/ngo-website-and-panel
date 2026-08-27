@@ -188,7 +188,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 style={{
                   color: 'var(--mfct-dark-green)',
                   fontSize: '1.35rem',
-                  fontFamily: isHindi ? 'inherit' : 'Georgia, serif',
                   letterSpacing: isHindi ? '0.01em' : '0.04em',
                   textTransform: isHindi ? 'none' : 'uppercase',
                 }}
@@ -200,7 +199,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 style={{
                   color: 'var(--mfct-gold-dark)',
                   fontSize: '1.1rem',
-                  fontFamily: isHindi ? 'inherit' : 'Georgia, serif',
                   letterSpacing: isHindi ? '0.01em' : '0.04em',
                   textTransform: isHindi ? 'none' : 'uppercase',
                 }}

@@ -283,7 +283,7 @@ export const AccountDetailsTab: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-extrabold" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'serif' }}>
+          <h2 className="text-xl font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>
             {tr('बैंक खाता विवरण', 'بینک اکاؤنٹ کی تفصیلات', 'Bank Account Details')}
           </h2>
           <p className="text-xs sm:text-sm mt-0.5" style={{ color: 'var(--mfct-text-muted)' }}>

@@ -351,10 +351,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             {/* Headline */}
-            <h1
-              className="text-2xl sm:text-3xl lg:text-[2.65rem] font-black text-white tracking-tight leading-[1.1]"
-              style={{ fontFamily: 'Playfair Display, Noto Sans Devanagari, serif' }}
-            >
+            <h1 className="text-2xl sm:text-3xl lg:text-[2.65rem] font-black text-white tracking-tight leading-[1.1]">
               {t('home.hero_line1', 'Yaad Unki,')}{' '}
               <span className="block sm:inline" style={{ color: 'var(--mfct-gold)' }}>
                 {t('home.hero_line2_giving', 'Seva Hamari')}
@@ -573,7 +570,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--mfct-dark-green)' }} />
                 Live & Verified Account
               </span>
-              <h3 className="text-xl font-black text-white pt-1" style={{ fontFamily: 'Playfair Display, serif' }}>
+              <h3 className="text-xl font-black text-white pt-1">
                 Scan to Donate
               </h3>
               <p className="text-[11px] text-white/70">
@@ -662,7 +659,6 @@ export const HomePage: React.FC<HomePageProps> = ({
             className="text-3xl sm:text-4xl font-black tracking-tight"
             style={{
               color: 'var(--mfct-dark-green)',
-              fontFamily: 'Playfair Display, Noto Sans Devanagari, serif',
             }}
           >
             {language === 'hi' ? 'हमारा उद्देश्य' : language === 'ur' ? 'ہمارا مقصد' : 'Our Mission'}
@@ -873,10 +869,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </span>
                 
                 {/* Headline */}
-                <h2
-                  className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight"
-                  style={{ fontFamily: 'Playfair Display, Noto Sans Devanagari, serif' }}
-                >
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                   {language === 'hi'
                     ? 'मोहम्मद फहीम चैरिटेबल ट्रस्ट (MFCT)'
                     : language === 'ur'
@@ -992,7 +985,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </span>
           <h2
             className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight"
-            style={{ color: 'var(--mfct-dark-green)', fontFamily: 'Playfair Display, Noto Sans Devanagari, serif' }}
+            style={{ color: 'var(--mfct-dark-green)' }}
           >
             {language === 'hi' ? 'हमारे प्रमुख कार्यक्रम' : language === 'ur' ? 'ہمارے اہم پروگرامز' : 'Our Key Programs'}
           </h2>
@@ -1262,32 +1255,144 @@ export const HomePage: React.FC<HomePageProps> = ({
         <MembershipBanner />
       </section>
 
-      {/* 6. HOW IT WORKS */}
-      <section className="py-12 rounded-2xl max-w-7xl mx-auto px-6 sm:px-12" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', boxShadow: 'var(--shadow-card)' }}>
-        <div className="text-center max-w-2xl mx-auto mb-10 space-y-1">
-          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-gold)' }}>{t('home.how_tag', 'Simple & Trustworthy')}</span>
-          <h2 className="text-2xl font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>{t('home.how_title', 'How Does It Work?')}</h2>
-          <p className="text-xs" style={{ color: 'var(--mfct-text-muted)' }}>{t('home.how_desc', 'A simple 4-step model for transparent and direct aid')}</p>
+      {/* 6. HOW IT WORKS (REDESIGNED ULTRA ATTRACTIVE STEPPER) */}
+      <section className="py-16 rounded-3xl max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 relative overflow-hidden bg-gradient-to-b from-white via-[#fcfbf7] to-slate-50 border border-slate-200/80 shadow-xl">
+        {/* Subtle decorative background glow */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-100/40 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-100/30 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
+
+        {/* Section Header */}
+        <div className="text-center max-w-2xl mx-auto mb-12 space-y-2.5 relative z-10">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow-sm bg-amber-50 border border-amber-200 text-amber-800">
+            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+            <span>{language === 'hi' ? 'पारदर्शी कार्यप्रणाली' : language === 'ur' ? 'شفاف طریقہ کار' : 'TRANSPARENT PROCESS'}</span>
+          </div>
+
+          <h2
+            className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight"
+            style={{ color: 'var(--mfct-dark-green)' }}
+          >
+            {t('home.how_title', 'How Does It Work?')}
+          </h2>
+
+          <div className="flex items-center justify-center gap-2 pt-0.5">
+            <span className="w-10 h-0.5" style={{ background: 'var(--mfct-gold)' }} />
+            <Heart className="w-3.5 h-3.5 fill-current" style={{ color: 'var(--mfct-gold)' }} />
+            <span className="w-10 h-0.5" style={{ background: 'var(--mfct-gold)' }} />
+          </div>
+
+          <p className="text-xs sm:text-sm font-medium text-slate-600">
+            {t('home.how_desc', 'A simple 4-step model for transparent and direct aid')}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[{
-            step: 1, title: t('home.step1_title', '1. Grassroots Identification'), desc: t('home.step1_desc', 'Mohalla elders and field volunteers personally verify every case.')
-          }, {
-            step: 2, title: t('home.step2_title', '2. Direct Bank & Hospital Payments'), desc: t('home.step2_desc', 'Funds go directly to hospitals, vendors, or beneficiaries.')
-          }, {
-            step: 3, title: t('home.step3_title', '3. 100% Audit & Receipts'), desc: t('home.step3_desc', "Every transaction's bill and audit report is publicly available.")
-          }, {
-            step: 4, title: t('home.step4_title', '4. Video & Photo Updates'), desc: t('home.step4_desc', 'Proof is shared with donors immediately after relief is delivered.')
-          }].map(({ step, title, desc }) => (
-            <div key={step} className="p-5 rounded-xl text-center space-y-2" style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)' }}>
-              <div className="w-10 h-10 rounded-xl font-extrabold flex items-center justify-center text-base mx-auto" style={{ background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-dark-green)', border: '2px solid rgba(200,168,75,0.3)' }}>
-                {step}
+        {/* 4 Interactive Stepper Cards with Connecting Line */}
+        <div className="relative z-10">
+          {/* Desktop Connecting Line behind cards */}
+          <div className="hidden lg:block absolute top-1/2 left-12 right-12 h-1 -translate-y-12 bg-gradient-to-r from-emerald-200 via-amber-200 to-emerald-200 z-0" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+            {[
+              {
+                step: '01',
+                badge: language === 'hi' ? 'ज़मीनी पड़ताल' : 'Field Verification',
+                title: t('home.step1_title', '1. Grassroots Identification'),
+                desc: t('home.step1_desc', 'Mohalla elders and field volunteers personally verify every case.'),
+                points: language === 'hi' ? ['100% भौतिक सत्यापन', 'दस्तावेज व पात्रता जांच'] : ['100% Ground Verified', 'Document & Need Check'],
+                iconColor: 'bg-emerald-600 text-white shadow-emerald-200',
+                borderHover: 'hover:border-emerald-500',
+                accentBg: 'bg-emerald-50 text-emerald-800'
+              },
+              {
+                step: '02',
+                badge: language === 'hi' ? 'प्रत्यक्ष भुगतान' : 'Direct Payout',
+                title: t('home.step2_title', '2. Direct Bank & Hospital Payments'),
+                desc: t('home.step2_desc', 'Funds go directly to hospitals, vendors, or beneficiaries.'),
+                points: language === 'hi' ? ['शून्य बिचौलिया कटौती', 'सीधे बैंक / अस्पताल ट्रांसफर'] : ['Zero Middlemen Cut', 'Direct to Bank / Hospital'],
+                iconColor: 'bg-amber-500 text-white shadow-amber-200',
+                borderHover: 'hover:border-amber-500',
+                accentBg: 'bg-amber-50 text-amber-800'
+              },
+              {
+                step: '03',
+                badge: language === 'hi' ? 'सार्वजनिक ऑडिट' : 'Public Audit',
+                title: t('home.step3_title', '3. 100% Audit & Receipts'),
+                desc: t('home.step3_desc', "Every transaction's bill and audit report is publicly available."),
+                points: language === 'hi' ? ['पारदर्शी डिजिटल रिकॉर्ड', 'प्रत्येक ₹1 का UTR हिसाब'] : ['Public Ledger & Bills', 'Track Every Single Rupee'],
+                iconColor: 'bg-indigo-600 text-white shadow-indigo-200',
+                borderHover: 'hover:border-indigo-500',
+                accentBg: 'bg-indigo-50 text-indigo-800'
+              },
+              {
+                step: '04',
+                badge: language === 'hi' ? 'सत्यापित प्रमाण' : 'Impact Proof',
+                title: t('home.step4_title', '4. Video & Photo Updates'),
+                desc: t('home.step4_desc', 'Proof is shared with donors immediately after relief is delivered.'),
+                points: language === 'hi' ? ['लाइव वीडियो व फोटो', 'सहयोगियों को सीधा अपडेट'] : ['Live Photos & Videos', 'Instant Donor Updates'],
+                iconColor: 'bg-rose-600 text-white shadow-rose-200',
+                borderHover: 'hover:border-rose-500',
+                accentBg: 'bg-rose-50 text-rose-800'
+              }
+            ].map(({ step, badge, title, desc, points, iconColor, borderHover, accentBg }) => (
+              <div
+                key={step}
+                className={`bg-white rounded-2xl p-6 shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200/90 flex flex-col justify-between group ${borderHover} relative overflow-hidden`}
+              >
+                {/* Top Glowing Header inside card */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    {/* Glowing Number Circle */}
+                    <div className={`w-12 h-12 rounded-2xl ${iconColor} font-black text-lg flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                      {step}
+                    </div>
+
+                    {/* Micro Pill */}
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${accentBg}`}>
+                      {badge}
+                    </span>
+                  </div>
+
+                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-emerald-900 transition-colors leading-snug mb-2">
+                    {title}
+                  </h3>
+
+                  <p className="text-xs leading-relaxed text-slate-600 font-normal mb-4">
+                    {desc}
+                  </p>
+                </div>
+
+                {/* Feature checklist bullets */}
+                <div className="pt-3 border-t border-slate-100 space-y-1.5 bg-slate-50/50 -mx-6 -mb-6 p-4 rounded-b-2xl">
+                  {points.map((pt, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>{pt}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <h3 className="font-bold text-sm" style={{ color: 'var(--mfct-dark-green)' }}>{title}</h3>
-              <p className="text-xs leading-relaxed" style={{ color: 'var(--mfct-text-muted)' }}>{desc}</p>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom Trust Assurance Ribbon */}
+        <div className="mt-10 pt-6 border-t border-slate-200/80 grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-xs font-bold text-slate-700 relative z-10">
+          <div className="flex items-center justify-center gap-2 p-2 rounded-xl bg-white border border-slate-100 shadow-sm">
+            <span className="text-emerald-600">🛡️</span>
+            <span>{language === 'hi' ? '100% प्रत्यक्ष सहायता' : '100% Direct Aid'}</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 p-2 rounded-xl bg-white border border-slate-100 shadow-sm">
+            <span className="text-amber-600">⚡</span>
+            <span>{language === 'hi' ? '0% बिचौलिया कटौती' : 'Zero Intermediary Cut'}</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 p-2 rounded-xl bg-white border border-slate-100 shadow-sm">
+            <span className="text-indigo-600">📜</span>
+            <span>{language === 'hi' ? 'डिजिटल UTR रसीद' : 'Digital UTR Proof'}</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 p-2 rounded-xl bg-white border border-slate-100 shadow-sm">
+            <span className="text-rose-600">🤝</span>
+            <span>{language === 'hi' ? 'सामूहिक इंसानियत' : 'Collective Humanity'}</span>
+          </div>
         </div>
       </section>
 
@@ -1509,7 +1614,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
               {/* Center Content */}
               <div className="relative z-10 my-4 space-y-2">
-                <h3 className="text-xl font-extrabold text-white leading-snug" style={{ fontFamily: 'serif' }}>
+                <h3 className="text-xl font-extrabold text-white leading-snug">
                   {t('home.faq_card_title', 'Transparent & Direct Giving')}
                 </h3>
                 <p className="text-xs text-white/80 leading-relaxed">

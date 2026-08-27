@@ -145,7 +145,7 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
             >
               <ShieldCheckIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> Community Admin
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white" style={{ fontFamily: 'serif' }}>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
               {community?.name || 'Community Admin Hub'}
             </h1>
             <p className="text-xs mt-1" style={{ color: 'rgba(200,168,75,0.85)' }}>

@@ -63,7 +63,7 @@ export const MyCommunityTab: React.FC<MyCommunityTabProps> = ({ activeUser }) =>
               <Building2 className="w-8 h-8 drop-shadow-md" />
             </div>
             <div>
-              <h2 className="text-2xl font-extrabold text-white mb-1 tracking-tight" style={{ fontFamily: 'serif' }}>
+              <h2 className="text-2xl font-extrabold text-white mb-1 tracking-tight">
                 {activeUser.communityName || t('admin.tabCommunityHub', 'Community Hub')}
               </h2>
               <div className="flex items-center gap-2 text-sm font-medium" style={{ color: 'rgba(200,168,75,0.85)' }}>
