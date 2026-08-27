@@ -54,10 +54,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'home', label: t('nav.home', 'Home'), path: '/' },
     { id: 'campaigns', label: t('nav.campaigns', 'Campaigns'), path: '/campaigns' },
     { id: 'communities', label: t('nav.communities', 'Communities'), path: '/communities' },
-    { id: 'niyamawali', label: language === 'hi' ? 'नियमावली' : language === 'ur' ? 'قواعد و ضوابط' : 'Niyamawali', path: '/niyamawali' },
+    { id: 'niyamawali', label: language === 'hi' ? 'नियमावली' : language === 'ur' ? 'قواعد व ضوابط' : 'Niyamawali', path: '/niyamawali' },
     { id: 'about', label: t('nav.about', 'About'), path: '/about' },
     { id: 'gallery', label: t('nav.gallery', 'Gallery'), path: '/gallery' },
     { id: 'contact', label: t('nav.contact', 'Contact'), path: '/contact' },
+    { id: 'members', label: language === 'hi' ? 'सदस्य सूची' : language === 'ur' ? 'ممبر لسٹ' : 'Members', path: '/members' },
     { id: 'testimonials', label: t('nav.testimonials', 'Impact Stories'), path: '/testimonials' },
   ];
 
