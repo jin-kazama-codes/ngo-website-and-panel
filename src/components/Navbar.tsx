@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { User, UserRole } from '../types';
 import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, ChevronDown, Award, LayoutDashboard, Calculator, LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import { FaFacebookF, FaInstagram, FaWhatsapp } from 'react-icons/fa6';
 import { useLanguage } from '../context/LanguageContext';
 import { LanguageSelector } from './LanguageSelector';
 
@@ -53,6 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'home', label: t('nav.home', 'Home'), path: '/' },
     { id: 'campaigns', label: t('nav.campaigns', 'Campaigns'), path: '/campaigns' },
     { id: 'communities', label: t('nav.communities', 'Communities'), path: '/communities' },
+    { id: 'niyamawali', label: language === 'hi' ? 'नियमावली' : language === 'ur' ? 'قواعد و ضوابط' : 'Niyamawali', path: '/niyamawali' },
     { id: 'about', label: t('nav.about', 'About'), path: '/about' },
     { id: 'gallery', label: t('nav.gallery', 'Gallery'), path: '/gallery' },
     { id: 'contact', label: t('nav.contact', 'Contact'), path: '/contact' },
@@ -65,15 +67,93 @@ export const Navbar: React.FC<NavbarProps> = ({
       <header className="relative z-[60]">
 
       {/* ── Top Gold Ticker ── */}
-      <div style={{ background: 'var(--mfct-dark-green)', borderBottom: '1px solid var(--mfct-gold-dark)' }} className="py-1.5 overflow-hidden">
-        <div className="flex items-center justify-center gap-2 text-xs font-bold tracking-wider" style={{ color: 'var(--mfct-gold)' }}>
-          <span style={{ fontSize: '14px' }}>✦</span>
-          <span>{language === 'hi' ? 'याद उनकी, सेवा हमारी' : language === 'ur' ? 'یاد ان کی، خدمت ہماری' : 'In Their Memory, In Our Service'}</span>
-          <span style={{ fontSize: '14px' }}>✦</span>
-          <span className="hidden sm:inline mx-4 opacity-60">|</span>
-          <span className="hidden sm:inline" style={{ color: '#e0c068' }}>Regd. No.: 258/2026</span>
-          <span className="hidden md:inline mx-4 opacity-60">|</span>
-          <span className="hidden md:inline" style={{ color: '#e0c068' }}>+91 82180 17226</span>
+      <div style={{ background: 'var(--mfct-dark-green)', borderBottom: '1px solid var(--mfct-gold-dark)' }} className="py-1 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          
+          {/* Left / Center Info */}
+          <div className="flex items-center gap-2 text-xs font-bold tracking-wider" style={{ color: 'var(--mfct-gold)' }}>
+            <span style={{ fontSize: '14px' }}>✦</span>
+            <span>{language === 'hi' ? 'याद उनकी, सेवा हमारी' : language === 'ur' ? 'یاد ان کی، خدمت ہماری' : 'In Their Memory, In Our Service'}</span>
+            <span style={{ fontSize: '14px' }}>✦</span>
+            <span className="hidden sm:inline mx-3 opacity-60">|</span>
+            <span className="hidden sm:inline" style={{ color: '#e0c068' }}>Regd. No.: 258/2026</span>
+            <span className="hidden md:inline mx-3 opacity-60">|</span>
+            <span className="hidden md:inline" style={{ color: '#e0c068' }}>+91 82180 17226</span>
+          </div>
+
+          {/* Right Corner: Social Handles */}
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+            {/* Facebook Handle */}
+            <a
+              href="https://facebook.com/mfcttrust"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 sm:gap-2 group hover:opacity-90 transition-opacity"
+            >
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#1877F2] flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                <FaFacebookF className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current" />
+              </div>
+              <div className="text-left hidden sm:block">
+                <span className="text-[9px] text-white/80 block leading-tight">
+                  {language === 'hi' ? 'Facebook Page' : language === 'ur' ? 'Facebook Page' : 'Facebook Page'}
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-bold text-white block leading-tight">
+                  mfcttrust
+                </span>
+              </div>
+            </a>
+
+            <span className="h-4 sm:h-5 w-px bg-white/25" />
+
+            {/* Instagram Handle */}
+            <a
+              href="https://instagram.com/mfcttrust"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 sm:gap-2 group hover:opacity-90 transition-opacity"
+            >
+              <div
+                className="w-5 h-5 sm:w-6 sm:h-6 rounded-md sm:rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform"
+                style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
+              >
+                <FaInstagram className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              </div>
+              <div className="text-left hidden sm:block">
+                <span className="text-[9px] text-white/80 block leading-tight">
+                  {language === 'hi' ? 'Instagram Page' : language === 'ur' ? 'Instagram Page' : 'Instagram Page'}
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-bold text-white block leading-tight">
+                  mfcttrust
+                </span>
+              </div>
+            </a>
+
+            <span className="h-4 sm:h-5 w-px bg-white/25" />
+
+            {/* WhatsApp Handle */}
+            <a
+              href="https://wa.me/918218017226"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 sm:gap-2 group hover:opacity-90 transition-opacity"
+            >
+              <div
+                className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform"
+                style={{ background: '#25D366' }}
+              >
+                <FaWhatsapp className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
+              </div>
+              <div className="text-left hidden sm:block">
+                <span className="text-[9px] text-white/80 block leading-tight">
+                  WhatsApp
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-bold text-white block leading-tight">
+                  +91 82180 17226
+                </span>
+              </div>
+            </a>
+          </div>
+
         </div>
       </div>
 

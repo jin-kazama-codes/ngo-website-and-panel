@@ -316,6 +316,7 @@ export function AppStateProvider({
     campaigns: '/campaigns',
     emergency: '/emergency',
     communities: '/communities',
+    niyamawali: '/niyamawali',
     about: '/about',
     gallery: '/gallery',
     testimonials: '/testimonials',

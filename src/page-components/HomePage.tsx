@@ -307,7 +307,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   return (
     <div className="space-y-16 pb-12 animate-fade-in" style={{ color: 'var(--mfct-text-dark)' }}>
       {/* 1. HERO CAROUSEL SECTION */}
-      <section className="relative w-full overflow-hidden bg-[#0a1c14] min-h-[580px] lg:min-h-[640px] flex items-center">
+      <section className="relative w-full overflow-hidden bg-[#0a1c14] min-h-[440px] lg:h-[calc(100vh-185px)] lg:max-h-[600px] flex items-center">
         {/* Background Slide Images with Cross-Fade */}
         {heroImages.map((imgSrc, idx) => (
           <div
@@ -341,18 +341,18 @@ export const HomePage: React.FC<HomePageProps> = ({
         />
 
         {/* Content Container */}
-        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 w-full">
-          <div className="max-w-3xl space-y-6">
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 w-full">
+          <div className="max-w-3xl space-y-2.5 sm:space-y-3.5">
             
             {/* Tagline / Pre-heading badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest" style={{ background: 'rgba(26,60,44,0.9)', border: '1px solid rgba(200,168,75,0.4)', color: 'var(--mfct-gold)' }}>
-              <ArrowRight className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest" style={{ background: 'rgba(26,60,44,0.9)', border: '1px solid rgba(200,168,75,0.4)', color: 'var(--mfct-gold)' }}>
+              <ArrowRight className="w-3 h-3 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
               <span>{t('home.hero_tagline', 'Together for a Better Tomorrow')}</span>
             </div>
 
             {/* Headline */}
             <h1
-              className="text-4xl sm:text-5xl lg:text-[3.5rem] font-black text-white tracking-tight leading-[1.1]"
+              className="text-2xl sm:text-3xl lg:text-[2.65rem] font-black text-white tracking-tight leading-[1.1]"
               style={{ fontFamily: 'Playfair Display, Noto Sans Devanagari, serif' }}
             >
               {t('home.hero_line1', 'Yaad Unki,')}{' '}
@@ -362,12 +362,12 @@ export const HomePage: React.FC<HomePageProps> = ({
             </h1>
 
             {/* Sub-description */}
-            <p className="text-base sm:text-lg leading-relaxed font-normal text-white/90 max-w-xl">
+            <p className="text-xs sm:text-sm leading-relaxed font-normal text-white/90 max-w-xl">
               {t('home.hero_desc', 'MFCT का संकल्प – समाज सेवा, मानवता और एकता के लिए हम हमेशा आपके साथ हैं।')}
             </p>
 
             {/* Trust Badges (Original) */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {[
                 { icon: ShieldCheck, label: t('home.trust_zakat', 'Zakat Compliant') },
                 { icon: CheckCircle2, label: t('home.trust_verified', 'UTR Verified Receipts') },
@@ -375,24 +375,24 @@ export const HomePage: React.FC<HomePageProps> = ({
               ].map(({ icon: Icon, label }) => (
                 <span
                   key={label}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
                   style={{
                     background: 'rgba(200,168,75,0.15)',
                     border: '1px solid rgba(200,168,75,0.35)',
                     color: '#ffffff',
                   }}
                 >
-                  <Icon className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} />
+                  <Icon className="w-3 h-3" style={{ color: 'var(--mfct-gold)' }} />
                   {label}
                 </span>
               ))}
             </div>
 
             {/* CTA Buttons (Exact Original Buttons) */}
-            <div className="flex flex-wrap items-center gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-2.5 pt-0.5">
               <button
                 onClick={onOpenRegister}
-                className="mfct-btn-outline group py-3.5 px-6 rounded-xl font-extrabold text-sm hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer transition-all shadow-lg"
+                className="mfct-btn-outline group py-2.5 px-5 rounded-xl font-extrabold text-xs sm:text-sm hover:-translate-y-0.5 flex items-center gap-1.5 cursor-pointer transition-all shadow-lg"
               >
                 <UserPlus className="w-4 h-4" />
                 {t('home.become_member', 'Become a Member')}
@@ -401,16 +401,16 @@ export const HomePage: React.FC<HomePageProps> = ({
 
               <button
                 onClick={() => onDonate()}
-                className="mfct-btn-gold group py-3.5 px-6 rounded-xl font-extrabold text-sm hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer transition-all shadow-lg"
+                className="mfct-btn-gold group py-2.5 px-5 rounded-xl font-extrabold text-xs sm:text-sm hover:-translate-y-0.5 flex items-center gap-1.5 cursor-pointer transition-all shadow-lg"
               >
-                <Heart className="w-4 h-4 fill-current" />
+                <Heart className="w-3.5 h-3.5 fill-current" />
                 {t('home.donate_now', 'Donate Now')}
               </button>
 
               {onOpenZakatCalc && (
                 <button
                   onClick={onOpenZakatCalc}
-                  className="mfct-btn-dark group py-3.5 px-5 rounded-xl font-black text-sm hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer transition-all shadow-lg"
+                  className="mfct-btn-dark group py-2.5 px-4.5 rounded-xl font-black text-xs sm:text-sm hover:-translate-y-0.5 flex items-center gap-1.5 cursor-pointer transition-all shadow-lg"
                 >
                   <Calculator className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
                   {t('home.zakat_calc', 'Zakat Calculator')}
@@ -419,52 +419,52 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             {/* Live Stats (3 Original Cards) */}
-            <div className="pt-2">
-              <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-lg">
+            <div className="pt-1">
+              <div className="grid grid-cols-3 gap-2 sm:gap-2.5 max-w-lg">
                 <div
-                  className="rounded-xl p-3 sm:p-4 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
+                  className="rounded-xl p-2 sm:p-2.5 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
                   style={{ background: '#ffffff', border: '1px solid rgba(200,168,75,0.3)' }}
                 >
                   {loading ? (
-                    <div className="h-6 sm:h-8 w-12 sm:w-16 rounded animate-pulse mb-1 skeleton-mfct" />
+                    <div className="h-5 sm:h-6 w-12 sm:w-16 rounded animate-pulse mb-1 skeleton-mfct" />
                   ) : (
-                    <span className="text-base sm:text-2xl lg:text-3xl font-black block tabular-nums leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
+                    <span className="text-sm sm:text-xl lg:text-2xl font-black block tabular-nums leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
                       {totalMembers > 0 ? totalMembers.toLocaleString('en-IN') : '0'}+
                     </span>
                   )}
-                  <span className="text-[10px] sm:text-[11px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
+                  <span className="text-[9px] sm:text-[10px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
                     {t('home.verified_members', 'Verified Members')}
                   </span>
                 </div>
 
                 <div
-                  className="rounded-xl p-3 sm:p-4 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
+                  className="rounded-xl p-2 sm:p-2.5 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
                   style={{ background: 'var(--mfct-dark-green)', border: '1px solid var(--mfct-mid-green)' }}
                 >
                   {loading ? (
-                    <div className="h-6 sm:h-8 w-16 sm:w-20 rounded animate-pulse mb-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
+                    <div className="h-5 sm:h-6 w-16 sm:w-20 rounded animate-pulse mb-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
                   ) : (
-                    <span className="text-[11px] xs:text-xs sm:text-lg lg:text-2xl font-black text-white block tabular-nums leading-tight tracking-tight truncate">
+                    <span className="text-[11px] xs:text-xs sm:text-base lg:text-xl font-black text-white block tabular-nums leading-tight tracking-tight truncate">
                       ₹{totalRaised > 0 ? totalRaised.toLocaleString('en-IN') : '0'}+
                     </span>
                   )}
-                  <span className="text-[10px] sm:text-[11px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-gold)' }}>
+                  <span className="text-[9px] sm:text-[10px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-gold)' }}>
                     {t('home.funds_disbursed', 'Relief Disbursed')}
                   </span>
                 </div>
 
                 <div
-                  className="rounded-xl p-3 sm:p-4 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
+                  className="rounded-xl p-2 sm:p-2.5 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
                   style={{ background: '#ffffff', border: '1px solid rgba(200,168,75,0.3)' }}
                 >
                   {loading ? (
-                    <div className="h-6 sm:h-8 w-10 sm:w-12 rounded animate-pulse mb-1 skeleton-mfct" />
+                    <div className="h-5 sm:h-6 w-10 sm:w-12 rounded animate-pulse mb-1 skeleton-mfct" />
                   ) : (
-                    <span className="text-base sm:text-2xl lg:text-3xl font-black block leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
+                    <span className="text-sm sm:text-xl lg:text-2xl font-black block leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
                       100%
                     </span>
                   )}
-                  <span className="text-[10px] sm:text-[11px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
+                  <span className="text-[9px] sm:text-[10px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
                     {t('home.audit_receipts', 'Audit Receipts')}
                   </span>
                 </div>
@@ -475,10 +475,10 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         {/* ── Right Side Bottom Corner: Compact QR Widget (Click to Enlarge) ── */}
-        <div className="absolute bottom-5 sm:bottom-6 right-4 sm:right-6 lg:right-8 z-30 hidden sm:block">
+        <div className="absolute bottom-3 sm:bottom-4 right-4 sm:right-6 lg:right-8 z-30 hidden sm:block">
           <div
             onClick={() => setIsQrModalOpen(true)}
-            className="group relative cursor-pointer rounded-2xl p-2.5 sm:p-3 max-w-[170px] sm:max-w-[190px] w-full shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-amber-500/20 active:scale-95"
+            className="group relative cursor-pointer rounded-2xl p-2 sm:p-2.5 max-w-[155px] sm:max-w-[170px] w-full shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-amber-500/20 active:scale-95"
             style={{
               background: 'rgba(10, 28, 20, 0.90)',
               backdropFilter: 'blur(16px)',
@@ -488,8 +488,8 @@ export const HomePage: React.FC<HomePageProps> = ({
             title="Click to Enlarge QR Code"
           >
             {/* Header */}
-            <div className="flex items-center justify-between gap-1 mb-1.5">
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider shadow" style={{ background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)' }}>
+            <div className="flex items-center justify-between gap-1 mb-1">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow" style={{ background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)' }}>
                 <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: 'var(--mfct-dark-green)' }} />
                 Live & Verified
               </span>
@@ -499,11 +499,11 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             {/* QR Thumbnail */}
-            <div className="bg-white p-1.5 rounded-lg shadow-md flex justify-center items-center relative overflow-hidden group-hover:ring-2 ring-amber-400 transition-all">
+            <div className="bg-white p-1 rounded-lg shadow-md flex justify-center items-center relative overflow-hidden group-hover:ring-2 ring-amber-400 transition-all">
               {accountDetails?.qr_code_url ? (
-                <img src={accountDetails.qr_code_url} alt="QR Code" className="w-16 h-16 sm:w-20 sm:h-20 object-contain transition-transform duration-300 group-hover:scale-105" />
+                <img src={accountDetails.qr_code_url} alt="QR Code" className="w-14 h-14 sm:w-16 sm:h-16 object-contain transition-transform duration-300 group-hover:scale-105" />
               ) : (
-                <QrCode className="w-16 h-16 sm:w-20 sm:h-20" style={{ color: 'var(--mfct-dark-green)' }} />
+                <QrCode className="w-14 h-14 sm:w-16 sm:h-16" style={{ color: 'var(--mfct-dark-green)' }} />
               )}
               {/* Tap to zoom hover overlay */}
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
@@ -514,11 +514,11 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             {/* Footer text */}
-            <div className="text-center mt-1.5 space-y-0.5">
-              <p className="text-[8.5px] uppercase tracking-wider font-bold truncate" style={{ color: 'var(--mfct-gold)' }}>
+            <div className="text-center mt-1 space-y-0.5">
+              <p className="text-[8px] uppercase tracking-wider font-bold truncate" style={{ color: 'var(--mfct-gold)' }}>
                 {t('home.scan_donate', 'UPI Direct Donate')}
               </p>
-              <p className="font-mono text-white font-bold text-[10px] select-all tracking-wide truncate">
+              <p className="font-mono text-white font-bold text-[9px] select-all tracking-wide truncate">
                 {accountDetails?.upi_id || 'nsns@oksbi'}
               </p>
             </div>
@@ -526,15 +526,15 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         {/* Carousel Bottom Dots */}
-        <div className="absolute bottom-6 left-0 right-0 z-30 flex items-center justify-center gap-2.5">
+        <div className="absolute bottom-2.5 sm:bottom-3 left-0 right-0 z-30 flex items-center justify-center gap-2">
           {heroImages.map((_, i) => (
             <button
               key={i}
               onClick={() => setCurrentSlide(i)}
               className={`transition-all duration-300 rounded-full cursor-pointer ${
                 currentSlide === i
-                  ? 'w-7 h-2.5 bg-amber-400 shadow-lg shadow-amber-400/50'
-                  : 'w-2.5 h-2.5 bg-white/40 hover:bg-white/80'
+                  ? 'w-6 h-2 bg-amber-400 shadow-lg shadow-amber-400/50'
+                  : 'w-2 h-2 bg-white/40 hover:bg-white/80'
               }`}
               title={`Slide ${i + 1}`}
             />

@@ -43,7 +43,7 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-fade-in overflow-y-auto">
       <div
         className="rounded-3xl max-w-lg w-full p-6 shadow-2xl relative overflow-hidden"
         style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)' }}
@@ -191,7 +191,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, onClose })
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-fade-in overflow-y-auto">
       <div
         className="rounded-3xl max-w-xl w-full p-8 shadow-2xl relative overflow-y-auto max-h-[90vh]"
         style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-text-dark)' }}
