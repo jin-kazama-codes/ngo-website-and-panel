@@ -850,7 +850,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div
                 className="relative rounded-2xl overflow-hidden shadow-2xl group cursor-pointer aspect-[4/3] max-h-[340px]"
                 style={{ border: '2px solid rgba(200,168,75,0.45)' }}
-                onClick={() => onPageChange('about')}
+                onClick={() => onNavigatePage('about')}
               >
                 <img
                   src="/about-mfct-indian-hands.jpg"
@@ -961,14 +961,14 @@ export const HomePage: React.FC<HomePageProps> = ({
               {/* Read More Button */}
               <div className="pt-1">
                 <button
-                  onClick={() => onPageChange('about')}
+                  onClick={() => onNavigatePage('about')}
                   className="mfct-btn-gold px-6 py-3 rounded-xl font-extrabold text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer shadow-lg hover:-translate-y-0.5 transition-all"
                 >
                   <span>
                     {language === 'hi'
                       ? 'हमारे बारे में और जानें'
                       : language === 'ur'
-                      ? 'ہمارے بارے में مزید جانیں'
+                      ? 'ہمارے بارے میں مزید جانیں'
                       : 'READ MORE ABOUT US'}
                   </span>
                   <ArrowRight className="w-4 h-4" />
@@ -1012,7 +1012,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               desc: language === 'hi' ? 'अस्पताल व सर्जरी' : language === 'ur' ? 'ہسپتال و سرجری' : 'Hospital & Surgery',
               image: '/program-medical.jpg',
               icon: Activity,
-              count: campaigns.filter(c => c.category === 'medical').length,
+              count: campaigns.filter(c => (c.category as string).toLowerCase() === 'medical').length,
             },
             {
               id: 'education',
@@ -1020,7 +1020,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               desc: language === 'hi' ? 'अनाथ व छात्र' : language === 'ur' ? 'یتیم اور طلباء' : 'Orphans & Students',
               image: '/program-education.jpg',
               icon: BookOpen,
-              count: campaigns.filter(c => c.category === 'education').length,
+              count: campaigns.filter(c => (c.category as string).toLowerCase() === 'education').length,
             },
             {
               id: 'marriage',
@@ -1028,7 +1028,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               desc: language === 'hi' ? 'दहेज मुक्त निकाह' : language === 'ur' ? 'جہیز سے پاک نکاح' : 'Dowry-free Nikah',
               image: '/program-marriage.jpg',
               icon: Heart,
-              count: campaigns.filter(c => c.category === 'marriage').length,
+              count: campaigns.filter(c => (c.category as string).toLowerCase() === 'marriage').length,
             },
             {
               id: 'janazah',
@@ -1036,7 +1036,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               desc: language === 'hi' ? 'एम्बुलेंस व कफ़न' : language === 'ur' ? 'ایمبولینس اور کفن' : 'Ambulance & Shroud',
               image: '/program-janazah.jpg',
               icon: FaHandsHoldingChild,
-              count: campaigns.filter(c => c.category === 'janazah').length,
+              count: campaigns.filter(c => (c.category as string).toLowerCase() === 'janazah').length,
             },
             {
               id: 'food',
@@ -1044,7 +1044,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               desc: language === 'hi' ? 'मासिक राशन किट' : language === 'ur' ? 'ماہانہ راشن کٹ' : 'Monthly Ration Kits',
               image: '/program-relief.jpg',
               icon: Flame,
-              count: campaigns.filter(c => c.category === 'food').length,
+              count: campaigns.filter(c => (c.category as string).toLowerCase() === 'food').length,
             },
             {
               id: 'zakat',
@@ -1052,7 +1052,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               desc: language === 'hi' ? '100% ज़कात पात्र' : language === 'ur' ? '100% زکوٰۃ کے مستحق' : '100% Zakat Eligible',
               image: '/program-zakat.jpg',
               icon: ShieldCheck,
-              count: campaigns.filter(c => c.isZakatEligible || c.category === 'zakat').length,
+              count: campaigns.filter(c => c.isZakatEligible || (c.category as string).toLowerCase() === 'zakat').length,
             },
           ].map((cat) => {
             const IconComp = cat.icon;
