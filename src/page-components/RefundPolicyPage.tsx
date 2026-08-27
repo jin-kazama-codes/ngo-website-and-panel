@@ -5,7 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 
 export const RefundPolicyPage: React.FC = () => {
   const router = useRouter();
-  const { language, t } = useLanguage();
+  const { language, t, isHindi } = useLanguage();
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 animate-fade-in text-slate-800">

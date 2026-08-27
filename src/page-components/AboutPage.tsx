@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, Heart, Users, Building2, CheckCircle2, Award, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Users, Award } from 'lucide-react';
 import { MembershipBanner } from '../components/MembershipBanner';
 import { useLanguage } from '../context/LanguageContext';
 

@@ -10,7 +10,7 @@ interface MyCommunityTabProps {
 }
 
 export const MyCommunityTab: React.FC<MyCommunityTabProps> = ({ activeUser }) => {
-  const { t } = useLanguage();
+  const { t, isHindi } = useLanguage();
   const [community, setCommunity] = useState<Community | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);

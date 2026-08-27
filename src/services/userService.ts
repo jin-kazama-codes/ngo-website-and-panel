@@ -70,7 +70,7 @@ export async function createUser(user: User & { kycDocumentUrl?: string }): Prom
   const payload = {
     id: user.id,
     name: user.name,
-    email: user.email.trim().toLowerCase(),
+    email: (user.email ?? '').trim().toLowerCase(),
     phone: user.phone,
     role: user.role,
     avatar: user.avatar,

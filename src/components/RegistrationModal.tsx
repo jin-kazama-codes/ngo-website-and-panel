@@ -8,6 +8,7 @@ import { getCommunities } from '../services/communityService';
 import { createUser } from '../services/userService';
 import { uploadImage } from '../lib/storage';
 import { hashPassword } from '../lib/auth';
+import { useLanguage } from '../context/LanguageContext';
 
 interface RegistrationModalProps {
   onClose: () => void;

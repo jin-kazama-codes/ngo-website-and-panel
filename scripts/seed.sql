@@ -371,6 +371,10 @@ DROP POLICY IF EXISTS "Anyone can update verification" ON pending_verifications;
 DROP POLICY IF EXISTS "Anyone can insert audit_log"   ON audit_logs;
 DROP POLICY IF EXISTS "Anyone can insert announcement" ON announcements;
 
+DROP POLICY IF EXISTS "Anyone can insert gallery"     ON gallery_photos;
+DROP POLICY IF EXISTS "Anyone can update gallery"     ON gallery_photos;
+DROP POLICY IF EXISTS "Anyone can delete gallery"     ON gallery_photos;
+
 -- Insert policies (anon users can submit forms)
 CREATE POLICY "Public read communities"       ON communities          FOR SELECT USING (true);
 CREATE POLICY "Public read campaigns"         ON campaigns            FOR SELECT USING (true);
@@ -395,6 +399,9 @@ CREATE POLICY "Anyone can read verifications" ON pending_verifications FOR SELEC
 CREATE POLICY "Anyone can update verification" ON pending_verifications FOR UPDATE USING (true);
 CREATE POLICY "Anyone can insert audit_log"   ON audit_logs           FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can insert announcement" ON announcements       FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can insert gallery"     ON gallery_photos       FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can update gallery"     ON gallery_photos       FOR UPDATE USING (true);
+CREATE POLICY "Anyone can delete gallery"     ON gallery_photos       FOR DELETE USING (true);
 
 -- ─── Table Privileges ──────────────────────────────────────────
 -- Grant full table permissions to anon & authenticated API roles
@@ -402,4 +409,6 @@ GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.users TO anon, authenticated, service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.donations TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.gallery_photos TO anon, authenticated, service_role;
+
 

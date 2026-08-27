@@ -67,7 +67,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
 
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 bg-white/50 hover:bg-slate-100 rounded-full backdrop-blur-sm transition-all shadow-sm"
+          className="cursor-pointer absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 bg-white/50 hover:bg-slate-100 rounded-full backdrop-blur-sm transition-all shadow-sm"
         >
           <X className="w-5 h-5" />
         </button>
@@ -140,7 +140,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -150,7 +150,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
               <button
                 type="submit"
                 disabled={authenticating}
-                className="w-full mt-2 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-70 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 flex items-center justify-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0"
+                className="cursor-pointer w-full mt-2 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-70 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 flex items-center justify-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0"
               >
                 {authenticating ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -172,7 +172,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
                         onClose();
                         onOpenRegister();
                       }}
-                      className="text-emerald-600 hover:text-emerald-700 font-bold transition-colors underline decoration-2 underline-offset-4"
+                      className="cursor-pointer text-emerald-600 hover:text-emerald-700 font-bold transition-colors underline decoration-2 underline-offset-4"
                     >
                       {tr('कृपया सदस्य बनें / रजिस्टर करें', 'رجسٹر کریں', 'Please sign up')}
                     </button>
