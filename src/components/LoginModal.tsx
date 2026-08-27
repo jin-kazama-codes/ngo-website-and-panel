@@ -59,7 +59,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginRole, cu
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-[100] animate-fade-in overflow-y-auto">
       <div className="bg-white rounded-[2rem] max-w-md w-full p-8 shadow-2xl shadow-emerald-900/20 relative overflow-hidden border border-white/20">
         {/* Decorative background blur */}
         <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-emerald-50/80 to-transparent -z-10" />

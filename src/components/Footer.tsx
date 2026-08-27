@@ -139,9 +139,9 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
               </div>
               <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
                 {language === 'hi'
-                  ? 'एमएफसीटी (मोहल्ला फाउंडेशन चैरिटी ट्रस्ट) एक पारदर्शी, ज़मीनी स्तर का कल्याणकारी नेटवर्क है जो गरीब परिवारों को चिकित्सा सहायता, निकाह सहायता, शिक्षा और जनाज़ा सेवाएं प्रदान करता है।'
+                  ? 'एमएफसीटी (मोहम्मद फ़ईम चैरिटेबल ट्रस्ट) एक पारदर्शी, ज़मीनी स्तर का कल्याणकारी नेटवर्क है जो गरीब परिवारों को चिकित्सा सहायता, निकाह सहायता, शिक्षा और जनाज़ा सेवाएं प्रदान करता है।'
                   : language === 'ur'
-                  ? 'ایم ایف سی ٹی (محلہ فاؤنڈیشن چیریٹی ٹرسٹ) ایک شفاف، زمینی فلاحی نیٹ ورک ہے جو ضرورت مند خاندانوں کو طبی امداد، نکاح امداد، تعلیم اور جنازہ خدمات فراہم کرتا ہے۔'
+                  ? 'ایم ایف سی ٹی (محمد فہیم چیریٹیبل ٹرسٹ) ایک شفاف، زمینی فلاحی نیٹ ورک ہے جو ضرورت مند خاندانوں کو طبی امداد، نکاح امداد، تعلیم اور جنازہ خدمات فراہم کرتا ہے۔'
                   : 'MFCT (Mohammad Faeem Charitable Trust) is a transparent, grassroots welfare network providing medical aid, Nikah support, education, and Janazah services to poor families.'}
               </p>
               <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: 'var(--mfct-gold)' }}>
@@ -158,8 +158,8 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
               {/* Social Icons */}
               <div className="flex gap-2.5 pt-1">
                 {[
-                  { icon: Facebook, label: 'Facebook', href: 'https://facebook.com' },
-                  { icon: Youtube, label: 'YouTube', href: 'https://youtube.com' },
+                  { icon: Facebook, label: 'Facebook', href: 'https://facebook.com/mfcttrust' },
+                  { icon: FaInstagram, label: 'Instagram', href: 'https://instagram.com/mfcttrust' },
                 ].map(({ icon: Icon, label, href }) => (
                   <a
                     key={label}
@@ -208,6 +208,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                 <li><Link href="/" className="hover:text-white transition-colors">{language === 'hi' ? 'मुख्य पृष्ठ' : language === 'ur' ? 'ہوم' : 'Home'}</Link></li>
                 <li><Link href="/campaigns" className="hover:text-white transition-colors">{language === 'hi' ? 'सभी अभियान' : language === 'ur' ? 'تمام مہمات' : 'Verified Campaigns'}</Link></li>
                 <li><Link href="/communities" className="hover:text-white transition-colors">{language === 'hi' ? 'समुदाय नेटवर्क' : language === 'ur' ? 'کمیونٹی نیٹ ورک' : 'Local Communities'}</Link></li>
+                <li><Link href="/niyamawali" className="hover:text-white transition-colors">{language === 'hi' ? 'नियमावली एवं नियम' : language === 'ur' ? 'قواعد و ضوابط' : 'Rules & Niyamawali'}</Link></li>
                 <li><Link href="/about" className="hover:text-white transition-colors">{language === 'hi' ? 'हमारे बारे में' : language === 'ur' ? 'ہمارے بارے میں' : 'About Us'}</Link></li>
                 <li><Link href="/gallery" className="hover:text-white transition-colors">{language === 'hi' ? 'गैलरी एवं फोटो' : language === 'ur' ? 'گیلری' : 'Gallery'}</Link></li>
                 <li><Link href="/testimonials" className="hover:text-white transition-colors">{language === 'hi' ? 'प्रभाव गाथाएं' : language === 'ur' ? 'اثرات کی کہانیاں' : 'Impact Stories'}</Link></li>
