@@ -321,6 +321,7 @@ export function AppStateProvider({
     gallery: '/gallery',
     testimonials: '/testimonials',
     contact: '/contact',
+    members: '/members',
   };
 
   const handlePageChange = (page: string) => {

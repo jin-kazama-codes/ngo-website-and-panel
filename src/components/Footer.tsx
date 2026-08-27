@@ -211,6 +211,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                 <li><Link href="/niyamawali" className="hover:text-white transition-colors">{language === 'hi' ? 'नियमावली एवं नियम' : language === 'ur' ? 'قواعد و ضوابط' : 'Rules & Niyamawali'}</Link></li>
                 <li><Link href="/about" className="hover:text-white transition-colors">{language === 'hi' ? 'हमारे बारे में' : language === 'ur' ? 'ہمارے بارے میں' : 'About Us'}</Link></li>
                 <li><Link href="/gallery" className="hover:text-white transition-colors">{language === 'hi' ? 'गैलरी एवं फोटो' : language === 'ur' ? 'گیلری' : 'Gallery'}</Link></li>
+                <li><Link href="/members" className="hover:text-white transition-colors">{language === 'hi' ? 'सदस्य सूची' : language === 'ur' ? 'ممبر لسٹ' : 'Member Directory'}</Link></li>
                 <li><Link href="/testimonials" className="hover:text-white transition-colors">{language === 'hi' ? 'प्रभाव गाथाएं' : language === 'ur' ? 'اثرات کی کہانیاں' : 'Impact Stories'}</Link></li>
               </ul>
             </div>
