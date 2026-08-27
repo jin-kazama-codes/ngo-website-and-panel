@@ -1,11 +1,172 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Noto+Sans+Devanagari:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  /* MFCT Brand Colors */
+  --mfct-dark-green: #1a3c2c;
+  --mfct-mid-green: #2e5e42;
+  --mfct-light-green: #3d7a55;
+  --mfct-gold: #c8a84b;
+  --mfct-gold-light: #e0c068;
+  --mfct-gold-dark: #a0832e;
+  --mfct-warm-bg: #f9f5ec;
+  --mfct-warm-bg-2: #f4ede0;
+  --mfct-white: #ffffff;
+  --mfct-text-dark: #1a1a1a;
+  --mfct-text-muted: #5a6a5f;
+  --mfct-border: #d4c9a8;
+  --mfct-border-green: #2e5e4240;
+
+  /* Shadows */
+  --shadow-card: 0 2px 16px rgba(26, 60, 44, 0.10);
+  --shadow-gold: 0 4px 20px rgba(200, 168, 75, 0.25);
+  --shadow-strong: 0 8px 32px rgba(26, 60, 44, 0.18);
+}
+
 @layer base {
   body {
-    background-color: #f8f9fa;
-    color: #1a1a1a;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: var(--mfct-warm-bg);
+    color: var(--mfct-text-dark);
+    font-family: 'Noto Sans', 'Noto Sans Devanagari', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
+
+  h1, h2, h3 {
+    font-family: 'Playfair Display', 'Noto Sans Devanagari', 'Noto Sans', serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #f1ebe0; }
+  ::-webkit-scrollbar-thumb { background: var(--mfct-mid-green); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--mfct-dark-green); }
+}
+
+/* ─── MFCT Utility Classes ─── */
+
+.mfct-btn-gold {
+  background: linear-gradient(135deg, var(--mfct-gold) 0%, var(--mfct-gold-dark) 100%);
+  color: var(--mfct-dark-green);
+  font-weight: 700;
+  border: 2px solid var(--mfct-gold-dark);
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-gold);
+}
+.mfct-btn-gold:hover {
+  background: linear-gradient(135deg, var(--mfct-gold-light) 0%, var(--mfct-gold) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(200, 168, 75, 0.4);
+}
+
+.mfct-btn-outline {
+  background: transparent;
+  color: var(--mfct-gold);
+  font-weight: 700;
+  border: 2px solid var(--mfct-gold);
+  transition: all 0.2s ease;
+}
+.mfct-btn-outline:hover {
+  background: var(--mfct-gold);
+  color: var(--mfct-dark-green);
+}
+
+.mfct-btn-dark {
+  background: var(--mfct-dark-green);
+  color: var(--mfct-white);
+  font-weight: 700;
+  border: 2px solid var(--mfct-mid-green);
+  transition: all 0.2s ease;
+}
+.mfct-btn-dark:hover {
+  background: var(--mfct-mid-green);
+  border-color: var(--mfct-light-green);
+}
+
+.mfct-card {
+  background: var(--mfct-white);
+  border: 1px solid var(--mfct-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.mfct-section-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+.mfct-section-header .eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--mfct-gold);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.mfct-section-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--mfct-dark-green);
+  line-height: 1.2;
+}
+.mfct-section-header p {
+  color: var(--mfct-text-muted);
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.mfct-gold-divider {
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--mfct-gold), var(--mfct-gold-light));
+  border-radius: 99px;
+  margin: 0.75rem auto 0;
+}
+
+/* ─── Animations ─── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200,168,75,0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(200,168,75,0); }
+}
+
+.animate-fade-in     { animation: fadeIn 0.3s ease both; }
+.animate-fade-in-up  { animation: fadeInUp 0.5s ease both; }
+.animate-pulse-gold  { animation: pulse-gold 2s infinite; }
+
+/* Skeleton shimmer */
+.skeleton-mfct {
+  background: linear-gradient(90deg, #e8e0d0 25%, #f4ede0 50%, #e8e0d0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+/* Dark mode overrides for admin panel */
+.dark body {
+  background-color: #0f1e17;
+  color: #e2f0e8;
+}
+.dark .mfct-card {
+  background: #1a2e22;
+  border-color: #2a4535;
 }

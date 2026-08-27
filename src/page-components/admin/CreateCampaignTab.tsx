@@ -2,11 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { DonationCategory, Campaign, Community } from '../../types';
-import { X, Plus, Upload, ArrowLeft } from 'lucide-react';
+import { X, Plus, Upload, ArrowLeft, Sparkles } from 'lucide-react';
 import { useAppState } from '../../providers/AppStateProvider';
+import { useLanguage } from '../../context/LanguageContext';
 import { getCommunities } from '../../services/communityService';
 import { createCampaign, updateCampaign } from '../../services/campaignService';
 import { uploadImage } from '../../lib/storage';
+import { autoTranslateCampaign } from '../../lib/autoTranslate';
+import { translateCity, translateCommunityName } from '../../lib/translateEntity';
 
 interface CreateCampaignTabProps {
   onClose: () => void;
@@ -16,6 +19,7 @@ interface CreateCampaignTabProps {
 
 export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, onCreate, initialCampaign }) => {
   const { activeUser } = useAppState();
+  const { t, language } = useLanguage();
   const [title, setTitle] = useState(initialCampaign?.title || '');
   const [category, setCategory] = useState<DonationCategory>(initialCampaign?.category || 'Medical');
   const [beneficiaryName, setBeneficiaryName] = useState(initialCampaign?.beneficiaryName || '');
@@ -97,9 +101,16 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
         const url = await uploadImage('campaigns', file);
         uploadedDocs.push({ title: file.name, url, verifiedBy: 'Community Leader' });
       }
-      
+
       const existingDocs = initialCampaign?.documents || [];
       const combinedDocs = [...existingDocs, ...uploadedDocs];
+
+      // Automatically generate multi-language translations in Hindi & Urdu
+      try {
+        await autoTranslateCampaign(title, story);
+      } catch (tErr) {
+        console.warn('Auto-translation notice:', tErr);
+      }
 
       if (initialCampaign) {
         const updateData: Partial<Campaign> = {
@@ -163,70 +174,76 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 relative">
+    <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-sm border border-slate-200 relative">
       {toast && (
-        <div className={`fixed top-24 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition-all z-[100] flex items-center gap-2 animate-fade-in ${toast.type === 'error' ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800' : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'}`}>
+        <div className={`fixed top-24 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition-all z-[100] flex items-center gap-2 animate-fade-in ${toast.type === 'error' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'}`}>
           <span>{toast.message}</span>
         </div>
       )}
-      
+
       <button
         onClick={onClose}
-        className="cursor-pointer flex items-center gap-2 text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors mb-6"
+        className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors mb-6"
       >
-        <ArrowLeft className="w-4 h-4" /> Back to Campaigns
+        <ArrowLeft className="w-4 h-4" /> {t('btn.back', 'Back to Campaigns')}
       </button>
 
-      <div className="mb-8">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold mb-3">
-          <Plus className="w-3.5 h-3.5" /> Community Admin Portal
+      <div className="mb-8 space-y-3">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold">
+          <Plus className="w-3.5 h-3.5" /> {t('admin.commAdmin', 'Community Admin')}
         </div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{initialCampaign ? 'Edit Campaign' : 'Create Verified Community Campaign'}</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          {initialCampaign ? 'Update campaign details and beneficiary information.' : 'Submit cause details for local member support. Requires verified beneficiary documents.'}
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{initialCampaign ? t('admin.editCampaign', 'Edit Campaign') : t('admin.createCampaign', 'Create Verified Community Campaign')}</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {initialCampaign ? t('admin.updateDetails', 'Update campaign details and beneficiary information.') : t('admin.submitDetails', 'Submit cause details for local member support. Requires verified beneficiary documents.')}
         </p>
+
+        {/* Automatic Translation Function Badge */}
+        <div className="flex items-center gap-2.5 p-3.5 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-emerald-800 dark:text-emerald-300 text-xs font-bold shadow-sm">
+          <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 animate-pulse" />
+          <span>{t('admin.autoTranslateActive', '✨ Automatic Translation Active: All title, story, and details will be automatically translated to Hindi and Urdu.')}</span>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 text-sm font-medium text-slate-700 dark:text-slate-300">
+      <form onSubmit={handleSubmit} className="space-y-6 text-sm font-medium text-slate-700">
         <div>
           <label className="block font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 text-xs">
-            Campaign Title / Headline
+            {t('modal.campTitle', 'Campaign Title / Headline')}
           </label>
           <input
             type="text"
             required
-            placeholder="e.g. Heart Surgery for 10-Year-Old Rahul in Bareilly"
+            placeholder={t('modal.campTitle', 'e.g. Heart Surgery for 10-Year-Old Rahul in Bareilly')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="block font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 text-xs">Category</label>
+            <label className="block font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 text-xs">{t('modal.campCategory', 'Category')}</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as DonationCategory)}
-              className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
             >
-              <option value="Medical">Medical</option>
-              <option value="Education">Education</option>
-              <option value="Marriage">Marriage</option>
-              <option value="Food">Food</option>
-              <option value="Janazah">Janazah</option>
+              <option value="Medical">{t('cat.medical', 'Medical Aid')}</option>
+              <option value="Education">{t('cat.education', 'Education')}</option>
+              <option value="Marriage">{t('cat.marriage', 'Marriage Aid')}</option>
+              <option value="Food">{t('cat.food', 'Food Relief')}</option>
+              <option value="Janazah">{t('cat.janazah', 'Janazah Aid')}</option>
             </select>
           </div>
           <div>
             <label className="block font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 text-xs">
-              Required Goal Amount (INR ₹)
+              {t('modal.goalAmount', 'Required Goal Amount (INR ₹)')}
             </label>
             <input
               type="number"
               required
               value={goalINR}
               onChange={(e) => setGoalINR(e.target.value)}
-              className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full p-3.5 rounded-xl border border-slate-200 font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
         </div>
@@ -234,7 +251,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label className="block font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 text-xs">
-              Beneficiary Name
+              {t('modal.beneficiary', 'Beneficiary Name')}
             </label>
             <input
               type="text"
@@ -242,12 +259,12 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
               placeholder="e.g. Master Rahul"
               value={beneficiaryName}
               onChange={(e) => setBeneficiaryName(e.target.value)}
-              className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
           <div>
             <label className="block font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 text-xs">
-              Beneficiary Relation
+              {t('modal.beneficiaryRelation', 'Beneficiary Relation')}
             </label>
             <input
               type="text"
@@ -255,14 +272,14 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
               placeholder="e.g. Son of Daily Wage Labourer"
               value={beneficiaryRelation}
               onChange={(e) => setBeneficiaryRelation(e.target.value)}
-              className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
         </div>
 
         <div>
           <label className="block font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 text-xs">
-            Detailed Case Story & Explanation
+            {t('modal.story', 'Detailed Case Story & Explanation')}
           </label>
           <textarea
             rows={5}
@@ -270,12 +287,12 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
             placeholder="Describe why this beneficiary urgently needs community help..."
             value={story}
             onChange={(e) => setStory(e.target.value)}
-            className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
           ></textarea>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
-          <label className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+          <label className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-100 transition-colors">
             <input
               type="checkbox"
               checked={isZakatEligible}
@@ -283,12 +300,12 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
               className="w-5 h-5 text-emerald-600 rounded"
             />
             <div>
-              <span className="font-bold text-slate-900 dark:text-white block text-base">Zakat Eligible</span>
+              <span className="font-bold text-slate-900 dark:text-white block text-base">{t('card.zakat', 'Zakat Eligible')}</span>
               <span className="text-xs text-slate-500 dark:text-slate-400">Meets Zakat compliance rules</span>
             </div>
           </label>
 
-          <label className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+          <label className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-100 transition-colors">
             <input
               type="checkbox"
               checked={isUrgent}
@@ -296,7 +313,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
               className="w-5 h-5 text-rose-600 rounded"
             />
             <div>
-              <span className="font-bold text-slate-900 dark:text-white block text-base">Urgent Priority</span>
+              <span className="font-bold text-slate-900 dark:text-white block text-base">{t('card.urgent', 'Urgent Priority')}</span>
               <span className="text-xs text-slate-500 dark:text-slate-400">Immediate hospital / life threat</span>
             </div>
           </label>
@@ -304,49 +321,51 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
 
         <div>
           <label className="block font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 text-xs">
-            Community
+            {t('nav.communities', 'Community')}
           </label>
           <select
             value={selectedCommunityId}
             onChange={(e) => setSelectedCommunityId(e.target.value)}
-            className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
           >
             {communities.map((c) => (
-              <option key={c.id} value={c.id}>{c.name} ({c.city})</option>
+              <option key={c.id} value={c.id}>
+                {translateCommunityName(c.name, language)} ({translateCity(c.city, language)})
+              </option>
             ))}
           </select>
         </div>
 
         <div>
           <label className="block font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 text-xs">
-            Campaign Main Image (optional)
+            {t('modal.attachDocs', 'Campaign Main Image (optional)')}
           </label>
-          <label className="p-6 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
-            <input 
-              type="file" 
-              accept="image/*" 
+          <label className="p-6 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100">
+            <input
+              type="file"
+              accept="image/*"
               multiple
-              className="sr-only" 
+              className="sr-only"
               onChange={(e) => {
                 const files = Array.from(e.target.files || []);
                 if (files.length > 0) {
                   setImageFiles(prev => [...prev, ...files]);
                 }
-              }} 
+              }}
             />
-            <Upload className="w-6 h-6 mx-auto mb-2 text-slate-500 dark:text-slate-400" />
+            <Upload className="w-6 h-6 mx-auto mb-2 text-slate-500" />
             <span className="text-sm font-bold">{imageFiles.length > 0 ? `✓ ${imageFiles.length} image(s) selected` : 'Click to upload main campaign image(s)'}</span>
           </label>
         </div>
 
         <div>
           <label className="block font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 text-xs">
-            Attach Medical Estimates / Documents
+            {t('modal.attachDocs', 'Attach Medical Estimates / Documents')}
           </label>
           <label
             className={`p-6 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${docUploaded
-              ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400 dark:border-emerald-600/50 text-emerald-800 dark:text-emerald-400'
-              : 'bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
+              : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
               }`}
           >
             <input
@@ -369,9 +388,9 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
                 }
               }}
             />
-            <Upload className="w-6 h-6 mx-auto mb-2 text-slate-500 dark:text-slate-400" />
+            <Upload className="w-6 h-6 mx-auto mb-2 text-slate-500" />
             <span className="text-sm font-bold">
-              {docUploaded 
+              {docUploaded
                 ? (docFiles.length > 0 ? `✓ ${docFiles.length} file(s) attached` : '✓ Documents attached')
                 : 'Click to attach hospital estimate / Aadhaar (Max 1MB)'}
             </span>
@@ -382,20 +401,19 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer py-3.5 px-6 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            className="py-3.5 px-6 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition-colors"
           >
-            Cancel
+            {t('modal.cancel', 'Cancel')}
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="cursor-pointer px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-base transition-colors shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none"
+            className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-base transition-colors shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none"
           >
-            {submitting ? 'Saving...' : initialCampaign ? 'Update Campaign' : 'Submit for Verification'}
+            {submitting ? 'Saving & Auto-Translating...' : initialCampaign ? 'Update Campaign' : t('modal.submitCampaign', 'Submit Verified Campaign')}
           </button>
         </div>
       </form>
     </div>
   );
 };
-

@@ -33,12 +33,33 @@ export async function GET(request: Request) {
       query = query.eq('city', city);
     }
 
-    query = query.order('is_urgent', { ascending: false }).order('created_at', { ascending: false });
+    query = query.order('created_at', { ascending: false });
 
     const { data, error } = await query;
     if (error) throw error;
 
     let results = data ?? [];
+
+    function getItemTimestamp(item: any): number {
+      const dateStr = item.created_at || item.created_date;
+      if (dateStr) {
+        const t = new Date(dateStr).getTime();
+        if (!isNaN(t) && t > 0) return t;
+      }
+      const idStr = String(item.id || '');
+      const match13 = idStr.match(/camp_(\d{13})/);
+      if (match13) return parseInt(match13[1], 10);
+      const match10 = idStr.match(/camp_(\d{10})/);
+      if (match10) return parseInt(match10[1], 10) * 1000;
+      return 0;
+    }
+
+    // Sort results by latest created date / timestamp first
+    results.sort((a: any, b: any) => {
+      const timeA = getItemTimestamp(a);
+      const timeB = getItemTimestamp(b);
+      return timeB - timeA;
+    });
 
     return NextResponse.json({ success: true, data: results });
   } catch (err: any) {
@@ -54,6 +75,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    const nowIso = new Date().toISOString();
     const newCampaign = {
       id: body.id || `camp_${Date.now()}`,
       title: body.title,
@@ -73,8 +95,9 @@ export async function POST(request: Request) {
       main_image: [body.mainImage, ...(body.galleryImages || [])].filter(Boolean).join(','),
       story: body.story,
       documents: body.documents || [],
-      created_date: body.createdDate || body.created_date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-      status: body.status || 'pending_approval',
+      created_date: body.createdDate || body.created_date || nowIso,
+      created_at: nowIso,
+      status: body.status || 'active',
     };
 
     const { data, error } = await supabaseAdmin

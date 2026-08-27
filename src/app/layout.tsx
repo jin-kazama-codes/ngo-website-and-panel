@@ -7,7 +7,9 @@ export const metadata: Metadata = {
   description: 'याद उनकी, सेवा हमारी।',
   keywords: 'NGO, crowdfunding, charity, zakat, sadakah, community, India',
   icons: {
-    icon: '/logo.svg',
+    icon: '/mfct-logo.jpeg',
+    shortcut: '/mfct-logo.jpeg',
+    apple: '/mfct-logo.jpeg',
   },
 };
 

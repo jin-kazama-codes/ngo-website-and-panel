@@ -3,8 +3,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import hi from '../i18n/locales/hi.json';
 import ur from '../i18n/locales/ur.json';
+import en from '../i18n/locales/en.json';
 
-export type Language = 'hi' | 'ur';
+export type Language = 'hi' | 'ur' | 'en';
 
 interface LanguageContextType {
   language: Language;
@@ -13,12 +14,14 @@ interface LanguageContextType {
   t: (key: string, defaultText?: string) => string;
   isHindi: boolean;
   isUrdu: boolean;
+  isEnglish: boolean;
   formatCurrency: (amount: number) => string;
 }
 
 const translations: Record<Language, Record<string, string>> = {
   hi: hi as Record<string, string>,
   ur: ur as Record<string, string>,
+  en: en as Record<string, string>,
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -30,31 +33,32 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   useEffect(() => {
     try {
       const saved = localStorage.getItem('mfct_lang') as Language;
-      if (saved === 'hi' || saved === 'ur') {
+      if (saved === 'hi' || saved === 'ur' || saved === 'en') {
         setLanguageState(saved);
       } else {
         localStorage.setItem('mfct_lang', 'hi');
       }
-    } catch {}
+    } catch { }
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    try {
+    if (typeof window !== 'undefined') {
       localStorage.setItem('mfct_lang', lang);
-    } catch {}
+    }
   };
 
   const toggleLanguage = () => {
-    setLanguage(language === 'hi' ? 'ur' : 'hi');
+    // Cycle: hi -> en -> hi (for website); handled by selector for admin
+    setLanguage(language === 'hi' ? 'en' : 'hi');
   };
 
   const t = (key: string, defaultText?: string): string => {
     if (translations[language] && translations[language][key]) {
       return translations[language][key];
     }
-    if (translations.hi && translations.hi[key]) {
-      return translations.hi[key];
+    if (translations.en[key]) {
+      return translations.en[key];
     }
     return defaultText || key;
   };
@@ -72,6 +76,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
         t,
         isHindi: language === 'hi',
         isUrdu: language === 'ur',
+        isEnglish: language === 'en',
         formatCurrency,
       }}
     >

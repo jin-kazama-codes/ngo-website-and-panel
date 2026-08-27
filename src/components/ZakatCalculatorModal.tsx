@@ -81,30 +81,42 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur-sm overflow-y-auto animate-fade-in">
-      <div className="relative w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
+      <div
+        className="relative w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden my-6"
+        style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)' }}
+      >
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-slate-900 text-white p-6 sm:p-7 relative">
+        <div
+          className="text-white p-6 sm:p-7 relative"
+          style={{ background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, var(--mfct-mid-green) 100%)', borderBottom: '1px solid rgba(200,168,75,0.3)' }}
+        >
           <button
             onClick={onClose}
-            className="cursor-pointer absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
+            className="absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="flex items-center gap-2.5 mb-2">
-            <span className="px-3 py-1 rounded-full bg-amber-400 text-amber-950 font-extrabold text-[11px] uppercase tracking-wider flex items-center gap-1 shadow-sm">
+            <span
+              className="px-3 py-1 rounded-full font-extrabold text-[11px] uppercase tracking-wider flex items-center gap-1 shadow-sm"
+              style={{ background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)' }}
+            >
               <Sparkles className="w-3.5 h-3.5" /> 2.5% Islamic Zakat Calculator
             </span>
-            <span className="px-2.5 py-1 rounded-full bg-emerald-700/80 text-emerald-100 font-bold text-[11px]">
+            <span
+              className="px-2.5 py-1 rounded-full font-bold text-[11px]"
+              style={{ background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-gold)', border: '1px solid rgba(200,168,75,0.3)' }}
+            >
               Shariah Compliant
             </span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight" style={{ fontFamily: 'Playfair Display, serif' }}>
             {isHindi ? 'सटीक ज़कात कैलकुलेटर' : 'Accurate Zakat Calculator'}
           </h2>
-          <p className="text-emerald-100/90 text-xs sm:text-sm mt-1 max-w-xl">
+          <p className="text-xs sm:text-sm mt-1 max-w-xl" style={{ color: 'rgba(200,168,75,0.85)' }}>
             {isHindi
               ? 'अपनी कुल संपत्ति, सोना, चांदी, नकद एवं ऋण दर्ज करके आसानी से अपनी 2.5% देय ज़कात की गणना करें।'
               : 'Calculate your exact 2.5% Zakat obligation based on current gold/silver rates, savings, cash, and investments.'}
@@ -114,39 +126,41 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
         {/* Content Body */}
         <div className="p-6 sm:p-7 max-h-[75vh] overflow-y-auto space-y-6">
           {/* Nisab Standard Selector & Live Rates */}
-          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3">
+          <div className="rounded-2xl p-4 space-y-3" style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)' }}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <label className="text-xs font-black text-slate-800 uppercase tracking-wider block">
+                <label className="text-xs font-black uppercase tracking-wider block" style={{ color: 'var(--mfct-dark-green)' }}>
                   {isHindi ? 'निसाब मानक चुनें (Nisab Standard)' : 'Select Nisab Threshold Standard'}
                 </label>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px]" style={{ color: 'var(--mfct-text-muted)' }}>
                   {isHindi
                     ? 'अधिकांश विद्वान चांदी (Silver) के मानक की सलाह देते हैं ताकि अधिक गरीबों की मदद हो सके।'
                     : 'Silver Nisab is widely recommended for maximal charity benefit to the needy.'}
                 </p>
               </div>
 
-              <div className="flex items-center bg-white p-1 rounded-xl border border-slate-300 shadow-xs self-start sm:self-auto">
+              <div className="flex items-center p-1 rounded-xl shadow-xs self-start sm:self-auto" style={{ background: 'var(--mfct-warm-bg-2)', border: '1px solid var(--mfct-border)' }}>
                 <button
                   type="button"
                   onClick={() => setNisabStandard('silver')}
-                  className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    nisabStandard === 'silver'
-                      ? 'bg-emerald-700 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className="cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={nisabStandard === 'silver' ? {
+                    background: 'var(--mfct-dark-green)', color: '#fff'
+                  } : {
+                    color: 'var(--mfct-text-muted)'
+                  }}
                 >
                   Silver (612.36g) ~ ₹{Math.round(silverNisabValue).toLocaleString('en-IN')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setNisabStandard('gold')}
-                  className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    nisabStandard === 'gold'
-                      ? 'bg-emerald-700 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className="cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={nisabStandard === 'gold' ? {
+                    background: 'var(--mfct-dark-green)', color: '#fff'
+                  } : {
+                    color: 'var(--mfct-text-muted)'
+                  }}
                 >
                   Gold (87.48g) ~ ₹{Math.round(goldNisabValue).toLocaleString('en-IN')}
                 </button>
@@ -154,27 +168,29 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
             </div>
 
             {/* Editable Gold/Silver Per Gram Rates */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/80">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2" style={{ borderTop: '1px solid var(--mfct-border)' }}>
               <div>
-                <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                <label className="text-[11px] font-bold block mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
                   {isHindi ? 'सोना दर (₹/ग्राम)' : 'Gold Rate (₹/Gram)'}
                 </label>
                 <input
                   type="number"
                   value={goldRatePerGram || ''}
                   onChange={(e) => setGoldRatePerGram(Number(e.target.value))}
-                  className="w-full px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold bg-white focus:border-emerald-600 outline-none"
+                  className="w-full px-3 py-1.5 rounded-xl text-xs font-bold outline-none"
+                  style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                 />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                <label className="text-[11px] font-bold block mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
                   {isHindi ? 'चांदी दर (₹/ग्राम)' : 'Silver Rate (₹/Gram)'}
                 </label>
                 <input
                   type="number"
                   value={silverRatePerGram || ''}
                   onChange={(e) => setSilverRatePerGram(Number(e.target.value))}
-                  className="w-full px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold bg-white focus:border-emerald-600 outline-none"
+                  className="w-full px-3 py-1.5 rounded-xl text-xs font-bold outline-none"
+                  style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                 />
               </div>
             </div>
@@ -182,12 +198,13 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
 
           {/* Asset Section */}
           <div>
-            <h3 className="text-sm font-extrabold text-slate-900 mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-extrabold mb-3 flex items-center justify-between" style={{ color: 'var(--mfct-dark-green)' }}>
               <span>{isHindi ? '1. संपत्ति एवं परिसंपत्तियां (Assets)' : '1. Assets & Wealth Eligible for Zakat'}</span>
               <button
                 type="button"
                 onClick={handleReset}
-                className="cursor-pointer text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                className="cursor-pointer text-xs font-bold flex items-center gap-1"
+                style={{ color: 'var(--mfct-gold-dark)' }}
               >
                 <RefreshCw className="w-3 h-3" /> {isHindi ? 'रीसेट करें' : 'Reset Fields'}
               </button>
@@ -195,8 +212,8 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {/* Gold Grams */}
-              <div className="p-3.5 rounded-2xl bg-amber-50/50 border border-amber-200/80">
-                <label className="text-xs font-bold text-amber-950 block mb-1">
+              <div className="p-3.5 rounded-2xl" style={{ background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.3)' }}>
+                <label className="text-xs font-bold block mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
                   {isHindi ? 'सोने का वजन (ग्राम में)' : 'Gold Weight (in Grams)'}
                 </label>
                 <div className="relative">
@@ -205,17 +222,18 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
                     placeholder="0"
                     value={goldGrams || ''}
                     onChange={(e) => setGoldGrams(Math.max(0, Number(e.target.value)))}
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-amber-300 text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 rounded-xl text-xs font-bold outline-none"
+                    style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                   />
-                  <span className="absolute right-3 top-2.5 text-[10px] font-bold text-amber-800">
+                  <span className="absolute right-3 top-2.5 text-[10px] font-bold" style={{ color: 'var(--mfct-gold-dark)' }}>
                     = ₹{goldValue.toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>
 
               {/* Silver Grams */}
-              <div className="p-3.5 rounded-2xl bg-slate-100/70 border border-slate-300/80">
-                <label className="text-xs font-bold text-slate-800 block mb-1">
+              <div className="p-3.5 rounded-2xl" style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)' }}>
+                <label className="text-xs font-bold block mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
                   {isHindi ? 'चांदी का वजन (ग्राम में)' : 'Silver Weight (in Grams)'}
                 </label>
                 <div className="relative">
@@ -224,17 +242,18 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
                     placeholder="0"
                     value={silverGrams || ''}
                     onChange={(e) => setSilverGrams(Math.max(0, Number(e.target.value)))}
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs font-bold outline-none focus:ring-2 focus:ring-slate-500"
+                    className="w-full px-3 py-2 rounded-xl text-xs font-bold outline-none"
+                    style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                   />
-                  <span className="absolute right-3 top-2.5 text-[10px] font-bold text-slate-700">
+                  <span className="absolute right-3 top-2.5 text-[10px] font-bold" style={{ color: 'var(--mfct-text-muted)' }}>
                     = ₹{silverValue.toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>
 
               {/* Cash in Hand */}
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200">
-                <label className="text-xs font-bold text-slate-800 block mb-1">
+              <div className="p-3.5 rounded-2xl" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)' }}>
+                <label className="text-xs font-bold block mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
                   {isHindi ? 'नकद राशि हाथ में (₹)' : 'Cash in Hand (₹)'}
                 </label>
                 <input
@@ -242,13 +261,14 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
                   placeholder="0"
                   value={cashInHand || ''}
                   onChange={(e) => setCashInHand(Math.max(0, Number(e.target.value)))}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold outline-none focus:border-emerald-600"
+                  className="w-full px-3 py-2 rounded-xl text-xs font-bold outline-none"
+                  style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                 />
               </div>
 
               {/* Bank Balance */}
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200">
-                <label className="text-xs font-bold text-slate-800 block mb-1">
+              <div className="p-3.5 rounded-2xl" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)' }}>
+                <label className="text-xs font-bold block mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
                   {isHindi ? 'बैंक खाते में बचत (₹)' : 'Cash in Bank Accounts (₹)'}
                 </label>
                 <input
@@ -256,13 +276,14 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
                   placeholder="0"
                   value={bankBalance || ''}
                   onChange={(e) => setBankBalance(Math.max(0, Number(e.target.value)))}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold outline-none focus:border-emerald-600"
+                  className="w-full px-3 py-2 rounded-xl text-xs font-bold outline-none"
+                  style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                 />
               </div>
 
               {/* Investments / Stocks */}
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200">
-                <label className="text-xs font-bold text-slate-800 block mb-1">
+              <div className="p-3.5 rounded-2xl" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)' }}>
+                <label className="text-xs font-bold block mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
                   {isHindi ? 'शेयर/म्यूचुअल फंड/इन्वेस्टमेंट (₹)' : 'Investments, Shares & Stocks (₹)'}
                 </label>
                 <input
@@ -270,13 +291,14 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
                   placeholder="0"
                   value={investments || ''}
                   onChange={(e) => setInvestments(Math.max(0, Number(e.target.value)))}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold outline-none focus:border-emerald-600"
+                  className="w-full px-3 py-2 rounded-xl text-xs font-bold outline-none"
+                  style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                 />
               </div>
 
               {/* Business Merchandise */}
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200">
-                <label className="text-xs font-bold text-slate-800 block mb-1">
+              <div className="p-3.5 rounded-2xl" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)' }}>
+                <label className="text-xs font-bold block mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
                   {isHindi ? 'व्यापार का माल / स्टॉक (₹)' : 'Business Stock & Inventory (₹)'}
                 </label>
                 <input
@@ -284,7 +306,8 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
                   placeholder="0"
                   value={businessStock || ''}
                   onChange={(e) => setBusinessStock(Math.max(0, Number(e.target.value)))}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold outline-none focus:border-emerald-600"
+                  className="w-full px-3 py-2 rounded-xl text-xs font-bold outline-none"
+                  style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                 />
               </div>
             </div>
@@ -292,11 +315,11 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
 
           {/* Liabilities Section */}
           <div>
-            <h3 className="text-sm font-extrabold text-slate-900 mb-3">
+            <h3 className="text-sm font-extrabold mb-3" style={{ color: 'var(--mfct-dark-green)' }}>
               {isHindi ? '2. देनदारियां व ऋण (Liabilities & Debts Deductible)' : '2. Liabilities & Immediate Debts'}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="p-3.5 rounded-2xl bg-red-50/50 border border-red-200/80">
+              <div className="p-3.5 rounded-2xl" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}>
                 <label className="text-xs font-bold text-red-950 block mb-1">
                   {isHindi ? 'बकाया कर्ज़ / लोन (₹)' : 'Immediate Debts Owed to Others (₹)'}
                 </label>
@@ -305,11 +328,12 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
                   placeholder="0"
                   value={debtsOwed || ''}
                   onChange={(e) => setDebtsOwed(Math.max(0, Number(e.target.value)))}
-                  className="w-full px-3 py-2 rounded-xl bg-white border border-red-300 text-xs font-bold outline-none focus:ring-2 focus:ring-red-400"
+                  className="w-full px-3 py-2 rounded-xl text-xs font-bold outline-none"
+                  style={{ background: 'var(--mfct-white)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--mfct-text-dark)' }}
                 />
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-red-50/50 border border-red-200/80">
+              <div className="p-3.5 rounded-2xl" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}>
                 <label className="text-xs font-bold text-red-950 block mb-1">
                   {isHindi ? 'तत्काल भुगतान योग्य बिल व बकाया (₹)' : 'Pending Utility Bills / Wages Due (₹)'}
                 </label>
@@ -318,38 +342,42 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
                   placeholder="0"
                   value={pendingBills || ''}
                   onChange={(e) => setPendingBills(Math.max(0, Number(e.target.value)))}
-                  className="w-full px-3 py-2 rounded-xl bg-white border border-red-300 text-xs font-bold outline-none focus:ring-2 focus:ring-red-400"
+                  className="w-full px-3 py-2 rounded-xl text-xs font-bold outline-none"
+                  style={{ background: 'var(--mfct-white)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--mfct-text-dark)' }}
                 />
               </div>
             </div>
           </div>
 
           {/* Zakat Calculation Summary Box */}
-          <div className="p-5 sm:p-6 rounded-3xl bg-slate-900 text-white border border-slate-800 space-y-4 shadow-xl">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-slate-800 text-center sm:text-left">
+          <div
+            className="p-5 sm:p-6 rounded-3xl text-white space-y-4 shadow-xl"
+            style={{ background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-white/10 text-center sm:text-left">
               <div>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                <span className="text-[11px] font-bold uppercase tracking-wider block" style={{ color: 'rgba(200,168,75,0.7)' }}>
                   {isHindi ? 'कुल संपत्ति (Gross Assets)' : 'Total Gross Assets'}
                 </span>
-                <span className="text-lg font-extrabold text-slate-100">
+                <span className="text-lg font-extrabold text-white">
                   ₹{totalGrossAssets.toLocaleString('en-IN')}
                 </span>
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                <span className="text-[11px] font-bold uppercase tracking-wider block" style={{ color: 'rgba(200,168,75,0.7)' }}>
                   {isHindi ? 'कुल कर्ज़ (Liabilities)' : 'Total Deductions'}
                 </span>
-                <span className="text-lg font-extrabold text-red-400">
+                <span className="text-lg font-extrabold text-rose-400">
                   - ₹{totalLiabilities.toLocaleString('en-IN')}
                 </span>
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                <span className="text-[11px] font-bold uppercase tracking-wider block" style={{ color: 'rgba(200,168,75,0.7)' }}>
                   {isHindi ? 'शुद्ध संपत्ति (Net Zakat Wealth)' : 'Net Wealth Position'}
                 </span>
-                <span className="text-lg font-extrabold text-emerald-400">
+                <span className="text-lg font-extrabold" style={{ color: 'var(--mfct-gold)' }}>
                   ₹{netWealth.toLocaleString('en-IN')}
                 </span>
               </div>
@@ -360,7 +388,10 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   {isEligibleForZakat ? (
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/30 flex items-center gap-1">
+                    <span
+                      className="px-2.5 py-0.5 rounded-full font-bold text-xs flex items-center gap-1"
+                      style={{ background: 'rgba(200,168,75,0.2)', color: 'var(--mfct-gold)', border: '1px solid var(--mfct-gold)' }}
+                    >
                       <CheckCircle2 className="w-3.5 h-3.5" /> {isHindi ? 'ज़कात फर्ज़ (Eligible)' : 'Zakat Obligation Applies'}
                     </span>
                   ) : (
@@ -368,11 +399,11 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
                       {isHindi ? 'निसाब से कम (Below Nisab)' : 'Below Nisab Threshold'}
                     </span>
                   )}
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
                     (Nisab: ₹{Math.round(activeNisabThreshold).toLocaleString('en-IN')})
                   </span>
                 </div>
-                <p className="text-xs text-slate-300">
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.75)' }}>
                   {isEligibleForZakat
                     ? isHindi
                       ? 'आपकी संपत्ति निसाब सीमा से अधिक है। आपकी 2.5% ज़कात नीचे दी गई है:'
@@ -384,11 +415,14 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
               </div>
 
               {/* Large Calculated Zakat Output */}
-              <div className="bg-emerald-950/80 p-4 rounded-2xl border border-emerald-500/40 text-center sm:text-right shrink-0">
-                <span className="text-[10px] font-extrabold text-emerald-300 uppercase tracking-wider block">
+              <div
+                className="p-4 rounded-2xl text-center sm:text-right shrink-0"
+                style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(200,168,75,0.3)' }}
+              >
+                <span className="text-[10px] font-extrabold uppercase tracking-wider block" style={{ color: 'rgba(200,168,75,0.8)' }}>
                   {isHindi ? 'कुल देय ज़कात (2.5%)' : 'Total Payable Zakat (2.5%)'}
                 </span>
-                <span className="text-2xl sm:text-3xl font-black text-amber-300">
+                <span className="text-2xl sm:text-3xl font-black" style={{ color: 'var(--mfct-gold)' }}>
                   ₹{zakatAmount.toLocaleString('en-IN')}
                 </span>
               </div>
@@ -399,9 +433,9 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
               <button
                 type="button"
                 onClick={handleProceedToDonate}
-                className="cursor-pointer w-full py-3.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 group"
+                className="mfct-btn-gold cursor-pointer w-full py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 group"
               >
-                <Heart className="w-4 h-4 fill-current text-slate-950" />
+                <Heart className="w-4 h-4 fill-current" />
                 <span>
                   {isHindi
                     ? `₹${zakatAmount.toLocaleString('en-IN')} सीधे सत्यापित ज़कात अभियानों में दान करें`
@@ -413,12 +447,13 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  onDonateCalculated(1000); // optional general sadaqah
+                  onDonateCalculated(1000);
                   onClose();
                 }}
-                className="cursor-pointer w-full py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition-all flex items-center justify-center gap-2 border border-slate-700"
+                className="cursor-pointer w-full py-3 px-4 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2"
+                style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(200,168,75,0.25)' }}
               >
-                <Heart className="w-4 h-4 text-emerald-400" />
+                <Heart className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
                 <span>
                   {isHindi
                     ? 'सामान्य सदक़ा / राहत कोष में स्वेच्छा से दान करें'

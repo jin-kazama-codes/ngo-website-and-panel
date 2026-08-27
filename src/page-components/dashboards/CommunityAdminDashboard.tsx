@@ -123,24 +123,40 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-900 dark:from-slate-900 dark:via-slate-950 dark:to-emerald-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-emerald-100/30 dark:border-emerald-900/30">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div
+        className="rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0c2016 100%)',
+          border: '1px solid rgba(200,168,75,0.3)',
+          boxShadow: 'var(--shadow-card)',
+        }}
+      >
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(200,168,75,0.15)' }} />
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/20 dark:bg-emerald-500/20 text-emerald-100 dark:text-emerald-300 text-xs font-bold border border-emerald-100/30 dark:border-emerald-500/30 mb-2">
-              <ShieldCheckIcon className="w-4 h-4 text-emerald-100 dark:text-emerald-400" /> Community Admin
+            <div
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold mb-2"
+              style={{
+                background: 'rgba(200,168,75,0.15)',
+                color: 'var(--mfct-gold)',
+                border: '1px solid rgba(200,168,75,0.3)',
+              }}
+            >
+              <ShieldCheckIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> Community Admin
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white" style={{ fontFamily: 'serif' }}>
               {community?.name || 'Community Admin Hub'}
             </h1>
-            <p className="text-xs text-emerald-50 dark:text-slate-300 mt-1">
-              Admin: <strong className="text-emerald-200 dark:text-emerald-400">{community?.adminName || 'Admin'}</strong> • {community?.city || 'City'} Chapter
+            <p className="text-xs mt-1" style={{ color: 'rgba(200,168,75,0.85)' }}>
+              Admin: <strong className="text-white">{community?.adminName || 'Admin'}</strong> • {community?.city || 'City'} Chapter
             </p>
           </div>
 
           <div className="flex items-center shrink-0 mt-2 sm:mt-0">
             <button
               onClick={onOpenCreateCampaign}
-              className="px-5 py-3 rounded-xl bg-white text-emerald-800 dark:bg-emerald-500 dark:text-white font-bold text-sm shadow-lg hover:bg-emerald-50 dark:hover:bg-emerald-400 transition-all flex items-center gap-2 cursor-pointer"
+              className="mfct-btn-gold px-5 py-3 rounded-xl font-bold text-sm flex items-center gap-2 cursor-pointer transition-all"
             >
               <PlusCircle className="w-5 h-5" />
               Create Campaign
@@ -151,50 +167,90 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
       {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Members */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+        <div
+          className="rounded-2xl p-5 transition-all flex items-center justify-between group"
+          style={{
+            background: 'var(--mfct-white)',
+            border: '1px solid var(--mfct-border)',
+            boxShadow: 'var(--shadow-card)',
+          }}
+        >
           <div>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Members</p>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 mb-1">{community?.totalMembers || 0}</h3>
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Active Registered</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-text-muted)' }}>Total Members</p>
+            <h3 className="text-2xl font-black mt-1 mb-1" style={{ color: 'var(--mfct-dark-green)' }}>{community?.totalMembers || 0}</h3>
+            <p className="text-xs font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>Active Registered</p>
           </div>
-          <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-            <Users className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"
+            style={{ background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.25)', color: 'var(--mfct-dark-green)' }}
+          >
+            <Users className="w-6 h-6" style={{ color: 'var(--mfct-dark-green)' }} />
           </div>
         </div>
 
         {/* Active Campaigns */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+        <div
+          className="rounded-2xl p-5 transition-all flex items-center justify-between group"
+          style={{
+            background: 'var(--mfct-white)',
+            border: '1px solid var(--mfct-border)',
+            boxShadow: 'var(--shadow-card)',
+          }}
+        >
           <div>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Causes</p>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 mb-1">{community?.activeCampaigns || 0}</h3>
-            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Live Campaign Causes</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-text-muted)' }}>Active Causes</p>
+            <h3 className="text-2xl font-black mt-1 mb-1" style={{ color: 'var(--mfct-dark-green)' }}>{community?.activeCampaigns || 0}</h3>
+            <p className="text-xs font-semibold" style={{ color: 'var(--mfct-gold-dark)' }}>Live Campaign Causes</p>
           </div>
-          <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-            <Heart className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"
+            style={{ background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.25)', color: 'var(--mfct-gold-dark)' }}
+          >
+            <Heart className="w-6 h-6" style={{ color: 'var(--mfct-gold-dark)' }} />
           </div>
         </div>
 
         {/* Total Funds Raised */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+        <div
+          className="rounded-2xl p-5 transition-all flex items-center justify-between group"
+          style={{
+            background: 'var(--mfct-white)',
+            border: '1px solid var(--mfct-border)',
+            boxShadow: 'var(--shadow-card)',
+          }}
+        >
           <div>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Funds Raised</p>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 mb-1">₹{(community?.totalRaisedINR || 0).toLocaleString('en-IN')}</h3>
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Escrow Audited</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-text-muted)' }}>Total Funds Raised</p>
+            <h3 className="text-2xl font-black mt-1 mb-1" style={{ color: 'var(--mfct-dark-green)' }}>₹{(community?.totalRaisedINR || 0).toLocaleString('en-IN')}</h3>
+            <p className="text-xs font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>Escrow Audited</p>
           </div>
-          <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-            <IndianRupee className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"
+            style={{ background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.25)', color: 'var(--mfct-dark-green)' }}
+          >
+            <IndianRupee className="w-6 h-6" style={{ color: 'var(--mfct-dark-green)' }} />
           </div>
         </div>
 
         {/* Health Score */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+        <div
+          className="rounded-2xl p-5 transition-all flex items-center justify-between group"
+          style={{
+            background: 'var(--mfct-white)',
+            border: '1px solid var(--mfct-border)',
+            boxShadow: 'var(--shadow-card)',
+          }}
+        >
           <div>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Community Health</p>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 mb-1">{community?.healthScore || 100}%</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Grade A Transparency</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-text-muted)' }}>Community Health</p>
+            <h3 className="text-2xl font-black mt-1 mb-1" style={{ color: 'var(--mfct-dark-green)' }}>{community?.healthScore || 100}%</h3>
+            <p className="text-xs font-semibold" style={{ color: 'var(--mfct-gold-dark)' }}>Grade A Transparency</p>
           </div>
-          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-            <Activity className="w-6 h-6 text-slate-600 dark:text-slate-300" />
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"
+            style={{ background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.25)', color: 'var(--mfct-dark-green)' }}
+          >
+            <Activity className="w-6 h-6" style={{ color: 'var(--mfct-dark-green)' }} />
           </div>
         </div>
       </div>

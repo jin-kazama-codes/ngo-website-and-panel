@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Community } from '../types';
-import { X, Upload, ArrowRight, UserCheck, Sparkles, Eye, EyeOff, QrCode } from 'lucide-react';
+import { X, Upload, ArrowRight, UserCheck, Sparkles, Lock, Eye, EyeOff, QrCode } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCommunities } from '../services/communityService';
 import { createUser } from '../services/userService';
@@ -21,7 +21,13 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   onRegistered,
   hasPendingDonation = false,
 }) => {
-  const { isHindi } = useLanguage();
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -83,7 +89,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
         kycUrl = await uploadImage('users', kycFile);
       }
 
-      let avatarUrl = 'https://images.unsplash.com/photo-153452874';
+      let avatarUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400';
       if (avatarFile) {
         avatarUrl = await uploadImage('users', avatarFile);
       }
@@ -94,25 +100,25 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
       }
 
       const hashedPassword = await hashPassword(password);
-      const userCity = city.trim() || 'Bareilly';
 
       const newMember: User = {
         id: `usr_new_${Date.now()}`,
-        name: fullName.trim(),
-        email: email.trim() ? email.trim().toLowerCase() : undefined,
-        phone: phone.trim(),
-        city: userCity,
-        state: state.trim(),
+        name: fullName,
+        email: email,
+        phone: phone,
+        city,
+        state: state,
         role: 'member',
         avatar: avatarUrl,
         communityId: activeCommunity.id,
         communityName: activeCommunity.name,
-        membershipId: `MFCT-${userCity.substring(0, 3).toUpperCase()}-2024-${Math.floor(1000 + Math.random() * 9000)}`,
+        membershipId: `SS-${city.substring(0, 3).toUpperCase()}-2024-${Math.floor(1000 + Math.random() * 9000)}`,
         isVerified: false,
+        isPremium: false,
         joinDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
         passwordHash: hashedPassword,
         paymentMethod: paymentMethod,
-        paymentUtr: utrNumber.trim() || undefined,
+        paymentUtr: utrNumber || undefined,
         paymentScreenshotUrl: screenshotUrl,
       };
 
@@ -123,7 +129,11 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     } catch (err) {
       console.error('Registration error:', err);
       showToast(
-        isHindi ? 'पंजीकरण विफल रहा। कृपया पुनः प्रयास करें।' : 'رجسٹریشن ناکام رہی۔ دوبارہ کوشش کریں۔',
+        tr(
+          'पंजीकरण विफल रहा। कृपया पुनः प्रयास करें।',
+          'رجسٹریشن ناکام رہی، دوبارہ کوشش کریں۔',
+          'Registration failed. Please try again.'
+        ),
         'error'
       );
     } finally {
@@ -133,10 +143,14 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100 max-h-[92vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        className="rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[92vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)' }}
+      >
         <button
           onClick={onClose}
-          className="cursor-pointer absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+          className="cursor-pointer absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 transition-colors"
+          style={{ color: 'var(--mfct-text-muted)' }}
         >
           <X className="w-5 h-5" />
         </button>
@@ -149,17 +163,22 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
         )}
 
         <div className="mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-            <span>{isHindi ? '₹50 सदस्यता एकजुटता कार्यक्रम' : '₹50 ممبرشپ یکجہتی پروگرام'}</span>
+          <div
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold mb-2"
+            style={{ background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-dark-green)', border: '1px solid rgba(200,168,75,0.3)' }}
+          >
+            <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} />
+            <span>{tr('₹100 सदस्यता एकजुटता कार्यक्रम', '₹100 ممبرشپ یکجہتی پروگرام', '₹100 Membership Solidarity Program')}</span>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900">
-            {isHindi ? 'सत्यापित समुदाय सदस्य बनें' : 'تصدیق شدہ کمیونٹی ممبر بنیں'}
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'Playfair Display, serif' }}>
+            {tr('सत्यापित समुदाय सदस्य बनें', 'تصدیق شدہ کمیونٹی ممبر بنیں', 'Become a Verified Community Member')}
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
-            {isHindi
-              ? 'अपने स्थानीय समुदाय से जुड़ें। दानकर्ता बनें और आपातकालीन सहायता के पात्र भी।'
-              : 'اپنی مقامی کمیونٹی میں شامل ہوں۔ عطیہ دہندہ بنیں اور ہنگامی امداد کے اہل بھی۔'}
+          <p className="text-sm mt-1" style={{ color: 'var(--mfct-text-muted)' }}>
+            {tr(
+              'अपने स्थानीय समुदाय से जुड़ें। दानकर्ता बनें और आपातकालीन सहायता के पात्र भी।',
+              'اپنی مقامی کمیونٹی میں شامل ہوں۔ عطیہ دہندہ بنیں اور ہنگامی امداد کے اہل بھی۔',
+              'Join your local neighbourhood community. Become an active supporter and get direct emergency relief.'
+            )}
           </p>
         </div>
 
@@ -167,21 +186,22 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  {isHindi ? 'पूरा नाम (आधार के अनुसार) *' : 'مکمل نام (آدھار کے مطابق) *'}
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                  {tr('पूरा नाम (आधार के अनुसार) *', 'مکمل نام (آدھار کے مطابق) *', 'Full Name (as per Aadhaar/ID) *')}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder={isHindi ? 'उदा. मोहम्मद तारिक' : 'مثال: محمد طارق'}
+                  placeholder={tr('उदा. मोहम्मद तारिक', 'مثال: محمد طارق', 'e.g. Mohammad Tariq')}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full p-3 rounded-xl text-sm font-medium outline-none"
+                  style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  {isHindi ? 'मोबाइल नंबर *' : 'موبائل نمبر *'}
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                  {tr('मोबाइल नंबर *', 'موبائل نمبر *', 'Mobile Number *')}
                 </label>
                 <input
                   type="tel"
@@ -194,41 +214,45 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                   onChange={(e) =>
                     setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
                   }
-                  className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full p-3 rounded-xl text-sm font-medium outline-none"
+                  style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  {isHindi ? 'ईमेल पता (वैकल्पिक)' : 'ای میل ایڈریس (اختیاری)'}
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                  {tr('ईमेल पता (वैकल्पिक)', 'ای میل ایڈریس (اختیاری)', 'Email Address (Optional)')}
                 </label>
                 <input
                   type="email"
-                  placeholder={isHindi ? 'उदा. tariq@example.com' : 'tariq@example.com'}
+                  placeholder={tr('उदा. tariq@example.com', 'tariq@example.com', 'e.g. tariq@example.com')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full p-3 rounded-xl text-sm font-medium outline-none"
+                  style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  {isHindi ? 'पासवर्ड बनाएं *' : 'پاس ورڈ بنائیں *'}
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                  {tr('पासवर्ड बनाएं *', 'پاس ورڈ بنائیں *', 'Create Password *')}
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
-                    placeholder={isHindi ? 'कम से कम 6 अक्षर' : 'کم از کم 6 حروف'}
+                    placeholder={tr('कम से कम 6 अक्षर', 'کم از کم 6 حروف', 'Minimum 6 characters')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full p-3 pr-10 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                    className="w-full p-3 pr-10 rounded-xl text-sm font-medium outline-none"
+                    style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="cursor-pointer absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                    className="cursor-pointer absolute right-3 top-3"
+                    style={{ color: 'var(--mfct-text-muted)' }}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -238,46 +262,49 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  {isHindi ? 'राज्य *' : 'ریاست *'}
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                  {tr('राज्य *', 'ریاست *', 'State *')}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder={isHindi ? 'उदा. उत्तर प्रदेश' : 'مثال: اتر پردیش'}
+                  placeholder={tr('उदा. उत्तर प्रदेश', 'مثال: اتر پردیش', 'e.g. Uttar Pradesh')}
                   value={state}
                   onChange={(e) => setState(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full p-3 rounded-xl text-sm font-medium outline-none"
+                  style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  {isHindi ? 'शहर / कस्बा *' : 'شہر / قصبہ *'}
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                  {tr('शहर / कस्बा *', 'شہر / قصبہ *', 'City / Town *')}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder={isHindi ? 'उदा. बरेली' : 'مثال: بریلی'}
+                  placeholder={tr('उदा. बरेली', 'مثال: بریلی', 'e.g. Bareilly')}
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full p-3 rounded-xl text-sm font-medium outline-none"
+                  style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                {isHindi ? 'अपना स्थानीय समुदाय चुनें' : 'اپنی مقامی کمیونٹی منتخب کریں'}
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                {tr('अपना स्थानीय समुदाय चुनें', 'اپنی مقامی کمیونٹی منتخب کریں', 'Select Your Local Community')}
               </label>
               <select
                 value={selectedCommunityId}
                 onChange={(e) => setSelectedCommunityId(e.target.value)}
-                className="w-full p-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 truncate"
+                className="w-full p-3 rounded-xl text-sm font-medium outline-none truncate"
+                style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
               >
                 {communities.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} ({c.city} - {isHindi ? 'प्रशासक:' : 'ایڈمن:'} {c.adminName})
+                    {c.name} ({c.city} - {tr('प्रशासक:', 'ایڈمن:', 'Admin:')} {c.adminName})
                   </option>
                 ))}
               </select>
@@ -285,41 +312,45 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  {isHindi ? 'प्रोफ़ाइल फ़ोटो (वैकल्पिक)' : 'پروفائل تصویر (اختیاری)'}
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                  {tr('प्रोफ़ाइल फ़ोटो (वैकल्पिक)', 'پروفائل تصویر (اختیاری)', 'Profile Photo (Optional)')}
                 </label>
                 <label
-                  className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${avatarUploaded
-                    ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
-                    : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
-                    }`}
+                  className="p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center"
+                  style={avatarUploaded ? {
+                    background: 'rgba(200,168,75,0.12)', borderColor: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)'
+                  } : {
+                    background: 'var(--mfct-warm-bg)', borderColor: 'var(--mfct-border)', color: 'var(--mfct-text-muted)'
+                  }}
                 >
                   <input type="file" accept="image/*" className="sr-only" onChange={handleAvatarFileChange} />
-                  <Upload className="w-5 h-5 mb-1 text-slate-500" />
+                  <Upload className="w-5 h-5 mb-1" style={{ color: 'var(--mfct-gold)' }} />
                   <span className="text-xs font-bold">
                     {avatarUploaded
-                      ? `✓ ${avatarFile?.name ?? (isHindi ? 'फ़ोटो संलग्न है' : 'تصویر منسلک ہے')}`
-                      : (isHindi ? 'फ़ोटो अपलोड करने के लिए क्लिक करें' : 'تصویر اپلوڈ کریں')}
+                      ? `✓ ${avatarFile?.name ?? tr('फ़ोटो संलग्न है', 'تصویر منسلک ہے', 'Photo Attached')}`
+                      : tr('फ़ोटो अपलोड करने के लिए क्लिक करें', 'تصویر اپلوڈ کریں', 'Click to upload photo')}
                   </span>
                 </label>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  {isHindi ? 'पहचान दस्तावेज (आधार / वोटर आईडी) *' : 'شناختی دستاویز (آدھار / ووٹر کارڈ) *'}
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                  {tr('पहचान दस्तावेज़ (आधार / वोटर आईडी) *', 'شناختی دستاویز (آدھار / ووٹر کارڈ) *', 'ID Document (Aadhaar / Voter ID) *')}
                 </label>
                 <label
-                  className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${kycUploaded
-                    ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
-                    : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
-                    }`}
+                  className="p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center"
+                  style={kycUploaded ? {
+                    background: 'rgba(200,168,75,0.12)', borderColor: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)'
+                  } : {
+                    background: 'var(--mfct-warm-bg)', borderColor: 'var(--mfct-border)', color: 'var(--mfct-text-muted)'
+                  }}
                 >
                   <input type="file" accept="image/*,.pdf" className="sr-only" onChange={handleKycFileChange} />
-                  <Upload className="w-5 h-5 mb-1 text-slate-500" />
+                  <Upload className="w-5 h-5 mb-1" style={{ color: 'var(--mfct-gold)' }} />
                   <span className="text-xs font-bold">
                     {kycUploaded
-                      ? `✓ ${kycFile?.name ?? (isHindi ? 'दस्तावेज संलग्न है' : 'دستاویز منسلک ہے')}`
-                      : (isHindi ? 'आधार या पहचान पत्र अपलोड करें *' : '* شناختی دستاویز اپلوڈ کریں')}
+                      ? `✓ ${kycFile?.name ?? tr('दस्तावेज़ संलग्न है', 'دستاویز منسلک ہے', 'Document Attached')}`
+                      : tr('आधार या पहचान पत्र अपलोड करें *', '* شناختی دستاویز اپلوڈ کریں', 'Upload ID proof (Aadhaar/Voter ID) *')}
                   </span>
                 </label>
               </div>
@@ -329,32 +360,38 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               type="button"
               onClick={() => {
                 const missingFields = [];
-                if (!fullName) missingFields.push(isHindi ? 'पूरा नाम' : 'مکمل نام');
-                if (!password) missingFields.push(isHindi ? 'पासवर्ड' : 'پاس ورڈ');
-                if (!phone) missingFields.push(isHindi ? 'मोबाइल नंबर' : 'موبائل نمبر');
-                if (!state) missingFields.push(isHindi ? 'राज्य' : 'ریاست');
-                if (!city) missingFields.push(isHindi ? 'शहर' : 'شہر');
-                if (!kycFile) missingFields.push(isHindi ? 'पहचान दस्तावेज' : 'شناختی دستاویز');
+                if (!fullName) missingFields.push(tr('पूरा नाम', 'مکمل نام', 'Full Name'));
+                if (!password) missingFields.push(tr('पासवर्ड', 'پاس ورڈ', 'Password'));
+                if (!phone) missingFields.push(tr('मोबाइल नंबर', 'موبائل نمبر', 'Mobile Number'));
+                if (!state) missingFields.push(tr('राज्य', 'ریاست', 'State'));
+                if (!city) missingFields.push(tr('शहर', 'شہر', 'City'));
+                if (!kycFile) missingFields.push(tr('पहचान दस्तावेज़', 'شناختی دستاویز', 'ID Document'));
 
                 if (missingFields.length > 0) {
                   showToast(
-                    isHindi
-                      ? `कृपया भरें: ${missingFields.join(', ')}`
-                      : `براہ کرم درج کریں: ${missingFields.join(', ')}`
+                    tr(
+                      `कृपया भरें: ${missingFields.join(', ')}`,
+                      `براہ کرم درج کریں: ${missingFields.join(', ')}`,
+                      `Please fill: ${missingFields.join(', ')}`
+                    )
                   );
                   return;
                 }
                 if (password.length < 6) {
                   showToast(
-                    isHindi ? 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।' : 'پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔'
+                    tr(
+                      'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।',
+                      'پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔',
+                      'Password must be at least 6 characters.'
+                    )
                   );
                   return;
                 }
                 setStep(2);
               }}
-              className="cursor-pointer w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
+              className="mfct-btn-gold cursor-pointer w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
             >
-              <span>{isHindi ? 'आगे बढ़ें: ₹50 सदस्यता शुल्क का भुगतान करें' : 'آگے بڑھیں: ₹50 ممبرشپ فیس ادا کریں'}</span>
+              <span>{tr('आगे बढ़ें: ₹100 सदस्यता शुल्क का भुगतान करें', 'آگے بڑھیں: ₹100 ممبرشپ فیس ادا کریں', 'Proceed to Pay ₹100 Membership Fee')}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -362,99 +399,125 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
         {step === 2 && (
           <form onSubmit={handleFinishRegistration} className="space-y-6">
-            <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-950 space-y-2">
-              <div className="flex justify-between font-bold text-base">
-                <span>{isHindi ? 'वार्षिक सदस्यता एकजुटता शुल्क:' : 'سالانہ ممبرشپ فیس:'}</span>
-                <span className="text-emerald-700">₹50</span>
+            <div
+              className="p-5 rounded-2xl space-y-2"
+              style={{ background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.3)' }}
+            >
+              <div className="flex justify-between font-bold text-base" style={{ color: 'var(--mfct-dark-green)' }}>
+                <span>{tr('वार्षिक सदस्यता एकजुटता शुल्क:', 'سالانہ ممبرشپ فیس:', 'Annual Membership Solidarity Fee:')}</span>
+                <span className="font-bold">₹100</span>
               </div>
-              <p className="text-xs text-emerald-800 leading-relaxed">
-                {isHindi
-                  ? `यह नाममात्र ₹50 शुल्क आपकी सदस्यता को ${activeCommunity.name} में सक्रिय करता है और आपातकालीन सहायता व मतदान का अधिकार देता है।`
-                  : `یہ ₹50 فیس ${activeCommunity.name} میں آپ کی ممبرشپ فعال کرتی ہے اور ہنگامی امداد کی اہلیت دیتی ہے۔`}
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--mfct-text-dark)' }}>
+                {tr(
+                  `यह नाममात्र ₹100 शुल्क आपकी सदस्यता को ${activeCommunity.name} में सक्रिय करता है और आपातकालीन सहायता व मतदान का अधिकार देता है।`,
+                  `یہ ₹100 فیس ${activeCommunity.name} میں آپ کی ممبرشپ فعال کرتی ہے اور ہنگامی امداد کی اہلیت دیتی ہے۔`,
+                  `This ₹100 solidarity fee activates your full membership in ${activeCommunity.name}, giving you community voting rights and priority emergency relief.`
+                )}
               </p>
             </div>
 
             {/* Payment Method Tabs */}
-            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
+            <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl" style={{ background: 'var(--mfct-warm-bg-2)', border: '1px solid var(--mfct-border)' }}>
               <button
                 type="button"
                 onClick={() => setPaymentMethod('UPI')}
-                className={`cursor-pointer py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'UPI' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
-                  }`}
+                className="cursor-pointer py-2.5 rounded-xl text-xs font-bold transition-all"
+                style={paymentMethod === 'UPI' ? {
+                  background: 'var(--mfct-white)', color: 'var(--mfct-dark-green)', boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                } : {
+                  color: 'var(--mfct-text-muted)'
+                }}
               >
-                {isHindi ? 'तुरंत UPI / QR स्कैन' : 'فوری UPI / کیو آر اسکین'}
+                {tr('तुरंत UPI / QR स्कैन', 'فوری UPI / کیو آر اسکین', 'Instant UPI / QR Scan')}
               </button>
               <button
                 type="button"
                 onClick={() => setPaymentMethod('Bank Transfer')}
-                className={`cursor-pointer py-2.5 rounded-xl text-xs font-bold transition-all ${paymentMethod === 'Bank Transfer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
-                  }`}
+                className="cursor-pointer py-2.5 rounded-xl text-xs font-bold transition-all"
+                style={paymentMethod === 'Bank Transfer' ? {
+                  background: 'var(--mfct-white)', color: 'var(--mfct-dark-green)', boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                } : {
+                  color: 'var(--mfct-text-muted)'
+                }}
               >
-                {isHindi ? 'डायरेक्ट बैंक NEFT / RTGS' : 'بینک ٹرانسفر / RTGS'}
+                {tr('डायरेक्ट बैंक NEFT / RTGS', 'بینک ٹرانسفر / RTGS', 'Direct Bank NEFT / RTGS')}
               </button>
             </div>
 
             {paymentMethod === 'UPI' ? (
-              <div className="p-6 bg-slate-900 text-white rounded-3xl text-center space-y-4">
+              <div
+                className="p-6 rounded-3xl text-center space-y-4 text-white"
+                style={{ background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
+              >
                 <div className="bg-white p-3 rounded-2xl inline-block shadow-lg">
-                  <QrCode className="w-36 h-36 text-slate-900 mx-auto" />
+                  <QrCode className="w-36 h-36 mx-auto" style={{ color: 'var(--mfct-dark-green)' }} />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 uppercase tracking-wider">
-                    {isHindi ? 'प्रत्यक्ष एस्क्रो के लिए UPI ID' : 'براہ راست ادائیگی کے لیے UPI ID'}
+                  <p className="text-xs uppercase tracking-wider" style={{ color: 'rgba(200,168,75,0.9)' }}>
+                    {tr('प्रत्यक्ष एस्क्रो के लिए UPI ID', 'براہ راست ادائیگی کے لیے UPI ID', 'UPI ID for Direct Escrow')}
                   </p>
-                  <p className="font-mono text-emerald-400 font-bold text-lg select-all">
+                  <p className="font-mono font-bold text-lg select-all" style={{ color: 'var(--mfct-gold)' }}>
                     mfct@okicici
                   </p>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    {isHindi ? 'Google Pay, PhonePe, Paytm या BHIM UPI द्वारा स्कैन करें' : 'Google Pay, PhonePe, Paytm کے ذریعے اسکین کریں'}
+                  <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                    {tr(
+                      'Google Pay, PhonePe, Paytm या BHIM UPI द्वारा स्कैन करें',
+                      'Google Pay, PhonePe, Paytm کے ذریعے اسکین کریں',
+                      'Scan using Google Pay, PhonePe, Paytm, or BHIM UPI'
+                    )}
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="p-5 bg-slate-900 text-white rounded-3xl space-y-3 text-xs font-mono">
-                <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">{isHindi ? 'खाता नाम:' : 'کھاتہ نام:'}</span>
-                  <span className="text-emerald-400 font-bold">MFCT Community Foundation</span>
+              <div
+                className="p-5 rounded-3xl space-y-3 text-xs font-mono text-white"
+                style={{ background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
+              >
+                <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.6)' }}>{tr('खाता नाम:', 'کھاتہ نام:', 'Account Name:')}</span>
+                  <span className="font-bold" style={{ color: 'var(--mfct-gold)' }}>Mohammad Faeem Charitable Trust</span>
                 </div>
-                <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">{isHindi ? 'बैंक का नाम:' : 'بینک:'}</span>
-                  <span className="text-slate-200">ICICI Bank Ltd</span>
+                <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.6)' }}>{tr('बैंक का नाम:', 'بینک:', 'Bank Name:')}</span>
+                  <span className="text-white">ICICI Bank Ltd</span>
                 </div>
-                <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">{isHindi ? 'खाता संख्या:' : 'اکاؤنٹ نمبر:'}</span>
-                  <span className="text-emerald-300 font-bold select-all">000405018892</span>
+                <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.6)' }}>{tr('खाता संख्या:', 'اکاؤنٹ نمبر:', 'Account Number:')}</span>
+                  <span className="font-bold select-all" style={{ color: 'var(--mfct-gold)' }}>000405018892</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">IFSC Code:</span>
-                  <span className="text-emerald-300 font-bold select-all">ICIC0000004</span>
+                  <span style={{ color: 'rgba(255,255,255,0.6)' }}>IFSC Code:</span>
+                  <span className="font-bold select-all" style={{ color: 'var(--mfct-gold)' }}>ICIC0000004</span>
                 </div>
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  {isHindi ? '12 अंकों का बैंक UTR / संदर्भ संख्या' : '12 ہندسوں کا بینک UTR / ریفرنس نمبر'}
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                  {tr('12 अंकों का बैंक UTR / संदर्भ संख्या', '12 ہندسوں کا بینک UTR / ریفرنس نمبر', '12-Digit Bank UTR / Transaction Ref No')}
                 </label>
                 <input
                   type="text"
-                  placeholder={isHindi ? 'उदा. 420199381029' : 'مثال: 420199381029'}
+                  placeholder={tr('उदा. 420199381029', 'مثال: 420199381029', 'e.g. 420199381029')}
                   value={utrNumber}
                   onChange={(e) => setUtrNumber(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 font-mono text-sm font-semibold focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full p-3 rounded-xl font-mono text-sm font-semibold outline-none"
+                  style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  {isHindi ? 'या भुगतान स्क्रीनशॉट अपलोड करें' : 'یا ادائیگی کی رسید اپلوڈ کریں'}
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                  {tr('या भुगतान स्क्रीनशॉट अपलोड करें', 'یا ادائیگی کی رسید اپلوڈ کریں', 'Or Upload Payment Screenshot')}
                 </label>
                 <label
-                  className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${screenshotUploaded
-                    ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
-                    : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
-                    }`}
+                  className="p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center"
+                  style={screenshotUploaded ? {
+                    background: 'rgba(200,168,75,0.12)', borderColor: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)'
+                  } : {
+                    background: 'var(--mfct-warm-bg)', borderColor: 'var(--mfct-border)', color: 'var(--mfct-text-muted)'
+                  }}
                 >
                   <input
                     type="file"
@@ -462,11 +525,11 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                     className="sr-only"
                     onChange={handleScreenshotFileChange}
                   />
-                  <Upload className="w-5 h-5 mb-1 text-slate-500" />
+                  <Upload className="w-5 h-5 mb-1" style={{ color: 'var(--mfct-gold)' }} />
                   <span className="text-xs font-bold">
                     {screenshotUploaded
-                      ? `✓ ${screenshotFile?.name ?? (isHindi ? 'स्क्रीनशॉट संलग्न है' : 'رسید منسلک ہے')}`
-                      : (isHindi ? 'भुगतान रसीद अपलोड करने के लिए क्लिक करें' : 'ادائیگی کی رسید اپلوڈ کریں')}
+                      ? `✓ ${screenshotFile?.name ?? tr('स्क्रीनशॉट संलग्न है', 'رسید منسلک ہے', 'Screenshot Attached')}`
+                      : tr('भुगतान रसीद अपलोड करने के लिए क्लिक करें', 'ادائیگی کی رسید اپلوڈ کریں', 'Click to upload payment screenshot')}
                   </span>
                 </label>
               </div>
@@ -479,12 +542,14 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 required
                 checked={isFeePaid}
                 onChange={(e) => setIsFeePaid(e.target.checked)}
-                className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer"
+                className="w-4 h-4 rounded cursor-pointer accent-[#c8a84b]"
               />
-              <label htmlFor="feeCheck" className="text-xs text-slate-700 font-medium cursor-pointer">
-                {isHindi
-                  ? 'मैंने ₹50 का UPI भुगतान पूरा कर लिया है और सामुदायिक दिशानिर्देशों से सहमत हूँ।'
-                  : 'میں نے ₹50 کی ادائیگی مکمل کر لی ہے اور فلاحی اصولوں سے متفق ہوں۔'}
+              <label htmlFor="feeCheck" className="text-xs font-medium cursor-pointer" style={{ color: 'var(--mfct-text-dark)' }}>
+                {tr(
+                  'मैंने ₹100 का UPI भुगतान पूरा कर लिया है और सामुदायिक दिशानिर्देशों से सहमत हूँ।',
+                  'میں نے ₹100 کی ادائیگی مکمل کر لی ہے اور فلاحی اصولوں سے متفق ہوں۔',
+                  'I have completed the ₹100 payment and agree to the community guidelines.'
+                )}
               </label>
             </div>
 
@@ -492,18 +557,21 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="cursor-pointer py-3.5 px-4 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 transition-colors"
+                className="cursor-pointer py-3.5 px-4 rounded-xl font-bold text-xs transition-colors"
+                style={{ background: 'var(--mfct-warm-bg-2)', color: 'var(--mfct-dark-green)', border: '1px solid var(--mfct-border)' }}
               >
-                {isHindi ? 'वापस' : 'واپس'}
+                {tr('वापस', 'واپس', 'Back')}
               </button>
               <button
                 type="submit"
                 disabled={!isFeePaid || submitting}
-                className="cursor-pointer flex-1 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+                className="mfct-btn-gold cursor-pointer flex-1 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {submitting ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (isHindi ? 'सदस्यता पंजीकरण पूर्ण करें' : 'ممبرشپ رجسٹریشن مکمل کریں')}
+                ) : (
+                  tr('सदस्यता पंजीकरण पूर्ण करें', 'ممبرشپ رجسٹریشن مکمل کریں', 'Complete Membership Registration')
+                )}
               </button>
             </div>
           </form>
@@ -511,25 +579,35 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
         {step === 3 && (
           <div className="text-center py-6 space-y-5 animate-fade-in">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
-              <UserCheck className="w-10 h-10" />
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-md"
+              style={{ background: 'rgba(200,168,75,0.2)', border: '2px solid var(--mfct-gold)' }}
+            >
+              <UserCheck className="w-10 h-10" style={{ color: 'var(--mfct-gold)' }} />
             </div>
 
             <div>
-              <h3 className="text-2xl font-bold text-slate-900">
-                {isHindi ? 'MFCT में आपका स्वागत है!' : 'MFCT میں خوش آمدید!'}
+              <h3 className="text-2xl font-bold" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'Playfair Display, serif' }}>
+                {tr('MFCT में आपका स्वागत है!', 'MFCT میں خوش آمدید!', 'Welcome to MFCT!')}
               </h3>
-              <p className="text-sm text-slate-600 mt-1">
-                {isHindi ? (
-                  <>अब आप <span className="font-bold text-emerald-700">{activeCommunity.name}</span> के एक सत्यापित सदस्य हैं।</>
+              <p className="text-sm mt-1" style={{ color: 'var(--mfct-text-muted)' }}>
+                {language === 'hi' ? (
+                  <>अब आप <span className="font-bold" style={{ color: 'var(--mfct-dark-green)' }}>{activeCommunity.name}</span> के एक सत्यापित सदस्य हैं।</>
+                ) : language === 'ur' ? (
+                  <>اب آپ <span className="font-bold" style={{ color: 'var(--mfct-dark-green)' }}>{activeCommunity.name}</span> کے تصدیق شدہ ممبر بن چکے ہیں۔</>
                 ) : (
-                  <>اب آپ <span className="font-bold text-emerald-700">{activeCommunity.name}</span> کے تصدیق شدہ ممبر بن چکے ہیں۔</>
+                  <>You are now a verified member of <span className="font-bold" style={{ color: 'var(--mfct-dark-green)' }}>{activeCommunity.name}</span>.</>
                 )}
                 {hasPendingDonation && (
-                  <span className="block text-emerald-600 font-bold mt-2 text-xs bg-emerald-50 py-1.5 px-3 rounded-lg border border-emerald-100">
-                    {isHindi
-                      ? '✓ सत्यापित सदस्यता सक्रिय! दान पूरा करने के लिए आगे बढ़ रहे हैं...'
-                      : '✓ ممبرشپ فعال ہو گئی! عطیہ مکمل کرنے کے لیے آگے بڑھ رہے ہیں...'}
+                  <span
+                    className="block font-bold mt-2 text-xs py-1.5 px-3 rounded-lg"
+                    style={{ background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-dark-green)', border: '1px solid rgba(200,168,75,0.3)' }}
+                  >
+                    {tr(
+                      '✓ सत्यापित सदस्यता सक्रिय! दान पूरा करने के लिए आगे बढ़ रहे हैं...',
+                      '✓ ممبرشپ فعال ہو گئی! عطیہ مکمل کرنے کے لیے آگے بڑھ رہے ہیں...',
+                      '✓ Verified membership active! Continuing to complete your donation...'
+                    )}
                   </span>
                 )}
               </p>
@@ -537,12 +615,12 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
             <button
               onClick={onClose}
-              className="cursor-pointer w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
+              className="mfct-btn-gold cursor-pointer w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
             >
               <span>
                 {hasPendingDonation
-                  ? (isHindi ? 'दान पूरा करने के लिए आगे बढ़ें' : 'عطیہ مکمل کریں')
-                  : (isHindi ? 'सदस्य डैशबोर्ड खोलें' : 'ممبر ڈیش بورڈ کھولیں')}
+                  ? tr('दान पूरा करने के लिए आगे बढ़ें', 'عطیہ مکمل کریں', 'Proceed to Complete Donation')
+                  : tr('सदस्य डैशबोर्ड खोलें', 'ممبر ڈیش بورڈ کھولیں', 'Open Member Dashboard')}
               </span>
               <ArrowRight className="w-4 h-4" />
             </button>

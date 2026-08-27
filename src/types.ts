@@ -3,6 +3,7 @@ export type UserRole =
   | 'community_admin'
   | 'executive_admin'
   | 'member'
+  | 'premium_donor';
 
 export type DonationCategory =
   | 'General'

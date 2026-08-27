@@ -15,6 +15,7 @@ function mapRow(row: Record<string, unknown>): User {
     communityName: row.community_name as string,
     membershipId: row.membership_id as string,
     isVerified: row.is_verified as boolean,
+    isPremium: row.is_premium as boolean,
     joinDate: row.join_date as string,
     city: row.city as string,
     state: row.state as string,
@@ -45,6 +46,19 @@ export async function getUserByPhone(phone: string): Promise<User | null> {
 }
 
 export async function getUsers(communityId?: string): Promise<User[]> {
+  try {
+    const url = communityId ? `/api/users?communityId=${encodeURIComponent(communityId)}` : '/api/users';
+    const res = await fetch(url);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        return json.data.map(mapRow);
+      }
+    }
+  } catch (err) {
+    console.warn('API fetch users failed, using client fallback:', err);
+  }
+
   let query = supabase.from('users').select('*').order('created_at', { ascending: false });
   if (communityId) query = query.eq('community_id', communityId);
   const { data, error } = await query;
@@ -53,94 +67,61 @@ export async function getUsers(communityId?: string): Promise<User[]> {
 }
 
 export async function createUser(user: User & { kycDocumentUrl?: string }): Promise<User> {
-  const insertPayload: Record<string, unknown> = {
+  const payload = {
     id: user.id,
     name: user.name,
-    email: user.email ? user.email.trim().toLowerCase() : null,
+    email: (user.email ?? '').trim().toLowerCase(),
     phone: user.phone,
     role: user.role,
     avatar: user.avatar,
-    community_id: user.communityId,
-    community_name: user.communityName,
-    membership_id: user.membershipId,
-    is_verified: user.isVerified,
-    join_date: user.joinDate,
+    communityId: user.communityId,
+    communityName: user.communityName,
+    membershipId: user.membershipId,
+    isVerified: user.isVerified,
+    isPremium: user.isPremium,
+    joinDate: user.joinDate,
     city: user.city,
     state: user.state,
-    document_url: user.kycDocumentUrl ?? null,
-    password: user.passwordHash ?? null,
-    payment_method: user.paymentMethod ?? null,
-    payment_utr: user.paymentUtr ?? null,
-    payment_screenshot_url: user.paymentScreenshotUrl ?? null,
+    kycDocumentUrl: user.kycDocumentUrl || user.documentUrl,
+    passwordHash: user.passwordHash,
+    paymentMethod: user.paymentMethod,
+    paymentUtr: user.paymentUtr,
+    paymentScreenshotUrl: user.paymentScreenshotUrl,
   };
 
-  let finalUser = user;
-  let success = false;
+  const res = await fetch('/api/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
 
-  try {
-    const { data, error } = await supabase
-      .from('users')
-      .insert(insertPayload)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Supabase user insert error:', error.message, error.details);
-      // Try essential payload if optional columns differ
-      const essentialPayload = {
-        id: user.id,
-        name: user.name,
-        email: user.email ? user.email.trim().toLowerCase() : null,
-        phone: user.phone,
-        role: user.role,
-        community_id: user.communityId,
-        community_name: user.communityName,
-        membership_id: user.membershipId,
-        is_verified: user.isVerified,
-        city: user.city,
-        state: user.state,
-        document_url: user.kycDocumentUrl ?? null,
-        password: user.passwordHash ?? null,
-        payment_method: user.paymentMethod ?? null,
-        payment_utr: user.paymentUtr ?? null,
-        payment_screenshot_url: user.paymentScreenshotUrl ?? null,
-      };
-      const { data: retryData, error: retryError } = await supabase
-        .from('users')
-        .insert(essentialPayload)
-        .select()
-        .single();
-      if (!retryError && retryData) {
-        finalUser = mapRow(retryData);
-        success = true;
-      }
-    } else {
-      finalUser = mapRow(data);
-      success = true;
-    }
-  } catch (err) {
-    console.error('Supabase createUser exception:', err);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to create user');
   }
 
-  if (success && finalUser.communityId) {
+  const json = await res.json();
+  const createdUser = json.data ? mapRow(json.data) : user;
+
+  if (createdUser.communityId) {
     try {
       const { data: comm } = await supabase
         .from('communities')
         .select('total_members')
-        .eq('id', finalUser.communityId)
+        .eq('id', createdUser.communityId)
         .single();
 
       if (comm) {
-        await updateCommunityStats(finalUser.communityId, {
-          totalMembers: (comm.total_members || 0) + 1
+        await updateCommunityStats(createdUser.communityId, {
+          totalMembers: (comm.total_members || 0) + 1,
         });
       }
     } catch (cErr) {
-      console.error('Failed to increment community member count:', cErr);
+      console.warn('Failed to increment community member count:', cErr);
     }
   }
 
-  return finalUser;
+  return createdUser;
 }
 
 export async function authenticateUser(identifier: string, plainPassword: string): Promise<{ success: boolean; user?: User; error?: string }> {
