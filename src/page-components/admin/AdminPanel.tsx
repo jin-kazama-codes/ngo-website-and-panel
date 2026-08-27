@@ -315,7 +315,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <div className="min-w-0">
                   <h1 className="font-extrabold text-sm text-white leading-none truncate">MFCT Portal</h1>
                   <span className="text-[10px] font-bold uppercase tracking-wider block mt-0.5 truncate" style={{ color: 'rgba(200,168,75,0.7)' }}>
-                    {t('admin.title', 'Management Desk')}
+                    Together for a Better Tomorrow
                   </span>
                 </div>
               )}

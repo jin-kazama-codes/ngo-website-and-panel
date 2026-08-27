@@ -443,6 +443,7 @@ export function AppStateProvider({
           <Footer
             onPageChange={handlePageChange}
             onOpenDonate={() => handleOpenDonate()}
+            onOpenRegister={handleOpenRegister}
             onNavigateToAdmin={handleNavigateToAdmin}
           />
           {sharedModals}
