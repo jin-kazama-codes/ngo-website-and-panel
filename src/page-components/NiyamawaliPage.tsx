@@ -56,10 +56,7 @@ export const NiyamawaliPage: React.FC = () => {
             <span>MOHAMMAD FAEEM CHARITABLE TRUST (MFCT)</span>
           </div>
 
-          <h1
-            className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white"
-            style={{ fontFamily: 'Playfair Display, Noto Sans Devanagari, serif' }}
-          >
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white">
             {language === 'hi' ? 'नियमावली एवं संचालन नियम' : 'Rules, Regulations & Bylaws'}
           </h1>
 
@@ -724,7 +721,7 @@ export const NiyamawaliPage: React.FC = () => {
         >
           <span className="text-xs font-bold tracking-widest uppercase text-amber-400 block">26. ट्रस्ट का मूल सिद्धांत</span>
           
-          <blockquote className="text-base sm:text-2xl font-black text-white italic leading-relaxed" style={{ fontFamily: 'Playfair Display, Noto Sans Devanagari, serif' }}>
+          <blockquote className="text-base sm:text-2xl font-black text-white italic leading-relaxed">
             “हम किसी को लाभ का वादा नहीं करते, हम जरूरत के समय साथ खड़े होने का प्रयास करते हैं।”
           </blockquote>
           

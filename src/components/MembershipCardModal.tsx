@@ -64,8 +64,8 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
             <ShieldCheck className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
             {tr('मान्यता प्राप्त डिजिटल एनजीओ कार्ड', 'تصدیق شدہ این جی او کارڈ', 'Recognized Digital NGO Card')}
           </div>
-          <h3 className="text-2xl font-bold" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'Playfair Display, serif' }}>
-            {tr('डिजिटल सदस्यता कार्ड', 'ڈیجیٹل ممبرشپ کارڈ', 'Digital Membership Card')}
+          <h3 className="text-2xl font-bold" style={{ color: 'var(--mfct-dark-green)' }}>
+            {tr('आधिकारिक डिजिटल सदस्यता कार्ड', 'سرکاری ڈیجیٹل ممبرشپ کارڈ', 'Official Digital Membership Card')}
           </h3>
           <p className="text-sm" style={{ color: 'var(--mfct-text-muted)' }}>
             {tr('आधिकारिक MFCT समुदाय पहचान पत्र', 'سرکاری MFCT کمیونٹی شناختی کارڈ', 'Official MFCT Community ID')}
@@ -213,7 +213,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, onClose })
               className="w-10 h-10 rounded-full object-cover shadow-md border border-[var(--mfct-gold)]"
             />
             <div>
-              <h3 className="font-bold text-xl leading-tight" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'Playfair Display, serif' }}>MFCT Foundation</h3>
+              <h3 className="font-bold text-xl leading-tight" style={{ color: 'var(--mfct-dark-green)' }}>MFCT Foundation</h3>
               <p className="text-xs" style={{ color: 'var(--mfct-text-muted)' }}>
                 {tr('सेक्शन 8 पंजीकृत एनजीओ | 80G कर छूट', 'رجسٹرڈ این جی او | 80G ٹیکس چھوٹ', 'Regd NGO under Section 8 | 80G Tax Exempted')}
               </p>

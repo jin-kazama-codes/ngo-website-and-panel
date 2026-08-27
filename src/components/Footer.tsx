@@ -129,7 +129,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                   className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-[var(--mfct-gold)]"
                 />
                 <div>
-                  <span className="font-extrabold text-white text-sm block" style={{ fontFamily: 'serif' }}>
+                  <span className="font-extrabold text-white text-sm block">
                     {language === 'hi' ? 'मोहम्मद फ़ईम' : language === 'ur' ? 'محمد فہیم' : 'Mohammad Faeem'}
                   </span>
                   <span className="text-xs block" style={{ color: 'var(--mfct-gold)' }}>

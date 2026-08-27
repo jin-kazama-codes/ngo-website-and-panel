@@ -320,10 +320,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
             <span>MOHAMMAD FAEEM CHARITABLE TRUST (MFCT)</span>
           </div>
 
-          <h1
-            className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white"
-            style={{ fontFamily: 'Playfair Display, Noto Sans Devanagari, serif' }}
-          >
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white">
             {language === 'hi' ? 'वैधानिक सदस्य सूची' : language === 'ur' ? 'آفیشل ممبر لسٹ' : 'Official Member List'}
           </h1>
 

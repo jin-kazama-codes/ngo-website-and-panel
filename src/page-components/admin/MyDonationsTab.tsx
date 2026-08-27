@@ -127,8 +127,8 @@ export const MyDonationsTab: React.FC<MyDonationsTabProps> = ({
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
         <div>
-          <h2 className="text-xl sm:text-2xl font-extrabold" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'serif' }}>
-            {tr('मेरा दान इतिहास एवं रसीदें', 'میری عطیات کی تاریخ اور رسیدیں', 'My Donation History & Receipts')}
+          <h2 className="text-xl sm:text-2xl font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>
+            {tr('मेरे दान एवं सहयोग रिकॉर्ड', 'میرے عطیات', 'My Giving Ledger')}
           </h2>
           <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--mfct-text-muted)' }}>
             {tr('अपने सभी दानों के लिए सत्यापित रसीदें देखें।', 'اپنے تمام عطیات کے لیے تصدیق شدہ رسیدیں देखیں۔', 'View verified receipts for all your donations.')}

@@ -113,7 +113,7 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
             </span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight" style={{ fontFamily: 'Playfair Display, serif' }}>
+          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
             {isHindi ? 'सटीक ज़कात कैलकुलेटर' : 'Accurate Zakat Calculator'}
           </h2>
           <p className="text-xs sm:text-sm mt-1 max-w-xl" style={{ color: 'rgba(200,168,75,0.85)' }}>

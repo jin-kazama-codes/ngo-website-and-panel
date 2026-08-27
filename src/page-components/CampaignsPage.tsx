@@ -80,8 +80,8 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-black" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'Playfair Display, serif' }}>
-          {t('campaigns.page_title', 'Explore Verified Campaigns')}
+        <h1 className="text-3xl font-black" style={{ color: 'var(--mfct-dark-green)' }}>
+          {language === 'hi' ? 'सत्यापित सहायता अभियान' : language === 'ur' ? 'تصدیق شدہ مہمات' : 'Verified Relief Campaigns'}
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--mfct-text-muted)' }}>
           {t('campaigns.page_desc', 'Every campaign is verified on-site by local administrators and executive officers.')}
