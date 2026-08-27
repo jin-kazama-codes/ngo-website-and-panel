@@ -111,6 +111,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate }) => {
                 <li><Link href="/campaigns" className="hover:text-white transition-colors">{t('nav.campaigns', 'Verified Campaigns')}</Link></li>
                 <li><Link href="/communities" className="hover:text-white transition-colors">{t('nav.communities', 'Local Communities')}</Link></li>
                 <li><Link href="/about" className="hover:text-white transition-colors">{t('nav.about', 'About Us')}</Link></li>
+                <li><Link href="/rules" className="hover:text-white transition-colors font-medium text-emerald-300">{t('nav.rules', 'Rules & Guidelines')}</Link></li>
                 <li><Link href="/gallery" className="hover:text-white transition-colors">{t('nav.gallery', 'Gallery')}</Link></li>
                 <li><Link href="/testimonials" className="hover:text-white transition-colors">{t('nav.testimonials', 'Impact Stories')}</Link></li>
               </ul>
@@ -188,7 +189,9 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate }) => {
       <div className="py-4" style={{ background: 'rgba(0,0,0,0.3)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
           <p>© 2025 Mohammad Faeem Charitable Trust (MFCT). All Rights Reserved.</p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <Link href="/rules" className="hover:text-white transition-colors text-emerald-300 font-semibold">{t('nav.rules', 'Rules & Guidelines')}</Link>
+            <span className="opacity-30">|</span>
             <Link href="/privacy" className="hover:text-white transition-colors">{t('footer.privacy', 'Privacy Policy')}</Link>
             <span className="opacity-30">|</span>
             <Link href="/terms" className="hover:text-white transition-colors">{t('footer.terms', 'Terms & Conditions')}</Link>

@@ -322,6 +322,7 @@ export function AppStateProvider({
     emergency: '/emergency',
     communities: '/communities',
     about: '/about',
+    rules: '/rules',
     gallery: '/gallery',
     testimonials: '/testimonials',
     contact: '/contact',

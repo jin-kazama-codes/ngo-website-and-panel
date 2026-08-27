@@ -54,9 +54,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'campaigns', label: t('nav.campaigns', 'Campaigns'), path: '/campaigns' },
     { id: 'communities', label: t('nav.communities', 'Communities'), path: '/communities' },
     { id: 'about', label: t('nav.about', 'About'), path: '/about' },
+    { id: 'rules', label: t('nav.rules', 'Rules & Guidelines'), path: '/rules' },
     { id: 'gallery', label: t('nav.gallery', 'Gallery'), path: '/gallery' },
-    { id: 'contact', label: t('nav.contact', 'Contact'), path: '/contact' },
     { id: 'testimonials', label: t('nav.testimonials', 'Impact Stories'), path: '/testimonials' },
+    { id: 'contact', label: t('nav.contact', 'Contact'), path: '/contact' },
   ];
 
   return (
