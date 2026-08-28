@@ -19,7 +19,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
   return (
     <footer style={{ background: '#092115', color: 'rgba(255,255,255,0.85)' }} className="pt-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        
+
         {/* ── 1. Top Hero Card Banner (Become a Member / Center Logo / Support Our Cause) ── */}
         <div
           className="relative rounded-2xl md:rounded-3xl p-5 sm:p-8 lg:p-10 shadow-2xl overflow-visible"
@@ -30,7 +30,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
           }}
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-8 items-center">
-            
+
             {/* Center Column on Mobile (Order 1 on mobile, Order 2 on desktop) */}
             <div className="order-1 lg:order-2 lg:col-span-2 flex justify-center my-1 lg:-my-8">
               <div
@@ -67,8 +67,8 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                     {language === 'hi'
                       ? 'MFCT से जुड़ें और समाज सेवा का हिस्सा बनें।'
                       : language === 'ur'
-                      ? 'ایم ایف سی ٹی سے جڑیں اور فلاحی کاموں کا حصہ بنیں۔'
-                      : 'Join MFCT and be a part of community service.'}
+                        ? 'ایم ایف سی ٹی سے جڑیں اور فلاحی کاموں کا حصہ بنیں۔'
+                        : 'Join MFCT and be a part of community service.'}
                   </p>
                 </div>
                 <div className="flex justify-center sm:justify-start">
@@ -102,8 +102,8 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                     {language === 'hi'
                       ? 'आपका छोटा सा सहयोग किसी की ज़िंदगी बदल सकता है।'
                       : language === 'ur'
-                      ? 'آپ کا چھوٹا سا تعاون کسی کی زندگی بدل سکتا ہے۔'
-                      : 'Your small support can change someone’s life.'}
+                        ? 'آپ کا چھوٹا سا تعاون کسی کی زندگی بدل سکتا ہے۔'
+                        : 'Your small support can change someone’s life.'}
                   </p>
                 </div>
                 <div className="flex justify-center sm:justify-start lg:justify-end w-full sm:w-auto">
@@ -147,8 +147,8 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                 {language === 'hi'
                   ? 'एमएफसीटी (मोहम्मद फ़ईम चैरिटेबल ट्रस्ट) एक पारदर्शी, ज़मीनी स्तर का कल्याणकारी नेटवर्क है जो गरीब परिवारों को चिकित्सा सहायता, निकाह सहायता, शिक्षा और जनाज़ा सेवाएं प्रदान करता है।'
                   : language === 'ur'
-                  ? 'ایم ایف سی ٹی (محمد فہیم چیریٹیبل ٹرسٹ) ایک شفاف، زمینی فلاحی نیٹ ورک ہے جو ضرورت مند خاندانوں کو طبی امداد، نکاح امداد، تعلیم اور جنازہ خدمات فراہم کرتا ہے۔'
-                  : 'MFCT (Mohammad Faeem Charitable Trust) is a transparent, grassroots welfare network providing medical aid, Nikah support, education, and Janazah services to poor families.'}
+                    ? 'ایم ایف سی ٹی (محمد فہیم چیریٹیبل ٹرسٹ) ایک شفاف، زمینی فلاحی نیٹ ورک ہے جو ضرورت مند خاندانوں کو طبی امداد، نکاح امداد، تعلیم اور جنازہ خدمات فراہم کرتا ہے۔'
+                    : 'MFCT (Mohammad Faeem Charitable Trust) is a transparent, grassroots welfare network providing medical aid, Nikah support, education, and Janazah services to poor families.'}
               </p>
               <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: 'var(--mfct-gold)' }}>
                 <ShieldCheck className="w-4 h-4" />
@@ -156,8 +156,8 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                   {language === 'hi'
                     ? 'धारा 8 पंजीकृत एनजीओ | 80G कर छूट प्रमाणित'
                     : language === 'ur'
-                    ? 'سیکشن 8 رجسٹرڈ این جی او | 80G ٹیکس چھوٹ تصدیق شدہ'
-                    : 'Section 8 Registered NGO | 80G Tax Exemption Certified'}
+                      ? 'سیکشن 8 رجسٹرڈ این جی او | 80G ٹیکس چھوٹ تصدیق شدہ'
+                      : 'Section 8 Registered NGO | 80G Tax Exemption Certified'}
                 </span>
               </div>
 
@@ -250,10 +250,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                   <MapPin className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
                   <span>
                     {language === 'hi'
-                      ? 'ग्राम पिपरिया, पोस्ट बिलवा, बरेली, उत्तर प्रदेश – 243202, भारत'
+                      ? 'ग्राम पिपरिया, पोस्ट बिलवा, बरेली, उत्तर प्रदेश - 243202, भारत'
                       : language === 'ur'
-                      ? 'گاؤں پپریہ، پوسٹ بلوا، بریلی، اتر پردیش – 243202، بھارت'
-                      : 'Village Pipariya, Post Bilwa, Bareilly, Uttar Pradesh – 243202, India'}
+                        ? 'گاؤں پپریہ، پوسٹ بلوا، بریلی، اتر پردیش - 243202، بھارت'
+                        : 'Village Pipariya, Post Bilwa, Bareilly, Uttar Pradesh - 243202, India'}
                   </span>
                 </div>
                 <div className="space-y-1">
