@@ -1,38 +1,49 @@
 import { NextResponse } from 'next/server';
 
-async function translateWithGoogle(text: string, targetLang: string): Promise<string> {
-  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(
-    targetLang
-  )}&dt=t&q=${encodeURIComponent(text)}`;
+// Server-side in-memory cache to prevent repeat API calls & rate limits
+const serverCache = new Map<string, string>();
 
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-    },
-    next: { revalidate: 3600 },
-  });
+async function translateWithGoogle(text: string, targetLang: string): Promise<string | null> {
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(
+      targetLang
+    )}&dt=t&q=${encodeURIComponent(text)}`;
 
-  if (!response.ok) throw new Error(`Google API status ${response.status}`);
-  const data = await response.json();
-  if (Array.isArray(data) && Array.isArray(data[0])) {
-    return data[0].map((item: any) => item[0]).filter(Boolean).join('');
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      },
+      next: { revalidate: 86400 },
+    });
+
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (Array.isArray(data) && Array.isArray(data[0])) {
+      return data[0].map((item: any) => item[0]).filter(Boolean).join('');
+    }
+  } catch {
+    // Fallback to MyMemory quietly on network or rate-limit issues
   }
-  throw new Error('Invalid Google API response');
+  return null;
 }
 
-async function translateWithMyMemory(text: string, targetLang: string): Promise<string> {
-  const langPair = `en|${targetLang}`;
-  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
-    text
-  )}&langpair=${encodeURIComponent(langPair)}`;
+async function translateWithMyMemory(text: string, targetLang: string): Promise<string | null> {
+  try {
+    const langPair = `en|${targetLang}`;
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
+      text
+    )}&langpair=${encodeURIComponent(langPair)}`;
 
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`MyMemory status ${response.status}`);
-  const data = await response.json();
-  if (data?.responseData?.translatedText) {
-    return data.responseData.translatedText;
+    const response = await fetch(url, { next: { revalidate: 86400 } });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data?.responseData?.translatedText) {
+      return data.responseData.translatedText;
+    }
+  } catch {
+    // Return null on failure
   }
-  throw new Error('Invalid MyMemory response');
+  return null;
 }
 
 export async function POST(request: Request) {
@@ -43,35 +54,45 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, translatedText: text || '' });
     }
 
-    // If target is english and text is only ASCII characters, no translation needed
-    const isPureAscii = /^[\x00-\x7F]*$/.test(text);
+    const trimmed = text.trim();
+
+    // If target is English and text is only ASCII characters, no translation needed
+    const isPureAscii = /^[\x00-\x7F]*$/.test(trimmed);
     if (targetLang === 'en' && isPureAscii) {
-      return NextResponse.json({ success: true, translatedText: text });
+      return NextResponse.json({ success: true, translatedText: trimmed });
     }
 
-    let translated = '';
+    // Check server memory cache
+    const cacheKey = `${targetLang}:${trimmed}`;
+    if (serverCache.has(cacheKey)) {
+      return NextResponse.json({
+        success: true,
+        translatedText: serverCache.get(cacheKey),
+      });
+    }
 
-    // Attempt 1: Google Translate (sl=auto detects source language automatically)
-    try {
-      translated = await translateWithGoogle(text, targetLang);
-    } catch (gErr) {
-      console.warn('Google translation failed, trying MyMemory:', gErr);
-      // Attempt 2: MyMemory API
-      try {
-        translated = await translateWithMyMemory(text, targetLang);
-      } catch (mErr) {
-        console.warn('MyMemory translation failed:', mErr);
-      }
+    // Attempt 1: Google Translate
+    let translated = await translateWithGoogle(trimmed, targetLang);
+
+    // Attempt 2: MyMemory API fallback
+    if (!translated) {
+      translated = await translateWithMyMemory(trimmed, targetLang);
+    }
+
+    const finalResult = translated || trimmed;
+
+    // Cache successful translation in memory
+    if (translated) {
+      serverCache.set(cacheKey, translated);
     }
 
     return NextResponse.json({
       success: true,
-      translatedText: translated || text,
+      translatedText: finalResult,
     });
   } catch (error: any) {
-    console.error('Translation error:', error);
     return NextResponse.json(
-      { success: false, translatedText: null, error: error.message },
+      { success: false, translatedText: null, error: error?.message || 'Translation failed' },
       { status: 200 }
     );
   }

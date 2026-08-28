@@ -1,0 +1,79 @@
+<!-- SVG Open Graph fallback image — 1200×630 -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f2d1e"/>
+      <stop offset="50%" style="stop-color:#1a3c2c"/>
+      <stop offset="100%" style="stop-color:#0a1f14"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e0c068"/>
+      <stop offset="50%" style="stop-color:#c8a84b"/>
+      <stop offset="100%" style="stop-color:#a0832e"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Decorative arcs -->
+  <circle cx="0" cy="0" r="300" fill="none" stroke="#c8a84b" stroke-width="1" opacity="0.08"/>
+  <circle cx="1200" cy="630" r="400" fill="none" stroke="#c8a84b" stroke-width="1" opacity="0.08"/>
+  <circle cx="600" cy="315" r="500" fill="none" stroke="#2e5e42" stroke-width="40" opacity="0.12"/>
+
+  <!-- Gold top bar -->
+  <rect x="0" y="0" width="1200" height="6" fill="url(#gold)"/>
+
+  <!-- Logo circle -->
+  <circle cx="600" cy="155" r="72" fill="none" stroke="url(#gold)" stroke-width="3"/>
+  <circle cx="600" cy="155" r="66" fill="#1a3c2c" opacity="0.9"/>
+  <text x="600" y="175" text-anchor="middle" font-size="52" font-family="serif" fill="#c8a84b" filter="url(#glow)">☪</text>
+
+  <!-- Main Hindi title -->
+  <text x="600" y="280" text-anchor="middle" font-family="'Noto Sans Devanagari', serif" font-size="38" font-weight="900" fill="white" letter-spacing="1">
+    मोहम्मद फ़ईम चैरिटेबल ट्रस्ट
+  </text>
+
+  <!-- English subtitle -->
+  <text x="600" y="322" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="22" font-weight="600" fill="#c8a84b" letter-spacing="3">
+    MOHAMMAD FAEEM CHARITABLE TRUST
+  </text>
+
+  <!-- Divider line -->
+  <line x1="300" y1="350" x2="900" y2="350" stroke="url(#gold)" stroke-width="1.5" opacity="0.6"/>
+  <circle cx="600" cy="350" r="5" fill="#c8a84b"/>
+
+  <!-- Tagline -->
+  <text x="600" y="390" text-anchor="middle" font-family="'Noto Sans Devanagari', serif" font-size="28" font-weight="700" fill="#e0c068" letter-spacing="1">
+    "याद उनकी, सेवा हमारी"
+  </text>
+
+  <!-- Service badges -->
+  <rect x="155" y="425" width="180" height="44" rx="22" fill="#c8a84b" fill-opacity="0.15" stroke="#c8a84b" stroke-width="1.5"/>
+  <text x="245" y="452" text-anchor="middle" font-family="sans-serif" font-size="15" fill="#e0c068">🏥 चिकित्सा सहायता</text>
+
+  <rect x="360" y="425" width="165" height="44" rx="22" fill="#c8a84b" fill-opacity="0.15" stroke="#c8a84b" stroke-width="1.5"/>
+  <text x="442" y="452" text-anchor="middle" font-family="sans-serif" font-size="15" fill="#e0c068">💍 निकाह शगुन</text>
+
+  <rect x="550" y="425" width="145" height="44" rx="22" fill="#c8a84b" fill-opacity="0.15" stroke="#c8a84b" stroke-width="1.5"/>
+  <text x="622" y="452" text-anchor="middle" font-family="sans-serif" font-size="15" fill="#e0c068">🕌 जनाज़ा सेवा</text>
+
+  <rect x="720" y="425" width="140" height="44" rx="22" fill="#c8a84b" fill-opacity="0.15" stroke="#c8a84b" stroke-width="1.5"/>
+  <text x="790" y="452" text-anchor="middle" font-family="sans-serif" font-size="15" fill="#e0c068">📚 शिक्षा सहायता</text>
+
+  <!-- Bottom strip -->
+  <rect x="0" y="570" width="1200" height="60" fill="#0a1f14"/>
+  <text x="600" y="608" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="16" fill="#c8a84b" letter-spacing="4">
+    MFCT · SECTION 8 NGO · UTTAR PRADESH, INDIA · mfct.org.in
+  </text>
+
+  <!-- Gold bottom bar -->
+  <rect x="0" y="624" width="1200" height="6" fill="url(#gold)"/>
+</svg>

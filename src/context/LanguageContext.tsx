@@ -33,10 +33,12 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   useEffect(() => {
     try {
       const saved = localStorage.getItem('mfct_lang') as Language;
-      if (saved === 'hi' || saved === 'ur' || saved === 'en') {
-        setLanguageState(saved);
-      } else {
-        localStorage.setItem('mfct_lang', 'hi');
+      const initialLang = (saved === 'hi' || saved === 'ur' || saved === 'en') ? saved : 'hi';
+      setLanguageState(initialLang);
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute('lang', initialLang);
+        document.documentElement.setAttribute('data-lang', initialLang);
+        document.documentElement.setAttribute('dir', initialLang === 'ur' ? 'rtl' : 'ltr');
       }
     } catch { }
   }, []);
@@ -45,6 +47,9 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     setLanguageState(lang);
     if (typeof window !== 'undefined') {
       localStorage.setItem('mfct_lang', lang);
+      document.documentElement.setAttribute('lang', lang);
+      document.documentElement.setAttribute('data-lang', lang);
+      document.documentElement.setAttribute('dir', lang === 'ur' ? 'rtl' : 'ltr');
     }
   };
 
