@@ -3,10 +3,15 @@ import { User, UserRole } from '../types';
 import { verifyPassword } from '../lib/auth';
 import { updateCommunityStats } from './communityService';
 
+function cleanDisplayName(name: string | undefined | null): string {
+  if (!name) return '';
+  return name.replace(/\s*\([^)]*\)/g, '').trim();
+}
+
 function mapRow(row: Record<string, unknown>): User {
   return {
     id: row.id as string,
-    name: row.name as string,
+    name: cleanDisplayName(row.name as string),
     email: row.email as string,
     phone: row.phone as string,
     role: (row.role as string)?.replace(' ', '_') as UserRole,

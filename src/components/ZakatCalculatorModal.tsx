@@ -81,7 +81,7 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
       <div
         className="relative w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden my-6"
         style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)' }}
@@ -113,7 +113,7 @@ export const ZakatCalculatorModal: React.FC<ZakatCalculatorModalProps> = ({
             </span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight" style={{ fontFamily: 'Playfair Display, serif' }}>
+          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
             {isHindi ? 'सटीक ज़कात कैलकुलेटर' : 'Accurate Zakat Calculator'}
           </h2>
           <p className="text-xs sm:text-sm mt-1 max-w-xl" style={{ color: 'rgba(200,168,75,0.85)' }}>

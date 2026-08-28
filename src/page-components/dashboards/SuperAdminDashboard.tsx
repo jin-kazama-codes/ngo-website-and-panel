@@ -130,7 +130,7 @@ export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) =>
             >
               <Shield className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('admin.superAdmin', 'Super Admin')}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white" style={{ fontFamily: 'serif' }}>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
               {t('admin.platformMasterTitle', 'Platform Master Analytics & Oversight')}
             </h1>
             <p className="text-xs mt-1" style={{ color: 'rgba(200,168,75,0.85)' }}>

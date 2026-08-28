@@ -142,7 +142,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-fade-in overflow-y-auto">
       <div
         className="rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[92vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)' }}
@@ -170,7 +170,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
             <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} />
             <span>{tr('₹100 सदस्यता एकजुटता कार्यक्रम', '₹100 ممبرشپ یکجہتی پروگرام', '₹100 Membership Solidarity Program')}</span>
           </div>
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'Playfair Display, serif' }}>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--mfct-dark-green)' }}>
             {tr('सत्यापित समुदाय सदस्य बनें', 'تصدیق شدہ کمیونٹی ممبر بنیں', 'Become a Verified Community Member')}
           </h2>
           <p className="text-sm mt-1" style={{ color: 'var(--mfct-text-muted)' }}>
@@ -587,8 +587,8 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
             </div>
 
             <div>
-              <h3 className="text-2xl font-bold" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'Playfair Display, serif' }}>
-                {tr('MFCT में आपका स्वागत है!', 'MFCT میں خوش آمدید!', 'Welcome to MFCT!')}
+              <h3 className="text-2xl font-bold" style={{ color: 'var(--mfct-dark-green)' }}>
+                {tr('पंजीकरण अनुरोध सबमिट हुआ!', 'درخواست جمع کر دی گئی!', 'Registration Submitted!')}
               </h3>
               <p className="text-sm mt-1" style={{ color: 'var(--mfct-text-muted)' }}>
                 {language === 'hi' ? (

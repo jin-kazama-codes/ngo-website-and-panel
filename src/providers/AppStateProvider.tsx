@@ -321,11 +321,13 @@ export function AppStateProvider({
     campaigns: '/campaigns',
     emergency: '/emergency',
     communities: '/communities',
+    niyamawali: '/niyamawali',
     about: '/about',
     rules: '/rules',
     gallery: '/gallery',
     testimonials: '/testimonials',
     contact: '/contact',
+    members: '/members',
   };
 
   const handlePageChange = (page: string) => {
@@ -449,6 +451,7 @@ export function AppStateProvider({
           <Footer
             onPageChange={handlePageChange}
             onOpenDonate={() => handleOpenDonate()}
+            onOpenRegister={handleOpenRegister}
             onNavigateToAdmin={handleNavigateToAdmin}
           />
           {sharedModals}

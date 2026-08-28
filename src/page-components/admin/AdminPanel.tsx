@@ -281,7 +281,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   return (
     <div className={`h-screen max-h-screen overflow-hidden ${theme === 'dark' ? 'dark' : ''} flex flex-col font-sans`}
-      style={{ background: theme === 'dark' ? '#0f1e17' : 'var(--mfct-warm-bg)', color: theme === 'dark' ? '#e2f0e8' : 'var(--mfct-text-dark)', fontFamily: "'Noto Sans', 'Noto Sans Devanagari', sans-serif" }}
+      style={{ background: theme === 'dark' ? '#0f1e17' : 'var(--mfct-warm-bg)', color: theme === 'dark' ? '#e2f0e8' : 'var(--mfct-text-dark)' }}
     >
       {/* Admin Panel Container */}
       <div className="flex flex-1 min-h-0 overflow-hidden relative">
@@ -315,7 +315,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <div className="min-w-0">
                   <h1 className="font-extrabold text-sm text-white leading-none truncate">MFCT Portal</h1>
                   <span className="text-[10px] font-bold uppercase tracking-wider block mt-0.5 truncate" style={{ color: 'rgba(200,168,75,0.7)' }}>
-                    {t('admin.title', 'Management Desk')}
+                    Together for a Better Tomorrow
                   </span>
                 </div>
               )}

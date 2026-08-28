@@ -116,8 +116,8 @@ export const CommunityMembersTab: React.FC<CommunityMembersTabProps> = ({ active
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
         <div>
-          <h2 className="text-xl font-extrabold" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'serif' }}>
-            {tr('सामुदायिक सदस्य निर्देशिका', 'کمیونٹی ممبران کی ڈائرکٹری', 'Community Members Directory')}
+          <h2 className="text-xl font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>
+            {tr('समुदाय सदस्य निर्देशिका', 'کمیونٹی ممبرز ڈائرکٹری', 'Community Members Directory')}
           </h2>
           <p className="text-xs mt-0.5" style={{ color: 'var(--mfct-text-muted)' }}>
             {tr(

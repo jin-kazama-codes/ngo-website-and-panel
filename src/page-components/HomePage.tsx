@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Campaign, Testimonial, CommunityStory, Donation, Community, AccountDetails } from '../types';
 import { getCampaigns, sortCampaignsByLatest } from '../services/campaignService';
 import { getTestimonials } from '../services/testimonialService';
@@ -46,8 +47,17 @@ import {
   Flame,
   Shield,
   Share2,
-  Calculator
+  Calculator,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  X,
+  Copy,
+  HeartHandshake,
+  GraduationCap
 } from 'lucide-react';
+import { FaHandsHoldingChild, FaHandHoldingHeart, FaPeopleGroup } from 'react-icons/fa6';
+import { TbShieldCheck } from 'react-icons/tb';
 import { useLanguage } from '../context/LanguageContext';
 import { useRouter } from 'next/navigation';
 import { useAppState } from '../providers/AppStateProvider';
@@ -159,6 +169,36 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [contactMsg, setContactMsg] = useState('');
   const [contactSubmitted, setContactSubmitted] = useState(false);
 
+  // ─── Hero Carousel Background Images ─────────────────────────────────────
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [copiedUpi, setCopiedUpi] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleCopyUpi = () => {
+    const upi = accountDetails?.upi_id || 'nsns@oksbi';
+    navigator.clipboard.writeText(upi);
+    setCopiedUpi(true);
+    setTimeout(() => setCopiedUpi(false), 2500);
+  };
+
+  const heroImages = [
+    '/hero-slide-1.webp',
+    '/hero-slide-2.webp',
+    '/hero-slide-3.webp',
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroImages.length);
+    }, 5500);
+    return () => clearInterval(timer);
+  }, [heroImages.length]);
+
   useEffect(() => {
     Promise.all([
       getCampaigns({ status: 'active' }),
@@ -266,221 +306,816 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   return (
     <div className="space-y-16 pb-12 animate-fade-in" style={{ color: 'var(--mfct-text-dark)' }}>
-      {/* 1. HERO SECTION */}
-      <section className="relative pt-10 sm:pt-14 pb-16 overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(200,168,75,0.06)' }} />
-        <div className="absolute -bottom-24 -right-24 w-[360px] h-[360px] rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(26,60,44,0.08)' }} />
+      {/* 1. HERO CAROUSEL SECTION */}
+      <section className="relative w-full overflow-hidden bg-[#0a1c14] min-h-[440px] lg:h-[calc(100vh-185px)] lg:max-h-[600px] flex items-center">
+        {/* Background Slide Images with Cross-Fade */}
+        {heroImages.map((imgSrc, idx) => (
+          <div
+            key={idx}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+              idx === currentSlide ? 'opacity-100 z-0' : 'opacity-0 z-0 pointer-events-none'
+            }`}
+          >
+            <img
+              src={imgSrc}
+              alt={`Hero Background ${idx + 1}`}
+              className={`w-full h-full object-cover object-center transform transition-transform duration-[7000ms] ease-out ${
+                idx === currentSlide ? 'scale-105' : 'scale-100'
+              }`}
+            />
+          </div>
+        ))}
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        {/* Cinematic Gradient Overlays */}
+        <div
+          className="absolute inset-0 z-10 pointer-events-none"
+          style={{
+            background: 'linear-gradient(90deg, rgba(8,24,16,0.96) 0%, rgba(8,24,16,0.90) 45%, rgba(8,24,16,0.52) 75%, rgba(8,24,16,0.20) 100%)',
+          }}
+        />
+        <div
+          className="absolute inset-0 z-10 pointer-events-none"
+          style={{
+            background: 'linear-gradient(to top, rgba(8,24,16,0.85) 0%, transparent 35%)',
+          }}
+        />
 
-            {/* ── Left Column ── */}
-            <div className="lg:col-span-7 space-y-6">
+        {/* Content Container */}
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 w-full">
+          <div className="max-w-3xl space-y-2.5 sm:space-y-3.5">
+            
+            {/* Tagline / Pre-heading badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest" style={{ background: 'rgba(26,60,44,0.9)', border: '1px solid rgba(200,168,75,0.4)', color: 'var(--mfct-gold)' }}>
+              <ArrowRight className="w-3 h-3 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+              <span>{t('home.hero_tagline', 'Together for a Better Tomorrow')}</span>
+            </div>
 
-              {/* Location badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold" style={{ background: 'rgba(200,168,75,0.10)', border: '1px solid rgba(200,168,75,0.3)', color: 'var(--mfct-dark-green)' }}>
-                <span className="w-2 h-2 rounded-full animate-pulse shrink-0" style={{ background: 'var(--mfct-gold)' }} />
-                <MapPin className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} />
-                <span>{t('home.headquartered', 'Headquartered in Bareilly, Uttar Pradesh')}</span>
-              </div>
+            {/* Headline */}
+            <h1 className="text-2xl sm:text-3xl lg:text-[2.65rem] font-black text-white tracking-tight leading-[1.1]">
+              {t('home.hero_line1', 'Yaad Unki,')}{' '}
+              <span className="block sm:inline" style={{ color: 'var(--mfct-gold)' }}>
+                {t('home.hero_line2_giving', 'Seva Hamari')}
+              </span>
+            </h1>
 
-              {/* Headline */}
-              <h1 className="text-4xl sm:text-[3.4rem] font-black tracking-tight leading-[1.1]" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'Playfair Display, Noto Sans Devanagari, serif' }}>
-                {t('home.hero_line1', 'Together For A')}{' '}
-                <span className="relative inline-block">
-                  <span className="relative z-10" style={{ color: 'var(--mfct-gold)' }}>
-                    {t('home.hero_line2_giving', 'Better Tomorrow')}
-                  </span>
-                  <span className="absolute bottom-1 left-0 w-full h-2.5 rounded-full" style={{ zIndex: 0, background: 'rgba(200,168,75,0.15)' }} />
+            {/* Sub-description */}
+            <p className="text-xs sm:text-sm leading-relaxed font-normal text-white/90 max-w-xl">
+              {t('home.hero_desc', 'MFCT का संकल्प – समाज सेवा, मानवता और एकता के लिए हम हमेशा आपके साथ हैं।')}
+            </p>
+
+            {/* Trust Badges (Original) */}
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
+              {[
+                { icon: ShieldCheck, label: t('home.trust_zakat', 'Zakat Compliant') },
+                { icon: CheckCircle2, label: t('home.trust_verified', 'UTR Verified Receipts') },
+                { icon: Building2, label: t('home.trust_registered', 'Govt. Registered NGO') },
+              ].map(({ icon: Icon, label }) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
+                  style={{
+                    background: 'rgba(200,168,75,0.15)',
+                    border: '1px solid rgba(200,168,75,0.35)',
+                    color: '#ffffff',
+                  }}
+                >
+                  <Icon className="w-3 h-3" style={{ color: 'var(--mfct-gold)' }} />
+                  {label}
                 </span>
-              </h1>
+              ))}
+            </div>
 
-              {/* Sub-description */}
-              <p className="text-base sm:text-lg leading-relaxed font-normal max-w-lg" style={{ color: 'var(--mfct-text-muted)' }}>
-                {t('home.hero_desc', 'MFCT का संकल्प – समाज सेवा, मानवता और एकता के लिए हम हमेशा आपके साथ हैं।')}
-              </p>
+            {/* CTA Buttons (Exact Original Buttons) */}
+            <div className="flex flex-wrap items-center gap-2.5 pt-0.5">
+              <button
+                onClick={onOpenRegister}
+                className="mfct-btn-outline group py-2.5 px-5 rounded-xl font-extrabold text-xs sm:text-sm hover:-translate-y-0.5 flex items-center gap-1.5 cursor-pointer transition-all shadow-lg"
+              >
+                <UserPlus className="w-4 h-4" />
+                {t('home.become_member', 'Become a Member')}
+                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold" style={{ background: 'rgba(200,168,75,0.2)' }}>₹100</span>
+              </button>
 
-              {/* Trust badges */}
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { icon: ShieldCheck, label: t('home.trust_zakat', 'Zakat Compliant') },
-                  { icon: CheckCircle2, label: t('home.trust_verified', 'UTR Verified Receipts') },
-                  { icon: Building2, label: t('home.trust_registered', 'Govt. Registered NGO') },
-                ].map(({ icon: Icon, label }) => (
-                  <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'rgba(200,168,75,0.10)', border: '1px solid rgba(200,168,75,0.25)', color: 'var(--mfct-dark-green)' }}>
-                    <Icon className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} />
-                    {label}
+              <button
+                onClick={() => onDonate()}
+                className="mfct-btn-gold group py-2.5 px-5 rounded-xl font-extrabold text-xs sm:text-sm hover:-translate-y-0.5 flex items-center gap-1.5 cursor-pointer transition-all shadow-lg"
+              >
+                <Heart className="w-3.5 h-3.5 fill-current" />
+                {t('home.donate_now', 'Donate Now')}
+              </button>
+
+              {onOpenZakatCalc && (
+                <button
+                  onClick={onOpenZakatCalc}
+                  className="mfct-btn-dark group py-2.5 px-4.5 rounded-xl font-black text-xs sm:text-sm hover:-translate-y-0.5 flex items-center gap-1.5 cursor-pointer transition-all shadow-lg"
+                >
+                  <Calculator className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                  {t('home.zakat_calc', 'Zakat Calculator')}
+                </button>
+              )}
+            </div>
+
+            {/* Live Stats (3 Original Cards) */}
+            <div className="pt-1">
+              <div className="grid grid-cols-3 gap-2 sm:gap-2.5 max-w-lg">
+                <div
+                  className="rounded-xl p-2 sm:p-2.5 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
+                  style={{ background: '#ffffff', border: '1px solid rgba(200,168,75,0.3)' }}
+                >
+                  {loading ? (
+                    <div className="h-5 sm:h-6 w-12 sm:w-16 rounded animate-pulse mb-1 skeleton-mfct" />
+                  ) : (
+                    <span className="text-sm sm:text-xl lg:text-2xl font-black block tabular-nums leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
+                      {totalMembers > 0 ? totalMembers.toLocaleString('en-IN') : '0'}+
+                    </span>
+                  )}
+                  <span className="text-[9px] sm:text-[10px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
+                    {t('home.verified_members', 'Verified Members')}
                   </span>
-                ))}
-              </div>
+                </div>
 
-              {/* CTA Buttons */}
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  onClick={onOpenRegister}
-                  className="mfct-btn-outline group py-3.5 px-6 rounded-xl font-extrabold text-sm hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer transition-all"
+                <div
+                  className="rounded-xl p-2 sm:p-2.5 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
+                  style={{ background: 'var(--mfct-dark-green)', border: '1px solid var(--mfct-mid-green)' }}
                 >
-                  <UserPlus className="w-4 h-4" />
-                  {t('home.become_member', 'Become a Member')}
-                  <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold" style={{ background: 'rgba(200,168,75,0.2)' }}>₹100</span>
-                </button>
+                  {loading ? (
+                    <div className="h-5 sm:h-6 w-16 sm:w-20 rounded animate-pulse mb-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
+                  ) : (
+                    <span className="text-[11px] xs:text-xs sm:text-base lg:text-xl font-black text-white block tabular-nums leading-tight tracking-tight truncate">
+                      ₹{totalRaised > 0 ? totalRaised.toLocaleString('en-IN') : '0'}+
+                    </span>
+                  )}
+                  <span className="text-[9px] sm:text-[10px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-gold)' }}>
+                    {t('home.funds_disbursed', 'Relief Disbursed')}
+                  </span>
+                </div>
 
-                <button
-                  onClick={() => onDonate()}
-                  className="mfct-btn-gold group py-3.5 px-6 rounded-xl font-extrabold text-sm hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer transition-all"
+                <div
+                  className="rounded-xl p-2 sm:p-2.5 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
+                  style={{ background: '#ffffff', border: '1px solid rgba(200,168,75,0.3)' }}
                 >
-                  <Heart className="w-4 h-4 fill-current" />
-                  {t('home.donate_now', 'Donate Now')}
-                </button>
-
-                {onOpenZakatCalc && (
-                  <button
-                    onClick={onOpenZakatCalc}
-                    className="mfct-btn-dark group py-3.5 px-5 rounded-xl font-black text-sm hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer transition-all"
-                  >
-                    <Calculator className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                    {t('home.zakat_calc', 'Zakat Calculator')}
-                  </button>
-                )}
-
-              </div>
-
-              {/* Live Stats */}
-              <div className="pt-4" style={{ borderTop: '1px solid rgba(200,168,75,0.2)' }}>
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                  <div className="rounded-xl p-2.5 sm:p-4 flex flex-col justify-center overflow-hidden transition-all" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', boxShadow: 'var(--shadow-card)' }}>
-                    {loading ? (
-                      <div className="h-6 sm:h-8 w-12 sm:w-16 rounded animate-pulse mb-1 skeleton-mfct" />
-                    ) : (
-                      <span className="text-base sm:text-2xl lg:text-3xl font-black block tabular-nums leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
-                        {totalMembers > 0 ? totalMembers.toLocaleString('en-IN') : '0'}+
-                      </span>
-                    )}
-                    <span className="text-[10px] sm:text-[11px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>{t('home.verified_members', 'Verified Members')}</span>
-                  </div>
-
-                  <div className="rounded-xl p-2.5 sm:p-4 flex flex-col justify-center overflow-hidden transition-all" style={{ background: 'var(--mfct-dark-green)', border: '1px solid var(--mfct-mid-green)' }}>
-                    {loading ? (
-                      <div className="h-6 sm:h-8 w-16 sm:w-20 rounded animate-pulse mb-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
-                    ) : (
-                      <span className="text-[11px] xs:text-xs sm:text-lg lg:text-2xl font-black text-white block tabular-nums leading-tight tracking-tight truncate">
-                        ₹{totalRaised > 0 ? totalRaised.toLocaleString('en-IN') : '0'}+
-                      </span>
-                    )}
-                    <span className="text-[10px] sm:text-[11px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-gold)' }}>{t('home.funds_disbursed', 'Relief Disbursed')}</span>
-                  </div>
-
-                  <div className="rounded-xl p-2.5 sm:p-4 flex flex-col justify-center overflow-hidden transition-all" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', boxShadow: 'var(--shadow-card)' }}>
-                    {loading ? (
-                      <div className="h-6 sm:h-8 w-10 sm:w-12 rounded animate-pulse mb-1 skeleton-mfct" />
-                    ) : (
-                      <span className="text-base sm:text-2xl lg:text-3xl font-black block leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>100%</span>
-                    )}
-                    <span className="text-[10px] sm:text-[11px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>{t('home.audit_receipts', 'Audit Receipts')}</span>
-                  </div>
+                  {loading ? (
+                    <div className="h-5 sm:h-6 w-10 sm:w-12 rounded animate-pulse mb-1 skeleton-mfct" />
+                  ) : (
+                    <span className="text-sm sm:text-xl lg:text-2xl font-black block leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
+                      100%
+                    </span>
+                  )}
+                  <span className="text-[9px] sm:text-[10px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
+                    {t('home.audit_receipts', 'Audit Receipts')}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* ── Right Column ── */}
-            <div className="lg:col-span-5 relative">
-              <div className="absolute -inset-4 rounded-[2.5rem] blur-2xl pointer-events-none" style={{ background: 'rgba(200,168,75,0.08)' }} />
+          </div>
+        </div>
 
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl group" style={{ border: '2px solid rgba(200,168,75,0.25)' }}>
+        {/* ── Right Side Bottom Corner: Compact QR Widget (Click to Enlarge) ── */}
+        <div className="absolute bottom-3 sm:bottom-4 right-4 sm:right-6 lg:right-8 z-30 hidden sm:block">
+          <div
+            onClick={() => setIsQrModalOpen(true)}
+            className="group relative cursor-pointer rounded-2xl p-2 sm:p-2.5 max-w-[155px] sm:max-w-[170px] w-full shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-amber-500/20 active:scale-95"
+            style={{
+              background: 'rgba(10, 28, 20, 0.90)',
+              backdropFilter: 'blur(16px)',
+              border: '1.5px solid rgba(200,168,75,0.45)',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
+            }}
+            title="Click to Enlarge QR Code"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between gap-1 mb-1">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow" style={{ background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)' }}>
+                <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: 'var(--mfct-dark-green)' }} />
+                Live & Verified
+              </span>
+              <div className="p-0.5 rounded bg-white/10 text-white/70 group-hover:text-amber-300 group-hover:bg-white/20 transition-all">
+                <Maximize2 className="w-3 h-3" />
+              </div>
+            </div>
+
+            {/* QR Thumbnail */}
+            <div className="bg-white p-1 rounded-lg shadow-md flex justify-center items-center relative overflow-hidden group-hover:ring-2 ring-amber-400 transition-all">
+              {accountDetails?.qr_code_url ? (
+                <img src={accountDetails.qr_code_url} alt="QR Code" className="w-14 h-14 sm:w-16 sm:h-16 object-contain transition-transform duration-300 group-hover:scale-105" />
+              ) : (
+                <QrCode className="w-14 h-14 sm:w-16 sm:h-16" style={{ color: 'var(--mfct-dark-green)' }} />
+              )}
+              {/* Tap to zoom hover overlay */}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold text-white bg-black/80 backdrop-blur-sm">
+                  Tap to Zoom
+                </span>
+              </div>
+            </div>
+
+            {/* Footer text */}
+            <div className="text-center mt-1 space-y-0.5">
+              <p className="text-[8px] uppercase tracking-wider font-bold truncate" style={{ color: 'var(--mfct-gold)' }}>
+                {t('home.scan_donate', 'UPI Direct Donate')}
+              </p>
+              <p className="font-mono text-white font-bold text-[9px] select-all tracking-wide truncate">
+                {accountDetails?.upi_id || 'nsns@oksbi'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Carousel Bottom Dots */}
+        <div className="absolute bottom-2.5 sm:bottom-3 left-0 right-0 z-30 flex items-center justify-center gap-2">
+          {heroImages.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentSlide(i)}
+              className={`transition-all duration-300 rounded-full cursor-pointer ${
+                currentSlide === i
+                  ? 'w-6 h-2 bg-amber-400 shadow-lg shadow-amber-400/50'
+                  : 'w-2 h-2 bg-white/40 hover:bg-white/80'
+              }`}
+              title={`Slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* ── Enlarged QR Code Modal (Mounted via Portal to sit above all page elements) ── */}
+      {isQrModalOpen && mounted && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-fade-in"
+          style={{ zIndex: 99999 }}
+          onClick={() => setIsQrModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-sm rounded-3xl p-5 sm:p-6 text-center space-y-3.5 shadow-2xl transition-all my-auto max-h-[90vh] overflow-y-auto animate-scale-up"
+            style={{
+              background: '#0a1c14',
+              border: '2px solid rgba(200,168,75,0.6)',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.85), 0 0 35px rgba(200,168,75,0.18)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setIsQrModalOpen(false)}
+              className="absolute top-3 right-3 p-1.5 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all cursor-pointer z-10"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Modal Header */}
+            <div className="space-y-1 pr-6 pl-2 pt-1">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow" style={{ background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)' }}>
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--mfct-dark-green)' }} />
+                Live & Verified Account
+              </span>
+              <h3 className="text-xl font-black text-white pt-1">
+                Scan to Donate
+              </h3>
+              <p className="text-[11px] text-white/70">
+                Direct bank transfer via any UPI app with 100% audit transparency
+              </p>
+            </div>
+
+            {/* QR Code */}
+            <div className="bg-white p-3 rounded-2xl shadow-xl mx-auto w-fit max-w-full">
+              {accountDetails?.qr_code_url ? (
                 <img
-                  src="https://images.unsplash.com/photo-1644726270363-e746b37b482b?q=80&w=465&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                  alt="MFCT Food Ration Distribution Drive"
-                  className="w-full h-[500px] object-cover transition-transform duration-700 group-hover:scale-105"
-                  referrerPolicy="no-referrer"
+                  src={accountDetails.qr_code_url}
+                  alt="Enlarged QR Code"
+                  className="w-44 h-44 sm:w-48 sm:h-48 object-contain mx-auto"
                 />
-                {/* Gradient overlay */}
-                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(26,60,44,0.96) 0%, rgba(26,60,44,0.45) 50%, transparent 100%)' }} />
+              ) : (
+                <QrCode className="w-44 h-44 sm:w-48 sm:h-48" style={{ color: 'var(--mfct-dark-green)' }} />
+              )}
+            </div>
 
-                {/* Live badge – top left */}
-                <div className="absolute top-4 left-4">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg" style={{ background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)' }}>
-                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--mfct-dark-green)' }} />
-                    {t('home.live_verified', 'Live & Verified')}
-                  </span>
+            {/* UPI ID Box with 1-Click Copy */}
+            <div className="rounded-xl p-3 flex items-center justify-between gap-2 text-left" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(200,168,75,0.35)' }}>
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] uppercase tracking-wider font-bold" style={{ color: 'var(--mfct-gold)' }}>
+                  Official UPI ID
+                </p>
+                <p className="font-mono text-white font-bold text-xs sm:text-sm select-all truncate">
+                  {accountDetails?.upi_id || 'nsns@oksbi'}
+                </p>
+              </div>
+
+              <button
+                onClick={handleCopyUpi}
+                className="px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer shadow"
+                style={{
+                  background: copiedUpi ? '#10b981' : 'var(--mfct-gold)',
+                  color: copiedUpi ? '#ffffff' : 'var(--mfct-dark-green)',
+                }}
+              >
+                {copiedUpi ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Accepted Apps */}
+            <div className="flex items-center justify-center gap-1.5 flex-wrap pt-0.5">
+              {['GPay', 'PhonePe', 'Paytm', 'BHIM', 'Amazon Pay'].map((app) => (
+                <span
+                  key={app}
+                  className="px-2 py-0.5 rounded text-[9px] font-bold"
+                  style={{
+                    background: 'rgba(200,168,75,0.15)',
+                    color: 'var(--mfct-gold)',
+                    border: '1px solid rgba(200,168,75,0.3)',
+                  }}
+                >
+                  {app}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* 2. OUR MISSION SECTION (हमारा उद्देश्य) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4">
+        {/* Section Header */}
+        <div className="text-center max-w-2xl mx-auto space-y-2 mb-10">
+          <span
+            className="text-xs sm:text-sm font-black uppercase tracking-widest block"
+            style={{ color: 'var(--mfct-gold-dark)' }}
+          >
+            {language === 'hi' ? 'हमारा मिशन' : language === 'ur' ? 'ہمارا مشن' : 'OUR MISSION'}
+          </span>
+          <h2
+            className="text-3xl sm:text-4xl font-black tracking-tight"
+            style={{
+              color: 'var(--mfct-dark-green)',
+            }}
+          >
+            {language === 'hi' ? 'हमारा उद्देश्य' : language === 'ur' ? 'ہمارا مقصد' : 'Our Mission'}
+          </h2>
+          <div className="flex items-center justify-center gap-2 py-1">
+            <span className="w-8 h-0.5 rounded-full" style={{ background: 'var(--mfct-gold)' }} />
+            <Heart className="w-3.5 h-3.5 fill-current" style={{ color: 'var(--mfct-gold)' }} />
+            <span className="w-8 h-0.5 rounded-full" style={{ background: 'var(--mfct-gold)' }} />
+          </div>
+          <p className="text-sm sm:text-base font-medium leading-relaxed" style={{ color: 'var(--mfct-text-muted)' }}>
+            {language === 'hi'
+              ? 'समाज के हर वर्ग तक सहायता, सहयोग और सेवा पहुँचाना ही हमारा लक्ष्य है।'
+              : language === 'ur'
+              ? 'معاشرے کے ہر طبقے تک مدد، تعاون اور خدمت پہنچانا ہی ہمارا مقصد ہے۔'
+              : 'Our goal is to deliver aid, support, and selfless service to every section of society.'}
+          </p>
+        </div>
+
+        {/* 4 Mission Pillar Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Card 1: We Care Every Life */}
+          <div
+            className="rounded-2xl p-6 sm:p-7 text-center space-y-4 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl group cursor-pointer"
+            style={{
+              background: '#ffffff',
+              border: '1px solid rgba(26,60,44,0.12)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+            }}
+          >
+            <div
+              className="w-16 h-16 mx-auto rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110"
+              style={{
+                background: 'radial-gradient(circle, #1a4230 0%, #0d281a 100%)',
+                border: '2px solid rgba(200,168,75,0.4)',
+              }}
+            >
+              <FaHandsHoldingChild className="w-8 h-8 text-white" />
+            </div>
+            <h3
+              className="text-base sm:text-[1.05rem] font-bold leading-snug"
+              style={{
+                color: 'var(--mfct-dark-green)',
+                fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif",
+                letterSpacing: '0.015em',
+              }}
+            >
+              {language === 'hi' ? 'हर जीवन की परवाह' : language === 'ur' ? 'ہر زندگی کی حفاظت' : 'We Care Every Life'}
+            </h3>
+            <div
+              className="space-y-1 text-xs sm:text-[13px] font-semibold leading-relaxed"
+              style={{ color: 'var(--mfct-text-muted)', letterSpacing: '0.01em' }}
+            >
+              <p>{language === 'hi' ? 'आकस्मिक निधन सहायता' : language === 'ur' ? 'ہنگامی و کفالت امداد' : 'Emergency Bereavement Aid'}</p>
+              <p>{language === 'hi' ? 'हर मुश्किल में हम आपके साथ' : language === 'ur' ? 'ہر مشکل में हम आपके साथ' : 'Standing by you in every crisis'}</p>
+            </div>
+          </div>
+
+          {/* Card 2: We Stand Together */}
+          <div
+            className="rounded-2xl p-6 sm:p-7 text-center space-y-4 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl group cursor-pointer"
+            style={{
+              background: '#ffffff',
+              border: '1px solid rgba(26,60,44,0.12)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+            }}
+          >
+            <div
+              className="w-16 h-16 mx-auto rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110"
+              style={{
+                background: 'radial-gradient(circle, #1a4230 0%, #0d281a 100%)',
+                border: '2px solid rgba(200,168,75,0.4)',
+              }}
+            >
+              <TbShieldCheck className="w-8 h-8 text-white stroke-[2.2]" />
+            </div>
+            <h3
+              className="text-base sm:text-[1.05rem] font-bold leading-snug"
+              style={{
+                color: 'var(--mfct-dark-green)',
+                fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif",
+                letterSpacing: '0.015em',
+              }}
+            >
+              {language === 'hi' ? 'हम सब एक साथ' : language === 'ur' ? 'ہم سب ایک ساتھ' : 'We Stand Together'}
+            </h3>
+            <div
+              className="space-y-1 text-xs sm:text-[13px] font-semibold leading-relaxed"
+              style={{ color: 'var(--mfct-text-muted)', letterSpacing: '0.01em' }}
+            >
+              <p>{language === 'hi' ? 'सहयोग, एकता और मानवता' : language === 'ur' ? 'تعاون، اتحاد اور انسانیت' : 'Cooperation, Unity & Humanity'}</p>
+              <p>{language === 'hi' ? 'के लिए समर्पित' : language === 'ur' ? 'کے لیے وقف' : 'Dedicated to All'}</p>
+            </div>
+          </div>
+
+          {/* Card 3: We Serve Selflessly */}
+          <div
+            className="rounded-2xl p-6 sm:p-7 text-center space-y-4 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl group cursor-pointer"
+            style={{
+              background: '#ffffff',
+              border: '1px solid rgba(26,60,44,0.12)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+            }}
+          >
+            <div
+              className="w-16 h-16 mx-auto rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110"
+              style={{
+                background: 'radial-gradient(circle, #1a4230 0%, #0d281a 100%)',
+                border: '2px solid rgba(200,168,75,0.4)',
+              }}
+            >
+              <FaHandHoldingHeart className="w-8 h-8 text-white" />
+            </div>
+            <h3
+              className="text-base sm:text-[1.05rem] font-bold leading-snug"
+              style={{
+                color: 'var(--mfct-dark-green)',
+                fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif",
+                letterSpacing: '0.015em',
+              }}
+            >
+              {language === 'hi' ? 'निःस्वार्थ सेवा' : language === 'ur' ? 'بے لوث خدمت' : 'We Serve Selflessly'}
+            </h3>
+            <div
+              className="space-y-1 text-xs sm:text-[13px] font-semibold leading-relaxed"
+              style={{ color: 'var(--mfct-text-muted)', letterSpacing: '0.01em' }}
+            >
+              <p>{language === 'hi' ? 'बेटी विवाह शगुन योजना,' : language === 'ur' ? 'بیٹی شادی شگن اسکیم،' : 'Daughter Marriage Shagun Aid,'}</p>
+              <p>{language === 'hi' ? 'बेटी हमारी, ज़िम्मेदारी हमारी' : language === 'ur' ? 'بیٹی ہماری، ذمہ داری ہماری' : 'Our Daughter, Our Responsibility'}</p>
+            </div>
+          </div>
+
+          {/* Card 4: We Build Better Society */}
+          <div
+            className="rounded-2xl p-6 sm:p-7 text-center space-y-4 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl group cursor-pointer"
+            style={{
+              background: '#ffffff',
+              border: '1px solid rgba(26,60,44,0.12)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+            }}
+          >
+            <div
+              className="w-16 h-16 mx-auto rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110"
+              style={{
+                background: 'radial-gradient(circle, #1a4230 0%, #0d281a 100%)',
+                border: '2px solid rgba(200,168,75,0.4)',
+              }}
+            >
+              <FaPeopleGroup className="w-8 h-8 text-white" />
+            </div>
+            <h3
+              className="text-base sm:text-[1.05rem] font-bold leading-snug"
+              style={{
+                color: 'var(--mfct-dark-green)',
+                fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif",
+                letterSpacing: '0.015em',
+              }}
+            >
+              {language === 'hi' ? 'सशक्त समाज निर्माण' : language === 'ur' ? 'بہتر معاشرے کی تعمیر' : 'We Build Better Society'}
+            </h3>
+            <div
+              className="space-y-1 text-xs sm:text-[13px] font-semibold leading-relaxed"
+              style={{ color: 'var(--mfct-text-muted)', letterSpacing: '0.01em' }}
+            >
+              <p>{language === 'hi' ? 'शिक्षा, स्वास्थ्य, चिकित्सा सहायता' : language === 'ur' ? 'تعلیم، صحت، طبی امداد' : 'Education, Health & Medical Aid'}</p>
+              <p>{language === 'hi' ? 'और सामाजिक उत्थान' : language === 'ur' ? 'اور سماجی ترقی' : 'and Social Upliftment'}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2.5 ABOUT MFCT BANNER SECTION (Document 2) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div
+          className="rounded-3xl p-6 sm:p-8 lg:p-10 text-white shadow-2xl relative overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, #091f15 0%, #0e2a1d 50%, #06160e 100%)',
+            border: '1.5px solid rgba(200,168,75,0.4)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(200,168,75,0.2)',
+          }}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            
+            {/* Left Side: Unity Hands Image */}
+            <div className="lg:col-span-5">
+              <div
+                className="relative rounded-2xl overflow-hidden shadow-2xl group cursor-pointer aspect-[4/3] max-h-[340px]"
+                style={{ border: '2px solid rgba(200,168,75,0.45)' }}
+                onClick={() => onNavigatePage('about')}
+              >
+                <img
+                  src="/about-mfct-indian-hands.jpg"
+                  alt="Mohammad Faeem Charitable Trust (MFCT)"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+              </div>
+            </div>
+
+            {/* Right Side: Header, Story Description, Impact Stats & CTA */}
+            <div className="lg:col-span-7 space-y-4 sm:space-y-5">
+              
+              {/* Preheading */}
+              <div className="space-y-1">
+                <span
+                  className="text-xs sm:text-sm font-black uppercase tracking-widest block"
+                  style={{ color: 'var(--mfct-gold)' }}
+                >
+                  {language === 'hi' ? 'MFCT के बारे में' : language === 'ur' ? 'ایم ایف سی ٹی کے بارے में' : 'ABOUT MFCT'}
+                </span>
+                
+                {/* Headline */}
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  {language === 'hi'
+                    ? 'मोहम्मद फहीम चैरिटेबल ट्रस्ट (MFCT)'
+                    : language === 'ur'
+                    ? 'محمد فہیم چیریٹیبل ٹرسٹ (MFCT)'
+                    : 'Mohammad Faeem Charitable Trust (MFCT)'}
+                </h2>
+
+                {/* Gold Heart Arrow Divider */}
+                <div className="flex items-center gap-2 pt-1 pb-1">
+                  <span className="w-12 h-0.5" style={{ background: 'var(--mfct-gold)' }} />
+                  <Heart className="w-3.5 h-3.5 fill-current" style={{ color: 'var(--mfct-gold)' }} />
+                  <span className="flex-1 max-w-[120px] h-0.5" style={{ background: 'linear-gradient(to right, var(--mfct-gold), transparent)' }} />
+                  <ArrowRight className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} />
+                </div>
+              </div>
+
+              {/* Description paragraph (Multilingual: Hindi / English / Urdu) */}
+              <p
+                className="text-xs sm:text-sm leading-relaxed text-white/90 font-normal"
+                style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif" }}
+              >
+                {language === 'hi'
+                  ? 'MFCT की स्थापना समाज में भाईचारा, एकता और इंसानियत को मजबूत करने के लिए की गई है। हमारा विश्वास है कि सेवा और सहयोग से ही एक बेहतर और सशक्त समाज का निर्माण किया जा सकता है। हम शिक्षा, स्वास्थ्य, आकस्मिक सहायता, बेटी विवाह शगुन योजना, चिकित्सा सहायता, आपदा राहत और अन्य सामाजिक कार्यों के माध्यम से समाज के हर वर्ग तक सहायता पहुँचाने के लिए प्रतिबद्ध हैं।'
+                  : language === 'ur'
+                  ? 'ایم ایف سی ٹی کا قیام معاشرے میں بھائی چارے، اتحاد اور انسانیت کو فروغ دینے کے لیے کیا گیا ہے۔ ہمارا پختہ یقین ہے کہ بے لوث خدمت اور باہمی تعاون سے ہی ایک بہتر اور باوقار معاشرہ تشکیل پاتا ہے۔ ہم تعلیم، صحت، ہنگامی کفالت، بیٹی شادی امداد اور سماجی فلاح کے ذریعے ہر طبقے کی خدمت کے لیے پرعزم ہیں۔'
+                  : 'MFCT was established to strengthen brotherhood, unity, and humanity across society. We firmly believe that selfless service and collective cooperation build a stronger, more compassionate society. Through education, health, emergency bereavement aid, daughter marriage support, medical assistance, disaster relief, and welfare programs, we are dedicated to reaching every section of society.'}
+              </p>
+
+              {/* 4 Impact Stat Badges */}
+              <div
+                className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-2xl"
+                style={{
+                  background: 'rgba(0, 0, 0, 0.28)',
+                  border: '1px solid rgba(200, 168, 75, 0.3)',
+                }}
+              >
+                {/* Stat 1 */}
+                <div className="flex items-center gap-2.5 p-1.5">
+                  <FaPeopleGroup className="w-7 h-7 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                  <div className="min-w-0">
+                    <p className="text-base sm:text-lg font-black text-white leading-tight">1000+</p>
+                    <p className="text-[10px] sm:text-[11px] font-semibold truncate leading-tight" style={{ color: 'var(--mfct-gold-light)' }}>
+                      {language === 'hi' ? 'परिवारों की सहायता' : language === 'ur' ? 'خاندانوں کی مدد' : 'Families Assisted'}
+                    </p>
+                  </div>
                 </div>
 
-                {/* QR + UPI panel – bottom */}
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <div className="rounded-2xl p-4 flex items-center gap-4" style={{ background: 'rgba(26,60,44,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(200,168,75,0.25)' }}>
-                    {/* QR code */}
-                    <div className="bg-white p-2.5 rounded-xl shadow-lg shrink-0">
-                      {accountDetails?.qr_code_url ? (
-                        <img src={accountDetails.qr_code_url} alt="QR Code" className="w-20 h-20 object-contain" />
-                      ) : (
-                        <QrCode className="w-20 h-20" style={{ color: 'var(--mfct-dark-green)' }} />
-                      )}
-                    </div>
+                {/* Stat 2 */}
+                <div className="flex items-center gap-2.5 p-1.5">
+                  <FaHandHoldingHeart className="w-7 h-7 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                  <div className="min-w-0">
+                    <p className="text-base sm:text-lg font-black text-white leading-tight">500+</p>
+                    <p className="text-[10px] sm:text-[11px] font-semibold truncate leading-tight" style={{ color: 'var(--mfct-gold-light)' }}>
+                      {language === 'hi' ? 'बेटी विवाह सहायता' : language === 'ur' ? 'شادی شگن امداد' : 'Marriage Aid'}
+                    </p>
+                  </div>
+                </div>
 
-                    {/* UPI details */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: 'var(--mfct-gold)' }}>
-                        {t('home.scan_donate', 'Scan QR or Copy UPI ID to Donate')}
-                      </p>
-                      <p className="font-mono text-white font-bold text-lg select-all tracking-wide truncate">
-                        {accountDetails?.upi_id || 'nsns@oksbi'}
-                      </p>
-                      <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        {['GPay', 'PhonePe', 'Paytm'].map(app => (
-                          <span key={app} className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(200,168,75,0.2)', color: 'var(--mfct-gold)', border: '1px solid rgba(200,168,75,0.3)' }}>
-                            {app}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                {/* Stat 3 */}
+                <div className="flex items-center gap-2.5 p-1.5">
+                  <FaHandsHoldingChild className="w-7 h-7 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                  <div className="min-w-0">
+                    <p className="text-base sm:text-lg font-black text-white leading-tight">200+</p>
+                    <p className="text-[10px] sm:text-[11px] font-semibold truncate leading-tight" style={{ color: 'var(--mfct-gold-light)' }}>
+                      {language === 'hi' ? 'आकस्मिक सहायता' : language === 'ur' ? 'ہنگامی امداد' : 'Emergency Aid'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Stat 4 */}
+                <div className="flex items-center gap-2.5 p-1.5">
+                  <Users className="w-7 h-7 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                  <div className="min-w-0">
+                    <p className="text-base sm:text-lg font-black text-white leading-tight">50+</p>
+                    <p className="text-[10px] sm:text-[11px] font-semibold truncate leading-tight" style={{ color: 'var(--mfct-gold-light)' }}>
+                      {language === 'hi' ? 'स्थायी सहयोगी' : language === 'ur' ? 'مستقل رضاکار' : 'Key Volunteers'}
+                    </p>
                   </div>
                 </div>
               </div>
+
+              {/* Read More Button */}
+              <div className="pt-1">
+                <button
+                  onClick={() => onNavigatePage('about')}
+                  className="mfct-btn-gold px-6 py-3 rounded-xl font-extrabold text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer shadow-lg hover:-translate-y-0.5 transition-all"
+                >
+                  <span>
+                    {language === 'hi'
+                      ? 'हमारे बारे में और जानें'
+                      : language === 'ur'
+                      ? 'ہمارے بارے میں مزید جانیں'
+                      : 'READ MORE ABOUT US'}
+                  </span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+
             </div>
 
           </div>
         </div>
       </section>
 
-      {/* 3. CATEGORY CAROUSEL & CARDS */}
+      {/* 3. OUR PROGRAMS / हमारे प्रमुख कार्यक्रम */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider block mb-1" style={{ color: 'var(--mfct-gold)' }}>{t('home.targeted_giving', 'Targeted Giving')}</span>
-            <h2 className="text-2xl font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>{t('home.explore_categories', 'Explore Aid Categories')}</h2>
+        <div className="text-center space-y-2 max-w-3xl mx-auto">
+          <span
+            className="text-xs font-black uppercase tracking-widest block"
+            style={{ color: 'var(--mfct-gold)' }}
+          >
+            {language === 'hi' ? 'हमारे कार्यक्रम' : language === 'ur' ? 'ہمارے پروگرامز' : 'OUR PROGRAMS'}
+          </span>
+          <h2
+            className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight"
+            style={{ color: 'var(--mfct-dark-green)' }}
+          >
+            {language === 'hi' ? 'हमारे प्रमुख कार्यक्रम' : language === 'ur' ? 'ہمارے اہم پروگرامز' : 'Our Key Programs'}
+          </h2>
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <span className="w-12 h-0.5" style={{ background: 'var(--mfct-gold)' }} />
+            <Heart className="w-4 h-4 fill-current" style={{ color: 'var(--mfct-gold)' }} />
+            <span className="w-12 h-0.5" style={{ background: 'var(--mfct-gold)' }} />
           </div>
-          <p className="text-xs" style={{ color: 'var(--mfct-text-muted)' }}>{t('home.category_subtitle', 'Direct aid channels reaching those who need it most')}</p>
         </div>
 
-        {/* Category Pill Carousel */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-          {categoriesList.map((cat) => {
+        {/* 6 Category Image Cards Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[
+            {
+              id: 'medical',
+              label: language === 'hi' ? 'चिकित्सा सहायता' : language === 'ur' ? 'طبی امداد' : 'Medical Aid',
+              desc: language === 'hi' ? 'अस्पताल व सर्जरी' : language === 'ur' ? 'ہسپتال و سرجری' : 'Hospital & Surgery',
+              image: '/program-medical.jpg',
+              icon: Activity,
+              count: campaigns.filter(c => (c.category as string).toLowerCase() === 'medical').length,
+            },
+            {
+              id: 'education',
+              label: language === 'hi' ? 'शिक्षा एवं पुस्तकें' : language === 'ur' ? 'تعلیم اور کتب' : 'Education & Books',
+              desc: language === 'hi' ? 'अनाथ व छात्र' : language === 'ur' ? 'یتیم اور طلباء' : 'Orphans & Students',
+              image: '/program-education.jpg',
+              icon: BookOpen,
+              count: campaigns.filter(c => (c.category as string).toLowerCase() === 'education').length,
+            },
+            {
+              id: 'marriage',
+              label: language === 'hi' ? 'विवाह एवं निकाह सहायता' : language === 'ur' ? 'شادی اور نکاح امداد' : 'Marriage & Nikah Support',
+              desc: language === 'hi' ? 'दहेज मुक्त निकाह' : language === 'ur' ? 'جہیز سے پاک نکاح' : 'Dowry-free Nikah',
+              image: '/program-marriage.jpg',
+              icon: Heart,
+              count: campaigns.filter(c => (c.category as string).toLowerCase() === 'marriage').length,
+            },
+            {
+              id: 'janazah',
+              label: language === 'hi' ? 'जनाज़ा एवं क़ब्रिस्तान' : language === 'ur' ? 'جنازہ اور قبرستان' : 'Janazah & Cemetery',
+              desc: language === 'hi' ? 'एम्बुलेंस व कफ़न' : language === 'ur' ? 'ایمبولینس اور کفن' : 'Ambulance & Shroud',
+              image: '/program-janazah.jpg',
+              icon: FaHandsHoldingChild,
+              count: campaigns.filter(c => (c.category as string).toLowerCase() === 'janazah').length,
+            },
+            {
+              id: 'food',
+              label: language === 'hi' ? 'भोजन एवं राशन किट' : language === 'ur' ? 'خوراک اور راشن کٹ' : 'Food & Ration Kit',
+              desc: language === 'hi' ? 'मासिक राशन किट' : language === 'ur' ? 'ماہانہ راشن کٹ' : 'Monthly Ration Kits',
+              image: '/program-relief.jpg',
+              icon: Flame,
+              count: campaigns.filter(c => (c.category as string).toLowerCase() === 'food').length,
+            },
+            {
+              id: 'zakat',
+              label: language === 'hi' ? 'ज़कात योग्य' : language === 'ur' ? 'زکوٰۃ کے مستحق' : 'Zakat Eligible',
+              desc: language === 'hi' ? '100% ज़कात पात्र' : language === 'ur' ? '100% زکوٰۃ کے مستحق' : '100% Zakat Eligible',
+              image: '/program-zakat.jpg',
+              icon: ShieldCheck,
+              count: campaigns.filter(c => c.isZakatEligible || (c.category as string).toLowerCase() === 'zakat').length,
+            },
+          ].map((cat) => {
             const IconComp = cat.icon;
             const isSelected = selectedCategory === cat.id;
             return (
-              <button
+              <div
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className="p-4 rounded-xl text-left transition-all flex flex-col justify-between cursor-pointer"
-                style={isSelected ? {
-                  background: 'var(--mfct-dark-green)', color: '#fff', border: '2px solid var(--mfct-gold)', boxShadow: 'var(--shadow-card)'
-                } : {
-                  background: 'var(--mfct-white)', color: 'var(--mfct-text-dark)', border: '1px solid var(--mfct-border)'
+                onClick={() => setSelectedCategory(isSelected ? 'all' : cat.id)}
+                className="bg-white rounded-2xl overflow-visible shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col group cursor-pointer"
+                style={{
+                  border: isSelected ? '2px solid var(--mfct-gold)' : '1px solid rgba(26,60,44,0.12)',
+                  boxShadow: isSelected ? '0 10px 25px rgba(200,168,75,0.25)' : undefined,
                 }}
               >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={isSelected ? { background: 'rgba(200,168,75,0.2)', color: 'var(--mfct-gold)' } : { background: 'rgba(200,168,75,0.1)', color: 'var(--mfct-dark-green)' }}>
-                    <IconComp className="w-4 h-4" />
+                {/* Photo & Overlapping Badge */}
+                <div className="relative">
+                  <div className="h-32 sm:h-36 overflow-hidden rounded-t-2xl relative">
+                    <img
+                      src={cat.image}
+                      alt={cat.label}
+                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                    />
+                    
+                    {/* Category Count Badge */}
+                    <span
+                      className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[10px] font-black shadow-md backdrop-blur-md"
+                      style={isSelected ? {
+                        background: 'var(--mfct-gold)',
+                        color: '#0d281a',
+                      } : {
+                        background: 'rgba(255,255,255,0.92)',
+                        color: '#1a4230',
+                      }}
+                    >
+                      {cat.count}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={isSelected ? { background: 'rgba(200,168,75,0.2)', color: 'var(--mfct-gold)' } : { background: 'rgba(26,60,44,0.08)', color: 'var(--mfct-text-muted)' }}>
-                    {cat.count}
-                  </span>
+
+                  {/* Overlapping Round Badge - 100% Full Unclipped Circle */}
+                  <div
+                    className="absolute -bottom-4.5 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full flex items-center justify-center shadow-lg z-20 transition-transform duration-300 group-hover:scale-110"
+                    style={{
+                      background: 'radial-gradient(circle, #1a4230 0%, #0d281a 100%)',
+                      border: '2px solid rgba(200, 168, 75, 0.85)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                    }}
+                  >
+                    <IconComp className="w-5 h-5 text-white" />
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-xs">{cat.label}</h4>
-                  <p className="text-[10px] line-clamp-1 mt-0.5" style={{ color: isSelected ? 'rgba(200,168,75,0.75)' : 'var(--mfct-text-muted)' }}>{cat.desc}</p>
+
+                {/* Bottom Content with Exact Titles */}
+                <div className="pt-6 pb-4 px-3 text-center flex flex-col justify-between flex-1 space-y-1">
+                  <h4
+                    className="text-xs sm:text-[13px] font-bold leading-snug truncate"
+                    style={{
+                      color: isSelected ? 'var(--mfct-gold-darker, #1a4230)' : 'var(--mfct-dark-green)',
+                      fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif",
+                    }}
+                  >
+                    {cat.label}
+                  </h4>
+                  <p
+                    className="text-[10px] sm:text-[11px] leading-tight truncate"
+                    style={{ color: 'var(--mfct-text-muted)', fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif" }}
+                  >
+                    {cat.desc}
+                  </p>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -620,32 +1255,144 @@ export const HomePage: React.FC<HomePageProps> = ({
         <MembershipBanner />
       </section>
 
-      {/* 6. HOW IT WORKS */}
-      <section className="py-12 rounded-2xl max-w-7xl mx-auto px-6 sm:px-12" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', boxShadow: 'var(--shadow-card)' }}>
-        <div className="text-center max-w-2xl mx-auto mb-10 space-y-1">
-          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-gold)' }}>{t('home.how_tag', 'Simple & Trustworthy')}</span>
-          <h2 className="text-2xl font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>{t('home.how_title', 'How Does It Work?')}</h2>
-          <p className="text-xs" style={{ color: 'var(--mfct-text-muted)' }}>{t('home.how_desc', 'A simple 4-step model for transparent and direct aid')}</p>
+      {/* 6. HOW IT WORKS (REDESIGNED ULTRA ATTRACTIVE STEPPER) */}
+      <section className="py-16 rounded-3xl max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 relative overflow-hidden bg-gradient-to-b from-white via-[#fcfbf7] to-slate-50 border border-slate-200/80 shadow-xl">
+        {/* Subtle decorative background glow */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-100/40 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-100/30 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
+
+        {/* Section Header */}
+        <div className="text-center max-w-2xl mx-auto mb-12 space-y-2.5 relative z-10">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow-sm bg-amber-50 border border-amber-200 text-amber-800">
+            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+            <span>{language === 'hi' ? 'पारदर्शी कार्यप्रणाली' : language === 'ur' ? 'شفاف طریقہ کار' : 'TRANSPARENT PROCESS'}</span>
+          </div>
+
+          <h2
+            className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight"
+            style={{ color: 'var(--mfct-dark-green)' }}
+          >
+            {t('home.how_title', 'How Does It Work?')}
+          </h2>
+
+          <div className="flex items-center justify-center gap-2 pt-0.5">
+            <span className="w-10 h-0.5" style={{ background: 'var(--mfct-gold)' }} />
+            <Heart className="w-3.5 h-3.5 fill-current" style={{ color: 'var(--mfct-gold)' }} />
+            <span className="w-10 h-0.5" style={{ background: 'var(--mfct-gold)' }} />
+          </div>
+
+          <p className="text-xs sm:text-sm font-medium text-slate-600">
+            {t('home.how_desc', 'A simple 4-step model for transparent and direct aid')}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[{
-            step: 1, title: t('home.step1_title', '1. Grassroots Identification'), desc: t('home.step1_desc', 'Mohalla elders and field volunteers personally verify every case.')
-          }, {
-            step: 2, title: t('home.step2_title', '2. Direct Bank & Hospital Payments'), desc: t('home.step2_desc', 'Funds go directly to hospitals, vendors, or beneficiaries.')
-          }, {
-            step: 3, title: t('home.step3_title', '3. 100% Audit & Receipts'), desc: t('home.step3_desc', "Every transaction's bill and audit report is publicly available.")
-          }, {
-            step: 4, title: t('home.step4_title', '4. Video & Photo Updates'), desc: t('home.step4_desc', 'Proof is shared with donors immediately after relief is delivered.')
-          }].map(({ step, title, desc }) => (
-            <div key={step} className="p-5 rounded-xl text-center space-y-2" style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)' }}>
-              <div className="w-10 h-10 rounded-xl font-extrabold flex items-center justify-center text-base mx-auto" style={{ background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-dark-green)', border: '2px solid rgba(200,168,75,0.3)' }}>
-                {step}
+        {/* 4 Interactive Stepper Cards with Connecting Line */}
+        <div className="relative z-10">
+          {/* Desktop Connecting Line behind cards */}
+          <div className="hidden lg:block absolute top-1/2 left-12 right-12 h-1 -translate-y-12 bg-gradient-to-r from-emerald-200 via-amber-200 to-emerald-200 z-0" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+            {[
+              {
+                step: '01',
+                badge: language === 'hi' ? 'ज़मीनी पड़ताल' : 'Field Verification',
+                title: t('home.step1_title', '1. Grassroots Identification'),
+                desc: t('home.step1_desc', 'Mohalla elders and field volunteers personally verify every case.'),
+                points: language === 'hi' ? ['100% भौतिक सत्यापन', 'दस्तावेज व पात्रता जांच'] : ['100% Ground Verified', 'Document & Need Check'],
+                iconColor: 'bg-emerald-600 text-white shadow-emerald-200',
+                borderHover: 'hover:border-emerald-500',
+                accentBg: 'bg-emerald-50 text-emerald-800'
+              },
+              {
+                step: '02',
+                badge: language === 'hi' ? 'प्रत्यक्ष भुगतान' : 'Direct Payout',
+                title: t('home.step2_title', '2. Direct Bank & Hospital Payments'),
+                desc: t('home.step2_desc', 'Funds go directly to hospitals, vendors, or beneficiaries.'),
+                points: language === 'hi' ? ['शून्य बिचौलिया कटौती', 'सीधे बैंक / अस्पताल ट्रांसफर'] : ['Zero Middlemen Cut', 'Direct to Bank / Hospital'],
+                iconColor: 'bg-amber-500 text-white shadow-amber-200',
+                borderHover: 'hover:border-amber-500',
+                accentBg: 'bg-amber-50 text-amber-800'
+              },
+              {
+                step: '03',
+                badge: language === 'hi' ? 'सार्वजनिक ऑडिट' : 'Public Audit',
+                title: t('home.step3_title', '3. 100% Audit & Receipts'),
+                desc: t('home.step3_desc', "Every transaction's bill and audit report is publicly available."),
+                points: language === 'hi' ? ['पारदर्शी डिजिटल रिकॉर्ड', 'प्रत्येक ₹1 का UTR हिसाब'] : ['Public Ledger & Bills', 'Track Every Single Rupee'],
+                iconColor: 'bg-indigo-600 text-white shadow-indigo-200',
+                borderHover: 'hover:border-indigo-500',
+                accentBg: 'bg-indigo-50 text-indigo-800'
+              },
+              {
+                step: '04',
+                badge: language === 'hi' ? 'सत्यापित प्रमाण' : 'Impact Proof',
+                title: t('home.step4_title', '4. Video & Photo Updates'),
+                desc: t('home.step4_desc', 'Proof is shared with donors immediately after relief is delivered.'),
+                points: language === 'hi' ? ['लाइव वीडियो व फोटो', 'सहयोगियों को सीधा अपडेट'] : ['Live Photos & Videos', 'Instant Donor Updates'],
+                iconColor: 'bg-rose-600 text-white shadow-rose-200',
+                borderHover: 'hover:border-rose-500',
+                accentBg: 'bg-rose-50 text-rose-800'
+              }
+            ].map(({ step, badge, title, desc, points, iconColor, borderHover, accentBg }) => (
+              <div
+                key={step}
+                className={`bg-white rounded-2xl p-6 shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200/90 flex flex-col justify-between group ${borderHover} relative overflow-hidden`}
+              >
+                {/* Top Glowing Header inside card */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    {/* Glowing Number Circle */}
+                    <div className={`w-12 h-12 rounded-2xl ${iconColor} font-black text-lg flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                      {step}
+                    </div>
+
+                    {/* Micro Pill */}
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${accentBg}`}>
+                      {badge}
+                    </span>
+                  </div>
+
+                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-emerald-900 transition-colors leading-snug mb-2">
+                    {title}
+                  </h3>
+
+                  <p className="text-xs leading-relaxed text-slate-600 font-normal mb-4">
+                    {desc}
+                  </p>
+                </div>
+
+                {/* Feature checklist bullets */}
+                <div className="pt-3 border-t border-slate-100 space-y-1.5 bg-slate-50/50 -mx-6 -mb-6 p-4 rounded-b-2xl">
+                  {points.map((pt, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>{pt}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <h3 className="font-bold text-sm" style={{ color: 'var(--mfct-dark-green)' }}>{title}</h3>
-              <p className="text-xs leading-relaxed" style={{ color: 'var(--mfct-text-muted)' }}>{desc}</p>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom Trust Assurance Ribbon */}
+        <div className="mt-10 pt-6 border-t border-slate-200/80 grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-xs font-bold text-slate-700 relative z-10">
+          <div className="flex items-center justify-center gap-2 p-2 rounded-xl bg-white border border-slate-100 shadow-sm">
+            <span className="text-emerald-600">🛡️</span>
+            <span>{language === 'hi' ? '100% प्रत्यक्ष सहायता' : '100% Direct Aid'}</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 p-2 rounded-xl bg-white border border-slate-100 shadow-sm">
+            <span className="text-amber-600">⚡</span>
+            <span>{language === 'hi' ? '0% बिचौलिया कटौती' : 'Zero Intermediary Cut'}</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 p-2 rounded-xl bg-white border border-slate-100 shadow-sm">
+            <span className="text-indigo-600">📜</span>
+            <span>{language === 'hi' ? 'डिजिटल UTR रसीद' : 'Digital UTR Proof'}</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 p-2 rounded-xl bg-white border border-slate-100 shadow-sm">
+            <span className="text-rose-600">🤝</span>
+            <span>{language === 'hi' ? 'सामूहिक इंसानियत' : 'Collective Humanity'}</span>
+          </div>
         </div>
       </section>
 
@@ -867,7 +1614,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
               {/* Center Content */}
               <div className="relative z-10 my-4 space-y-2">
-                <h3 className="text-xl font-extrabold text-white leading-snug" style={{ fontFamily: 'serif' }}>
+                <h3 className="text-xl font-extrabold text-white leading-snug">
                   {t('home.faq_card_title', 'Transparent & Direct Giving')}
                 </h3>
                 <p className="text-xs text-white/80 leading-relaxed">

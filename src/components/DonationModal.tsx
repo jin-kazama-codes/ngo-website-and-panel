@@ -182,7 +182,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-fade-in overflow-y-auto">
       <div
         className="rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[92vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-text-dark)' }}
@@ -212,7 +212,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               {tr('पारदर्शी सामुदायिक एस्क्रो', 'شفاف کمیونٹی اسکرو', 'Transparent Community Escrow')}
             </span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'Playfair Display, serif' }}>
+          <h2 className="text-2xl sm:text-3xl font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>
             {step === 3
               ? tr('दान सफल! 🎉', 'عطیہ کامیاب! 🎉', 'Donation Successful! 🎉')
               : tr('सत्यापित दान करें', 'تصدیق شدہ عطیہ دیں', 'Make a Verified Donation')}
@@ -370,7 +370,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 <span className="absolute left-3.5 top-3 font-bold" style={{ color: 'var(--mfct-gold)' }}>₹</span>
                 <input
                   type="number"
-                  placeholder={tr('इच्छानुसार राशि दर्ज करें...', 'اپنی مرضی کی رقم درج کریں...', 'Enter custom amount...')}
+                  placeholder={tr('इच्छानुसार राशि दर्ज करें...', 'अपनी مرضی کی رقم درج کریں...', 'Enter custom amount...')}
                   value={customAmount}
                   onChange={handleCustomAmountChange}
                   className="w-full pl-8 pr-4 py-2.5 rounded-xl text-sm font-semibold outline-none"
@@ -562,8 +562,8 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             </div>
 
             <div>
-              <h3 className="text-xl font-bold" style={{ color: 'var(--mfct-dark-green)', fontFamily: 'Playfair Display, serif' }}>
-                {tr('आपकी उदारता के लिए धन्यवाद! 🎉', 'آپ کی سخاوت کا شکریہ! 🎉', 'Thank You for Your Generosity! 🎉')}
+              <h3 className="text-xl font-bold" style={{ color: 'var(--mfct-dark-green)' }}>
+                {tr('धन्यवाद! आपका दान प्राप्त हुआ', 'شکریہ! آپ کا عطیہ موصول ہوا', 'JazakAllah! Donation Recorded')}
               </h3>
               <p className="text-sm mt-1 max-w-md mx-auto" style={{ color: 'var(--mfct-text-muted)' }}>
                 {language === 'hi' ? (

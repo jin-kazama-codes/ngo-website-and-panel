@@ -57,7 +57,7 @@ export const MemberDashboard: React.FC<MemberDashboardProps> = ({
             >
               <ShieldCheck className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> Active Verified Community Member
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white" style={{ fontFamily: 'serif' }}>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
               Welcome back, {user.name}!
             </h1>
             <p className="text-xs sm:text-sm flex items-center gap-2" style={{ color: 'rgba(200,168,75,0.85)' }}>
