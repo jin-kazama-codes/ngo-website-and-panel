@@ -24,6 +24,9 @@ import {
   CheckCircle2,
   Users,
   Building2,
+  UserCheck,
+  FileCheck,
+  Video,
   Search,
   Filter,
   Phone,
@@ -54,7 +57,10 @@ import {
   X,
   Copy,
   HeartHandshake,
-  GraduationCap
+  GraduationCap,
+  Headphones,
+  Clock,
+  User,
 } from 'lucide-react';
 import { FaHandsHoldingChild, FaHandHoldingHeart, FaPeopleGroup } from 'react-icons/fa6';
 import { TbShieldCheck } from 'react-icons/tb';
@@ -1251,42 +1257,167 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* 6. HOW IT WORKS */}
-      <section className="py-12 rounded-3xl max-w-7xl mx-auto px-6 sm:px-12" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', boxShadow: 'var(--shadow-card)' }}>
-        <div className="text-center max-w-2xl mx-auto mb-10 space-y-1.5">
-          <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-widest" style={{ color: 'var(--mfct-gold-dark)' }}>{t('home.how_tag', 'HOW IT WORKS')}</span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: 'var(--mfct-dark-green)' }}>{t('home.how_title', 'How Does It Work?')}</h2>
-          <p className="text-xs sm:text-sm" style={{ color: 'var(--mfct-text-muted)' }}>{t('home.how_desc', 'A simple 4-step model for transparent and direct aid')}</p>
+      <section
+        className="relative py-14 sm:py-16 rounded-3xl max-w-7xl mx-auto px-5 sm:px-10 lg:px-12 overflow-hidden shadow-xl"
+        style={{
+          background: 'linear-gradient(180deg, #ffffff 0%, #fdfbf7 50%, #f7f1e4 100%)',
+          border: '1px solid rgba(200, 168, 75, 0.28)',
+          boxShadow: '0 10px 30px -5px rgba(26, 60, 44, 0.08), 0 4px 12px rgba(200, 168, 75, 0.06)',
+        }}
+      >
+        {/* Ambient Decorative Background Glows */}
+        <div
+          className="absolute -top-24 left-1/4 w-80 h-80 rounded-full pointer-events-none opacity-25 blur-3xl"
+          style={{ background: 'radial-gradient(circle, var(--mfct-gold) 0%, transparent 70%)' }}
+        />
+        <div
+          className="absolute -bottom-24 right-1/4 w-96 h-96 rounded-full pointer-events-none opacity-20 blur-3xl"
+          style={{ background: 'radial-gradient(circle, var(--mfct-light-green) 0%, transparent 70%)' }}
+        />
+
+        {/* Section Header */}
+        <div className="relative text-center max-w-2xl mx-auto mb-12 sm:mb-14 space-y-2">
+          <div
+            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] sm:text-xs font-black uppercase tracking-widest shadow-sm mb-1"
+            style={{
+              background: 'rgba(200, 168, 75, 0.12)',
+              color: 'var(--mfct-gold-dark)',
+              border: '1px solid rgba(200, 168, 75, 0.35)',
+            }}
+          >
+            <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold-dark)' }} />
+            <span>{t('home.how_tag', 'HOW IT WORKS')}</span>
+          </div>
+          <h2
+            className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight"
+            style={{ color: 'var(--mfct-dark-green)' }}
+          >
+            {t('home.how_title', 'How Does It Work?')}
+          </h2>
+          <p
+            className="text-xs sm:text-sm font-medium leading-relaxed"
+            style={{ color: 'var(--mfct-text-muted)' }}
+          >
+            {t('home.how_desc', 'A simple 4-step model for transparent and direct aid')}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-          {[{
-            step: 1, title: t('home.step1_title', '1. Grassroots Identification & Verification'), desc: t('home.step1_desc', 'Mohalla elders and field volunteers personally verify every case.')
-          }, {
-            step: 2, title: t('home.step2_title', '2. Direct Bank & Hospital Payments'), desc: t('home.step2_desc', 'Funds go directly to hospitals, vendors, or beneficiaries.')
-          }, {
-            step: 3, title: t('home.step3_title', '3. 100% Audit & Receipts'), desc: t('home.step3_desc', "Every transaction's bill and audit report is publicly available on the app.")
-          }, {
-            step: 4, title: t('home.step4_title', '4. Video & Photo Updates'), desc: t('home.step4_desc', 'Proof is shared with donors immediately after relief is delivered.')
-          }].map(({ step, title, desc }) => (
-            <div
-              key={step}
-              className="p-6 rounded-2xl text-center flex flex-col items-center justify-start space-y-3.5 transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
-              style={{ background: 'var(--mfct-warm-bg)', border: '1px solid rgba(200,168,75,0.25)' }}
-            >
+        {/* Steps Grid with Horizontal Connection Line on Large Screens */}
+        <div className="relative">
+          {/* Subtle Connecting Line across steps on Desktop */}
+          <div
+            className="hidden lg:block absolute top-12 left-[12%] right-[12%] h-0.5 border-t-2 border-dashed pointer-events-none z-0"
+            style={{ borderColor: 'rgba(200, 168, 75, 0.35)' }}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-6 relative z-10">
+            {[
+              {
+                step: 1,
+                stepNum: '01',
+                icon: UserCheck,
+                title: t('home.step1_title', 'Grassroots Identification & Verification'),
+                desc: t('home.step1_desc', 'Mohalla elders and field volunteers personally verify every case.'),
+                gradient: 'linear-gradient(135deg, #1a3c2c 0%, #2e5e42 100%)',
+                accentColor: '#1a3c2c',
+                stepBg: 'rgba(26, 60, 44, 0.08)',
+                stepText: '#1a3c2c',
+              },
+              {
+                step: 2,
+                stepNum: '02',
+                icon: Building2,
+                title: t('home.step2_title', 'Direct Bank & Hospital Payments'),
+                desc: t('home.step2_desc', 'Funds go directly to hospitals, vendors, or beneficiaries.'),
+                gradient: 'linear-gradient(135deg, #c8a84b 0%, #a0832e 100%)',
+                accentColor: '#c8a84b',
+                stepBg: 'rgba(200, 168, 75, 0.16)',
+                stepText: '#8a6e1a',
+              },
+              {
+                step: 3,
+                stepNum: '03',
+                icon: FileCheck,
+                title: t('home.step3_title', '100% Audit & Receipts'),
+                desc: t('home.step3_desc', "Every transaction's bill and audit report is publicly available on the app."),
+                gradient: 'linear-gradient(135deg, #2e5e42 0%, #3d7a55 100%)',
+                accentColor: '#2e5e42',
+                stepBg: 'rgba(46, 94, 66, 0.1)',
+                stepText: '#2e5e42',
+              },
+              {
+                step: 4,
+                stepNum: '04',
+                icon: Video,
+                title: t('home.step4_title', 'Video & Photo Updates'),
+                desc: t('home.step4_desc', 'Proof is shared with donors immediately after relief is delivered.'),
+                gradient: 'linear-gradient(135deg, #1a3c2c 0%, #c8a84b 100%)',
+                accentColor: '#c8a84b',
+                stepBg: 'rgba(200, 168, 75, 0.16)',
+                stepText: '#8a6e1a',
+              },
+            ].map((item) => (
               <div
-                className="w-11 h-11 rounded-xl font-extrabold flex items-center justify-center text-sm sm:text-base mx-auto shadow-sm"
-                style={{ background: 'rgba(200,168,75,0.18)', color: 'var(--mfct-dark-green)', border: '1px solid rgba(200,168,75,0.38)' }}
+                key={item.step}
+                className="group relative flex flex-col items-center text-center p-6 sm:p-7 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-xl cursor-default"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(200, 168, 75, 0.28)',
+                  boxShadow: '0 4px 20px -2px rgba(26, 60, 44, 0.05)',
+                }}
               >
-                {step}
+                {/* Step Pill Top Badge */}
+                <div className="flex items-center justify-center w-full mb-4">
+                  <span
+                    className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-xs"
+                    style={{
+                      background: item.stepBg,
+                      color: item.stepText,
+                      border: '1px solid rgba(200, 168, 75, 0.25)',
+                    }}
+                  >
+                    STEP {item.stepNum}
+                  </span>
+                </div>
+
+                {/* Glowing Icon Container */}
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-white mb-5 relative transform transition-all duration-300 group-hover:scale-110 shadow-lg"
+                  style={{
+                    background: item.gradient,
+                    boxShadow: '0 8px 18px -4px rgba(26, 60, 44, 0.25)',
+                  }}
+                >
+                  <item.icon className="w-7 h-7 stroke-[2.2]" />
+                </div>
+
+                {/* Title */}
+                <h3
+                  className="font-bold text-[15px] sm:text-[16px] leading-snug mb-2.5 transition-colors group-hover:text-[var(--mfct-mid-green)]"
+                  style={{ color: 'var(--mfct-dark-green)' }}
+                >
+                  {item.title}
+                </h3>
+
+                {/* Description */}
+                <p
+                  className="text-xs sm:text-[13px] leading-relaxed flex-grow"
+                  style={{ color: 'var(--mfct-text-muted)' }}
+                >
+                  {item.desc}
+                </p>
+
+                {/* Hover Accent Underline */}
+                <div
+                  className="absolute bottom-0 left-6 right-6 h-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent, var(--mfct-gold), transparent)',
+                  }}
+                />
               </div>
-              <h3 className="font-bold text-[14px] sm:text-[15px] leading-snug" style={{ color: 'var(--mfct-dark-green)' }}>
-                {title}
-              </h3>
-              <p className="text-xs sm:text-[12.5px] leading-relaxed" style={{ color: 'var(--mfct-text-muted)' }}>
-                {desc}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
@@ -1534,95 +1665,340 @@ export const HomePage: React.FC<HomePageProps> = ({
 
 
       {/* 17. CONTACT SECTION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="text-center max-w-xl mx-auto space-y-1">
-          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-gold)' }}>{t('home.contact_tag', 'Contact')}</span>
-          <h2 className="text-2xl font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>{t('home.contact_title', 'Need Help or Have a Question?')}</h2>
-          <p className="text-xs" style={{ color: 'var(--mfct-text-muted)' }}>{t('home.contact_desc', 'Our team is available 24/7 to assist you')}</p>
+      <section
+        className="relative py-14 sm:py-16 rounded-3xl max-w-7xl mx-auto px-5 sm:px-10 lg:px-12 overflow-hidden shadow-xl"
+        style={{
+          background: 'linear-gradient(180deg, #ffffff 0%, #fdfbf7 50%, #f7f1e4 100%)',
+          border: '1px solid rgba(200, 168, 75, 0.28)',
+          boxShadow: '0 10px 30px -5px rgba(26, 60, 44, 0.08), 0 4px 12px rgba(200, 168, 75, 0.06)',
+        }}
+      >
+        {/* Ambient Decorative Background Glows */}
+        <div
+          className="absolute -top-24 right-1/4 w-80 h-80 rounded-full pointer-events-none opacity-20 blur-3xl"
+          style={{ background: 'radial-gradient(circle, var(--mfct-gold) 0%, transparent 70%)' }}
+        />
+        <div
+          className="absolute -bottom-24 left-1/4 w-96 h-96 rounded-full pointer-events-none opacity-15 blur-3xl"
+          style={{ background: 'radial-gradient(circle, var(--mfct-light-green) 0%, transparent 70%)' }}
+        />
+
+        {/* Section Header */}
+        <div className="relative text-center max-w-2xl mx-auto mb-10 sm:mb-12 space-y-2">
+          <div
+            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] sm:text-xs font-black uppercase tracking-widest shadow-sm mb-1"
+            style={{
+              background: 'rgba(200, 168, 75, 0.12)',
+              color: 'var(--mfct-gold-dark)',
+              border: '1px solid rgba(200, 168, 75, 0.35)',
+            }}
+          >
+            <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold-dark)' }} />
+            <span>{t('home.contact_tag', 'CONTACT')}</span>
+          </div>
+          <h2
+            className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight"
+            style={{ color: 'var(--mfct-dark-green)' }}
+          >
+            {t('home.contact_title', 'Need Help or Have a Question?')}
+          </h2>
+          <p
+            className="text-xs sm:text-sm font-medium leading-relaxed"
+            style={{ color: 'var(--mfct-text-muted)' }}
+          >
+            {t('home.contact_desc', 'Our team is available 24/7 to assist you')}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 p-6 rounded-2xl space-y-4" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', boxShadow: 'var(--shadow-card)' }}>
-            <h3 className="font-bold text-sm" style={{ color: 'var(--mfct-dark-green)' }}>{t('home.send_message', 'Send Message')}</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 relative z-10">
+          {/* Left Column: Send Message Form */}
+          <div
+            className="lg:col-span-7 p-6 sm:p-8 rounded-3xl space-y-6 flex flex-col justify-between"
+            style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(200, 168, 75, 0.28)',
+              boxShadow: '0 4px 20px -2px rgba(26, 60, 44, 0.06)',
+            }}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-[rgba(200,168,75,0.2)]">
+              <div>
+                <h3 className="font-extrabold text-base sm:text-lg" style={{ color: 'var(--mfct-dark-green)' }}>
+                  {t('home.send_message', 'Send Message')}
+                </h3>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--mfct-text-muted)' }}>
+                  {t('home.form_subtitle', 'Fill out the form below and our team will get back to you promptly.')}
+                </p>
+              </div>
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: 'rgba(200, 168, 75, 0.15)', color: 'var(--mfct-dark-green)' }}
+              >
+                <MessageSquare className="w-5 h-5" />
+              </div>
+            </div>
 
             {contactSubmitted ? (
-              <div className="p-4 rounded-xl text-center space-y-1 text-xs" style={{ background: 'rgba(200,168,75,0.08)', border: '1px solid rgba(200,168,75,0.25)' }}>
-                <CheckCircle2 className="w-8 h-8 mx-auto" style={{ color: 'var(--mfct-gold)' }} />
-                <p className="font-bold" style={{ color: 'var(--mfct-dark-green)' }}>{t('home.msg_received', 'Your message has been received!')}</p>
-                <p style={{ color: 'var(--mfct-text-muted)' }}>{t('home.msg_received_desc', 'Our team will contact you soon.')}</p>
+              <div
+                className="p-8 rounded-2xl text-center space-y-3"
+                style={{ background: 'rgba(200,168,75,0.08)', border: '1.5px solid rgba(200,168,75,0.3)' }}
+              >
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center mx-auto shadow-md"
+                  style={{ background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, var(--mfct-mid-green) 100%)', color: 'var(--mfct-gold)' }}
+                >
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+                <h4 className="font-extrabold text-base sm:text-lg" style={{ color: 'var(--mfct-dark-green)' }}>
+                  {t('home.msg_received', 'Your message has been received!')}
+                </h4>
+                <p className="text-xs sm:text-sm max-w-sm mx-auto" style={{ color: 'var(--mfct-text-muted)' }}>
+                  {t('home.msg_received_desc', 'Our support team will contact you shortly on your provided phone number.')}
+                </p>
               </div>
             ) : (
-              <form onSubmit={handleContactSubmit} className="space-y-3 text-xs">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <form onSubmit={handleContactSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Name Input */}
                   <div>
-                    <label className="block font-bold mb-1" style={{ color: 'var(--mfct-dark-green)' }}>{t('home.your_name', 'Your Name')}</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder={t('home.name_placeholder', 'Enter your full name')}
-                      value={contactName}
-                      onChange={(e) => setContactName(e.target.value)}
-                      className="w-full p-2.5 rounded-lg text-xs outline-none"
-                      style={{ border: '1px solid var(--mfct-border)', background: 'var(--mfct-warm-bg)' }}
-                    />
+                    <label className="block text-xs font-bold mb-1.5" style={{ color: 'var(--mfct-dark-green)' }}>
+                      {t('home.your_name', 'Your Name')} <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--mfct-text-muted)]">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        placeholder={t('home.name_placeholder', 'Enter your full name')}
+                        value={contactName}
+                        onChange={(e) => setContactName(e.target.value)}
+                        className="w-full pl-10 pr-3.5 py-3 rounded-xl text-xs sm:text-sm outline-none transition-all duration-200"
+                        style={{
+                          border: '1px solid var(--mfct-border)',
+                          background: 'var(--mfct-warm-bg)',
+                          color: 'var(--mfct-text-dark)',
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = 'var(--mfct-gold-dark)';
+                          e.target.style.boxShadow = '0 0 0 3px rgba(200, 168, 75, 0.2)';
+                          e.target.style.background = '#ffffff';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = 'var(--mfct-border)';
+                          e.target.style.boxShadow = 'none';
+                          e.target.style.background = 'var(--mfct-warm-bg)';
+                        }}
+                      />
+                    </div>
                   </div>
+
+                  {/* Phone Input */}
                   <div>
-                    <label className="block font-bold mb-1" style={{ color: 'var(--mfct-dark-green)' }}>{t('home.phone_number', 'Phone Number')}</label>
-                    <input
-                      type="number"
-                      required
-                      placeholder={t('home.phone_placeholder', '10-digit mobile number')}
-                      value={contactPhone}
-                      onChange={(e) => setContactPhone(e.target.value)}
-                      className="w-full p-2.5 rounded-lg text-xs outline-none"
-                      style={{ border: '1px solid var(--mfct-border)', background: 'var(--mfct-warm-bg)' }}
-                    />
+                    <label className="block text-xs font-bold mb-1.5" style={{ color: 'var(--mfct-dark-green)' }}>
+                      {t('home.phone_number', 'Phone Number')} <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--mfct-text-muted)]">
+                        <Phone className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="tel"
+                        required
+                        placeholder={t('home.phone_placeholder', '10-digit mobile number')}
+                        value={contactPhone}
+                        onChange={(e) => setContactPhone(e.target.value)}
+                        className="w-full pl-10 pr-3.5 py-3 rounded-xl text-xs sm:text-sm outline-none transition-all duration-200"
+                        style={{
+                          border: '1px solid var(--mfct-border)',
+                          background: 'var(--mfct-warm-bg)',
+                          color: 'var(--mfct-text-dark)',
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = 'var(--mfct-gold-dark)';
+                          e.target.style.boxShadow = '0 0 0 3px rgba(200, 168, 75, 0.2)';
+                          e.target.style.background = '#ffffff';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = 'var(--mfct-border)';
+                          e.target.style.boxShadow = 'none';
+                          e.target.style.background = 'var(--mfct-warm-bg)';
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
 
+                {/* Message Input */}
                 <div>
-                  <label className="block font-bold mb-1" style={{ color: 'var(--mfct-dark-green)' }}>{t('home.help_label', 'Your Need / Message')}</label>
-                  <textarea
-                    rows={3}
-                    required
-                    placeholder={t('home.help_placeholder', 'Describe in detail how we can help you...')}
-                    value={contactMsg}
-                    onChange={(e) => setContactMsg(e.target.value)}
-                    className="w-full p-2.5 rounded-lg text-xs outline-none"
-                    style={{ border: '1px solid var(--mfct-border)', background: 'var(--mfct-warm-bg)' }}
-                  ></textarea>
+                  <label className="block text-xs font-bold mb-1.5" style={{ color: 'var(--mfct-dark-green)' }}>
+                    {t('home.help_label', 'Your Need / Message')} <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <textarea
+                      rows={3}
+                      required
+                      placeholder={t('home.help_placeholder', 'Describe in detail how we can help you...')}
+                      value={contactMsg}
+                      onChange={(e) => setContactMsg(e.target.value)}
+                      className="w-full p-3.5 rounded-xl text-xs sm:text-sm outline-none transition-all duration-200 resize-none"
+                      style={{
+                        border: '1px solid var(--mfct-border)',
+                        background: 'var(--mfct-warm-bg)',
+                        color: 'var(--mfct-text-dark)',
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = 'var(--mfct-gold-dark)';
+                        e.target.style.boxShadow = '0 0 0 3px rgba(200, 168, 75, 0.2)';
+                        e.target.style.background = '#ffffff';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = 'var(--mfct-border)';
+                        e.target.style.boxShadow = 'none';
+                        e.target.style.background = 'var(--mfct-warm-bg)';
+                      }}
+                    ></textarea>
+                  </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="mfct-btn-gold w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="mfct-btn-gold w-full py-3.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5"
                 >
-                  <Send className="w-3.5 h-3.5" /> {t('home.send_request', 'Send Message')}
+                  <Send className="w-4 h-4" /> {t('home.send_request', 'Send Message')}
                 </button>
               </form>
             )}
           </div>
 
-          <div className="lg:col-span-5 space-y-4">
-            <div className="p-6 rounded-2xl space-y-4 shadow-md" style={{ background: 'var(--mfct-dark-green)', border: '1px solid rgba(200,168,75,0.2)' }}>
-              <h4 className="font-bold text-sm text-white">{t('home.emergency_desks', 'Emergency Helpline')}</h4>
+          {/* Right Column: Emergency Helpline */}
+          <div
+            className="lg:col-span-5 p-6 sm:p-8 rounded-3xl text-white shadow-xl flex flex-col justify-between relative overflow-hidden space-y-6"
+            style={{
+              background: 'linear-gradient(145deg, #10291e 0%, #1a3c2c 55%, #0d2017 100%)',
+              border: '1px solid rgba(200, 168, 75, 0.35)',
+            }}
+          >
+            {/* Top decorative ambient glow */}
+            <div
+              className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none opacity-20 blur-2xl"
+              style={{ background: 'var(--mfct-gold)' }}
+            />
 
-              <div className="space-y-3 text-xs">
-                <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.07)' }}>
-                  <Phone className="w-4 h-4 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+            <div className="space-y-4 relative z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md"
+                    style={{ background: 'rgba(200, 168, 75, 0.18)', border: '1px solid rgba(200, 168, 75, 0.35)' }}
+                  >
+                    <Headphones className="w-5 h-5" style={{ color: 'var(--mfct-gold)' }} />
+                  </div>
                   <div>
-                    <span className="text-[10px] block uppercase" style={{ color: 'rgba(200,168,75,0.6)' }}>{t('home.helpline_247', '24/7 Emergency Support')}</span>
-                    <span className="font-bold text-white text-xs">+91 82180 17226</span>
+                    <h4 className="font-extrabold text-base sm:text-lg text-white">
+                      {t('home.emergency_desks', 'Emergency Helpline')}
+                    </h4>
+                    <span className="text-[11px] block" style={{ color: 'rgba(200, 168, 75, 0.8)' }}>
+                      {t('home.instant_assistance', 'Direct Voice Support')}
+                    </span>
                   </div>
                 </div>
+                <span
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider"
+                  style={{ background: 'rgba(200, 168, 75, 0.2)', color: 'var(--mfct-gold)', border: '1px solid rgba(200, 168, 75, 0.3)' }}
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Live 24/7
+                </span>
+              </div>
 
-                <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.2)' }}>
-                  <Phone className="w-4 h-4 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
-                  <div>
-                    <span className="text-[10px] block uppercase" style={{ color: 'rgba(200,168,75,0.6)' }}>{t('home.helpline_247', '24/7 Emergency Support')}</span>
-                    <span className="font-bold text-white text-xs">+91 97569 19430</span>
+              <p className="text-xs leading-relaxed" style={{ color: 'rgba(255, 255, 255, 0.75)' }}>
+                {t('home.helpline_lead', 'For urgent medical cases, emergency food support, or immediate verification assistance, call our coordinators directly.')}
+              </p>
+
+              {/* Helpline Phone Cards */}
+              <div className="space-y-3 pt-2">
+                <a
+                  href="tel:+918218017226"
+                  className="group flex items-center justify-between p-3.5 rounded-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(200, 168, 75, 0.25)',
+                    backdropFilter: 'blur(6px)',
+                  }}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+                      style={{ background: 'rgba(200, 168, 75, 0.2)', color: 'var(--mfct-gold)' }}
+                    >
+                      <Phone className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold block uppercase tracking-wider" style={{ color: 'rgba(200, 168, 75, 0.75)' }}>
+                        {t('home.helpline_247', '24/7 Emergency Support')}
+                      </span>
+                      <span className="font-extrabold text-white text-sm sm:text-base tracking-wide">
+                        +91 82180 17226
+                      </span>
+                    </div>
                   </div>
-                </div>
+                  <span
+                    className="text-[11px] font-bold px-3 py-1 rounded-lg transition-colors group-hover:bg-[var(--mfct-gold)] group-hover:text-[var(--mfct-dark-green)]"
+                    style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--mfct-gold-light)' }}
+                  >
+                    Call Now ↗
+                  </span>
+                </a>
+
+                <a
+                  href="tel:+919756919430"
+                  className="group flex items-center justify-between p-3.5 rounded-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                  style={{
+                    background: 'rgba(200, 168, 75, 0.12)',
+                    border: '1px solid rgba(200, 168, 75, 0.35)',
+                    backdropFilter: 'blur(6px)',
+                  }}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+                      style={{ background: 'rgba(200, 168, 75, 0.25)', color: 'var(--mfct-gold)' }}
+                    >
+                      <Phone className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold block uppercase tracking-wider" style={{ color: 'rgba(200, 168, 75, 0.75)' }}>
+                        {t('home.helpline_247', '24/7 Emergency Support')}
+                      </span>
+                      <span className="font-extrabold text-white text-sm sm:text-base tracking-wide">
+                        +91 97569 19430
+                      </span>
+                    </div>
+                  </div>
+                  <span
+                    className="text-[11px] font-bold px-3 py-1 rounded-lg transition-colors group-hover:bg-[var(--mfct-gold)] group-hover:text-[var(--mfct-dark-green)]"
+                    style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--mfct-gold-light)' }}
+                  >
+                    Call Now ↗
+                  </span>
+                </a>
+              </div>
+            </div>
+
+            {/* Bottom trust footer */}
+            <div
+              className="pt-4 border-t border-white/10 flex items-center justify-between text-[11px] font-medium"
+              style={{ color: 'rgba(200, 168, 75, 0.85)' }}
+            >
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Instant Callback Available</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>100% Confidential</span>
               </div>
             </div>
           </div>

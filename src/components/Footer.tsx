@@ -22,50 +22,19 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
         
         {/* ── 1. Top Hero Card Banner (Become a Member / Center Logo / Support Our Cause) ── */}
         <div
-          className="relative rounded-2xl md:rounded-3xl p-6 sm:p-8 lg:p-10 shadow-2xl overflow-visible"
+          className="relative rounded-2xl md:rounded-3xl p-5 sm:p-8 lg:p-10 shadow-2xl overflow-visible"
           style={{
             background: 'radial-gradient(ellipse at center, #103825 0%, #082115 100%)',
             border: '1.5px solid rgba(200, 168, 75, 0.45)',
             boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
           }}
         >
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-8 items-center">
             
-            {/* Left Column: Become a Member */}
-            <div className="lg:col-span-5 flex items-start gap-4 sm:gap-5">
-              <div className="shrink-0 pt-1">
-                <Users
-                  className="w-10 h-10 sm:w-12 sm:h-12"
-                  style={{ color: '#d4af37' }}
-                />
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-lg sm:text-xl font-bold text-white tracking-wide">
-                    {language === 'hi' ? 'सदस्य बनें' : language === 'ur' ? 'ممبر بنیں' : 'Become a Member'}
-                  </h3>
-                  <p className="text-xs sm:text-sm mt-1" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-                    {language === 'hi'
-                      ? 'MFCT से जुड़ें और समाज सेवा का हिस्सा बनें।'
-                      : language === 'ur'
-                      ? 'ایم ایف سی ٹی سے جڑیں اور فلاحی کاموں کا حصہ بنیں۔'
-                      : 'Join MFCT and be a part of community service.'}
-                  </p>
-                </div>
-                <button
-                  onClick={onOpenRegister}
-                  className="mfct-btn-gold px-6 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer shadow-lg hover:-translate-y-0.5 transition-all"
-                >
-                  <span>{language === 'hi' ? 'अभी जुड़ें' : language === 'ur' ? 'ابھی جڑیں' : 'JOIN NOW'}</span>
-                  <UserPlus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Center Column: Prominent Circular Logo */}
-            <div className="lg:col-span-2 flex justify-center -my-4 lg:-my-8">
+            {/* Center Column on Mobile (Order 1 on mobile, Order 2 on desktop) */}
+            <div className="order-1 lg:order-2 lg:col-span-2 flex justify-center my-1 lg:-my-8">
               <div
-                className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center shadow-2xl p-1 bg-white"
+                className="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-full flex items-center justify-center shadow-2xl p-1 bg-white"
                 style={{
                   border: '3px solid #d4af37',
                   boxShadow: '0 0 25px rgba(212, 175, 55, 0.35)',
@@ -79,17 +48,54 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
               </div>
             </div>
 
-            {/* Right Column: Support Our Cause */}
-            <div className="lg:col-span-5 flex items-start justify-start lg:justify-end gap-4 sm:gap-5">
-              <div className="shrink-0 pt-1 lg:order-2">
-                <HandHeart
-                  className="w-10 h-10 sm:w-12 sm:h-12"
-                  style={{ color: '#d4af37' }}
-                />
+            {/* Left Column: Become a Member (Order 2 on mobile, Order 1 on desktop) */}
+            <div className="order-2 lg:order-1 lg:col-span-5 p-4 sm:p-5 lg:p-0 rounded-2xl lg:rounded-none bg-black/25 lg:bg-transparent border border-white/10 lg:border-none flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3.5 sm:gap-5">
+              <div className="shrink-0 pt-0 sm:pt-1">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(200, 168, 75, 0.15)' }}>
+                  <Users
+                    className="w-6 h-6 sm:w-7 sm:h-7"
+                    style={{ color: '#d4af37' }}
+                  />
+                </div>
               </div>
-              <div className="space-y-3 lg:text-right lg:order-1">
+              <div className="space-y-3 w-full sm:w-auto">
                 <div>
-                  <h3 className="text-lg sm:text-xl font-bold text-white tracking-wide">
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold text-white tracking-wide">
+                    {language === 'hi' ? 'सदस्य बनें' : language === 'ur' ? 'ممبر بنیں' : 'Become a Member'}
+                  </h3>
+                  <p className="text-xs sm:text-sm mt-1" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                    {language === 'hi'
+                      ? 'MFCT से जुड़ें और समाज सेवा का हिस्सा बनें।'
+                      : language === 'ur'
+                      ? 'ایم ایف سی ٹی سے جڑیں اور فلاحی کاموں کا حصہ بنیں۔'
+                      : 'Join MFCT and be a part of community service.'}
+                  </p>
+                </div>
+                <div className="flex justify-center sm:justify-start">
+                  <button
+                    onClick={onOpenRegister}
+                    className="mfct-btn-gold w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:-translate-y-0.5 transition-all"
+                  >
+                    <span>{language === 'hi' ? 'अभी जुड़ें' : language === 'ur' ? 'ابھی جڑیں' : 'JOIN NOW'}</span>
+                    <UserPlus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Support Our Cause (Order 3 on mobile, Order 3 on desktop) */}
+            <div className="order-3 lg:col-span-5 p-4 sm:p-5 lg:p-0 rounded-2xl lg:rounded-none bg-black/25 lg:bg-transparent border border-white/10 lg:border-none flex flex-col sm:flex-row items-center sm:items-start lg:justify-end text-center sm:text-left lg:text-right gap-3.5 sm:gap-5">
+              <div className="shrink-0 pt-0 sm:pt-1 lg:order-2">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(200, 168, 75, 0.15)' }}>
+                  <HandHeart
+                    className="w-6 h-6 sm:w-7 sm:h-7"
+                    style={{ color: '#d4af37' }}
+                  />
+                </div>
+              </div>
+              <div className="space-y-3 w-full sm:w-auto lg:order-1 flex flex-col items-center sm:items-start lg:items-end">
+                <div>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold text-white tracking-wide">
                     {language === 'hi' ? 'सहयोग करें' : language === 'ur' ? 'مدد کریں' : 'Support Our Cause'}
                   </h3>
                   <p className="text-xs sm:text-sm mt-1" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
@@ -100,10 +106,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                       : 'Your small support can change someone’s life.'}
                   </p>
                 </div>
-                <div className="flex lg:justify-end">
+                <div className="flex justify-center sm:justify-start lg:justify-end w-full sm:w-auto">
                   <button
                     onClick={onOpenDonate}
-                    className="mfct-btn-gold px-6 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer shadow-lg hover:-translate-y-0.5 transition-all"
+                    className="mfct-btn-gold w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:-translate-y-0.5 transition-all"
                   >
                     <Heart className="w-3.5 h-3.5 fill-current" />
                     <span>{language === 'hi' ? 'दान करें' : language === 'ur' ? 'عطیہ کریں' : 'DONATE NOW'}</span>
@@ -121,7 +127,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
 
             {/* Col 1: Brand & Mission */}
-            <div className="space-y-4 lg:col-span-1">
+            <div className="space-y-4 col-span-1 md:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-3">
                 <img
                   src="/mfct-logo.jpeg"
@@ -198,43 +204,46 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
               </div>
             </div>
 
-            {/* Col 2: Quick Navigation */}
-            <div className="space-y-3 text-xs">
-              <h4 className="font-bold text-white text-sm pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
-                {language === 'hi' ? 'त्वरित लिंक' : language === 'ur' ? 'فوری لنکس' : 'Quick Navigation'}
-              </h4>
-              <ul className="space-y-2" style={{ color: 'rgba(255,255,255,0.70)' }}>
-                <li><Link href="/admin" className="font-bold transition-colors hover:opacity-100" style={{ color: 'var(--mfct-gold)' }}>{language === 'hi' ? 'व्यवस्थापक और सदस्य पोर्टल (/admin)' : language === 'ur' ? 'ایڈمن اور ممبر پورٹل (/admin)' : 'Admin & Member Portal (/admin)'}</Link></li>
-                <li><Link href="/" className="hover:text-white transition-colors">{language === 'hi' ? 'मुख्य पृष्ठ' : language === 'ur' ? 'ہوم' : 'Home'}</Link></li>
-                <li><Link href="/campaigns" className="hover:text-white transition-colors">{language === 'hi' ? 'सभी अभियान' : language === 'ur' ? 'تمام مہمات' : 'Verified Campaigns'}</Link></li>
-                <li><Link href="/communities" className="hover:text-white transition-colors">{language === 'hi' ? 'समुदाय नेटवर्क' : language === 'ur' ? 'کمیونٹی نیٹ ورک' : 'Local Communities'}</Link></li>
-                <li><Link href="/niyamawali" className="hover:text-white transition-colors text-emerald-300 font-medium">{language === 'hi' ? 'नियमावली (27 नियम)' : language === 'ur' ? 'قواعد و ضوابط' : 'Niyamawali (27 Bylaws)'}</Link></li>
-                <li><Link href="/about" className="hover:text-white transition-colors">{language === 'hi' ? 'हमारे बारे में' : language === 'ur' ? 'ہمارے بارے میں' : 'About Us'}</Link></li>
-                <li><Link href="/gallery" className="hover:text-white transition-colors">{language === 'hi' ? 'गैलरी एवं फोटो' : language === 'ur' ? 'گیلری' : 'Gallery'}</Link></li>
-                <li><Link href="/members" className="hover:text-white transition-colors">{language === 'hi' ? 'सदस्य सूची' : language === 'ur' ? 'ممبر لسٹ' : 'Member Directory'}</Link></li>
-                <li><Link href="/testimonials" className="hover:text-white transition-colors">{language === 'hi' ? 'प्रभाव गाथाएं' : language === 'ur' ? 'اثرات کی کہانیاں' : 'Impact Stories'}</Link></li>
-              </ul>
-            </div>
+            {/* Combined 2-Column Group on Mobile (Col 2 & Col 3 Side-by-Side) */}
+            <div className="col-span-1 md:col-span-2 lg:col-span-2 grid grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+              {/* Col 2: Quick Navigation */}
+              <div className="space-y-3 text-xs">
+                <h4 className="font-bold text-white text-sm pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
+                  {language === 'hi' ? 'त्वरित लिंक' : language === 'ur' ? 'فوری لنکس' : 'Quick Navigation'}
+                </h4>
+                <ul className="space-y-2" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                  <li><Link href="/admin" className="font-bold transition-colors hover:opacity-100 block" style={{ color: 'var(--mfct-gold)' }}>{language === 'hi' ? 'व्यवस्थापक पोर्टल (/admin)' : language === 'ur' ? 'ایڈمن پورٹل (/admin)' : 'Admin Portal (/admin)'}</Link></li>
+                  <li><Link href="/" className="hover:text-white transition-colors block">{language === 'hi' ? 'मुख्य पृष्ठ' : language === 'ur' ? 'ہوم' : 'Home'}</Link></li>
+                  <li><Link href="/campaigns" className="hover:text-white transition-colors block">{language === 'hi' ? 'सभी अभियान' : language === 'ur' ? 'تمام مہمات' : 'Verified Campaigns'}</Link></li>
+                  <li><Link href="/communities" className="hover:text-white transition-colors block">{language === 'hi' ? 'समुदाय नेटवर्क' : language === 'ur' ? 'کمیونٹی نیٹ ورک' : 'Local Communities'}</Link></li>
+                  <li><Link href="/niyamawali" className="hover:text-white transition-colors text-emerald-300 font-medium block">{language === 'hi' ? 'नियमावली (27 नियम)' : language === 'ur' ? 'قواعد و ضوابط' : 'Niyamawali (27 Bylaws)'}</Link></li>
+                  <li><Link href="/about" className="hover:text-white transition-colors block">{language === 'hi' ? 'हमारे बारे में' : language === 'ur' ? 'ہمارے بارے میں' : 'About Us'}</Link></li>
+                  <li><Link href="/gallery" className="hover:text-white transition-colors block">{language === 'hi' ? 'गैलरी एवं फोटो' : language === 'ur' ? 'گیلری' : 'Gallery'}</Link></li>
+                  <li><Link href="/members" className="hover:text-white transition-colors block">{language === 'hi' ? 'सदस्य सूची' : language === 'ur' ? 'ممبر لسٹ' : 'Member Directory'}</Link></li>
+                  <li><Link href="/testimonials" className="hover:text-white transition-colors block">{language === 'hi' ? 'प्रभाव गाथाएं' : language === 'ur' ? 'اثرات کی کہانیاں' : 'Impact Stories'}</Link></li>
+                </ul>
+              </div>
 
-            {/* Col 3: Key Programs */}
-            <div className="space-y-3 text-xs">
-              <h4 className="font-bold text-white text-sm pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
-                {language === 'hi' ? 'हमारी प्रमुख सेवाएं' : language === 'ur' ? 'ہماری اہم خدمات' : 'Our Key Services'}
-              </h4>
-              <ul className="space-y-2" style={{ color: 'rgba(255,255,255,0.70)' }}>
-                <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'चिकित्सा सहायता' : language === 'ur' ? 'طبی امداد' : 'Medical Aid'}</li>
-                <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'शिक्षा एवं पुस्तकें' : language === 'ur' ? 'تعلیم اور کتب' : 'Education & Books'}</li>
-                <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'विवाह एवं निकाह सहायता' : language === 'ur' ? 'شادی اور نکاح امداد' : 'Marriage & Nikah Support'}</li>
-                <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'ज़कात योग्य' : language === 'ur' ? 'زکوٰۃ के مستحق' : 'Zakat Eligible'}</li>
-                <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'सदक़ा एवं सामान्य राहत' : language === 'ur' ? 'صدقہ اور عام ریلیف' : 'Sadaqah & General Relief'}</li>
-                <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'जनाज़ा एवं क़ब्रिस्तान' : language === 'ur' ? 'جنازہ اور قبرستان' : 'Janazah & Cemetery'}</li>
-              </ul>
+              {/* Col 3: Key Programs */}
+              <div className="space-y-3 text-xs">
+                <h4 className="font-bold text-white text-sm pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
+                  {language === 'hi' ? 'हमारी प्रमुख सेवाएं' : language === 'ur' ? 'ہماری اہم خدمات' : 'Our Key Services'}
+                </h4>
+                <ul className="space-y-2" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                  <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'चिकित्सा सहायता' : language === 'ur' ? 'طبی امداد' : 'Medical Aid'}</li>
+                  <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'शिक्षा एवं पुस्तकें' : language === 'ur' ? 'تعلیم اور کتب' : 'Education & Books'}</li>
+                  <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'विवाह सहायता' : language === 'ur' ? 'شادی امداد' : 'Marriage & Nikah'}</li>
+                  <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'ज़कात योग्य' : language === 'ur' ? 'زکوٰۃ के مستحق' : 'Zakat Eligible'}</li>
+                  <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'सदक़ा व राहत' : language === 'ur' ? 'صدقہ اور ریلیف' : 'Sadaqah Relief'}</li>
+                  <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'जनाज़ा सेवाएं' : language === 'ur' ? 'جنازہ خدمات' : 'Janazah & Cemetery'}</li>
+                </ul>
+              </div>
             </div>
 
             {/* Col 4: Contact Info */}
-            <div className="space-y-3 text-xs">
+            <div className="space-y-3 text-xs col-span-1 md:col-span-2 lg:col-span-1">
               <h4 className="font-bold text-white text-sm pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
-                {language === 'hi' ? 'संपर्क एवं पता' : language === 'ur' ? 'رابطہ और पता' : 'Contact Info'}
+                {language === 'hi' ? 'संपर्क एवं पता' : language === 'ur' ? 'رابطہ اور پتہ' : 'Contact Info'}
               </h4>
               <div className="space-y-3" style={{ color: 'rgba(255,255,255,0.70)' }}>
                 <div className="flex items-start gap-2">
