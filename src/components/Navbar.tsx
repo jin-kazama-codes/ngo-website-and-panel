@@ -170,7 +170,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-3 group cursor-pointer"
           >
             <Image
-              src="/logo.jpg"
+              src="/mfct-logo.jpeg"
               alt="MFCT Logo"
               width={56}
               height={56}
