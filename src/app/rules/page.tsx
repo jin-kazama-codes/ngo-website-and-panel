@@ -1,12 +1,13 @@
 'use client';
 
 import { AppStateProvider } from '../../providers/AppStateProvider';
-import { NiyamawaliPage } from '../../page-components/NiyamawaliPage';
+import { RulesPage } from '../../page-components/RulesPage';
 
-export default function RulesRoute() {
+export default function Rules() {
   return (
-    <AppStateProvider isPublicLayout currentPage="niyamawali">
-      <NiyamawaliPage />
+    <AppStateProvider isPublicLayout currentPage="rules">
+      <RulesPage />
     </AppStateProvider>
   );
 }
+

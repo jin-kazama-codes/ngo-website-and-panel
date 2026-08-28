@@ -22,6 +22,7 @@ function HomeContent() {
           campaigns: '/campaigns',
           communities: '/communities',
           about: '/about',
+          rules: '/rules',
           gallery: '/gallery',
           testimonials: '/testimonials',
           contact: '/contact',

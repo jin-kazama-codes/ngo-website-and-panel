@@ -36,10 +36,13 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
+  const [address, setAddress] = useState('');
   const [communities, setCommunities] = useState<Community[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState('');
-  const [kycFile, setKycFile] = useState<File | null>(null);
-  const [kycUploaded, setKycUploaded] = useState(false);
+  const [aadhaarFrontFile, setAadhaarFrontFile] = useState<File | null>(null);
+  const [aadhaarFrontUploaded, setAadhaarFrontUploaded] = useState(false);
+  const [aadhaarBackFile, setAadhaarBackFile] = useState<File | null>(null);
+  const [aadhaarBackUploaded, setAadhaarBackUploaded] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarUploaded, setAvatarUploaded] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'Bank Transfer'>('UPI');
@@ -49,10 +52,12 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   const [isFeePaid, setIsFeePaid] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const modalScrollRef = React.useRef<HTMLDivElement>(null);
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 4000);
   };
 
   useEffect(() => {
@@ -64,9 +69,14 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
   const activeCommunity = communities.find((c) => c.id === selectedCommunityId) || communities[0];
 
-  const handleKycFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAadhaarFrontChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) { setKycFile(file); setKycUploaded(true); }
+    if (file) { setAadhaarFrontFile(file); setAadhaarFrontUploaded(true); }
+  };
+
+  const handleAadhaarBackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) { setAadhaarBackFile(file); setAadhaarBackUploaded(true); }
   };
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,14 +92,56 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   const handleFinishRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeCommunity) return;
+
+    if (!utrNumber.trim()) {
+      showToast(
+        tr(
+          'कृपया 12 अंकों का बैंक UTR / संदर्भ संख्या दर्ज करें।',
+          'براہ کرم 12 ہندسوں کا UTR نمبر درج کریں۔',
+          'Please enter 12-digit Bank UTR / Reference number.'
+        ),
+        'error'
+      );
+      return;
+    }
+
+    if (!screenshotFile) {
+      showToast(
+        tr(
+          'कृपया भुगतान स्क्रीनशॉट अपलोड करें।',
+          'براہ کرم ادائیگی کی رسید اپلوڈ کریں۔',
+          'Please upload payment screenshot.'
+        ),
+        'error'
+      );
+      return;
+    }
+
+    if (!isFeePaid) {
+      showToast(
+        tr(
+          'कृपया भुगतान और दिशानिर्देशों की पुष्टि करें।',
+          'براہ کرم ادائیگی اور ہدایات کی تصدیق کریں۔',
+          'Please confirm payment and guidelines agreement.'
+        ),
+        'error'
+      );
+      return;
+    }
+
     setSubmitting(true);
     try {
-      let kycUrl: string | undefined;
-      if (kycFile) {
-        kycUrl = await uploadImage('users', kycFile);
+      let aadhaarFrontUrl: string | undefined;
+      if (aadhaarFrontFile) {
+        aadhaarFrontUrl = await uploadImage('users', aadhaarFrontFile);
       }
 
-      let avatarUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400';
+      let aadhaarBackUrl: string | undefined;
+      if (aadhaarBackFile) {
+        aadhaarBackUrl = await uploadImage('users', aadhaarBackFile);
+      }
+
+      let avatarUrl = '';
       if (avatarFile) {
         avatarUrl = await uploadImage('users', avatarFile);
       }
@@ -107,7 +159,8 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
         email: email,
         phone: phone,
         city,
-        state: state,
+        state,
+        address,
         role: 'member',
         avatar: avatarUrl,
         communityId: activeCommunity.id,
@@ -120,9 +173,11 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
         paymentMethod: paymentMethod,
         paymentUtr: utrNumber || undefined,
         paymentScreenshotUrl: screenshotUrl,
+        aadhaarFrontUrl,
+        aadhaarBackUrl,
       };
 
-      await createUser({ ...newMember, kycDocumentUrl: kycUrl });
+      await createUser(newMember);
       onRegistered(newMember);
       setStep(3);
       try { confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } }); } catch { }
@@ -143,7 +198,29 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-fade-in overflow-y-auto">
+      {/* High-visibility Floating Toast */}
+      {toast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[99999] max-w-lg w-[92%] animate-fade-in pointer-events-auto">
+          <div className={`p-4 rounded-2xl text-sm font-bold shadow-2xl flex items-center justify-between gap-3 border ${
+            toast.type === 'error'
+              ? 'bg-red-600 text-white border-red-700 shadow-red-950/40'
+              : 'bg-emerald-600 text-white border-emerald-700 shadow-emerald-950/40'
+          }`}>
+            <div className="flex items-center gap-2.5 flex-1">
+              <span className="text-lg leading-none">{toast.type === 'error' ? '⚠️' : '✓'}</span>
+              <span className="leading-snug">{toast.message}</span>
+            </div>
+            <button
+              onClick={() => setToast(null)}
+              className="p-1 hover:bg-white/20 rounded-full transition-colors shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
       <div
+        ref={modalScrollRef}
         className="rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[92vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)' }}
       >
@@ -154,13 +231,6 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
         >
           <X className="w-5 h-5" />
         </button>
-
-        {toast && (
-          <div className={`fixed top-10 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition-all z-[100] flex items-center gap-2 animate-fade-in ${toast.type === 'error' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-            }`}>
-            <span>{toast.message}</span>
-          </div>
-        )}
 
         <div className="mb-6">
           <div
@@ -184,6 +254,15 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
         {step === 1 && (
           <div className="space-y-4">
+            {formError && (
+              <div className="p-4 rounded-2xl bg-red-50 border-2 border-red-300 text-red-700 text-xs font-bold flex items-start gap-2.5 animate-fade-in shadow-sm">
+                <span className="text-base leading-none">⚠️</span>
+                <div className="flex-1">
+                  <div className="font-extrabold mb-0.5">{tr('कृपया निम्नलिखित विवरण पूरा करें:', 'براہ کرم درج ذیل تفصیلات مکمل کریں:', 'Please complete the following details:')}</div>
+                  <div className="font-medium text-red-600">{formError}</div>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
@@ -294,6 +373,21 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                {tr('पूरा पता *', 'مکمل پتہ *', 'Full Address *')}
+              </label>
+              <textarea
+                required
+                rows={2}
+                placeholder={tr('मकान संख्या, गली / मोहल्ला, लैंडमार्क, पिन कोड', 'مکان نمبر، گلی / محلہ، پن کوڈ', 'House No., Street / Area, Landmark, Pincode')}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="w-full p-3 rounded-xl text-sm font-medium outline-none resize-none"
+                style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
                 {tr('अपना स्थानीय समुदाय चुनें', 'اپنی مقامی کمیونٹی منتخب کریں', 'Select Your Local Community')}
               </label>
               <select
@@ -310,84 +404,130 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               </select>
             </div>
 
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                {tr('प्रोफ़ाइल फ़ोटो *', 'پروفائل تصویر *', 'Profile Photo *')}
+              </label>
+              <label
+                className="p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center"
+                style={avatarUploaded ? {
+                  background: 'rgba(200,168,75,0.12)', borderColor: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)'
+                } : {
+                  background: 'var(--mfct-warm-bg)', borderColor: 'var(--mfct-border)', color: 'var(--mfct-text-muted)'
+                }}
+              >
+                <input type="file" accept="image/*" className="sr-only" onChange={handleAvatarFileChange} />
+                <Upload className="w-5 h-5 mb-1" style={{ color: 'var(--mfct-gold)' }} />
+                <span className="text-xs font-bold">
+                  {avatarUploaded
+                    ? `✓ ${avatarFile?.name ?? tr('फ़ोटो संलग्न है', 'تصویر منسلک ہے', 'Photo Attached')}`
+                    : tr('फ़ोटो अपलोड करने के लिए क्लिक करें *', '* تصویر اپلوڈ کرنے کے لیے کلک کریں', 'Click to upload profile photo *')}
+                </span>
+              </label>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
-                  {tr('प्रोफ़ाइल फ़ोटो (वैकल्पिक)', 'پروفائل تصویر (اختیاری)', 'Profile Photo (Optional)')}
+                  {tr('आधार कार्ड - सामने का भाग (वैकल्पिक)', 'آدھار کارڈ - سامنے کا حصہ (اختیاری)', 'Aadhaar Card - Front (Optional)')}
                 </label>
                 <label
                   className="p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center"
-                  style={avatarUploaded ? {
+                  style={aadhaarFrontUploaded ? {
                     background: 'rgba(200,168,75,0.12)', borderColor: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)'
                   } : {
                     background: 'var(--mfct-warm-bg)', borderColor: 'var(--mfct-border)', color: 'var(--mfct-text-muted)'
                   }}
                 >
-                  <input type="file" accept="image/*" className="sr-only" onChange={handleAvatarFileChange} />
+                  <input type="file" accept="image/*,.pdf" className="sr-only" onChange={handleAadhaarFrontChange} />
                   <Upload className="w-5 h-5 mb-1" style={{ color: 'var(--mfct-gold)' }} />
                   <span className="text-xs font-bold">
-                    {avatarUploaded
-                      ? `✓ ${avatarFile?.name ?? tr('फ़ोटो संलग्न है', 'تصویر منسلک ہے', 'Photo Attached')}`
-                      : tr('फ़ोटो अपलोड करने के लिए क्लिक करें', 'تصویر اپلوڈ کریں', 'Click to upload photo')}
+                    {aadhaarFrontUploaded
+                      ? `✓ ${aadhaarFrontFile?.name ?? tr('आधार सामने की फ़ोटो संलग्न है', 'آدھار سامنے کی تصویر منسلک ہے', 'Aadhaar Front Attached')}`
+                      : tr('आधार सामने का भाग अपलोड करें', 'آدھار سامنے کا حصہ اپلوڈ کریں', 'Upload Aadhaar Front')}
                   </span>
                 </label>
               </div>
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
-                  {tr('पहचान दस्तावेज़ (आधार / वोटर आईडी) *', 'شناختی دستاویز (آدھار / ووٹر کارڈ) *', 'ID Document (Aadhaar / Voter ID) *')}
+                  {tr('आधार कार्ड - पीछे का भाग (वैकल्पिक)', 'آدھار کارڈ - پیچھے کا حصہ (اختیاری)', 'Aadhaar Card - Back (Optional)')}
                 </label>
                 <label
                   className="p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center"
-                  style={kycUploaded ? {
+                  style={aadhaarBackUploaded ? {
                     background: 'rgba(200,168,75,0.12)', borderColor: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)'
                   } : {
                     background: 'var(--mfct-warm-bg)', borderColor: 'var(--mfct-border)', color: 'var(--mfct-text-muted)'
                   }}
                 >
-                  <input type="file" accept="image/*,.pdf" className="sr-only" onChange={handleKycFileChange} />
+                  <input type="file" accept="image/*,.pdf" className="sr-only" onChange={handleAadhaarBackChange} />
                   <Upload className="w-5 h-5 mb-1" style={{ color: 'var(--mfct-gold)' }} />
                   <span className="text-xs font-bold">
-                    {kycUploaded
-                      ? `✓ ${kycFile?.name ?? tr('दस्तावेज़ संलग्न है', 'دستاویز منسلک ہے', 'Document Attached')}`
-                      : tr('आधार या पहचान पत्र अपलोड करें *', '* شناختی دستاویز اپلوڈ کریں', 'Upload ID proof (Aadhaar/Voter ID) *')}
+                    {aadhaarBackUploaded
+                      ? `✓ ${aadhaarBackFile?.name ?? tr('आधार पीछे की फ़ोटो संलग्न है', 'آدھار پیچھے کی تصویر منسلک ہے', 'Aadhaar Back Attached')}`
+                      : tr('आधार पीछे का भाग अपलोड करें', 'آدھار پیچھے کا حصہ اپلوڈ کریں', 'Upload Aadhaar Back')}
                   </span>
                 </label>
               </div>
             </div>
 
+            {formError && (
+              <div className="p-3.5 rounded-2xl bg-red-50 border-2 border-red-300 text-red-700 text-xs font-bold flex items-start gap-2 animate-fade-in shadow-sm">
+                <span className="text-base leading-none">⚠️</span>
+                <span className="flex-1">{formError}</span>
+              </div>
+            )}
+
             <button
               type="button"
               onClick={() => {
                 const missingFields = [];
-                if (!fullName) missingFields.push(tr('पूरा नाम', 'مکمل نام', 'Full Name'));
+                if (!fullName.trim()) missingFields.push(tr('पूरा नाम', 'مکمل نام', 'Full Name'));
+                if (!phone.trim()) missingFields.push(tr('मोबाइल नंबर', 'موبائل نمبر', 'Mobile Number'));
                 if (!password) missingFields.push(tr('पासवर्ड', 'پاس ورڈ', 'Password'));
-                if (!phone) missingFields.push(tr('मोबाइल नंबर', 'موبائل نمبر', 'Mobile Number'));
-                if (!state) missingFields.push(tr('राज्य', 'ریاست', 'State'));
-                if (!city) missingFields.push(tr('शहर', 'شہر', 'City'));
-                if (!kycFile) missingFields.push(tr('पहचान दस्तावेज़', 'شناختی دستاویز', 'ID Document'));
+                if (!state.trim()) missingFields.push(tr('राज्य', 'ریاست', 'State'));
+                if (!city.trim()) missingFields.push(tr('शहर', 'شہر', 'City'));
+                if (!address.trim()) missingFields.push(tr('पूरा पता', 'مکمل پتہ', 'Full Address'));
+                if (!avatarFile) missingFields.push(tr('प्रोफ़ाइल फ़ोटो', 'پروفائل تصویر', 'Profile Photo'));
 
                 if (missingFields.length > 0) {
-                  showToast(
-                    tr(
-                      `कृपया भरें: ${missingFields.join(', ')}`,
-                      `براہ کرم درج کریں: ${missingFields.join(', ')}`,
-                      `Please fill: ${missingFields.join(', ')}`
-                    )
+                  const errMsg = tr(
+                    `कृपया आवश्यक फ़ील्ड भरें: ${missingFields.join(', ')}`,
+                    `براہ کرم درج کریں: ${missingFields.join(', ')}`,
+                    `Please fill required fields: ${missingFields.join(', ')}`
                   );
+                  setFormError(errMsg);
+                  showToast(errMsg, 'error');
+                  modalScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
                   return;
                 }
+
+                if (phone.trim().length < 10) {
+                  const errMsg = tr(
+                    'मोबाइल नंबर कम से कम 10 अंकों का होना चाहिए।',
+                    'موبائل نمبر 10 ہندسوں کا ہونا چاہیے۔',
+                    'Mobile number must be at least 10 digits.'
+                  );
+                  setFormError(errMsg);
+                  showToast(errMsg, 'error');
+                  return;
+                }
+
                 if (password.length < 6) {
-                  showToast(
-                    tr(
-                      'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।',
-                      'پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔',
-                      'Password must be at least 6 characters.'
-                    )
+                  const errMsg = tr(
+                    'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।',
+                    'پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔',
+                    'Password must be at least 6 characters.'
                   );
+                  setFormError(errMsg);
+                  showToast(errMsg, 'error');
                   return;
                 }
+
+                setFormError(null);
                 setStep(2);
+                modalScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               className="mfct-btn-gold cursor-pointer w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
             >
@@ -495,10 +635,11 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
-                  {tr('12 अंकों का बैंक UTR / संदर्भ संख्या', '12 ہندسوں کا بینک UTR / ریفرنس نمبر', '12-Digit Bank UTR / Transaction Ref No')}
+                  {tr('12 अंकों का बैंक UTR / संदर्भ संख्या *', '12 ہندسوں کا بینک UTR / ریفرنس نمبر *', '12-Digit Bank UTR / Transaction Ref No *')}
                 </label>
                 <input
                   type="text"
+                  required
                   placeholder={tr('उदा. 420199381029', 'مثال: 420199381029', 'e.g. 420199381029')}
                   value={utrNumber}
                   onChange={(e) => setUtrNumber(e.target.value)}
@@ -509,7 +650,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
-                  {tr('या भुगतान स्क्रीनशॉट अपलोड करें', 'یا ادائیگی کی رسید اپلوڈ کریں', 'Or Upload Payment Screenshot')}
+                  {tr('भुगतान स्क्रीनशॉट अपलोड करें *', 'ادائیگی کی رسید اپلوڈ کریں *', 'Upload Payment Screenshot *')}
                 </label>
                 <label
                   className="p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center"
@@ -529,7 +670,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                   <span className="text-xs font-bold">
                     {screenshotUploaded
                       ? `✓ ${screenshotFile?.name ?? tr('स्क्रीनशॉट संलग्न है', 'رسید منسلک ہے', 'Screenshot Attached')}`
-                      : tr('भुगतान रसीद अपलोड करने के लिए क्लिक करें', 'ادائیگی کی رسید اپلوڈ کریں', 'Click to upload payment screenshot')}
+                      : tr('भुगतान रसीद अपलोड करने के लिए क्लिक करें *', 'ادائیگی کی رسید اپلوڈ کریں *', 'Click to upload payment screenshot *')}
                   </span>
                 </label>
               </div>

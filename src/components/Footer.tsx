@@ -2,12 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Phone, MapPin, Mail, Globe, ArrowRight, UserPlus, Heart, ShieldCheck, Facebook, Youtube } from 'lucide-react';
-import { FaHandsHoldingChild, FaHandHoldingHeart, FaFacebookF, FaInstagram, FaYoutube, FaWhatsapp } from 'react-icons/fa6';
+import { Phone, MapPin, Mail, Globe, ArrowRight, UserPlus, Heart, ShieldCheck, Facebook, Youtube, Users, HandHeart } from 'lucide-react';
+import { FaFacebookF, FaInstagram, FaWhatsapp } from 'react-icons/fa6';
 import { useLanguage } from '../context/LanguageContext';
 
 interface FooterProps {
-  onPageChange: (page: string) => void;
+  onPageChange?: (page: string) => void;
   onOpenDonate: () => void;
   onOpenRegister?: () => void;
   onNavigateToAdmin?: () => void;
@@ -34,7 +34,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
             {/* Left Column: Become a Member */}
             <div className="lg:col-span-5 flex items-start gap-4 sm:gap-5">
               <div className="shrink-0 pt-1">
-                <FaHandsHoldingChild
+                <Users
                   className="w-10 h-10 sm:w-12 sm:h-12"
                   style={{ color: '#d4af37' }}
                 />
@@ -82,7 +82,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
             {/* Right Column: Support Our Cause */}
             <div className="lg:col-span-5 flex items-start justify-start lg:justify-end gap-4 sm:gap-5">
               <div className="shrink-0 pt-1 lg:order-2">
-                <FaHandHoldingHeart
+                <HandHeart
                   className="w-10 h-10 sm:w-12 sm:h-12"
                   style={{ color: '#d4af37' }}
                 />
@@ -129,7 +129,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                   className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-[var(--mfct-gold)]"
                 />
                 <div>
-                  <span className="font-extrabold text-white text-sm block">
+                  <span className="font-extrabold text-white text-sm block" style={{ fontFamily: 'serif' }}>
                     {language === 'hi' ? 'मोहम्मद फ़ईम' : language === 'ur' ? 'محمد فہیم' : 'Mohammad Faeem'}
                   </span>
                   <span className="text-xs block" style={{ color: 'var(--mfct-gold)' }}>
@@ -209,7 +209,8 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                 <li><Link href="/campaigns" className="hover:text-white transition-colors">{language === 'hi' ? 'सभी अभियान' : language === 'ur' ? 'تمام مہمات' : 'Verified Campaigns'}</Link></li>
                 <li><Link href="/communities" className="hover:text-white transition-colors">{language === 'hi' ? 'समुदाय नेटवर्क' : language === 'ur' ? 'کمیونٹی نیٹ ورک' : 'Local Communities'}</Link></li>
                 <li><Link href="/niyamawali" className="hover:text-white transition-colors">{language === 'hi' ? 'नियमावली एवं नियम' : language === 'ur' ? 'قواعد و ضوابط' : 'Rules & Niyamawali'}</Link></li>
-                <li><Link href="/about" className="hover:text-white transition-colors">{language === 'hi' ? 'हमारे बारे में' : language === 'ur' ? 'ہمارے بارے میں' : 'About Us'}</Link></li>
+                <li><Link href="/rules" className="hover:text-white transition-colors text-emerald-300 font-medium">{language === 'hi' ? 'ट्रस्ट नियमावली (27 नियम)' : language === 'ur' ? 'ٹرسٹ قواعد و ضوابط' : 'Trust Rules & Guidelines'}</Link></li>
+                <li><Link href="/about" className="hover:text-white transition-colors">{language === 'hi' ? 'हमारे बारे में' : language === 'ur' ? 'ہمارے بارے में' : 'About Us'}</Link></li>
                 <li><Link href="/gallery" className="hover:text-white transition-colors">{language === 'hi' ? 'गैलरी एवं फोटो' : language === 'ur' ? 'گیلری' : 'Gallery'}</Link></li>
                 <li><Link href="/members" className="hover:text-white transition-colors">{language === 'hi' ? 'सदस्य सूची' : language === 'ur' ? 'ممبر لسٹ' : 'Member Directory'}</Link></li>
                 <li><Link href="/testimonials" className="hover:text-white transition-colors">{language === 'hi' ? 'प्रभाव गाथाएं' : language === 'ur' ? 'اثرات کی کہانیاں' : 'Impact Stories'}</Link></li>
@@ -225,7 +226,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                 <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'चिकित्सा सहायता' : language === 'ur' ? 'طبی امداد' : 'Medical Aid'}</li>
                 <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'शिक्षा एवं पुस्तकें' : language === 'ur' ? 'تعلیم اور کتب' : 'Education & Books'}</li>
                 <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'विवाह एवं निकाह सहायता' : language === 'ur' ? 'شادی اور نکاح امداد' : 'Marriage & Nikah Support'}</li>
-                <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'ज़कात योग्य' : language === 'ur' ? 'زکوٰۃ کے مستحق' : 'Zakat Eligible'}</li>
+                <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'ज़कात योग्य' : language === 'ur' ? 'زکوٰۃ के مستحق' : 'Zakat Eligible'}</li>
                 <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'सदक़ा एवं सामान्य राहत' : language === 'ur' ? 'صدقہ اور عام ریلیف' : 'Sadaqah & General Relief'}</li>
                 <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'जनाज़ा एवं क़ब्रिस्तान' : language === 'ur' ? 'جنازہ اور قبرستان' : 'Janazah & Cemetery'}</li>
               </ul>
@@ -234,7 +235,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
             {/* Col 4: Contact Info */}
             <div className="space-y-3 text-xs">
               <h4 className="font-bold text-white text-sm pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
-                {language === 'hi' ? 'संपर्क एवं पता' : language === 'ur' ? 'رابطہ اور پتہ' : 'Contact Info'}
+                {language === 'hi' ? 'संपर्क एवं पता' : language === 'ur' ? 'رابطہ और पता' : 'Contact Info'}
               </h4>
               <div className="space-y-3" style={{ color: 'rgba(255,255,255,0.70)' }}>
                 <div className="flex items-start gap-2">
@@ -276,7 +277,11 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
       <div className="mt-4 py-4" style={{ background: '#05140d', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
           <p>© 2026 Mohammad Faeem Charitable Trust (MFCT). {language === 'hi' ? 'सर्वाधिकार सुरक्षित।' : language === 'ur' ? 'جملہ حقوق محفوظ ہیں۔' : 'All Rights Reserved.'}</p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <Link href="/rules" className="hover:text-white transition-colors text-emerald-300 font-semibold">
+              {language === 'hi' ? 'नियम एवं दिशानिर्देश' : language === 'ur' ? 'قواعد و ضوابط' : 'Rules & Guidelines'}
+            </Link>
+            <span className="opacity-30">|</span>
             <Link href="/privacy" className="hover:text-white transition-colors">
               {language === 'hi' ? 'गोपनीयता नीति' : language === 'ur' ? 'پرائیویسی پالیسی' : 'Privacy Policy'}
             </Link>
