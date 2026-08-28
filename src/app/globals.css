@@ -1,9 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Noto+Sans+Devanagari:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Mukta:wght@300;400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  /* Font Families */
+  --font-english: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-hindi: 'Mukta', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-urdu: 'Noto Nastaliq Urdu', 'Noto Sans Arabic', Tahoma, sans-serif;
+  --font-site: var(--font-hindi);
+
   /* MFCT Brand Colors */
   --mfct-dark-green: #1a3c2c;
   --mfct-mid-green: #2e5e42;
@@ -27,29 +33,51 @@
 
 @layer base {
   *, ::before, ::after {
-    font-family: 'Plus Jakarta Sans', 'Inter', 'Noto Sans Devanagari', 'Noto Sans', system-ui, -apple-system, sans-serif;
+    font-family: inherit;
+    box-sizing: border-box;
   }
 
-  html, body {
-    background-color: var(--mfct-warm-bg);
-    color: var(--mfct-text-dark);
-    font-family: 'Plus Jakarta Sans', 'Inter', 'Noto Sans Devanagari', 'Noto Sans', system-ui, -apple-system, sans-serif;
+  html {
+    font-family: var(--font-hindi);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    font-size: 16px;
+  }
+
+  /* English Language Typography */
+  html[lang="en"], html[data-lang="en"] {
+    font-family: var(--font-english);
+    letter-spacing: -0.011em;
+  }
+
+  /* Hindi Language Typography — Clean, highly readable, balanced font size */
+  html[lang="hi"], html[data-lang="hi"] {
+    font-family: var(--font-hindi);
+    letter-spacing: 0.005em;
+    line-height: 1.55;
+  }
+
+  /* Urdu Language Typography */
+  html[lang="ur"], html[data-lang="ur"] {
+    font-family: var(--font-urdu);
+    line-height: 1.8;
+  }
+
+  body {
+    background-color: var(--mfct-warm-bg);
+    color: var(--mfct-text-dark);
+    font-family: inherit;
+    line-height: 1.5;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Plus Jakarta Sans', 'Inter', 'Noto Sans Devanagari', 'Noto Sans', system-ui, -apple-system, sans-serif;
-    letter-spacing: -0.015em;
+    font-family: inherit;
+    font-weight: 800;
   }
 
   button, input, select, textarea {
-    font-family: 'Plus Jakarta Sans', 'Inter', 'Noto Sans Devanagari', 'Noto Sans', system-ui, -apple-system, sans-serif;
-  }
-
-  * {
-    box-sizing: border-box;
+    font-family: inherit;
   }
 
   /* Scrollbar */

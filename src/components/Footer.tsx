@@ -129,7 +129,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                   className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-[var(--mfct-gold)]"
                 />
                 <div>
-                  <span className="font-extrabold text-white text-sm block" style={{ fontFamily: 'serif' }}>
+                  <span className="font-extrabold text-white text-sm block">
                     {language === 'hi' ? 'मोहम्मद फ़ईम' : language === 'ur' ? 'محمد فہیم' : 'Mohammad Faeem'}
                   </span>
                   <span className="text-xs block" style={{ color: 'var(--mfct-gold)' }}>
@@ -208,9 +208,8 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                 <li><Link href="/" className="hover:text-white transition-colors">{language === 'hi' ? 'मुख्य पृष्ठ' : language === 'ur' ? 'ہوم' : 'Home'}</Link></li>
                 <li><Link href="/campaigns" className="hover:text-white transition-colors">{language === 'hi' ? 'सभी अभियान' : language === 'ur' ? 'تمام مہمات' : 'Verified Campaigns'}</Link></li>
                 <li><Link href="/communities" className="hover:text-white transition-colors">{language === 'hi' ? 'समुदाय नेटवर्क' : language === 'ur' ? 'کمیونٹی نیٹ ورک' : 'Local Communities'}</Link></li>
-                <li><Link href="/niyamawali" className="hover:text-white transition-colors">{language === 'hi' ? 'नियमावली एवं नियम' : language === 'ur' ? 'قواعد و ضوابط' : 'Rules & Niyamawali'}</Link></li>
-                <li><Link href="/rules" className="hover:text-white transition-colors text-emerald-300 font-medium">{language === 'hi' ? 'ट्रस्ट नियमावली (27 नियम)' : language === 'ur' ? 'ٹرسٹ قواعد و ضوابط' : 'Trust Rules & Guidelines'}</Link></li>
-                <li><Link href="/about" className="hover:text-white transition-colors">{language === 'hi' ? 'हमारे बारे में' : language === 'ur' ? 'ہمارے بارے में' : 'About Us'}</Link></li>
+                <li><Link href="/niyamawali" className="hover:text-white transition-colors text-emerald-300 font-medium">{language === 'hi' ? 'नियमावली (27 नियम)' : language === 'ur' ? 'قواعد و ضوابط' : 'Niyamawali (27 Bylaws)'}</Link></li>
+                <li><Link href="/about" className="hover:text-white transition-colors">{language === 'hi' ? 'हमारे बारे में' : language === 'ur' ? 'ہمارے بارے میں' : 'About Us'}</Link></li>
                 <li><Link href="/gallery" className="hover:text-white transition-colors">{language === 'hi' ? 'गैलरी एवं फोटो' : language === 'ur' ? 'گیلری' : 'Gallery'}</Link></li>
                 <li><Link href="/members" className="hover:text-white transition-colors">{language === 'hi' ? 'सदस्य सूची' : language === 'ur' ? 'ممبر لسٹ' : 'Member Directory'}</Link></li>
                 <li><Link href="/testimonials" className="hover:text-white transition-colors">{language === 'hi' ? 'प्रभाव गाथाएं' : language === 'ur' ? 'اثرات کی کہانیاں' : 'Impact Stories'}</Link></li>
@@ -278,7 +277,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
           <p>© 2026 Mohammad Faeem Charitable Trust (MFCT). {language === 'hi' ? 'सर्वाधिकार सुरक्षित।' : language === 'ur' ? 'جملہ حقوق محفوظ ہیں۔' : 'All Rights Reserved.'}</p>
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-            <Link href="/rules" className="hover:text-white transition-colors text-emerald-300 font-semibold">
+            <Link href="/niyamawali" className="hover:text-white transition-colors text-emerald-300 font-semibold">
               {language === 'hi' ? 'नियम एवं दिशानिर्देश' : language === 'ur' ? 'قواعد و ضوابط' : 'Rules & Guidelines'}
             </Link>
             <span className="opacity-30">|</span>

@@ -307,7 +307,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   return (
     <div className="space-y-16 pb-12 animate-fade-in" style={{ color: 'var(--mfct-text-dark)' }}>
       {/* 1. HERO CAROUSEL SECTION */}
-      <section className="relative w-full overflow-hidden bg-[#0a1c14] min-h-[580px] lg:min-h-[640px] flex items-center">
+      <section className="relative w-full overflow-hidden bg-[#0a1c14] min-h-[500px] lg:min-h-[calc(100vh-175px)] flex items-center">
         {/* Background Slide Images with Cross-Fade */}
         {heroImages.map((imgSrc, idx) => (
           <div
@@ -319,7 +319,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               src={imgSrc}
               alt={`Hero Background ${idx + 1}`}
               className={`w-full h-full object-cover object-center transform transition-transform duration-[7000ms] ease-out ${idx === currentSlide ? 'scale-105' : 'scale-100'
-                }`}
+              }`}
             />
           </div>
         ))}
@@ -339,19 +339,18 @@ export const HomePage: React.FC<HomePageProps> = ({
         />
 
         {/* Content Container */}
-        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 w-full">
-          <div className="max-w-3xl space-y-6">
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 w-full">
+          <div className="max-w-3xl space-y-3.5 sm:space-y-4">
 
             {/* Tagline / Pre-heading badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest" style={{ background: 'rgba(26,60,44,0.9)', border: '1px solid rgba(200,168,75,0.4)', color: 'var(--mfct-gold)' }}>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-widest" style={{ background: 'rgba(26,60,44,0.9)', border: '1px solid rgba(200,168,75,0.4)', color: 'var(--mfct-gold)' }}>
               <ArrowRight className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
               <span>{t('home.hero_tagline', 'Together for a Better Tomorrow')}</span>
             </div>
 
             {/* Headline */}
             <h1
-              className="text-4xl sm:text-5xl lg:text-[3.5rem] font-black text-white tracking-tight leading-[1.1]"
-              style={{ fontFamily: 'Playfair Display, Noto Sans Devanagari, serif' }}
+              className="text-3xl sm:text-4xl lg:text-[2.85rem] xl:text-[3.25rem] font-black text-white tracking-tight leading-[1.12]"
             >
               {t('home.hero_line1', 'Yaad Unki,')}{' '}
               <span className="block sm:inline" style={{ color: 'var(--mfct-gold)' }}>
@@ -360,7 +359,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </h1>
 
             {/* Sub-description */}
-            <p className="text-base sm:text-lg leading-relaxed font-normal text-white/90 max-w-xl">
+            <p className="text-sm sm:text-[15px] lg:text-base leading-snug sm:leading-relaxed font-normal text-white/90 max-w-xl">
               {t('home.hero_desc', 'MFCT का संकल्प – समाज सेवा, मानवता और एकता के लिए हम हमेशा आपके साथ हैं।')}
             </p>
 
@@ -373,7 +372,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               ].map(({ icon: Icon, label }) => (
                 <span
                   key={label}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-semibold"
                   style={{
                     background: 'rgba(200,168,75,0.15)',
                     border: '1px solid rgba(200,168,75,0.35)',
@@ -387,10 +386,10 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             {/* CTA Buttons (Exact Original Buttons) */}
-            <div className="flex flex-wrap items-center gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-1">
               <button
                 onClick={onOpenRegister}
-                className="mfct-btn-outline group py-3.5 px-6 rounded-xl font-extrabold text-sm hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer transition-all shadow-lg"
+                className="mfct-btn-outline group py-2.5 sm:py-3 px-4 sm:px-5 rounded-xl font-extrabold text-xs sm:text-sm hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer transition-all shadow-lg"
               >
                 <UserPlus className="w-4 h-4" />
                 {t('home.become_member', 'Become a Member')}
@@ -399,7 +398,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
               <button
                 onClick={() => onDonate()}
-                className="mfct-btn-gold group py-3.5 px-6 rounded-xl font-extrabold text-sm hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer transition-all shadow-lg"
+                className="mfct-btn-gold group py-2.5 sm:py-3 px-4 sm:px-5 rounded-xl font-extrabold text-xs sm:text-sm hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer transition-all shadow-lg"
               >
                 <Heart className="w-4 h-4 fill-current" />
                 {t('home.donate_now', 'Donate Now')}
@@ -408,7 +407,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               {onOpenZakatCalc && (
                 <button
                   onClick={onOpenZakatCalc}
-                  className="mfct-btn-dark group py-3.5 px-5 rounded-xl font-black text-sm hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer transition-all shadow-lg"
+                  className="mfct-btn-dark group py-2.5 sm:py-3 px-4 sm:px-5 rounded-xl font-black text-xs sm:text-sm hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer transition-all shadow-lg"
                 >
                   <Calculator className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
                   {t('home.zakat_calc', 'Zakat Calculator')}
@@ -417,52 +416,52 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             {/* Live Stats (3 Original Cards) */}
-            <div className="pt-2">
+            <div className="pt-1.5">
               <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-lg">
                 <div
-                  className="rounded-xl p-3 sm:p-4 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
+                  className="rounded-xl p-2.5 sm:p-3 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
                   style={{ background: '#ffffff', border: '1px solid rgba(200,168,75,0.3)' }}
                 >
                   {loading ? (
-                    <div className="h-6 sm:h-8 w-12 sm:w-16 rounded animate-pulse mb-1 skeleton-mfct" />
+                    <div className="h-5 sm:h-7 w-12 sm:w-16 rounded animate-pulse mb-0.5 skeleton-mfct" />
                   ) : (
-                    <span className="text-base sm:text-2xl lg:text-3xl font-black block tabular-nums leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
+                    <span className="text-sm sm:text-xl lg:text-2xl font-black block tabular-nums leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
                       {totalMembers > 0 ? totalMembers.toLocaleString('en-IN') : '0'}+
                     </span>
                   )}
-                  <span className="text-[10px] sm:text-[11px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
+                  <span className="text-[9.5px] sm:text-[10.5px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
                     {t('home.verified_members', 'Verified Members')}
                   </span>
                 </div>
 
                 <div
-                  className="rounded-xl p-3 sm:p-4 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
+                  className="rounded-xl p-2.5 sm:p-3 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
                   style={{ background: 'var(--mfct-dark-green)', border: '1px solid var(--mfct-mid-green)' }}
                 >
                   {loading ? (
-                    <div className="h-6 sm:h-8 w-16 sm:w-20 rounded animate-pulse mb-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
+                    <div className="h-5 sm:h-7 w-16 sm:w-20 rounded animate-pulse mb-0.5" style={{ background: 'rgba(255,255,255,0.1)' }} />
                   ) : (
-                    <span className="text-[11px] xs:text-xs sm:text-lg lg:text-2xl font-black text-white block tabular-nums leading-tight tracking-tight truncate">
+                    <span className="text-[10px] xs:text-xs sm:text-base lg:text-xl font-black text-white block tabular-nums leading-tight tracking-tight truncate">
                       ₹{totalRaised > 0 ? totalRaised.toLocaleString('en-IN') : '0'}+
                     </span>
                   )}
-                  <span className="text-[10px] sm:text-[11px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-gold)' }}>
+                  <span className="text-[9.5px] sm:text-[10.5px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-gold)' }}>
                     {t('home.funds_disbursed', 'Relief Disbursed')}
                   </span>
                 </div>
 
                 <div
-                  className="rounded-xl p-3 sm:p-4 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
+                  className="rounded-xl p-2.5 sm:p-3 flex flex-col justify-center overflow-hidden transition-all shadow-lg"
                   style={{ background: '#ffffff', border: '1px solid rgba(200,168,75,0.3)' }}
                 >
                   {loading ? (
-                    <div className="h-6 sm:h-8 w-10 sm:w-12 rounded animate-pulse mb-1 skeleton-mfct" />
+                    <div className="h-5 sm:h-7 w-10 sm:w-12 rounded animate-pulse mb-0.5 skeleton-mfct" />
                   ) : (
-                    <span className="text-base sm:text-2xl lg:text-3xl font-black block leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
+                    <span className="text-sm sm:text-xl lg:text-2xl font-black block leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
                       100%
                     </span>
                   )}
-                  <span className="text-[10px] sm:text-[11px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
+                  <span className="text-[9.5px] sm:text-[10.5px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
                     {t('home.audit_receipts', 'Audit Receipts')}
                   </span>
                 </div>
@@ -473,12 +472,12 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         {/* ── Right Side Bottom Corner: Compact QR Widget (Click to Enlarge) ── */}
-        <div className="absolute bottom-5 sm:bottom-6 right-4 sm:right-6 lg:right-8 z-30 hidden sm:block">
+        <div className="absolute bottom-4 sm:bottom-5 right-4 sm:right-6 lg:right-8 z-30 hidden sm:block">
           <div
             onClick={() => setIsQrModalOpen(true)}
-            className="group relative cursor-pointer rounded-2xl p-2.5 sm:p-3 max-w-[170px] sm:max-w-[190px] w-full shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-amber-500/20 active:scale-95"
+            className="group relative cursor-pointer rounded-2xl p-2 sm:p-2.5 max-w-[155px] sm:max-w-[170px] w-full shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-amber-500/20 active:scale-95"
             style={{
-              background: 'rgba(10, 28, 20, 0.90)',
+              background: 'rgba(10, 28, 20, 0.92)',
               backdropFilter: 'blur(16px)',
               border: '1.5px solid rgba(200,168,75,0.45)',
               boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
@@ -486,8 +485,8 @@ export const HomePage: React.FC<HomePageProps> = ({
             title="Click to Enlarge QR Code"
           >
             {/* Header */}
-            <div className="flex items-center justify-between gap-1 mb-1.5">
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider shadow" style={{ background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)' }}>
+            <div className="flex items-center justify-between gap-1 mb-1">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow" style={{ background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)' }}>
                 <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: 'var(--mfct-dark-green)' }} />
                 Live & Verified
               </span>
@@ -497,11 +496,11 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             {/* QR Thumbnail */}
-            <div className="bg-white p-1.5 rounded-lg shadow-md flex justify-center items-center relative overflow-hidden group-hover:ring-2 ring-amber-400 transition-all">
+            <div className="bg-white p-1 rounded-lg shadow-md flex justify-center items-center relative overflow-hidden group-hover:ring-2 ring-amber-400 transition-all">
               {accountDetails?.qr_code_url ? (
-                <img src={accountDetails.qr_code_url} alt="QR Code" className="w-16 h-16 sm:w-20 sm:h-20 object-contain transition-transform duration-300 group-hover:scale-105" />
+                <img src={accountDetails.qr_code_url} alt="QR Code" className="w-14 h-14 sm:w-16 sm:h-16 object-contain transition-transform duration-300 group-hover:scale-105" />
               ) : (
-                <QrCode className="w-16 h-16 sm:w-20 sm:h-20" style={{ color: 'var(--mfct-dark-green)' }} />
+                <QrCode className="w-14 h-14 sm:w-16 sm:h-16" style={{ color: 'var(--mfct-dark-green)' }} />
               )}
               {/* Tap to zoom hover overlay */}
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
@@ -512,11 +511,11 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             {/* Footer text */}
-            <div className="text-center mt-1.5 space-y-0.5">
-              <p className="text-[8.5px] uppercase tracking-wider font-bold truncate" style={{ color: 'var(--mfct-gold)' }}>
+            <div className="text-center mt-1 space-y-0.5">
+              <p className="text-[8px] uppercase tracking-wider font-bold truncate" style={{ color: 'var(--mfct-gold)' }}>
                 {t('home.scan_donate', 'UPI Direct Donate')}
               </p>
-              <p className="font-mono text-white font-bold text-[10px] select-all tracking-wide truncate">
+              <p className="font-mono text-white font-bold text-[9px] select-all tracking-wide truncate">
                 {accountDetails?.upi_id || 'nsns@oksbi'}
               </p>
             </div>
@@ -524,14 +523,14 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         {/* Carousel Bottom Dots */}
-        <div className="absolute bottom-6 left-0 right-0 z-30 flex items-center justify-center gap-2.5">
+        <div className="absolute bottom-2.5 sm:bottom-3 left-0 right-0 z-30 flex items-center justify-center gap-2">
           {heroImages.map((_, i) => (
             <button
               key={i}
               onClick={() => setCurrentSlide(i)}
               className={`transition-all duration-300 rounded-full cursor-pointer ${currentSlide === i
-                  ? 'w-7 h-2.5 bg-amber-400 shadow-lg shadow-amber-400/50'
-                  : 'w-2.5 h-2.5 bg-white/40 hover:bg-white/80'
+                  ? 'w-6 h-2 bg-amber-400 shadow-lg shadow-amber-400/50'
+                  : 'w-2 h-2 bg-white/40 hover:bg-white/80'
                 }`}
               title={`Slide ${i + 1}`}
             />
@@ -570,7 +569,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--mfct-dark-green)' }} />
                 Live & Verified Account
               </span>
-              <h3 className="text-xl font-black text-white pt-1" style={{ fontFamily: 'Playfair Display, serif' }}>
+              <h3 className="text-xl font-black text-white pt-1">
                 Scan to Donate
               </h3>
               <p className="text-[11px] text-white/70">
@@ -659,7 +658,6 @@ export const HomePage: React.FC<HomePageProps> = ({
             className="text-3xl sm:text-4xl font-black tracking-tight"
             style={{
               color: 'var(--mfct-dark-green)',
-              fontFamily: 'Playfair Display, Noto Sans Devanagari, serif',
             }}
           >
             {language === 'hi' ? 'हमारा उद्देश्य' : language === 'ur' ? 'ہمارا مقصد' : 'Our Mission'}
@@ -702,7 +700,6 @@ export const HomePage: React.FC<HomePageProps> = ({
               className="text-base sm:text-[1.05rem] font-bold leading-snug"
               style={{
                 color: 'var(--mfct-dark-green)',
-                fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif",
                 letterSpacing: '0.015em',
               }}
             >
@@ -739,7 +736,6 @@ export const HomePage: React.FC<HomePageProps> = ({
               className="text-base sm:text-[1.05rem] font-bold leading-snug"
               style={{
                 color: 'var(--mfct-dark-green)',
-                fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif",
                 letterSpacing: '0.015em',
               }}
             >
@@ -776,7 +772,6 @@ export const HomePage: React.FC<HomePageProps> = ({
               className="text-base sm:text-[1.05rem] font-bold leading-snug"
               style={{
                 color: 'var(--mfct-dark-green)',
-                fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif",
                 letterSpacing: '0.015em',
               }}
             >
@@ -813,7 +808,6 @@ export const HomePage: React.FC<HomePageProps> = ({
               className="text-base sm:text-[1.05rem] font-bold leading-snug"
               style={{
                 color: 'var(--mfct-dark-green)',
-                fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif",
                 letterSpacing: '0.015em',
               }}
             >
@@ -872,7 +866,6 @@ export const HomePage: React.FC<HomePageProps> = ({
                 {/* Headline */}
                 <h2
                   className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight"
-                  style={{ fontFamily: 'Playfair Display, Noto Sans Devanagari, serif' }}
                 >
                   {language === 'hi'
                     ? 'मोहम्मद फहीम चैरिटेबल ट्रस्ट (MFCT)'
@@ -893,7 +886,6 @@ export const HomePage: React.FC<HomePageProps> = ({
               {/* Description paragraph (Multilingual: Hindi / English / Urdu) */}
               <p
                 className="text-xs sm:text-sm leading-relaxed text-white/90 font-normal"
-                style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif" }}
               >
                 {language === 'hi'
                   ? 'MFCT की स्थापना समाज में भाईचारा, एकता और इंसानियत को मजबूत करने के लिए की गई है। हमारा विश्वास है कि सेवा और सहयोग से ही एक बेहतर और सशक्त समाज का निर्माण किया जा सकता है। हम शिक्षा, स्वास्थ्य, आकस्मिक सहायता, बेटी विवाह शगुन योजना, चिकित्सा सहायता, आपदा राहत और अन्य सामाजिक कार्यों के माध्यम से समाज के हर वर्ग तक सहायता पहुँचाने के लिए प्रतिबद्ध हैं।'
@@ -989,7 +981,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </span>
           <h2
             className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight"
-            style={{ color: 'var(--mfct-dark-green)', fontFamily: 'Playfair Display, Noto Sans Devanagari, serif' }}
+            style={{ color: 'var(--mfct-dark-green)' }}
           >
             {language === 'hi' ? 'हमारे प्रमुख कार्यक्रम' : language === 'ur' ? 'ہمارے اہم پروگرامز' : 'Our Key Programs'}
           </h2>
@@ -1107,14 +1099,13 @@ export const HomePage: React.FC<HomePageProps> = ({
                     className="text-xs sm:text-[13px] font-bold leading-snug truncate"
                     style={{
                       color: isSelected ? 'var(--mfct-gold-darker, #1a4230)' : 'var(--mfct-dark-green)',
-                      fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif",
                     }}
                   >
                     {cat.label}
                   </h4>
                   <p
                     className="text-[10px] sm:text-[11px] leading-tight truncate"
-                    style={{ color: 'var(--mfct-text-muted)', fontFamily: "'Plus Jakarta Sans', 'Inter', 'Noto Sans', sans-serif" }}
+                    style={{ color: 'var(--mfct-text-muted)' }}
                   >
                     {cat.desc}
                   </p>
@@ -1260,29 +1251,40 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* 6. HOW IT WORKS */}
-      <section className="py-12 rounded-2xl max-w-7xl mx-auto px-6 sm:px-12" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', boxShadow: 'var(--shadow-card)' }}>
-        <div className="text-center max-w-2xl mx-auto mb-10 space-y-1">
-          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-gold)' }}>{t('home.how_tag', 'Simple & Trustworthy')}</span>
-          <h2 className="text-2xl font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>{t('home.how_title', 'How Does It Work?')}</h2>
-          <p className="text-xs" style={{ color: 'var(--mfct-text-muted)' }}>{t('home.how_desc', 'A simple 4-step model for transparent and direct aid')}</p>
+      <section className="py-12 rounded-3xl max-w-7xl mx-auto px-6 sm:px-12" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', boxShadow: 'var(--shadow-card)' }}>
+        <div className="text-center max-w-2xl mx-auto mb-10 space-y-1.5">
+          <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-widest" style={{ color: 'var(--mfct-gold-dark)' }}>{t('home.how_tag', 'HOW IT WORKS')}</span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: 'var(--mfct-dark-green)' }}>{t('home.how_title', 'How Does It Work?')}</h2>
+          <p className="text-xs sm:text-sm" style={{ color: 'var(--mfct-text-muted)' }}>{t('home.how_desc', 'A simple 4-step model for transparent and direct aid')}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
           {[{
-            step: 1, title: t('home.step1_title', '1. Grassroots Identification'), desc: t('home.step1_desc', 'Mohalla elders and field volunteers personally verify every case.')
+            step: 1, title: t('home.step1_title', '1. Grassroots Identification & Verification'), desc: t('home.step1_desc', 'Mohalla elders and field volunteers personally verify every case.')
           }, {
             step: 2, title: t('home.step2_title', '2. Direct Bank & Hospital Payments'), desc: t('home.step2_desc', 'Funds go directly to hospitals, vendors, or beneficiaries.')
           }, {
-            step: 3, title: t('home.step3_title', '3. 100% Audit & Receipts'), desc: t('home.step3_desc', "Every transaction's bill and audit report is publicly available.")
+            step: 3, title: t('home.step3_title', '3. 100% Audit & Receipts'), desc: t('home.step3_desc', "Every transaction's bill and audit report is publicly available on the app.")
           }, {
             step: 4, title: t('home.step4_title', '4. Video & Photo Updates'), desc: t('home.step4_desc', 'Proof is shared with donors immediately after relief is delivered.')
           }].map(({ step, title, desc }) => (
-            <div key={step} className="p-5 rounded-xl text-center space-y-2" style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)' }}>
-              <div className="w-10 h-10 rounded-xl font-extrabold flex items-center justify-center text-base mx-auto" style={{ background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-dark-green)', border: '2px solid rgba(200,168,75,0.3)' }}>
+            <div
+              key={step}
+              className="p-6 rounded-2xl text-center flex flex-col items-center justify-start space-y-3.5 transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+              style={{ background: 'var(--mfct-warm-bg)', border: '1px solid rgba(200,168,75,0.25)' }}
+            >
+              <div
+                className="w-11 h-11 rounded-xl font-extrabold flex items-center justify-center text-sm sm:text-base mx-auto shadow-sm"
+                style={{ background: 'rgba(200,168,75,0.18)', color: 'var(--mfct-dark-green)', border: '1px solid rgba(200,168,75,0.38)' }}
+              >
                 {step}
               </div>
-              <h3 className="font-bold text-sm" style={{ color: 'var(--mfct-dark-green)' }}>{title}</h3>
-              <p className="text-xs leading-relaxed" style={{ color: 'var(--mfct-text-muted)' }}>{desc}</p>
+              <h3 className="font-bold text-[14px] sm:text-[15px] leading-snug" style={{ color: 'var(--mfct-dark-green)' }}>
+                {title}
+              </h3>
+              <p className="text-xs sm:text-[12.5px] leading-relaxed" style={{ color: 'var(--mfct-text-muted)' }}>
+                {desc}
+              </p>
             </div>
           ))}
         </div>
@@ -1506,7 +1508,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
               {/* Center Content */}
               <div className="relative z-10 my-4 space-y-2">
-                <h3 className="text-xl font-extrabold text-white leading-snug" style={{ fontFamily: 'serif' }}>
+                <h3 className="text-xl font-extrabold text-white leading-snug">
                   {t('home.faq_card_title', 'Transparent & Direct Giving')}
                 </h3>
                 <p className="text-xs text-white/80 leading-relaxed">
