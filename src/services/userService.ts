@@ -24,8 +24,10 @@ function mapRow(row: Record<string, unknown>): User {
     joinDate: row.join_date as string,
     city: row.city as string,
     state: row.state as string,
+    address: (row.address || row.adderess || row.full_address) as string | undefined,
     passwordHash: (row.password || row.password_hash || row.passwordHash) as string | undefined,
-    documentUrl: (row.document_url || row.kyc_document_url) as string | undefined,
+    aadhaarFrontUrl: (row.aadhaar_front_url || row.aadhaarFrontUrl) as string | undefined,
+    aadhaarBackUrl: (row.aadhaar_back_url || row.aadhaarBackUrl) as string | undefined,
     paymentMethod: row.payment_method as string,
     paymentUtr: row.payment_utr as string,
     paymentScreenshotUrl: row.payment_screenshot_url as string,
@@ -71,7 +73,7 @@ export async function getUsers(communityId?: string): Promise<User[]> {
   return (data ?? []).map(mapRow);
 }
 
-export async function createUser(user: User & { kycDocumentUrl?: string }): Promise<User> {
+export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaarBackUrl?: string }): Promise<User> {
   const payload = {
     id: user.id,
     name: user.name,
@@ -87,7 +89,9 @@ export async function createUser(user: User & { kycDocumentUrl?: string }): Prom
     joinDate: user.joinDate,
     city: user.city,
     state: user.state,
-    kycDocumentUrl: user.kycDocumentUrl || user.documentUrl,
+    address: user.address,
+    aadhaarFrontUrl: user.aadhaarFrontUrl,
+    aadhaarBackUrl: user.aadhaarBackUrl,
     passwordHash: user.passwordHash,
     paymentMethod: user.paymentMethod,
     paymentUtr: user.paymentUtr,
@@ -160,7 +164,9 @@ export async function updateUser(id: string, patch: Partial<User>): Promise<void
   if (patch.phone !== undefined) update.phone = patch.phone;
   if (patch.city !== undefined) update.city = patch.city;
   if (patch.state !== undefined) update.state = patch.state;
-  if (patch.documentUrl !== undefined) update.document_url = patch.documentUrl;
+  if (patch.aadhaarFrontUrl !== undefined) update.aadhaar_front_url = patch.aadhaarFrontUrl;
+  if (patch.aadhaarBackUrl !== undefined) update.aadhaar_back_url = patch.aadhaarBackUrl;
+  if (patch.paymentMethod !== undefined) update.payment_method = patch.paymentMethod;
   if (patch.paymentUtr !== undefined) update.payment_utr = patch.paymentUtr;
   if (patch.paymentScreenshotUrl !== undefined) update.payment_screenshot_url = patch.paymentScreenshotUrl;
   if (patch.passwordHash !== undefined) {

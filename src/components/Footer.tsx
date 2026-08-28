@@ -2,12 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Phone, MapPin, Mail, Globe, ArrowRight, UserPlus, Heart, ShieldCheck, Facebook, Youtube } from 'lucide-react';
-import { FaHandsHoldingChild, FaHandHoldingHeart, FaFacebookF, FaInstagram, FaYoutube, FaWhatsapp } from 'react-icons/fa6';
+import { Phone, MapPin, Mail, Globe, ArrowRight, UserPlus, Heart, ShieldCheck, Facebook, Youtube, Users, HandHeart } from 'lucide-react';
+import { FaFacebookF, FaInstagram, FaWhatsapp } from 'react-icons/fa6';
 import { useLanguage } from '../context/LanguageContext';
 
 interface FooterProps {
-  onPageChange: (page: string) => void;
+  onPageChange?: (page: string) => void;
   onOpenDonate: () => void;
   onOpenRegister?: () => void;
   onNavigateToAdmin?: () => void;
@@ -34,7 +34,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
             {/* Left Column: Become a Member */}
             <div className="lg:col-span-5 flex items-start gap-4 sm:gap-5">
               <div className="shrink-0 pt-1">
-                <FaHandsHoldingChild
+                <Users
                   className="w-10 h-10 sm:w-12 sm:h-12"
                   style={{ color: '#d4af37' }}
                 />
@@ -82,7 +82,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
             {/* Right Column: Support Our Cause */}
             <div className="lg:col-span-5 flex items-start justify-start lg:justify-end gap-4 sm:gap-5">
               <div className="shrink-0 pt-1 lg:order-2">
-                <FaHandHoldingHeart
+                <HandHeart
                   className="w-10 h-10 sm:w-12 sm:h-12"
                   style={{ color: '#d4af37' }}
                 />
@@ -129,7 +129,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                   className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-[var(--mfct-gold)]"
                 />
                 <div>
-                  <span className="font-extrabold text-white text-sm block">
+                  <span className="font-extrabold text-white text-sm block" style={{ fontFamily: 'serif' }}>
                     {language === 'hi' ? 'मोहम्मद फ़ईम' : language === 'ur' ? 'محمد فہیم' : 'Mohammad Faeem'}
                   </span>
                   <span className="text-xs block" style={{ color: 'var(--mfct-gold)' }}>
@@ -191,14 +191,26 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                   }}
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.41              <ul className="space-y-2" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                    <path d="M12.004 2C6.477 2 2 6.484 2 12.017c0 1.99.52 3.853 1.428 5.467L2 22l4.656-1.394C8.016 21.451 9.964 22 12.004 22 17.53 22 22 17.516 22 11.983 22 6.462 17.531 2 12.004 2zm0 18.18c-1.717 0-3.402-.462-4.877-1.338l-.35-.207-3.624 1.085 1.085-3.543-.228-.364C3.017 14.51 2.72 13.27 2.72 12c0-5.122 4.16-9.28 9.284-9.28 5.116 0 9.276 4.158 9.276 9.28 0 5.12-4.16 9.18-9.276 9.18z" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            {/* Col 2: Quick Navigation */}
+            <div className="space-y-3 text-xs">
+              <h4 className="font-bold text-white text-sm pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
+                {language === 'hi' ? 'त्वरित लिंक' : language === 'ur' ? 'فوری لنکس' : 'Quick Navigation'}
+              </h4>
+              <ul className="space-y-2" style={{ color: 'rgba(255,255,255,0.70)' }}>
                 <li><Link href="/admin" className="font-bold transition-colors hover:opacity-100" style={{ color: 'var(--mfct-gold)' }}>{language === 'hi' ? 'व्यवस्थापक और सदस्य पोर्टल (/admin)' : language === 'ur' ? 'ایڈمن اور ممبر پورٹل (/admin)' : 'Admin & Member Portal (/admin)'}</Link></li>
                 <li><Link href="/" className="hover:text-white transition-colors">{language === 'hi' ? 'मुख्य पृष्ठ' : language === 'ur' ? 'ہوم' : 'Home'}</Link></li>
                 <li><Link href="/campaigns" className="hover:text-white transition-colors">{language === 'hi' ? 'सभी अभियान' : language === 'ur' ? 'تمام مہمات' : 'Verified Campaigns'}</Link></li>
                 <li><Link href="/communities" className="hover:text-white transition-colors">{language === 'hi' ? 'समुदाय नेटवर्क' : language === 'ur' ? 'کمیونٹی نیٹ ورک' : 'Local Communities'}</Link></li>
                 <li><Link href="/niyamawali" className="hover:text-white transition-colors">{language === 'hi' ? 'नियमावली एवं नियम' : language === 'ur' ? 'قواعد و ضوابط' : 'Rules & Niyamawali'}</Link></li>
                 <li><Link href="/rules" className="hover:text-white transition-colors text-emerald-300 font-medium">{language === 'hi' ? 'ट्रस्ट नियमावली (27 नियम)' : language === 'ur' ? 'ٹرسٹ قواعد و ضوابط' : 'Trust Rules & Guidelines'}</Link></li>
-                <li><Link href="/about" className="hover:text-white transition-colors">{language === 'hi' ? 'हमारे बारे में' : language === 'ur' ? 'ہمارے بارے میں' : 'About Us'}</Link></li>
+                <li><Link href="/about" className="hover:text-white transition-colors">{language === 'hi' ? 'हमारे बारे में' : language === 'ur' ? 'ہمارے بارے में' : 'About Us'}</Link></li>
                 <li><Link href="/gallery" className="hover:text-white transition-colors">{language === 'hi' ? 'गैलरी एवं फोटो' : language === 'ur' ? 'گیلری' : 'Gallery'}</Link></li>
                 <li><Link href="/members" className="hover:text-white transition-colors">{language === 'hi' ? 'सदस्य सूची' : language === 'ur' ? 'ممبر لسٹ' : 'Member Directory'}</Link></li>
                 <li><Link href="/testimonials" className="hover:text-white transition-colors">{language === 'hi' ? 'प्रभाव गाथाएं' : language === 'ur' ? 'اثرات کی کہانیاں' : 'Impact Stories'}</Link></li>
@@ -215,7 +227,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                 <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'शिक्षा एवं पुस्तकें' : language === 'ur' ? 'تعلیم اور کتب' : 'Education & Books'}</li>
                 <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'विवाह एवं निकाह सहायता' : language === 'ur' ? 'شادی اور نکاح امداد' : 'Marriage & Nikah Support'}</li>
                 <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'ज़कात योग्य' : language === 'ur' ? 'زکوٰۃ के مستحق' : 'Zakat Eligible'}</li>
-                <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'सदक़ा एवं सामान्य राहत' : language === 'ur' ? 'صدقہ और عام ریلیف' : 'Sadaqah & General Relief'}</li>
+                <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'सदक़ा एवं सामान्य राहत' : language === 'ur' ? 'صدقہ اور عام ریلیف' : 'Sadaqah & General Relief'}</li>
                 <li className="hover:text-white transition-colors cursor-default">{language === 'hi' ? 'जनाज़ा एवं क़ब्रिस्तान' : language === 'ur' ? 'جنازہ اور قبرستان' : 'Janazah & Cemetery'}</li>
               </ul>
             </div>
@@ -223,7 +235,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
             {/* Col 4: Contact Info */}
             <div className="space-y-3 text-xs">
               <h4 className="font-bold text-white text-sm pb-2" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
-                {language === 'hi' ? 'संपर्क एवं पता' : language === 'ur' ? 'رابطہ और پتہ' : 'Contact Info'}
+                {language === 'hi' ? 'संपर्क एवं पता' : language === 'ur' ? 'رابطہ और पता' : 'Contact Info'}
               </h4>
               <div className="space-y-3" style={{ color: 'rgba(255,255,255,0.70)' }}>
                 <div className="flex items-start gap-2">

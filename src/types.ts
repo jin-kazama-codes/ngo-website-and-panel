@@ -31,6 +31,7 @@ export interface User {
   phone: string;
   city: string;
   state: string;
+  address?: string;
   role: UserRole;
   avatar: string;
   communityId: string;
@@ -40,6 +41,8 @@ export interface User {
   isPremium?: boolean;
   joinDate: string;
   passwordHash?: string;
+  aadhaarFrontUrl?: string;
+  aadhaarBackUrl?: string;
   documentUrl?: string;
   paymentMethod?: string;
   paymentUtr?: string;

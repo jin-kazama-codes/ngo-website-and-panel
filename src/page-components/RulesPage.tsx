@@ -2031,11 +2031,10 @@ export const RulesPage: React.FC = () => {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                  activeCategory === cat.id
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${activeCategory === cat.id
                     ? 'bg-[var(--mfct-dark-green)] text-white shadow-md'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
+                  }`}
               >
                 {cat.label}
               </button>
@@ -2106,9 +2105,8 @@ export const RulesPage: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   <ChevronDown
-                    className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
-                      isExpanded ? 'rotate-180' : ''
-                    }`}
+                    className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''
+                      }`}
                   />
                 </div>
               </button>

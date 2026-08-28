@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { User, UserRole } from '../types';
 import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, ChevronDown, Award, LayoutDashboard, Calculator, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 import { FaFacebookF, FaInstagram, FaWhatsapp } from 'react-icons/fa6';
@@ -97,7 +98,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
               <div className="text-left hidden sm:block">
                 <span className="text-[9px] text-white/80 block leading-tight">
-                  {language === 'hi' ? 'Facebook Page' : language === 'ur' ? 'Facebook Page' : 'Facebook Page'}
+                  Facebook Page
                 </span>
                 <span className="text-[10px] sm:text-[11px] font-bold text-white block leading-tight">
                   mfcttrust
@@ -122,7 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
               <div className="text-left hidden sm:block">
                 <span className="text-[9px] text-white/80 block leading-tight">
-                  {language === 'hi' ? 'Instagram Page' : language === 'ur' ? 'Instagram Page' : 'Instagram Page'}
+                  Instagram Page
                 </span>
                 <span className="text-[10px] sm:text-[11px] font-bold text-white block leading-tight">
                   mfcttrust
@@ -155,7 +156,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             </a>
           </div>
-
         </div>
       </div>
 
@@ -167,14 +167,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Link
             href="/"
             onClick={() => onPageChange('home')}
-            className="flex items-center gap-4 cursor-pointer group"
+            className="flex items-center gap-3 group cursor-pointer"
           >
-            <img
-              src="/mfct-logo.jpeg"
-              alt="Mohammad Faeem Charitable Trust (MFCT)"
+            <Image
+              src="/logo.jpg"
+              alt="MFCT Logo"
+              width={56}
+              height={56}
               style={{
-                width: '90px',
-                height: '90px',
                 borderRadius: '50%',
                 objectFit: 'cover',
                 border: '3px solid var(--mfct-gold)',
@@ -189,6 +189,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 style={{
                   color: 'var(--mfct-dark-green)',
                   fontSize: '1.35rem',
+                  fontFamily: isHindi ? 'inherit' : 'Georgia, serif',
                   letterSpacing: isHindi ? '0.01em' : '0.04em',
                   textTransform: isHindi ? 'none' : 'uppercase',
                 }}
@@ -200,6 +201,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 style={{
                   color: 'var(--mfct-gold-dark)',
                   fontSize: '1.1rem',
+                  fontFamily: isHindi ? 'inherit' : 'Georgia, serif',
                   letterSpacing: isHindi ? '0.01em' : '0.04em',
                   textTransform: isHindi ? 'none' : 'uppercase',
                 }}

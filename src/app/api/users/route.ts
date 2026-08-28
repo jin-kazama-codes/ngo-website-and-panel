@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       ? user.avatar 
       : null;
 
-    const basePayload: Record<string, unknown> = {
+    const payload: Record<string, unknown> = {
       id: user.id || `usr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       name: user.name,
       email: (user.email ?? '').trim().toLowerCase(),
@@ -38,61 +38,67 @@ export async function POST(request: Request) {
       community_id: user.communityId && user.communityId !== '' ? user.communityId : null,
       community_name: user.communityName || null,
       membership_id: user.membershipId || `MEM-${Date.now().toString().slice(-4)}`,
-      is_verified: user.isVerified ?? true,
+      is_verified: user.isVerified ?? false,
       city: user.city || null,
       state: user.state || null,
       password: user.passwordHash || user.password || null,
+      join_date: user.joinDate || user.join_date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      payment_method: user.paymentMethod || user.payment_method || null,
+      payment_utr: user.paymentUtr || user.payment_utr || null,
+      payment_screenshot_url: user.paymentScreenshotUrl || user.payment_screenshot_url || null,
+      aadhaar_front_url: user.aadhaarFrontUrl || user.aadhaar_front_url || null,
+      aadhaar_back_url: user.aadhaarBackUrl || user.aadhaar_back_url || null,
+      adderess: user.address || user.adderess || null,
     };
 
-    if (user.documentUrl || user.kycDocumentUrl) {
-      basePayload.document_url = user.kycDocumentUrl || user.documentUrl;
-    }
-    if (user.paymentUtr) {
-      basePayload.payment_utr = user.paymentUtr;
-    }
-    if (user.paymentScreenshotUrl) {
-      basePayload.payment_screenshot_url = user.paymentScreenshotUrl;
-    }
+    // Try inserting with all fields, dynamically removing only unsupported columns if any
+    let currentPayload = { ...payload };
+    let insertResult = null;
+    let lastError = null;
 
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .insert(basePayload)
-      .select()
-      .single();
-
-    if (error) {
-      console.warn('First insert attempt warning:', error.message);
-      // Fallback to essential columns only
-      const minimalPayload = {
-        id: basePayload.id,
-        name: basePayload.name,
-        email: basePayload.email,
-        phone: basePayload.phone,
-        role: basePayload.role,
-        community_id: basePayload.community_id,
-        community_name: basePayload.community_name,
-        membership_id: basePayload.membership_id,
-        is_verified: basePayload.is_verified,
-        city: basePayload.city,
-        state: basePayload.state,
-        password: basePayload.password,
-      };
-
-      const { data: retryData, error: retryError } = await supabaseAdmin
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data, error } = await supabaseAdmin
         .from('users')
-        .insert(minimalPayload)
+        .insert(currentPayload)
         .select()
         .single();
 
-      if (retryError) {
-        console.error('Supabase admin insert failed:', retryError.message);
-        throw retryError;
+      if (!error) {
+        insertResult = data;
+        break;
       }
 
-      return NextResponse.json({ success: true, data: retryData });
+      lastError = error;
+      console.warn(`Supabase insert attempt ${attempt + 1} warning:`, error.message);
+
+      // Check if error is due to a missing column: e.g. column "xyz" of relation "users" does not exist
+      const match = error.message.match(/column "([^"]+)" of relation "users" does not exist/);
+      if (match && match[1]) {
+        const missingCol = match[1];
+        delete currentPayload[missingCol];
+        // If adderess failed, try address
+        if (missingCol === 'adderess' && (user.address || user.adderess)) {
+          currentPayload['address'] = user.address || user.adderess;
+        }
+        continue;
+      }
+
+      // If generic error on optional column, try address fallback
+      if (currentPayload['adderess'] !== undefined) {
+        delete currentPayload['adderess'];
+        if (user.address || user.adderess) currentPayload['address'] = user.address || user.adderess;
+        continue;
+      }
+
+      break;
     }
 
-    return NextResponse.json({ success: true, data });
+    if (!insertResult) {
+      if (lastError) throw lastError;
+      throw new Error('Failed to insert user');
+    }
+
+    return NextResponse.json({ success: true, data: insertResult });
   } catch (err: any) {
     console.error('Error creating user:', err);
     return NextResponse.json({ success: false, error: err?.message || 'Failed to create user' }, { status: 500 });
@@ -118,16 +124,50 @@ export async function PUT(request: Request) {
     delete updates.join_date;
     delete updates.joinDate;
 
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
+    if (updates.address && !updates.adderess) {
+      updates.adderess = updates.address;
+      delete updates.address;
+    }
 
-    if (error) throw error;
+    let currentUpdates = { ...updates };
+    let updateResult = null;
+    let lastError = null;
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data, error } = await supabaseAdmin
+        .from('users')
+        .update(currentUpdates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (!error) {
+        updateResult = data;
+        break;
+      }
+
+      lastError = error;
+      console.warn(`Supabase update attempt ${attempt + 1} warning:`, error.message);
+
+      const match = error.message.match(/column "([^"]+)" of relation "users" does not exist/);
+      if (match && match[1]) {
+        const missingCol = match[1];
+        delete currentUpdates[missingCol];
+        if (missingCol === 'adderess' && updates.adderess) {
+          currentUpdates['address'] = updates.adderess;
+        }
+        continue;
+      }
+
+      break;
+    }
+
+    if (!updateResult) {
+      if (lastError) throw lastError;
+      throw new Error('Failed to update user');
+    }
     
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, data: updateResult });
   } catch (err: any) {
     console.error('Error updating user:', err);
     return NextResponse.json({ success: false, error: err?.message || 'Failed to update user' }, { status: 500 });
