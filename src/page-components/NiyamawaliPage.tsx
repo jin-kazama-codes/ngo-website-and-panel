@@ -13,7 +13,7 @@ export const NiyamawaliPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
 
   const categories = [
-    { id: 'all', label: isHindi ? 'सभी नियम (1–27)' : 'All Rules (1–27)' },
+    { id: 'all', label: isHindi ? 'सभी नियम (1-27)' : 'All Rules (1-27)' },
     { id: 'foundation', label: isHindi ? 'उद्देश्य एवं सदस्यता' : 'Objectives & Membership' },
     { id: 'support', label: isHindi ? 'निधन व विवाह सहायता' : 'Bereavement & Marriage Aid' },
     { id: 'verification', label: isHindi ? 'पात्रता, नॉमिनी व दस्तावेज' : 'Eligibility & Verification' },
@@ -23,23 +23,23 @@ export const NiyamawaliPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f8faf9] text-slate-800 pb-24">
-      
+
       {/* ── 1. Grand Hero Header (Exact 1:1 Live Design) ── */}
-      <section 
-        className="relative overflow-hidden text-white pt-12 pb-20 px-4 sm:px-6 lg:px-8" 
+      <section
+        className="relative overflow-hidden text-white pt-12 pb-20 px-4 sm:px-6 lg:px-8"
         style={{ background: 'radial-gradient(ellipse at top, #0f3322 0%, #061910 100%)' }}
       >
         <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#c8a84b_1px,transparent_1px)] [background-size:24px_24px]" />
-        
+
         <div className="relative max-w-7xl mx-auto text-center space-y-4">
-          
+
           {/* Badge */}
-          <div 
-            className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full text-xs sm:text-sm font-bold uppercase tracking-widest shadow-md" 
-            style={{ 
-              background: 'rgba(200,168,75,0.12)', 
-              border: '1.5px solid #c8a84b', 
-              color: '#f0c868' 
+          <div
+            className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full text-xs sm:text-sm font-bold uppercase tracking-widest shadow-md"
+            style={{
+              background: 'rgba(200,168,75,0.12)',
+              border: '1.5px solid #c8a84b',
+              color: '#f0c868'
             }}
           >
             <Sparkles className="w-4 h-4 text-amber-300" />
@@ -79,7 +79,7 @@ export const NiyamawaliPage: React.FC = () => {
                 {isHindi ? 'आकस्मिक सहायता' : 'Bereavement Aid'}
               </span>
               <span className="text-xl sm:text-2xl font-black text-white block mt-0.5">
-                {isHindi ? '₹20–25 लाख*' : '₹20–25 Lakh*'}
+                {isHindi ? '₹20-25 लाख*' : '₹20-25 Lakh*'}
               </span>
               <span className="text-[11px] text-slate-300 block mt-0.5">
                 {isHindi ? 'संभावित सामूहिक सहयोग' : 'Collective welfare goal'}
@@ -90,7 +90,7 @@ export const NiyamawaliPage: React.FC = () => {
                 {isHindi ? 'बेटी विवाह सहायता' : 'Marriage Support'}
               </span>
               <span className="text-xl sm:text-2xl font-black text-white block mt-0.5">
-                {isHindi ? '₹8–10 लाख*' : '₹8–10 Lakh*'}
+                {isHindi ? '₹8-10 लाख*' : '₹8-10 Lakh*'}
               </span>
               <span className="text-[11px] text-slate-300 block mt-0.5">
                 {isHindi ? 'संभावित सामूहिक सहयोग' : 'Collective welfare goal'}
@@ -120,11 +120,10 @@ export const NiyamawaliPage: React.FC = () => {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-4 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-[13px] font-bold transition-all cursor-pointer ${
-                  activeCategory === cat.id
-                    ? 'bg-[#0a2e1d] text-[#e0c068] shadow-md scale-105'
-                    : 'bg-[#ebf3ef] text-[#2c4035] hover:bg-[#deede5]'
-                }`}
+                className={`px-4 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-[13px] font-bold transition-all cursor-pointer ${activeCategory === cat.id
+                  ? 'bg-[#0a2e1d] text-[#e0c068] shadow-md scale-105'
+                  : 'bg-[#ebf3ef] text-[#2c4035] hover:bg-[#deede5]'
+                  }`}
               >
                 {cat.label}
               </button>
@@ -282,7 +281,7 @@ export const NiyamawaliPage: React.FC = () => {
                   {isHindi ? 'वार्षिक सहयोग' : 'Annual Contribution'}
                 </span>
                 <h3 className="text-lg sm:text-xl font-bold text-slate-900">
-                  {isHindi ? '₹100 — “वार्षिक व्यवस्था संचालन सहयोग”' : '₹100 — “Annual System & Operations Support”'}
+                  {isHindi ? '₹100 - “वार्षिक व्यवस्था संचालन सहयोग”' : '₹100 - “Annual System & Operations Support”'}
                 </h3>
               </div>
             </div>
@@ -366,7 +365,7 @@ export const NiyamawaliPage: React.FC = () => {
                   {isHindi ? 'संभावित सहायता लक्ष्य' : 'Potential Collective Target'}
                 </span>
                 <p className="text-base font-extrabold text-slate-900">
-                  {isHindi ? 'लगभग ₹20–25 लाख तक (अथवा कम/अधिक)' : 'Approx. ₹20–25 Lakh (Estimated Target)'}
+                  {isHindi ? 'लगभग ₹20-25 लाख तक (अथवा कम/अधिक)' : 'Approx. ₹20-25 Lakh (Estimated Target)'}
                 </p>
                 <p className="text-[11px] text-amber-700 leading-snug">
                   {isHindi ? 'यह अनुमानित सामूहिक लक्ष्य है, निश्चित लाभ या गारंटी नहीं।' : 'This is an estimated community goal, not a guaranteed return.'}
@@ -409,7 +408,7 @@ export const NiyamawaliPage: React.FC = () => {
                   {isHindi ? 'संभावित सहायता लक्ष्य' : 'Potential Collective Target'}
                 </span>
                 <p className="text-base font-extrabold text-slate-900">
-                  {isHindi ? 'लगभग ₹8–10 लाख तक (अथवा कम/अधिक)' : 'Approx. ₹8–10 Lakh (Estimated Target)'}
+                  {isHindi ? 'लगभग ₹8-10 लाख तक (अथवा कम/अधिक)' : 'Approx. ₹8-10 Lakh (Estimated Target)'}
                 </p>
                 <p className="text-[11px] text-amber-700 leading-snug">
                   {isHindi ? 'यह भी अनुमानित/संभावित राशि है, निश्चित या गारंटीकृत सहायता नहीं।' : 'Community solidarity target, not a commercial guarantee.'}
@@ -942,8 +941,8 @@ export const NiyamawaliPage: React.FC = () => {
             </div>
             <p className="text-sm text-slate-800 leading-relaxed font-medium">
               {isHindi
-                ? 'MFCT द्वारा प्रचारित ₹20–25 लाख अथवा ₹8–10 लाख जैसी राशियाँ संभावित/अनुमानित सामूहिक सहयोग राशि हैं।'
-                : 'Figures such as ₹20–25 Lakh or ₹8–10 Lakh represent potential community solidarity targets based on collective voluntary participation.'}
+                ? 'MFCT द्वारा प्रचारित ₹20-25 लाख अथवा ₹8-10 लाख जैसी राशियाँ संभावित/अनुमानित सामूहिक सहयोग राशि हैं।'
+                : 'Figures such as ₹20-25 Lakh or ₹8-10 Lakh represent potential community solidarity targets based on collective voluntary participation.'}
             </p>
             <p className="text-xs text-slate-700 leading-relaxed">
               {isHindi
@@ -967,13 +966,13 @@ export const NiyamawaliPage: React.FC = () => {
           <span className="text-xs font-bold tracking-widest uppercase text-[#e0c068] block">
             {isHindi ? '26. ट्रस्ट का मूल सिद्धांत' : '26. Core Philosophy'}
           </span>
-          
+
           <blockquote className="text-base sm:text-2xl font-black text-white italic leading-relaxed">
             {isHindi
               ? '“हम किसी को लाभ का वादा नहीं करते, हम जरूरत के समय साथ खड़े होने का प्रयास करते हैं।”'
               : '“We do not promise commercial returns; we strive to stand by each other in times of acute distress.”'}
           </blockquote>
-          
+
           <p className="text-sm sm:text-base font-semibold text-amber-200">
             {isHindi
               ? '“आपका ₹100 छोटा हो सकता है, लेकिन हजारों हाथ मिल जाएँ तो किसी परिवार के लिए बड़ी उम्मीद बन सकते हैं।”'
