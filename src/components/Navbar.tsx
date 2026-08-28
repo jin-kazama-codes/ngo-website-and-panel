@@ -155,13 +155,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* ── White Hero Header Band ── */}
         <div style={{ background: '#ffffff', borderBottom: '3px solid var(--mfct-gold)' }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-3">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-6 sm:py-3.5 min-h-[115px] sm:min-h-[85px]">
 
             {/* Brand Logo + Name */}
             <Link
               href="/"
               onClick={() => onPageChange('home')}
-              className="flex items-center gap-2.5 sm:gap-4 cursor-pointer group min-w-0"
+              className="flex items-center gap-3.5 sm:gap-4 cursor-pointer group min-w-0"
             >
               <img
                 src="/mfct-logo.jpeg"
@@ -173,14 +173,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                   boxShadow: '0 4px 16px rgba(200,168,75,0.35)',
                   transition: 'transform 0.2s',
                 }}
-                className="w-14 h-14 sm:w-20 sm:h-20 md:w-[90px] md:h-[90px] shrink-0 group-hover:scale-105"
+                className="w-[78px] h-[78px] sm:w-20 sm:h-20 md:w-[90px] md:h-[90px] shrink-0 group-hover:scale-105"
               />
               <div className="min-w-0">
                 <span
                   className="font-black leading-tight block"
                   style={{
                     color: 'var(--mfct-dark-green)',
-                    fontSize: 'clamp(0.95rem, 3.8vw, 1.35rem)',
+                    fontSize: 'clamp(1.1rem, 4.5vw, 1.35rem)',
                     letterSpacing: isHindi ? '0.01em' : '0.04em',
                     textTransform: isHindi ? 'none' : 'uppercase',
                   }}
@@ -188,10 +188,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {language === 'hi' ? 'मोहम्मद फ़ईम' : language === 'ur' ? 'محمد فہیم' : 'MOHAMMAD FAEEM'}
                 </span>
                 <span
-                  className="font-black leading-tight block"
+                  className="font-black leading-tight block mt-0.5"
                   style={{
                     color: 'var(--mfct-gold-dark)',
-                    fontSize: 'clamp(0.8rem, 3vw, 1.1rem)',
+                    fontSize: 'clamp(0.92rem, 3.6vw, 1.1rem)',
                     letterSpacing: isHindi ? '0.01em' : '0.04em',
                     textTransform: isHindi ? 'none' : 'uppercase',
                   }}
@@ -199,10 +199,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {language === 'hi' ? 'चैरिटेबल ट्रस्ट (MFCT)' : language === 'ur' ? 'چیریٹیبل ٹرسٹ (MFCT)' : 'CHARITABLE TRUST (MFCT)'}
                 </span>
                 <span
-                  className="font-semibold block mt-0.5"
-                  style={{ color: '#666', fontSize: 'clamp(0.7rem, 2.4vw, 0.82rem)', letterSpacing: '0.01em' }}
+                  className="font-semibold block mt-1"
+                  style={{ color: '#666', fontSize: 'clamp(0.78rem, 2.9vw, 0.82rem)', letterSpacing: '0.01em' }}
                 >
-                  {language === 'hi' ? 'याद उनकी, सेवा हमारी' : language === 'ur' ? 'یاد ان کی، خدمت हमारी' : 'In Their Memory, In Our Service'}
+                  {language === 'hi' ? 'याद उनकी, सेवा हमारी' : language === 'ur' ? 'یاد ان کی، خدمت ہماری' : 'In Their Memory, In Our Service'}
                 </span>
               </div>
             </Link>
@@ -388,11 +388,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="flex items-center shrink-0 sm:hidden">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-lg transition-all cursor-pointer shrink-0"
-                style={{ background: 'rgba(26,60,44,0.08)', color: 'var(--mfct-dark-green)', border: '1px solid rgba(200,168,75,0.4)' }}
+                className="p-2.5 sm:p-2 rounded-xl sm:rounded-lg transition-all cursor-pointer shrink-0"
+                style={{ background: 'rgba(26,60,44,0.08)', color: 'var(--mfct-dark-green)', border: '1.5px solid rgba(200,168,75,0.45)' }}
                 aria-label="Toggle navigation menu"
               >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                {mobileMenuOpen ? <X className="w-6 h-6 sm:w-5 sm:h-5" /> : <Menu className="w-6 h-6 sm:w-5 sm:h-5" />}
               </button>
             </div>
           </div>
