@@ -274,14 +274,14 @@ export const ManageGallery: React.FC<ManageGalleryProps> = ({ activeUser }) => {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
-              <h3 className="font-black text-white text-lg flex items-center gap-2">
-                <ImageIcon className="w-5 h-5 text-emerald-400" />
-                {editingId ? 'Edit Gallery Photo' : 'Add Gallery Photo'}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950">
+              <h3 className="font-black text-slate-900 dark:text-white text-lg flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                {editingId ? tr('तस्वीर संपादित करें', 'تصویر میں ترمیم کریں', 'Edit Gallery Photo') : tr('नई तस्वीर जोड़ें', 'نئی تصویر شامل کریں', 'Add Gallery Photo')}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 transition-all cursor-pointer">
+              <button onClick={() => setIsModalOpen(false)} className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-all cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -290,36 +290,36 @@ export const ManageGallery: React.FC<ManageGalleryProps> = ({ activeUser }) => {
               <form id="gallery-form" onSubmit={handleSubmit} className="space-y-4">
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 mb-2">Image URL or Upload</label>
-                  <div className="flex items-center gap-3">
-                    <input type="text" name="image" value={formData.image?.startsWith('data:') ? '' : formData.image} onChange={handleChange} placeholder="e.g. https://images.unsplash.com/..." className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-emerald-500 outline-none" />
-                    <span className="text-slate-500 text-xs font-bold">OR</span>
-                    <label className="cursor-pointer px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-bold transition-all whitespace-nowrap">
-                      Upload
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">{tr('छवि URL या अपलोड करें', 'تصویر کا URL یا اپلوڈ کریں', 'Image URL or Upload')}</label>
+                  <div className="flex items-center gap-2">
+                    <input type="text" name="image" value={formData.image?.startsWith('data:') ? '' : formData.image} onChange={handleChange} placeholder="e.g. https://images.unsplash.com/..." className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none" />
+                    <span className="text-slate-400 text-xs font-bold shrink-0">{tr('या', 'یا', 'OR')}</span>
+                    <label className="cursor-pointer shrink-0 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white rounded-xl text-xs font-bold transition-all whitespace-nowrap">
+                      {tr('अपलोड', 'اپلوڈ', 'Upload')}
                       <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                     </label>
                   </div>
                   {formData.image && (
                     <div className="mt-3">
-                      <img src={formData.image} alt="Preview" className="h-32 rounded-lg object-cover border border-slate-700" />
+                      <img src={formData.image} alt="Preview" className="h-32 rounded-xl object-cover border border-slate-200 dark:border-slate-700" />
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 mb-1">Title / Short Story</label>
-                  <input required type="text" name="title" value={formData.title} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-emerald-500 outline-none" />
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{tr('शीर्षक / विवरण', 'عنوان / مختصر تفصیل', 'Title / Short Story')}</label>
+                  <input required type="text" name="title" value={formData.title} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-1">City / Location</label>
-                    <input required type="text" name="city" value={formData.city} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-emerald-500 outline-none" />
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{tr('शहर / स्थान', 'شہر / مقام', 'City / Location')}</label>
+                    <input required type="text" name="city" value={formData.city} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-1">Category</label>
-                    <select required name="category" value={formData.category} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-emerald-500 outline-none">
-                      <option value="">Select Category</option>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{tr('श्रेणी', 'زمرہ', 'Category')}</label>
+                    <select required name="category" value={formData.category} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none">
+                      <option value="">{tr('-- श्रेणी चुनें --', '-- زمرہ منتخب کریں --', '-- Select Category --')}</option>
                       <option value="Medical Aid">Medical Aid</option>
                       <option value="Nikah Support">Nikah Support</option>
                       <option value="Child Education">Child Education</option>
@@ -331,20 +331,20 @@ export const ManageGallery: React.FC<ManageGalleryProps> = ({ activeUser }) => {
                 </div>
 
                 {formData.image && (
-                  <div className="pt-4 border-t border-slate-800">
-                    <label className="block text-xs font-bold text-slate-400 mb-2">Image Preview</label>
-                    <img src={formData.image} alt="Preview" className="w-full h-40 object-cover rounded-xl border border-slate-800" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Invalid+Image+URL' }} />
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">{tr('छवि पूर्वावलोकन', 'تصویر کا پیش منظر', 'Image Preview')}</label>
+                    <img src={formData.image} alt="Preview" className="w-full h-40 object-cover rounded-xl border border-slate-200 dark:border-slate-800" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Invalid+Image+URL' }} />
                   </div>
                 )}
 
               </form>
             </div>
 
-            <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-end gap-3">
-              <button onClick={() => setIsModalOpen(false)} className="cursor-pointer px-4 py-2 rounded-xl text-slate-300 font-bold text-sm hover:bg-slate-800 transition-all" disabled={isSaving}>
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-end gap-3">
+              <button onClick={() => setIsModalOpen(false)} className="cursor-pointer px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-800 transition-all" disabled={isSaving}>
                 {tr('रद्द करें', 'منسوخ کریں', 'Cancel')}
               </button>
-              <button type="submit" form="gallery-form" disabled={isSaving} className="cursor-pointer px-6 py-2 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-500 transition-all flex items-center gap-2 shadow-lg shadow-emerald-900/20 disabled:opacity-50 disabled:cursor-not-allowed">
+              <button type="submit" form="gallery-form" disabled={isSaving} className="cursor-pointer px-6 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-500 transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20 dark:shadow-emerald-900/20 disabled:opacity-50 disabled:cursor-not-allowed">
                 {isSaving ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -364,36 +364,34 @@ export const ManageGallery: React.FC<ManageGalleryProps> = ({ activeUser }) => {
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden flex flex-col shadow-2xl">
-            <div className="p-6 text-center space-y-4">
-              <div className="w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-2 text-rose-500">
-                <Trash2 className="w-8 h-8" />
-              </div>
-              <h3 className="font-black text-white text-xl">
-                {tr('क्या आप तस्वीर हटाना चाहते हैं?', 'کیا آپ تصویر حذف کرنا چاہتے ہیں؟', 'Delete Gallery Photo?')}
-              </h3>
-              <p className="text-sm text-slate-400">
-                {tr('क्या आप वाकई इस तस्वीर को गैलरी से हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।', 'کیا آپ واقعی اس تصویر کو گیلری سے حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں ہو سکتا۔', 'Are you sure you want to delete this photo from the gallery? This action cannot be undone.')}
-              </p>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-md overflow-hidden flex flex-col shadow-2xl p-6 text-center space-y-4">
+            <div className="w-16 h-16 bg-rose-50 dark:bg-rose-500/10 rounded-full flex items-center justify-center mx-auto text-rose-600 dark:text-rose-500">
+              <Trash2 className="w-8 h-8" />
             </div>
-            <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-end gap-3">
-              <button onClick={() => setDeleteConfirmId(null)} className="cursor-pointer px-4 py-2 rounded-xl text-slate-300 font-bold text-sm hover:bg-slate-800 transition-all" disabled={deletingId !== null}>
+            <h3 className="font-black text-slate-900 dark:text-white text-xl">
+              {tr('क्या आप तस्वीर हटाना चाहते हैं?', 'کیا آپ تصویر حذف کرنا چاہتے ہیں؟', 'Delete Gallery Photo?')}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {tr('क्या आप वाकई इस तस्वीर को गैलरी से हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।', 'کیا آپ واقعی اس تصویر کو گیلری سے حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں ہو سکتا۔', 'Are you sure you want to delete this photo from the gallery? This action cannot be undone.')}
+            </p>
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-end gap-3 rounded-2xl">
+              <button onClick={() => setDeleteConfirmId(null)} className="cursor-pointer px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-800 transition-all" disabled={deletingId !== null}>
                 {tr('रद्द करें', 'منسوخ کریں', 'Cancel')}
               </button>
               <button 
                 onClick={() => handleDelete(deleteConfirmId)} 
                 disabled={deletingId !== null} 
-                className="cursor-pointer px-6 py-2 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-500 transition-all flex items-center gap-2 shadow-lg shadow-rose-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="cursor-pointer px-6 py-2 rounded-xl bg-rose-600 text-white font-bold text-xs hover:bg-rose-500 transition-all flex items-center gap-2 shadow-lg shadow-rose-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {deletingId === deleteConfirmId ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Deleting...
+                    <span>{tr('हटाया जा रहा है...', 'حذف ہو رہا ہے...', 'Deleting...')}</span>
                   </>
                 ) : (
                   <>
-                    <Trash2 className="w-4 h-4" /> Yes, Delete
+                    <Trash2 className="w-4 h-4" /> <span>{tr('हाँ, हटाएं', 'ہاں، حذف کریں', 'Yes, Delete')}</span>
                   </>
                 )}
               </button>
