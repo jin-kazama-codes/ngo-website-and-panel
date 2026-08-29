@@ -267,7 +267,7 @@ export const SuperAdminCommunities: React.FC = () => {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
             <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
               <h3 className="font-black text-white text-lg">
