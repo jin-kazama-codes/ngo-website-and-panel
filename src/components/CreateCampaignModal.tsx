@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DonationCategory, Campaign, Community } from '../types';
-import { X, Plus, Upload, Sparkles } from 'lucide-react';
+import { X, Plus, Upload } from 'lucide-react';
 import { useAppState } from '../providers/AppStateProvider';
 import { useLanguage } from '../context/LanguageContext';
 import { getCommunities } from '../services/communityService';
@@ -19,7 +19,13 @@ interface CreateCampaignModalProps {
 
 export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClose, onCreate, initialCampaign }) => {
   const { activeUser } = useAppState();
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
   const [title, setTitle] = useState(initialCampaign?.title || '');
   const [category, setCategory] = useState<DonationCategory>(initialCampaign?.category || 'Medical');
   const [beneficiaryName, setBeneficiaryName] = useState(initialCampaign?.beneficiaryName || '');
@@ -73,7 +79,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !beneficiaryName || !story) {
-      showToast('Please fill out all required campaign details.', 'error');
+      showToast(tr('कृपया सभी आवश्यक विवरण भरें।', 'براہ کرم تمام لازمی خانے پر کریں۔', 'Please fill out all required campaign details.'), 'error');
       return;
     }
     setSubmitting(true);
@@ -89,7 +95,6 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
         docUrl = await uploadImage('campaigns', docFile);
       }
 
-      // Automatically generate multi-language translations in Hindi & Urdu
       try {
         await autoTranslateCampaign(title, story);
       } catch (tErr) {
@@ -114,8 +119,8 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
             { title: 'Community document', url: docUrl, verifiedBy: 'Community Leader' },
           ],
         };
-        const saved = await updateCampaign(initialCampaign.id, updateData);
-        showToast('Campaign updated successfully!', 'success');
+        await updateCampaign(initialCampaign.id, updateData);
+        showToast(tr('अभियान सफलतापूर्वक अपडेट हो गया!', 'مہم کامیابی سے اپ ڈیٹ ہو گئی!', 'Campaign updated successfully!'), 'success');
         setTimeout(() => {
           onCreate({ ...initialCampaign, ...updateData });
         }, 1500);
@@ -146,7 +151,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
         };
 
         const saved = await createCampaign(newCamp);
-        showToast('Campaign submitted for verification successfully!', 'success');
+        showToast(tr('सत्यापित समुदाय अभियान सफलतापूर्वक बन गया!', 'تصدیق شدہ کمیونٹی مہم کامیابی سے بن گئی!', 'Campaign submitted for verification successfully!'), 'success');
         setTimeout(() => {
           onCreate(saved);
         }, 1500);
@@ -176,29 +181,27 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
 
         <div className="mb-6 space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">
-            <Plus className="w-3.5 h-3.5" /> {t('admin.commAdmin', 'Community Admin')}
+            <Plus className="w-3.5 h-3.5" /> {tr('समुदाय एडमिन', 'کمیونٹی ایڈمن', 'Community Admin')}
           </div>
-          <h2 className="text-2xl font-bold text-slate-900">{initialCampaign ? t('admin.editCampaign', 'Edit Campaign') : t('admin.createCampaign', 'Create Verified Community Campaign')}</h2>
+          <h2 className="text-2xl font-bold text-slate-900">
+            {initialCampaign ? tr('अभियान संपादित करें', 'مہم میں ترمیم کریں', 'Edit Campaign') : tr('सत्यापित समुदाय अभियान बनाएं', 'تصدیق شدہ کمیونٹی مہم بنائیں', 'Create Verified Community Campaign')}
+          </h2>
           <p className="text-sm text-slate-500">
-            {initialCampaign ? t('admin.updateDetails', 'Update campaign details and beneficiary information.') : t('admin.submitDetails', 'Submit cause details for local member support. Requires verified beneficiary documents.')}
+            {initialCampaign 
+              ? tr('अभियान का विवरण और लाभार्थी की जानकारी अपडेट करें।', 'مہم کی تفصیلات اور مستحق کی معلومات اپ ڈیٹ کریں۔', 'Update campaign details and beneficiary information.') 
+              : tr('स्थानीय सदस्यों की सहायता के लिए अभियान विवरण दर्ज करें। लाभार्थी के दस्तावेज़ आवश्यक हैं।', 'مقامی اراکین کی مدد کے لیے مہم کی تفصیلات درج کریں۔ مستحق کے دستاویزات درکار ہیں۔', 'Submit cause details for local member support. Requires verified beneficiary documents.')}
           </p>
-
-          {/* Automatic Translation Function Badge */}
-          <div className="flex items-center gap-2.5 p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs font-bold shadow-sm">
-            <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 animate-pulse" />
-            <span>{t('admin.autoTranslateActive', '✨ Automatic Translation Active: Title, story, and details will automatically translate to Hindi & Urdu.')}</span>
-          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs font-medium text-slate-700">
           <div>
             <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
-              {t('modal.campTitle', 'Campaign Title / Headline')}
+              {tr('अभियान का शीर्षक / हेडलाइन', 'مہم کا عنوان / ہیڈ لائن', 'Campaign Title / Headline')}
             </label>
             <input
               type="text"
               required
-              placeholder={t('modal.campTitle', 'e.g. Heart Surgery for 10-Year-Old Rahul in Bareilly')}
+              placeholder={tr('उदा. बरेली में 10 वर्षीय राहुल के दिल का ऑपरेशन', 'مثلاً بریلی میں 10 سالہ راہل کے دل کا آپریشن', 'e.g. Heart Surgery for 10-Year-Old Rahul in Bareilly')}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full p-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -207,22 +210,24 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">{t('modal.campCategory', 'Category')}</label>
+              <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
+                {tr('श्रेणी', 'کیٹیگری', 'Category')}
+              </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as DonationCategory)}
                 className="w-full p-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
               >
-                <option value="Medical">{t('cat.medical', 'Medical Aid')}</option>
-                <option value="Education">{t('cat.education', 'Education')}</option>
-                <option value="Marriage">{t('cat.marriage', 'Marriage Aid')}</option>
-                <option value="Food">{t('cat.food', 'Food Relief')}</option>
-                <option value="Janazah">{t('cat.janazah', 'Janazah Aid')}</option>
+                <option value="Medical">{tr('चिकित्सा सहायता', 'طبی امداد', 'Medical Aid')}</option>
+                <option value="Education">{tr('शिक्षा सहायता', 'تعلیمی امداد', 'Education Aid')}</option>
+                <option value="Marriage">{tr('विवाह सहायता', 'نکاح معاونت', 'Marriage Aid')}</option>
+                <option value="Food">{tr('राशन / भोजन राहत', 'راشن و خوراک', 'Food Relief')}</option>
+                <option value="Janazah">{tr('जनाज़ा व कफ़न सहायता', 'جنازہ و تجہیز و تکفین', 'Janazah Aid')}</option>
               </select>
             </div>
             <div>
               <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
-                {t('modal.goalAmount', 'Required Goal Amount (INR ₹)')}
+                {tr('आवश्यक लक्ष्य राशि (₹)', 'مطلوبہ ہدف کی رقم (₹)', 'Required Goal Amount (INR ₹)')}
               </label>
               <input
                 type="number"
@@ -237,12 +242,12 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
-                {t('modal.beneficiary', 'Beneficiary Name')}
+                {tr('लाभार्थी का नाम', 'مستحق کا نام', 'Beneficiary Name')}
               </label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Master Rahul"
+                placeholder={tr('उदा. मास्टर राहुल', 'مثلاً ماسٹر راہل', 'e.g. Master Rahul')}
                 value={beneficiaryName}
                 onChange={(e) => setBeneficiaryName(e.target.value)}
                 className="w-full p-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -250,12 +255,12 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
             </div>
             <div>
               <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
-                {t('modal.beneficiaryRelation', 'Beneficiary Relation')}
+                {tr('लाभार्थी का संबंध / विवरण', 'مستحق کا رشتہ / تفصیل', 'Beneficiary Relation')}
               </label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Son of Daily Wage Labourer"
+                placeholder={tr('उदा. दिहाड़ी मजदूर का पुत्र', 'مثلاً دیہاڑی دار مزدور کا بیٹا', 'e.g. Son of Daily Wage Labourer')}
                 value={beneficiaryRelation}
                 onChange={(e) => setBeneficiaryRelation(e.target.value)}
                 className="w-full p-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -265,12 +270,12 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
 
           <div>
             <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
-              {t('modal.story', 'Detailed Case Story & Explanation')}
+              {tr('विस्तृत कारण एवं विवरण', 'تفصیلی روداد اور وضاحت', 'Detailed Case Story & Explanation')}
             </label>
             <textarea
               rows={4}
               required
-              placeholder="Describe why this beneficiary urgently needs community help..."
+              placeholder={tr('बताएं कि इस लाभार्थी को समुदाय की तत्काल सहायता की आवश्यकता क्यों है...', 'وضاحت کریں کہ اس مستحق کو کمیونٹی کی فوری مدد کی کیوں ضرورت ہے...', 'Describe why this beneficiary urgently needs community help...')}
               value={story}
               onChange={(e) => setStory(e.target.value)}
               className="w-full p-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -286,8 +291,12 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
                 className="w-4 h-4 text-emerald-600 rounded"
               />
               <div>
-                <span className="font-bold text-slate-900 block">{t('card.zakat', 'Zakat Eligible')}</span>
-                <span className="text-[10px] text-slate-500">Meets Zakat compliance rules</span>
+                <span className="font-bold text-slate-900 block">
+                  {tr('ज़कात पात्र', 'زکوٰۃ کے اہل', 'Zakat Eligible')}
+                </span>
+                <span className="text-[10px] text-slate-500">
+                  {tr('ज़कात नियमों के अनुरूप', 'شرعی زکوٰۃ کے شرائط پر پورا اترتا ہے', 'Meets Zakat compliance rules')}
+                </span>
               </div>
             </label>
 
@@ -299,15 +308,19 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
                 className="w-4 h-4 text-rose-600 rounded"
               />
               <div>
-                <span className="font-bold text-slate-900 block">{t('card.urgent', 'Urgent Priority')}</span>
-                <span className="text-[10px] text-slate-500">Immediate hospital / life threat</span>
+                <span className="font-bold text-slate-900 block">
+                  {tr('अति आवश्यक (इमरजेंसी)', 'انتہائی ہنگامی (ارجنٹ)', 'Urgent Priority')}
+                </span>
+                <span className="text-[10px] text-slate-500">
+                  {tr('अस्पताल / जीवन रक्षा हेतु तत्काल', 'ہسپتال / جان بچانے کے لیے فوری', 'Immediate hospital / life threat')}
+                </span>
               </div>
             </label>
           </div>
 
           <div>
             <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
-              {t('nav.communities', 'Community')}
+              {tr('समुदाय चुनें', 'کمیونٹی منتخب کریں', 'Community')}
             </label>
             <select
               value={selectedCommunityId}
@@ -324,18 +337,22 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
 
           <div>
             <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
-              {t('modal.attachDocs', 'Campaign Main Image (optional)')}
+              {tr('अभियान की मुख्य तस्वीर (वैकल्पिक)', 'مہم کی مرکزی تصویر (اختیاری)', 'Campaign Main Image (optional)')}
             </label>
             <label className="p-3.5 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100">
               <input type="file" accept="image/*" className="sr-only" onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} />
               <Upload className="w-4 h-4 mx-auto mb-1 text-slate-500" />
-              <span className="text-xs font-bold">{imageFile ? `✓ ${imageFile.name}` : 'Click to upload main campaign image'}</span>
+              <span className="text-xs font-bold">
+                {imageFile 
+                  ? `✓ ${imageFile.name}` 
+                  : tr('मुख्य अभियान की तस्वीर अपलोड करने के लिए क्लिक करें', 'مرکزی تصویر اپلوڈ کرنے کے لیے کلک کریں', 'Click to upload main campaign image')}
+              </span>
             </label>
           </div>
 
           <div>
             <label className="block font-bold text-slate-900 uppercase tracking-wider mb-1">
-              {t('modal.attachDocs', 'Attach Medical Estimates / Documents')}
+              {tr('अस्पताल का बिल / आधार / दस्तावेज़ संलग्न करें', 'ہسپتال کا بل / آدھار / دستاویزات منسلک کریں', 'Attach Medical Estimates / Documents')}
             </label>
             <label
               className={`p-3.5 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${docUploaded
@@ -354,7 +371,9 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
               />
               <Upload className="w-4 h-4 mx-auto mb-1 text-slate-500" />
               <span className="text-xs font-bold">
-                {docUploaded ? `✓ ${docFile?.name ?? 'Document Attached'}` : 'Click to attach hospital estimate / Aadhaar'}
+                {docUploaded 
+                  ? `✓ ${docFile?.name ?? tr('दस्तावेज़ संलग्न किए गए', 'دستاویزات منسلک ہو گئے', 'Document Attached')}` 
+                  : tr('अस्पताल का एस्टीमेट या आधार जोड़ें', 'ہسپتال کا تخمینہ یا آدھار منسلک کریں', 'Click to attach hospital estimate / Aadhaar')}
               </span>
             </label>
           </div>
@@ -365,14 +384,18 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
               onClick={onClose}
               className="cursor-pointer py-3 px-4 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition-colors"
             >
-              {t('modal.cancel', 'Cancel')}
+              {tr('रद्द करें', 'منسوخ کریں', 'Cancel')}
             </button>
             <button
               type="submit"
               disabled={submitting}
               className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-colors shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              {submitting ? 'Saving & Auto-Translating...' : initialCampaign ? 'Update Campaign' : t('modal.submitCampaign', 'Submit for Verification')}
+              {submitting 
+                ? tr('सुरक्षित किया जा रहा है...', 'محفوظ ہو رہا ہے...', 'Saving & Auto-Translating...') 
+                : initialCampaign 
+                ? tr('अभियान अपडेट करें', 'مہم اپ ڈیٹ کریں', 'Update Campaign') 
+                : tr('सत्यापन हेतु जमा करें', 'تصدیق کے لیے جمع کریں', 'Submit for Verification')}
             </button>
           </div>
         </form>
