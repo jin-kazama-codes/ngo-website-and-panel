@@ -71,14 +71,21 @@ export const CommunitiesPage: React.FC<CommunitiesPageProps> = ({ onOpenRegister
                 className="rounded-3xl overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow"
                 style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', boxShadow: 'var(--shadow-card)' }}
               >
-                <div className="relative h-40 overflow-hidden" style={{ background: 'var(--mfct-warm-bg-2)' }}>
-                  <img src={comm.coverImage || "https://images.unsplash.com/photo-1593113563332-e147ce367df0?q=80&w=400&auto=format&fit=crop"} alt={comm.name} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                  <div className="absolute bottom-3 left-4 text-white">
-                    <span className="text-xs font-bold flex items-center gap-1" style={{ color: 'var(--mfct-gold)' }}>
-                      <MapPin className="w-3.5 h-3.5" /> {comm.city}, {comm.state}
+                <div className="relative h-48 overflow-hidden bg-slate-900" style={{ background: 'linear-gradient(135deg, #0d3822 0%, #061c11 100%)' }}>
+                  <img
+                    src={comm.coverImage || "https://images.unsplash.com/photo-1593113563332-e147ce367df0?q=80&w=600&auto=format&fit=crop"}
+                    alt={comm.name}
+                    className="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-105"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1593113563332-e147ce367df0?q=80&w=600&auto=format&fit=crop";
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                  <div className="absolute bottom-3 left-4 right-4">
+                    <span className="text-[11px] font-bold flex items-center gap-1" style={{ color: 'var(--mfct-gold)' }}>
+                      <MapPin className="w-3.5 h-3.5 shrink-0" /> {comm.city}, {comm.state}
                     </span>
-                    <h3 className="font-bold text-base text-white">{comm.name}</h3>
+                    <h3 className="font-bold text-base text-white truncate drop-shadow-sm">{comm.name}</h3>
                   </div>
                 </div>
 

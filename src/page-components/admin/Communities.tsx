@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Community } from '../../types';
 import { getCommunities, createCommunity, updateCommunity, deleteCommunity } from '../../services/communityService';
 import { getUsers, updateUser } from '../../services/userService';
-import { PlusCircle, Edit2, Trash2, X, Building2, CheckCircle2 } from 'lucide-react';
+import { PlusCircle, Edit2, Trash2, X, Building2, CheckCircle2, Camera, Upload, ImageIcon } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
+import { uploadImage } from '../../lib/storage';
 
 const CommunityCard: React.FC<{
   community: Community;
@@ -121,6 +122,12 @@ export const Communities: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string>('');
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
@@ -164,6 +171,10 @@ export const Communities: React.FC = () => {
 
   const handleOpenAdd = () => {
     setEditingId(null);
+    setAvatarFile(null);
+    setAvatarPreview('');
+    setCoverFile(null);
+    setCoverPreview('');
     setFormData({
       name: '',
       city: '',
@@ -186,6 +197,10 @@ export const Communities: React.FC = () => {
 
   const handleOpenEdit = (c: Community) => {
     setEditingId(c.id);
+    setAvatarFile(null);
+    setAvatarPreview(c.avatar || '');
+    setCoverFile(null);
+    setCoverPreview(c.coverImage || '');
     const existingAdmin = availableUsers.find((u) => u.name === c.adminName || u.id === (c as any).adminId);
     setFormData({
       ...c,
@@ -209,24 +224,58 @@ export const Communities: React.FC = () => {
     }
   };
 
+  /**
+   * Upload a file: tries Supabase Storage via /api/upload,
+   * falls back to base64 data URL so the image always saves.
+   */
+  const uploadFileWithFallback = async (file: File, folder: string): Promise<string> => {
+    try {
+      const url = await uploadImage(folder, file);
+      // uploadImage already has error handling; if it returns an unsplash URL it failed
+      // In that case fall back to base64 so the user's actual image is preserved
+      if (url && !url.includes('unsplash.com')) return url;
+    } catch {
+      // ignore, fall through to base64
+    }
+    // Reliable base64 fallback
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      // Upload avatar if a new file was selected
+      let resolvedAvatar = formData.avatar || '';
+      if (avatarFile) {
+        resolvedAvatar = await uploadFileWithFallback(avatarFile, 'community-avatars');
+      }
+      // Upload cover image if a new file was selected
+      let resolvedCover = formData.coverImage || '';
+      if (coverFile) {
+        resolvedCover = await uploadFileWithFallback(coverFile, 'community-covers');
+      }
+      const finalFormData = { ...formData, avatar: resolvedAvatar, coverImage: resolvedCover };
+
       let savedCommunity: Community;
       if (editingId) {
-        savedCommunity = await updateCommunity(editingId, formData);
+        savedCommunity = await updateCommunity(editingId, finalFormData);
       } else {
         savedCommunity = await createCommunity({
-          ...formData,
-          avatar: formData.avatar || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=150',
-          totalMembers: Number(formData.totalMembers) || 0,
-          activeCampaigns: Number(formData.activeCampaigns) || 0,
-          totalRaisedINR: Number(formData.totalRaisedINR) || 0,
-          healthScore: Number(formData.healthScore) || 100,
-          verifiedStatus: formData.verifiedStatus || 'Verified',
-          description: formData.description || '',
-          establishedYear: Number(formData.establishedYear) || new Date().getFullYear(),
+          ...finalFormData,
+          avatar: resolvedAvatar || '',
+          totalMembers: Number(finalFormData.totalMembers) || 0,
+          activeCampaigns: Number(finalFormData.activeCampaigns) || 0,
+          totalRaisedINR: Number(finalFormData.totalRaisedINR) || 0,
+          healthScore: Number(finalFormData.healthScore) || 100,
+          verifiedStatus: finalFormData.verifiedStatus || 'Verified',
+          description: finalFormData.description || '',
+          establishedYear: Number(finalFormData.establishedYear) || new Date().getFullYear(),
         } as Omit<Community, 'id'>);
       }
 
@@ -266,19 +315,30 @@ export const Communities: React.FC = () => {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('Image size should be less than 5MB');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, coverImage: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      showToast(tr('छवि 5MB से कम होनी चाहिए', 'تصویر 5MB سے کم ہونی چاہیے', 'Avatar image must be less than 5MB'));
+      return;
     }
+    setAvatarFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setAvatarPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      showToast(tr('छवि 5MB से कम होनी चाहिए', 'تصویر 5MB سے کم ہونی چاہیے', 'Cover image must be less than 5MB'));
+      return;
+    }
+    setCoverFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setCoverPreview(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -342,6 +402,78 @@ export const Communities: React.FC = () => {
 
             <div className="p-6 overflow-y-auto flex-1">
               <form id="community-form" onSubmit={handleSubmit} className="space-y-6">
+
+                {/* Avatar Upload Section */}
+                <div>
+                  <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-3 border-b border-slate-200 dark:border-slate-800 pb-1">
+                    {tr('समुदाय का अवतार / लोगो', 'کمیونٹی اوتار / لوگو', 'Community Avatar / Logo')}
+                  </h4>
+                  <div className="flex items-start gap-4">
+                    {/* Avatar Preview */}
+                    <div className="relative shrink-0">
+                      <img
+                        src={
+                          avatarPreview ||
+                          formData.avatar ||
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || 'C')}&background=059669&color=fff`
+                        }
+                        alt="Avatar Preview"
+                        className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-200 dark:border-slate-700 shadow-md"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || 'C')}&background=059669&color=fff`;
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => avatarInputRef.current?.click()}
+                        className="absolute -bottom-2 -right-2 w-7 h-7 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg transition-all cursor-pointer"
+                        title={tr('अवतार बदलें', 'اوتار تبدیل کریں', 'Change avatar')}
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                      </button>
+                      <input
+                        ref={avatarInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleAvatarFileChange}
+                      />
+                    </div>
+
+                    {/* URL or Upload controls */}
+                    <div className="flex-1 space-y-2">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                        {tr('URL से या फ़ाइल अपलोड करें', 'URL سے یا فائل اپلوڈ کریں', 'Paste URL or upload a file')}
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          name="avatar"
+                          value={avatarFile ? '' : (formData.avatar || '')}
+                          onChange={(e) => {
+                            setAvatarFile(null);
+                            setAvatarPreview(e.target.value);
+                            setFormData((prev) => ({ ...prev, avatar: e.target.value }));
+                          }}
+                          placeholder="https://..."
+                          className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none"
+                        />
+                        <span className="text-slate-400 text-xs font-bold shrink-0">{tr('या', 'یا', 'OR')}</span>
+                        <label className="cursor-pointer shrink-0 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap">
+                          <Upload className="w-3.5 h-3.5" />
+                          {tr('अपलोड', 'اپلوڈ', 'Upload')}
+                          <input type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
+                        </label>
+                      </div>
+                      {avatarFile && (
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                          ✓ {avatarFile.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-3 border-b border-slate-200 dark:border-slate-800 pb-1">
                     {tr('मूल विवरण', 'بنیادی تفصیلات', 'Basic Details')}
@@ -450,6 +582,61 @@ export const Communities: React.FC = () => {
                     onChange={handleChange}
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none resize-none"
                   ></textarea>
+                </div>
+
+                {/* Cover Image Section */}
+                <div>
+                  <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-3 border-b border-slate-200 dark:border-slate-800 pb-1">
+                    {tr('कवर / बैनर इमेज', 'کور / بینر تصویر', 'Cover / Banner Image')}
+                  </h4>
+                  <div className="space-y-3">
+                    {/* Cover preview */}
+                    {(coverPreview || formData.coverImage) && (
+                      <div className="relative h-32 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                        <img
+                          src={coverPreview || formData.coverImage}
+                          alt="Cover preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                        <span className="absolute bottom-2 left-3 text-white text-xs font-bold opacity-80">
+                          {tr('पूर्वावलोकन', 'پیش منظر', 'Preview')}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        name="coverImage"
+                        value={coverFile ? '' : (formData.coverImage || '')}
+                        onChange={(e) => {
+                          setCoverFile(null);
+                          setCoverPreview(e.target.value);
+                          setFormData((prev) => ({ ...prev, coverImage: e.target.value }));
+                        }}
+                        placeholder="https://..."
+                        className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none"
+                      />
+                      <span className="text-slate-400 text-xs font-bold shrink-0">{tr('या', 'یا', 'OR')}</span>
+                      <label className="cursor-pointer shrink-0 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap">
+                        <Upload className="w-3.5 h-3.5" />
+                        {tr('अपलोड', 'اپلوڈ', 'Upload')}
+                        <input
+                          ref={coverInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleCoverFileChange}
+                        />
+                      </label>
+                    </div>
+                    {coverFile && (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                        ✓ {coverFile.name}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </form>
             </div>
