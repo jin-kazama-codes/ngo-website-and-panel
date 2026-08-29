@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Community } from '../../types';
 import { getCommunities, createCommunity, updateCommunity, deleteCommunity } from '../../services/communityService';
-import { PlusCircle, Edit2, Trash2, X, Building2, CheckCircle2 } from 'lucide-react';
+import { PlusCircle, Edit2, Trash2, X, Building2, CheckCircle2, Camera, Upload, ImageIcon } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { translateCommunityName, translateCity } from '../../lib/translateEntity';
+import { uploadImage } from '../../lib/storage';
 
 export const SuperAdminCommunities: React.FC = () => {
   const { language } = useLanguage();
@@ -20,6 +21,12 @@ export const SuperAdminCommunities: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string>('');
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState<Partial<Community>>({
     name: '',
@@ -54,6 +61,10 @@ export const SuperAdminCommunities: React.FC = () => {
 
   const handleOpenAdd = () => {
     setEditingId(null);
+    setAvatarFile(null);
+    setAvatarPreview('');
+    setCoverFile(null);
+    setCoverPreview('');
     setFormData({
       name: '',
       establishedYear: new Date().getFullYear(),
@@ -67,12 +78,17 @@ export const SuperAdminCommunities: React.FC = () => {
       totalRaisedINR: 0,
       healthScore: 100,
       verifiedStatus: 'Verified',
+      coverImage: '',
     });
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (comm: Community) => {
     setEditingId(comm.id);
+    setAvatarFile(null);
+    setAvatarPreview(comm.avatar || '');
+    setCoverFile(null);
+    setCoverPreview(comm.coverImage || '');
     setFormData(comm);
     setIsModalOpen(true);
   };
@@ -89,16 +105,74 @@ export const SuperAdminCommunities: React.FC = () => {
     }
   };
 
+  const uploadFileWithFallback = async (file: File, folder: string): Promise<string> => {
+    try {
+      const url = await uploadImage(folder, file);
+      if (url && !url.includes('unsplash.com')) return url;
+    } catch {
+      // ignore, fall through to base64
+    }
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+    });
+  };
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Avatar image must be less than 5MB');
+      return;
+    }
+    setAvatarFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setAvatarPreview(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Cover image must be less than 5MB');
+      return;
+    }
+    setCoverFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setCoverPreview(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
+      let resolvedAvatar = formData.avatar || '';
+      if (avatarFile) {
+        resolvedAvatar = await uploadFileWithFallback(avatarFile, 'community-avatars');
+      }
+      let resolvedCover = formData.coverImage || '';
+      if (coverFile) {
+        resolvedCover = await uploadFileWithFallback(coverFile, 'community-covers');
+      }
+      const finalFormData = { ...formData, avatar: resolvedAvatar, coverImage: resolvedCover };
+
       if (editingId) {
-        await updateCommunity(editingId, formData);
+        await updateCommunity(editingId, finalFormData);
       } else {
-        await createCommunity(formData as Omit<Community, 'id'>);
+        await createCommunity(finalFormData as Omit<Community, 'id'>);
       }
       setIsModalOpen(false);
+      fetchData();
       fetchData();
     } catch (err) {
       console.error(err);
@@ -278,15 +352,106 @@ export const SuperAdminCommunities: React.FC = () => {
 
                 {/* Media & Description */}
                 <div>
-                  <h4 className="text-sm font-bold text-emerald-400 mb-3 border-b border-slate-800 pb-1">Media & Description</h4>
+                  <h4 className="text-sm font-bold text-emerald-400 mb-3 border-b border-slate-800 pb-1">Avatar & Media</h4>
                   <div className="space-y-4">
+                    {/* Avatar Upload */}
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-1">Avatar Image URL</label>
-                      <input type="text" name="avatar" value={formData.avatar} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-emerald-500 outline-none" />
+                      <label className="block text-xs font-bold text-slate-400 mb-2">Avatar / Logo Image</label>
+                      <div className="flex items-start gap-4">
+                        {/* Preview */}
+                        <div className="relative shrink-0">
+                          <img
+                            src={
+                              avatarPreview ||
+                              formData.avatar ||
+                              `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || 'C')}&background=059669&color=fff`
+                            }
+                            alt="Avatar Preview"
+                            className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-700 shadow-md"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || 'C')}&background=059669&color=fff`;
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => avatarInputRef.current?.click()}
+                            className="absolute -bottom-2 -right-2 w-7 h-7 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg transition-all cursor-pointer"
+                            title="Change avatar"
+                          >
+                            <Camera className="w-3.5 h-3.5" />
+                          </button>
+                          <input
+                            ref={avatarInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleAvatarFileChange}
+                          />
+                        </div>
+                        {/* URL + Upload */}
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              name="avatar"
+                              value={avatarFile ? '' : (formData.avatar || '')}
+                              onChange={(e) => {
+                                setAvatarFile(null);
+                                setAvatarPreview(e.target.value);
+                                setFormData((prev) => ({ ...prev, avatar: e.target.value }));
+                              }}
+                              placeholder="https://..."
+                              className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-emerald-500 outline-none"
+                            />
+                            <span className="text-slate-500 text-xs font-bold shrink-0">OR</span>
+                            <label className="cursor-pointer shrink-0 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap">
+                              <Upload className="w-3.5 h-3.5" />
+                              Upload
+                              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
+                            </label>
+                          </div>
+                          {avatarFile && (
+                            <p className="text-xs text-emerald-400 font-medium">✓ {avatarFile.name}</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
+                    {/* Cover Image Upload */}
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-1">Cover Image URL</label>
-                      <input type="text" name="coverImage" value={formData.coverImage} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-emerald-500 outline-none" />
+                      <label className="block text-xs font-bold text-slate-400 mb-2">Cover / Banner Image</label>
+                      {(coverPreview || formData.coverImage) && (
+                        <div className="relative h-28 w-full rounded-xl overflow-hidden border border-slate-700 mb-2">
+                          <img
+                            src={coverPreview || formData.coverImage}
+                            alt="Cover Preview"
+                            className="w-full h-full object-cover"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          name="coverImage"
+                          value={coverFile ? '' : (formData.coverImage || '')}
+                          onChange={(e) => {
+                            setCoverFile(null);
+                            setCoverPreview(e.target.value);
+                            setFormData((prev) => ({ ...prev, coverImage: e.target.value }));
+                          }}
+                          placeholder="https://..."
+                          className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-emerald-500 outline-none"
+                        />
+                        <span className="text-slate-500 text-xs font-bold shrink-0">OR</span>
+                        <label className="cursor-pointer shrink-0 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap">
+                          <Upload className="w-3.5 h-3.5" />
+                          Upload
+                          <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverFileChange} />
+                        </label>
+                      </div>
+                      {coverFile && (
+                        <p className="text-xs text-emerald-400 font-medium mt-1">✓ {coverFile.name}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-400 mb-1">Description</label>
