@@ -184,6 +184,9 @@ export const CampaignDetailsPage: React.FC = () => {
 
   const displayBeneficiaryName = useDynamicTranslatedText(rawCampaign?.beneficiaryName, language);
   const displayBeneficiaryRelation = useDynamicTranslatedText(rawCampaign?.beneficiaryRelation, language);
+  // Must be here (before any early return) per Rules of Hooks
+  const displayCommunityName = useDynamicTranslatedText(rawCampaign?.communityName, language);
+  const displayCampaignCity = useDynamicTranslatedText(rawCampaign?.city, language);
 
   useEffect(() => {
     if (!rawCampaign) return;
@@ -778,8 +781,8 @@ export const CampaignDetailsPage: React.FC = () => {
                 {campaign.communityName.charAt(0) || 'M'}
               </div>
               <div className="min-w-0">
-                <p className="font-bold text-slate-900 text-sm truncate">{useDynamicTranslatedText(rawCampaign?.communityName, language) || campaign.communityName}</p>
-                <p className="text-xs text-slate-500">{useDynamicTranslatedText(rawCampaign?.city, language) || translateCity(campaign.city, language)}, India</p>
+                <p className="font-bold text-slate-900 text-sm truncate">{displayCommunityName || campaign.communityName}</p>
+                <p className="text-xs text-slate-500">{displayCampaignCity || translateCity(campaign.city, language)}, India</p>
               </div>
             </div>
           </div>

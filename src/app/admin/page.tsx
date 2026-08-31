@@ -23,6 +23,13 @@ function AdminContent() {
     handleCampaignCreated,
   } = useAppState();
 
+  // ✅ useEffect MUST be above all early returns (Rules of Hooks)
+  useEffect(() => {
+    if (isInitialized && !isAuthenticated) {
+      router.push('/sign-in');
+    }
+  }, [isInitialized, isAuthenticated, router]);
+
   if (!isInitialized) {
     return (
       <div className="h-screen bg-slate-50 dark:bg-slate-950 flex font-sans overflow-hidden">
@@ -83,12 +90,6 @@ function AdminContent() {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (isInitialized && !isAuthenticated) {
-      router.push('/sign-in');
-    }
-  }, [isInitialized, isAuthenticated, router]);
 
   if (!isAuthenticated) {
     return (

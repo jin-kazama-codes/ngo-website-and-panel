@@ -8,6 +8,7 @@ import { hashPassword } from '../../lib/auth';
 import { PlusCircle, Edit2, X, Users, CheckCircle2, Search, Upload, Trash2, Mail, Phone, MapPin } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
+import { translateReligion, translateHelpType } from '../../lib/translateEntity';
 
 // Interactive Dynamic User Row with real-time language conversion for Desktop Table
 const UserRow: React.FC<{
@@ -22,9 +23,9 @@ const UserRow: React.FC<{
     return en;
   };
 
-  const displayName = useDynamicTranslatedText(user.name, language);
-  const displayCity = useDynamicTranslatedText(user.city, language);
-  const displayState = useDynamicTranslatedText(user.state, language);
+  const displayName = useDynamicTranslatedText(user.name, language) || user.name;
+  const displayCity = useDynamicTranslatedText(user.city, language) || user.city;
+  const displayState = useDynamicTranslatedText(user.state, language) || user.state;
 
   const getRoleLabel = (role: string) => {
     switch (role) {
@@ -96,9 +97,9 @@ const UserRow: React.FC<{
             }`}>
               {user.religion === 'Muslim'
                 ? user.isMalikENisab
-                  ? 'Muslim (Nisab)'
-                  : `Muslim (${user.helpType || 'Aid'})`
-                : user.religion}
+                  ? tr('मुस्लिम (साहिब-ए-निसाब)', 'مسلم (صاحبِ نصاب)', 'Muslim (Nisab)')
+                  : `${tr('मुस्लिम', 'مسلم', 'Muslim')} (${translateHelpType(user.helpType, language) || tr('सहायता', 'امداد', 'Aid')})`
+                : translateReligion(user.religion, language)}
             </span>
           </div>
         )}
@@ -138,9 +139,9 @@ const UserMobileCard: React.FC<{
     return en;
   };
 
-  const displayName = useDynamicTranslatedText(user.name, language);
-  const displayCity = useDynamicTranslatedText(user.city, language);
-  const displayState = useDynamicTranslatedText(user.state, language);
+  const displayName = useDynamicTranslatedText(user.name, language) || user.name;
+  const displayCity = useDynamicTranslatedText(user.city, language) || user.city;
+  const displayState = useDynamicTranslatedText(user.state, language) || user.state;
 
   const getRoleLabel = (role: string) => {
     switch (role) {
@@ -224,9 +225,9 @@ const UserMobileCard: React.FC<{
             }`}>
               {user.religion === 'Muslim'
                 ? user.isMalikENisab
-                  ? 'Muslim (Sahib-e-Nisab)'
-                  : `Muslim (Need: ${user.helpType || 'Aid'})`
-                : user.religion}
+                  ? tr('मुस्लिम (साहिब-ए-निसाब)', 'مسلم (صاحبِ نصاب)', 'Muslim (Sahib-e-Nisab)')
+                  : `${tr('मुस्लिम', 'مسلم', 'Muslim')} (${tr('ज़रूरत', 'ضرورت', 'Need')}: ${translateHelpType(user.helpType, language) || tr('सहायता', 'امداد', 'Aid')})`
+                : translateReligion(user.religion, language)}
             </span>
           </div>
         )}

@@ -1,160 +1,77 @@
+'use client';
+
+/**
+ * translateEntity.ts
+ *
+ * All dynamic user-entered content (names, cities, states, community names/descriptions,
+ * campaign titles/stories, testimonial quotes, gallery titles, etc.) is translated via
+ * the Groq API route (/api/translate) through `autoTranslateText()` and cached in localStorage.
+ *
+ * This file provides:
+ * 1. Small STATIC maps ONLY for fixed enum-like system labels: category, religion, help type,
+ *    and role badges — values that the admin always picks from a dropdown and are never
+ *    free-typed by the end user.
+ * 2. `getCachedTranslation()` — reads the shared localStorage cache that autoTranslateText
+ *    writes to.
+ * 3. Synchronous "translate*" helpers that return the cached value immediately (or the
+ *    original text as fallback). These are used in components that cannot call a React hook
+ *    (e.g. pure functions), but the real translation is always initiated by
+ *    `useDynamicTranslatedText()` from autoTranslate.ts.
+ *
+ * DO NOT add static translations for user-entered data like person names, city/state strings,
+ * community names, campaign titles, testimonial quotes, or descriptions. Those must go through
+ * the API so any arbitrary value entered by an admin/user is translated correctly.
+ */
+
 import { Language } from '../context/LanguageContext';
 import { Campaign, Community, Testimonial, CommunityStory } from '../types';
 import { GalleryPhoto } from '../services/galleryService';
 
-const CITY_MAP: Record<string, { hi: string; ur: string }> = {
-  Bareilly: { hi: 'बरेली', ur: 'بریلی' },
-  Delhi: { hi: 'दिल्ली', ur: 'دہلی' },
-  Lucknow: { hi: 'लखनऊ', ur: 'لکھنؤ' },
-  Hyderabad: { hi: 'हैदराबाद', ur: 'حیدرآباد' },
-  Mumbai: { hi: 'मुंबई', ur: 'ممبئی' },
-};
-
-const STATE_MAP: Record<string, { hi: string; ur: string }> = {
-  'Uttar Pradesh': { hi: 'उत्तर प्रदेश', ur: 'اتر پردیش' },
-  'State': { hi: 'राज्य', ur: 'ریاست' },
-  'Delhi': { hi: 'दिल्ली', ur: 'دہلی' },
-  'Telangana': { hi: 'तेलंगाना', ur: 'تلنگانہ' },
-  'Maharashtra': { hi: 'महाराष्ट्र', ur: 'مہاراشٹر' },
-};
+// ─── STATIC ENUM MAPS (dropdown-selected values only) ────────────────────────
 
 const CATEGORY_MAP: Record<string, { hi: string; ur: string }> = {
-  Medical: { hi: 'चिकित्सा सहायता', ur: 'طبی امداد' },
-  Education: { hi: 'शिक्षा सहायता', ur: 'تعلیمی امداد' },
-  Marriage: { hi: 'विवाह सहायता', ur: 'نکاح امداد' },
-  Food: { hi: 'राशन एवं भोजन', ur: 'راشن و خوراک' },
-  Community: { hi: 'सामुदायिक कार्य', ur: 'کمیونٹی فلاح' },
-  Janazah: { hi: 'जनाज़ा एवं अंतिम संस्कार', ur: 'جنازہ و کفن' },
-  Zakat: { hi: 'ज़कात पात्र', ur: 'مستحقین زکوٰۃ' },
-};
-
-const ROLE_MAP: Record<string, { hi: string; ur: string }> = {
-  'Verified Donor': { hi: 'सत्यापित दानदाता', ur: 'تصدیق شدہ عطیہ دہندہ' },
-  'Beneficiary Father': { hi: 'लाभार्थी पिता', ur: 'مستفید والد' },
-  'Widow Mother': { hi: 'विधवा मां', ur: 'بیوہ ماں' },
-  'Community Admin': { hi: 'सामुदायिक प्रशासक', ur: 'کمیونٹی ایڈمن' },
-  'Headquarters Administrator': { hi: 'मुख्यालय प्रशासक', ur: 'مرکزی ایڈمن' },
-  'Member': { hi: 'सदस्य', ur: 'ممبر' },
-  'Volunteer': { hi: 'स्वयंसेवक', ur: 'رضاکار' },
-  'Regular Monthly Donor': { hi: 'नियमित मासिक दानदाता', ur: 'ماہانہ ڈونر' },
-  'Grassroots Field Volunteer': { hi: 'ज़मीनी स्वयंसेवक', ur: 'فیلڈ رضاکار' },
-  'Community Organiser': { hi: 'सामुदायिक आयोजक', ur: 'کمیونٹی آرگنائزر' },
+  Medical:   { hi: 'चिकित्सा सहायता',        ur: 'طبی امداد' },
+  Education: { hi: 'शिक्षा सहायता',           ur: 'تعلیمی امداد' },
+  Marriage:  { hi: 'विवाह सहायता',            ur: 'نکاح امداد' },
+  Food:      { hi: 'राशन एवं भोजन',           ur: 'راشن و خوراک' },
+  Community: { hi: 'सामुदायिक कार्य',          ur: 'کمیونٹی فلاح' },
+  Janazah:   { hi: 'जनाज़ा एवं अंतिम संस्कार', ur: 'جنازہ و کفن' },
+  Zakat:     { hi: 'ज़कात पात्र',             ur: 'مستحقین زکوٰۃ' },
 };
 
 export const RELIGION_MAP: Record<string, { hi: string; ur: string }> = {
-  Hindu: { hi: 'हिन्दू', ur: 'ہندو' },
-  Muslim: { hi: 'मुस्लिम', ur: 'مسلم' },
-  Sikh: { hi: 'सिख', ur: 'سکھ' },
-  Christian: { hi: 'ईसाई', ur: 'عیسائی' },
+  Hindu:    { hi: 'हिन्दू',  ur: 'ہندو' },
+  Muslim:   { hi: 'मुस्लिम', ur: 'مسلم' },
+  Sikh:     { hi: 'सिख',    ur: 'سکھ' },
+  Christian:{ hi: 'ईसाई',   ur: 'عیسائی' },
 };
 
 export const HELP_TYPE_MAP: Record<string, { hi: string; ur: string }> = {
-  Zakat: { hi: 'ज़कात', ur: 'زکوٰۃ' },
-  Sadaka: { hi: 'सदका', ur: 'صدقہ' },
-  Fitra: { hi: 'फ़ितरा', ur: 'فطرہ' },
-  Other: { hi: 'अन्य', ur: 'دیگر' },
+  Zakat:  { hi: 'ज़कात', ur: 'زکوٰۃ' },
+  Sadaka: { hi: 'सदका',  ur: 'صدقہ' },
+  Fitra:  { hi: 'फ़ितरा', ur: 'فطرہ' },
+  Other:  { hi: 'अन्य',  ur: 'دیگر' },
 };
 
-const ADMIN_NAME_MAP: Record<string, { hi: string; ur: string }> = {
-  'Delhi Admin': { hi: 'दिल्ली प्रशासक', ur: 'دہلی ایڈمن' },
-  'Bareilly Admin': { hi: 'बरेली प्रशासक', ur: 'بریلی ایڈمن' },
-  'Lucknow Admin': { hi: 'लखनऊ प्रशासक', ur: 'لکھنؤ ایڈمن' },
-  'Hyderabad Admin': { hi: 'हैदराबाद प्रशासक', ur: 'حیدرآباد ایڈمن' },
-  'Mumbai Admin': { hi: 'मुंबई प्रशासक', ur: 'ممبئی ایڈمن' },
-  'Maulana Hafiz Ziauddin Bareillvi': { hi: 'मौलाना हाफ़िज़ ज़ियाउद्दीन बरेलवी', ur: 'مولانا حافظ ضیاء الدین بریلوی' },
-  'Farhan Ali Siddiqui': { hi: 'फरहान अली सिद्दीकी', ur: 'فرحان علی صدیقی' },
-  'Dr. Mohammed Ahmed': { hi: 'डॉ. मोहम्मद अहमद', ur: 'ڈاکٹر محمد احمد' },
+const ROLE_MAP: Record<string, { hi: string; ur: string }> = {
+  'Verified Donor':            { hi: 'सत्यापित दानदाता',   ur: 'تصدیق شدہ عطیہ دہندہ' },
+  'Beneficiary Father':        { hi: 'लाभार्थी पिता',       ur: 'مستفید والد' },
+  'Widow Mother':              { hi: 'विधवा मां',            ur: 'بیوہ ماں' },
+  'Community Admin':           { hi: 'सामुदायिक प्रशासक',   ur: 'کمیونٹی ایڈمن' },
+  'Headquarters Administrator':{ hi: 'मुख्यालय प्रशासक',    ur: 'مرکزی ایڈمن' },
+  'Member':                    { hi: 'सदस्य',               ur: 'ممبر' },
+  'Volunteer':                 { hi: 'स्वयंसेवक',            ur: 'رضاکار' },
+  'Regular Monthly Donor':     { hi: 'नियमित मासिक दानदाता', ur: 'ماہانہ ڈونر' },
+  'Grassroots Field Volunteer':{ hi: 'ज़मीनी स्वयंसेवक',    ur: 'فیلڈ رضاکار' },
+  'Community Organiser':       { hi: 'सामुदायिक आयोजक',     ur: 'کمیونٹی آرگنائزر' },
 };
 
-const COMMUNITY_NAME_MAP: Record<string, { hi: string; ur: string }> = {
-  'Bareilly Central Care Society (Headquarters)': {
-    hi: 'बरेली सेंट्रल केयर सोसाइटी (मुख्यालय)',
-    ur: 'بریلی سینٹرل کیئر سوسائٹی (مرکزی دفتر)',
-  },
-  'Delhi Welfare Chapter': {
-    hi: 'दिल्ली वेलफेयर चैप्टर',
-    ur: 'دہلی ویلفیئر چیپٹر',
-  },
-  'Bareilly Welfare Chapter': {
-    hi: 'बरेली वेलफेयर चैप्टर',
-    ur: 'بریلی ویلفیئر چیپٹر',
-  },
-  'Lucknow Welfare Chapter': {
-    hi: 'लखनऊ वेलफेयर चैप्टर',
-    ur: 'لکھنؤ ویلفیئر چیپٹر',
-  },
-  'Hyderabad Welfare Chapter': {
-    hi: 'हैदराबाद वेलफेयर चैप्टर',
-    ur: 'حیدرآباد ویلفیئر چیپٹر',
-  },
-  'Mumbai Welfare Chapter': {
-    hi: 'मुंबई वेलफेयर चैप्टर',
-    ur: 'ممبئی ویلفیئر چیپٹر',
-  },
-  'Hazrat Nizamuddin Welfare Community': {
-    hi: 'हज़रत निज़ामुद्दीन कल्याण समिति',
-    ur: 'حضرت نظام الدین ویلفیئر کمیونٹی',
-  },
-  'Bareilly Unity & Relief Council': {
-    hi: 'बरेली एकता एवं राहत परिषद',
-    ur: 'بریلی یونٹی اینڈ ریلیف کونسل',
-  },
-  'Charminar Heritage & Care Society': {
-    hi: 'चारमीनार हेरिटेज एंड केयर सोसाइटी',
-    ur: 'چارمینار ہیریٹیج اینڈ کیئر سوسائٹی',
-  },
-  'Chowk Heritage Community Foundation': {
-    hi: 'चौक हेरिटेज कम्युनिटी फाउंडेशन',
-    ur: 'چوک ہیریٹیج کمیونٹی فاؤنڈیشن',
-  },
-};
+// ─── CACHE HELPERS ────────────────────────────────────────────────────────────
 
-const COMMUNITY_DESC_MAP: Record<string, { hi: string; ur: string }> = {
-  'Headquarters of SevaSangam in Civil Lines, Bareilly. Managing emergency Janazah mortuary van, Nikah bridal kits, and student scholarships across Uttar Pradesh.': {
-    hi: 'सिविल लाइंस, बरेली में मुख्य कार्यालय। आपातकालीन जनाज़ा वैन, निकाह किट और उत्तर प्रदेश में छात्रवृत्ति का प्रबंधन।',
-    ur: 'سول لائنز، بریلی میں مرکزی دفتر۔ ہنگامی جنازہ وین، نکاح کٹ اور پورے اتر پردیش میں طلباء کے وظائف کا انتظام۔',
-  },
-  'Official chapter for Delhi providing local emergency aid.': {
-    hi: 'दिल्ली के लिए आधिकारिक चैप्टर जो स्थानीय आपातकालीन सहायता प्रदान करता है।',
-    ur: 'دہلی کے لیے سرکاری چیپٹر جو مقامی ہنگامی امداد فراہم کرتا ہے۔',
-  },
-  'Official chapter for Bareilly providing local emergency aid.': {
-    hi: 'बरेली के लिए आधिकारिक चैप्टर जो स्थानीय आपातकालीन सहायता प्रदान करता है।',
-    ur: 'بریلی کے لیے سرکاری چیپٹر جو مقامی ہنگامی امداد فراہم کرتا ہے۔',
-  },
-  'Official chapter for Lucknow providing local emergency aid.': {
-    hi: 'लखनऊ के लिए आधिकारिक चैप्टर जो स्थानीय आपातकालीन सहायता प्रदान करता है।',
-    ur: 'لکھنؤ کے لیے سرکاری چیپٹر جو مقامی ہنگامی امداد فراہم کرتا ہے۔',
-  },
-  'Official chapter for Hyderabad providing local emergency aid.': {
-    hi: 'हैदराबाद के लिए आधिकारिक चैप्टर जो स्थानीय आपातकालीन सहायता प्रदान करता है।',
-    ur: 'حیدرآباد کے لیے سرکاری چیپٹر جو مقامی ہنگامی امداد فراہم کرتا ہے۔',
-  },
-  'Official chapter for Mumbai providing local emergency aid.': {
-    hi: 'मुंबई के लिए आधिकारिक चैप्टर जो स्थानीय आपातकालीन सहायता प्रदान करता है।',
-    ur: 'ممبئی کے لیے سرکاری چیپٹر جو مقامی ہنگامی امداد فراہم کرتا ہے۔',
-  },
-};
-
-const QUOTE_MAP: Record<string, { hi: string; ur: string }> = {
-  'This platform has made it so easy to see the direct impact of our contributions. Highly recommended and trustworthy!': {
-    hi: 'इस मंच ने हमारे योगदान के प्रत्यक्ष प्रभाव को देखना बहुत आसान बना दिया है। अत्यधिक अनुशंसित और भरोसेमंद!',
-    ur: 'اس پلیٹ فارم نے ہمارے عطیات کے براہ راست اثرات کو دیکھنا انتہائی آسان بنا دیا ہے۔ قابل اعتماد اور بہترین!',
-  },
-  'When my daughter Zoya needed an emergency kidney transplant, our local SevaSangam community raised ₹3.2 Lakhs in under two weeks. The transparency and direct hospital payments gave us hope.': {
-    hi: 'जब मेरी बेटी ज़ोया को आपातकालीन किडनी ट्रांसप्लांट की ज़रूरत थी, तो हमारे स्थानीय समुदाय ने दो सप्ताह से भी कम समय में ₹3.2 लाख जुटाए। पारदर्शिता ने हमें नई उम्मीद दी।',
-    ur: 'جب میری بیٹی زویا کو ایمرجنسی گردے کی پیوند کاری کی ضرورت تھی، تو مقامی کمیونٹی نے دو ہفتوں میں ₹3.2 لاکھ اکٹھے کیے۔ شفافیت نے ہمیں نئی امید بخشی۔',
-  },
-  'As a single mother working on daily stitching wages, I could never have arranged my daughter Sania’s wedding essentials without the community’s ₹50 membership solidarity.': {
-    hi: 'दैनिक सिलाई पर काम करने वाली एक अकेली माँ के रूप में, मैं समुदाय की ₹50 सदस्यता एकजुटता के बिना अपनी बेटी सानिया की शादी की व्यवस्था कभी नहीं कर पाती।',
-    ur: 'سلائی مزدوری کرنے والی تنہا ماں کے طور پر، میں محلے کے ₹50 ممبرشپ فنڈ کے بغیر اپنی بیٹی ثانیہ کے نکاح کا انتظام کبھی نہیں کر سکتی تھی۔',
-  },
-  'Managing 2,000+ local families through SevaSangam has completely eliminated fraud. Every rupee donated inside or outside our community is tracked with clear UTR receipts.': {
-    hi: 'इस मंच के माध्यम से 2,000+ स्थानीय परिवारों का प्रबंधन करने से धोखाधड़ी पूरी तरह खत्म हो गई है। प्रत्येक दान किए गए रुपये को स्पष्ट यूटीआर रसीदों के साथ ट्रैक किया जाता है।',
-    ur: 'اس پلیٹ فارم کے ذریعے 2,000+ خاندانوں کا انتظام کرنے سے دھوکہ دہی کا خاتمہ ہو گیا ہے۔ ہر ایک روپے کا حساب واضح یو ٹی آر رسید کے ساتھ رکھا جاتا ہے۔',
-  },
-};
-
+/**
+ * Reads the shared localStorage cache written by autoTranslateText().
+ * Returns null if not cached or on SSR.
+ */
 export function getCachedTranslation(text: string, lang: Language): string | null {
   if (typeof window === 'undefined' || !text || lang === 'en') return null;
   try {
@@ -167,176 +84,114 @@ export function getCachedTranslation(text: string, lang: Language): string | nul
   }
 }
 
-export function translateCity(city: string, lang: Language): string {
-  if (lang === 'en' || !city) return city;
-  return CITY_MAP[city]?.[lang] || city;
-}
+// ─── SYNCHRONOUS TRANSLATE HELPERS ───────────────────────────────────────────
+// These return the cached API translation if available, otherwise the original
+// text as a graceful fallback. Actual translation is triggered by the calling
+// component via `useDynamicTranslatedText(text, language)` from autoTranslate.ts.
 
-export function translateState(state: string, lang: Language): string {
-  if (lang === 'en' || !state) return state;
-  return STATE_MAP[state]?.[lang] || state;
-}
-
+/** Category badge labels — fixed enum, always safe to use static map. */
 export function translateCategory(cat: string, lang: Language): string {
   if (lang === 'en' || !cat) return cat;
   return CATEGORY_MAP[cat]?.[lang] || cat;
 }
 
-export function translateRole(role: string, lang: Language): string {
-  if (lang === 'en' || !role) return role;
-  return ROLE_MAP[role]?.[lang] || role;
-}
-
+/** Religion badge labels — fixed enum, always safe to use static map. */
 export function translateReligion(religion?: string, lang: Language = 'en'): string {
   if (!religion || lang === 'en') return religion || '';
   return RELIGION_MAP[religion]?.[lang] || religion;
 }
 
+/** Help-type badge labels — fixed enum, always safe to use static map. */
 export function translateHelpType(helpType?: string, lang: Language = 'en'): string {
   if (!helpType || lang === 'en') return helpType || '';
   return HELP_TYPE_MAP[helpType]?.[lang] || helpType;
 }
 
-export function translateAdminName(name: string, lang: Language): string {
-  if (lang === 'en' || !name) return name;
-  return ADMIN_NAME_MAP[name]?.[lang] || name;
+/** Role badge labels — fixed enum, always safe to use static map. */
+export function translateRole(role: string, lang: Language): string {
+  if (lang === 'en' || !role) return role;
+  return ROLE_MAP[role]?.[lang] || role;
 }
 
+// ─── USER-ENTERED CONTENT ─────────────────────────────────────────────────────
+// The functions below handle arbitrary user-entered text.
+// They return the cached API result if present, otherwise the original text.
+// The actual API call is always handled by `useDynamicTranslatedText()` in the
+// calling component — these are just synchronous cache-read wrappers for contexts
+// where hooks cannot be used.
+
+/** City / location name — arbitrary user input, routed through API cache. */
+export function translateCity(city: string, lang: Language): string {
+  if (lang === 'en' || !city) return city;
+  return getCachedTranslation(city, lang) || city;
+}
+
+/** State / province name — arbitrary user input, routed through API cache. */
+export function translateState(state: string, lang: Language): string {
+  if (lang === 'en' || !state) return state;
+  return getCachedTranslation(state, lang) || state;
+}
+
+/** Community name — arbitrary user input, routed through API cache. */
 export function translateCommunityName(name: string, lang: Language): string {
   if (lang === 'en' || !name) return name;
-  if (COMMUNITY_NAME_MAP[name]?.[lang]) {
-    return COMMUNITY_NAME_MAP[name][lang];
-  }
-  // Pattern matching: e.g. "City Welfare Chapter"
-  for (const [cityKey, cityTrans] of Object.entries(CITY_MAP)) {
-    if (name.includes(cityKey)) {
-      if (name.includes('Welfare Chapter')) {
-        return lang === 'hi'
-          ? `${cityTrans.hi} वेलफेयर चैप्टर`
-          : `${cityTrans.ur} ویلفیئر چیپٹر`;
-      }
-    }
-  }
-  return name;
+  return getCachedTranslation(name, lang) || name;
 }
 
+/** Community description — arbitrary user input, routed through API cache. */
 export function translateCommunityDesc(desc: string, lang: Language): string {
   if (lang === 'en' || !desc) return desc;
-  if (COMMUNITY_DESC_MAP[desc]?.[lang]) {
-    return COMMUNITY_DESC_MAP[desc][lang];
-  }
-  // Pattern: "Official chapter for [City] providing local emergency aid."
-  for (const [cityKey, cityTrans] of Object.entries(CITY_MAP)) {
-    if (desc.includes(`for ${cityKey}`)) {
-      return lang === 'hi'
-        ? `${cityTrans.hi} के लिए आधिकारिक चैप्टर जो स्थानीय आपातकालीन सहायता प्रदान करता है।`
-        : `${cityTrans.ur} کے لیے سرکاری چیپٹر جو مقامی ہنگامی امداد فراہم کرتا ہے۔`;
-    }
-  }
-  return desc;
+  return getCachedTranslation(desc, lang) || desc;
 }
 
-const DONOR_NAME_MAP: Record<string, { hi: string; ur: string }> = {
-  'Anonymous Supporter': { hi: 'गुमनाम समर्थक', ur: 'گمنام معاون' },
-  'Anonymous': { hi: 'गुमनाम दानदाता', ur: 'گمنام عطیہ دہندہ' },
-  'anonymous supporter': { hi: 'गुमनाम समर्थक', ur: 'گمنام معاون' },
-  'zaid alam': { hi: 'ज़ैद आलम', ur: 'زید عالم' },
-  'Zaid Alam': { hi: 'ज़ैद आलम', ur: 'زید عالم' },
-  'Faraz Hussain': { hi: 'फ़राज़ हुसैन', ur: 'فراز حسین' },
-  'faraz hussain': { hi: 'फ़राज़ हुसैन', ur: 'فراز حسین' },
-  'afzal rehman': { hi: 'अफ़ज़ल रहमान', ur: 'افضل رحمان' },
-  'Afzal Rehman': { hi: 'अफ़ज़ल रहमान', ur: 'افضل رحمان' },
-  'Mohd Faheem': { hi: 'मोहम्मद फहीम', ur: 'محمد فہیم' },
-  'mohd faheem': { hi: 'मोहम्मद फहीम', ur: 'محمد فہیم' },
-  'Mohammad Faeem': { hi: 'मोहम्मद फहीम', ur: 'محمد فہیم' },
-  'Tariq Anwer': { hi: 'तारिक अनवर', ur: 'طارق انور' },
-  'Sohail Khan': { hi: 'सोहेल खान', ur: 'سہیل خان' },
-  'Imran Malik': { hi: 'इमरान मलिक', ur: 'عمران ملک' },
-  'Arshad Warsi': { hi: 'अरशद वारसी', ur: 'ارشد وارثی' },
-  'Salman Khan': { hi: 'सलमान खान', ur: 'سلمان خان' },
-  'Aamir Khan': { hi: 'आमिर खान', ur: 'عامر خان' },
-  'Bareilly Care Admin': { hi: 'बरेली केयर प्रशासक', ur: 'بریلی کیئر ایڈمن' },
-};
-
-export function translateDonorName(name: string, lang: Language): string {
+/** Admin / person name — arbitrary user input, routed through API cache. */
+export function translateAdminName(name: string, lang: Language): string {
   if (lang === 'en' || !name) return name;
-  const cached = getCachedTranslation(name, lang);
-  if (cached) return cached;
-
-  if (DONOR_NAME_MAP[name]?.[lang]) {
-    return DONOR_NAME_MAP[name][lang];
-  }
-  const lower = name.toLowerCase().trim();
-  for (const [k, v] of Object.entries(DONOR_NAME_MAP)) {
-    if (k.toLowerCase().trim() === lower) {
-      return v[lang];
-    }
-  }
-
-  // Match "Donor X from City"
-  const donorMatch = name.match(/Donor\s+(\d+)\s+from\s+(\w+)/i);
-  if (donorMatch) {
-    const num = donorMatch[1];
-    const city = donorMatch[2];
-    const translatedCity = CITY_MAP[city]?.[lang] || city;
-    return lang === 'hi'
-      ? `दानदाता ${num} (${translatedCity})`
-      : `عطیہ دہندہ ${num} (${translatedCity})`;
-  }
-  if (ADMIN_NAME_MAP[name]?.[lang]) {
-    return ADMIN_NAME_MAP[name][lang];
-  }
-  return name;
+  return getCachedTranslation(name, lang) || name;
 }
 
-export function translateQuote(quote: string, lang: Language): string {
-  if (lang === 'en' || !quote) return quote;
-  if (QUOTE_MAP[quote]?.[lang]) {
-    return QUOTE_MAP[quote][lang];
-  }
-  return quote;
-}
-
+/** Campaign title — arbitrary user input, routed through API cache. */
 export function translateCampaignTitle(title: string, lang: Language): string {
   if (lang === 'en' || !title) return title;
-  const cached = getCachedTranslation(title, lang);
-  if (cached) return cached;
-
-  // Match "Urgent [Category] Support for Family in [City]"
-  const match = title.match(/Urgent\s+(\w+)\s+Support\s+for\s+Family\s+in\s+(\w+)/i);
-  if (match) {
-    const cat = match[1];
-    const city = match[2];
-    const transCat = CATEGORY_MAP[cat]?.[lang] || cat;
-    const transCity = CITY_MAP[city]?.[lang] || city;
-    return lang === 'hi'
-      ? `${transCity} में परिवार के लिए तत्काल ${transCat}`
-      : `${transCity} میں خاندان کے لیے فوری ${transCat}`;
-  }
-  return title;
+  return getCachedTranslation(title, lang) || title;
 }
 
+/** Campaign story / description — arbitrary user input, routed through API cache. */
 export function translateCampaignStory(story: string, lang: Language): string {
   if (lang === 'en' || !story) return story;
-  const cached = getCachedTranslation(story, lang);
-  if (cached) return cached;
-
-  if (story.includes('This is a detailed story about the cause')) {
-    return lang === 'hi'
-      ? 'यह इस मामले की विस्तृत जानकारी है। उन्हें तत्काल सहायता की आवश्यकता है। हम सभी से आगे आने और इस कारण का समर्थन करने का अनुरोध करते हैं।'
-      : 'یہ اس کیس کی تفصیلی معلومات ہے۔ انہیں فوری مدد کی ضرورت ہے۔ ہم سب سے گزارش کرتے ہیں کہ آگے آئیں اور اس نیک کام میں حصہ لیں۔';
-  }
-  return story;
+  return getCachedTranslation(story, lang) || story;
 }
 
-export function translateTestimonial(t: Testimonial, lang: Language): Testimonial {
-  if (lang === 'en') return t;
+/** Donor name — arbitrary user input, routed through API cache. */
+export function translateDonorName(name: string, lang: Language): string {
+  if (lang === 'en' || !name) return name;
+  return getCachedTranslation(name, lang) || name;
+}
+
+/** Testimonial quote — arbitrary user input, routed through API cache. */
+export function translateQuote(quote: string, lang: Language): string {
+  if (lang === 'en' || !quote) return quote;
+  return getCachedTranslation(quote, lang) || quote;
+}
+
+/** Gallery photo title — arbitrary user input, routed through API cache. */
+export function translateGalleryTitle(title: string, lang: Language): string {
+  if (lang === 'en' || !title) return title;
+  return getCachedTranslation(title, lang) || title;
+}
+
+// ─── COMPOUND OBJECT TRANSLATORS ─────────────────────────────────────────────
+// These return a translated copy of a full entity object using cached values.
+// For live translation in UI, use `useDynamicTranslatedText()` per field.
+
+export function translateCampaign(c: Campaign, lang: Language): Campaign {
+  if (lang === 'en') return c;
   return {
-    ...t,
-    name: translateDonorName(t.name, lang),
-    role: translateRole(t.role, lang),
-    city: translateCity(t.city, lang),
-    quote: translateQuote(t.quote, lang),
+    ...c,
+    title:         translateCampaignTitle(c.title, lang),
+    story:         translateCampaignStory(c.story, lang),
+    city:          translateCity(c.city, lang),
+    communityName: translateCommunityName(c.communityName, lang),
   };
 }
 
@@ -344,38 +199,31 @@ export function translateCommunity(c: Community, lang: Language): Community {
   if (lang === 'en') return c;
   return {
     ...c,
-    name: translateCommunityName(c.name, lang),
+    name:        translateCommunityName(c.name, lang),
     description: translateCommunityDesc(c.description, lang),
-    adminName: translateAdminName(c.adminName, lang),
-    city: translateCity(c.city, lang),
-    state: translateState(c.state, lang),
+    adminName:   translateAdminName(c.adminName, lang),
+    city:        translateCity(c.city, lang),
+    state:       translateState(c.state, lang),
   };
 }
 
-export function translateCampaign(c: Campaign, lang: Language): Campaign {
-  if (lang === 'en') return c;
+export function translateTestimonial(t: Testimonial, lang: Language): Testimonial {
+  if (lang === 'en') return t;
   return {
-    ...c,
-    title: translateCampaignTitle(c.title, lang),
-    story: translateCampaignStory(c.story, lang),
-    city: translateCity(c.city, lang),
-    communityName: translateCommunityName(c.communityName, lang),
+    ...t,
+    name:  translateDonorName(t.name, lang),
+    role:  translateRole(t.role, lang),
+    city:  translateCity(t.city, lang),
+    quote: translateQuote(t.quote, lang),
   };
 }
 
 export function translateGalleryPhoto(p: GalleryPhoto, lang: Language): GalleryPhoto {
   if (lang === 'en') return p;
-  const match = p.title.match(/Food Drive in (\w+)/i);
-  let title = p.title;
-  if (match) {
-    const city = match[1];
-    const transCity = CITY_MAP[city]?.[lang] || city;
-    title = lang === 'hi' ? `${transCity} में खाद्य वितरण अभियान` : `${transCity} میں راشن تقسیم مہم`;
-  }
   return {
     ...p,
-    title,
-    city: translateCity(p.city, lang),
+    title: translateGalleryTitle(p.title, lang),
+    city:  translateCity(p.city, lang),
   };
 }
 
@@ -383,8 +231,7 @@ export function translateCommunityStory(s: CommunityStory, lang: Language): Comm
   if (lang === 'en') return s;
   return {
     ...s,
-    summary: lang === 'hi' ? 'सामुदायिक सहायता की एक प्रेरणादायक कहानी।' : 'کمیونٹی سپورٹ کی ایک شاندار کہانی۔',
-    impactMetric: lang === 'hi' ? '1 जान बचाई गई' : '1 جان بچائی گئی',
     location: translateCity(s.location, lang),
+    summary:  getCachedTranslation(s.summary, lang) || s.summary,
   };
 }

@@ -279,10 +279,10 @@ export const HomePage: React.FC<HomePageProps> = ({
   });
 
   const myCommunityCampaigns = isAuthenticated && (activeUser?.communityId || activeUser?.communityName)
-    ? campaigns.filter(c => 
-        (activeUser.communityId && c.communityId === activeUser.communityId) ||
-        (activeUser.communityName && c.communityName && c.communityName.trim().toLowerCase() === activeUser.communityName.trim().toLowerCase())
-      )
+    ? campaigns.filter(c =>
+      (activeUser.communityId && c.communityId === activeUser.communityId) ||
+      (activeUser.communityName && c.communityName && c.communityName.trim().toLowerCase() === activeUser.communityName.trim().toLowerCase())
+    )
     : [];
 
   const translatedUserCommunity = useDynamicTranslatedText(activeUser?.communityName, language);
@@ -333,7 +333,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               src={imgSrc}
               alt={`Hero Background ${idx + 1}`}
               className={`w-full h-full object-cover object-center transform transition-transform duration-[7000ms] ease-out ${idx === currentSlide ? 'scale-105' : 'scale-100'
-              }`}
+                }`}
             />
           </div>
         ))}
@@ -543,8 +543,8 @@ export const HomePage: React.FC<HomePageProps> = ({
               key={i}
               onClick={() => setCurrentSlide(i)}
               className={`transition-all duration-300 rounded-full cursor-pointer ${currentSlide === i
-                  ? 'w-6 h-2 bg-amber-400 shadow-lg shadow-amber-400/50'
-                  : 'w-2 h-2 bg-white/40 hover:bg-white/80'
+                ? 'w-6 h-2 bg-amber-400 shadow-lg shadow-amber-400/50'
+                : 'w-2 h-2 bg-white/40 hover:bg-white/80'
                 }`}
               title={`Slide ${i + 1}`}
             />
@@ -2028,7 +2028,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         {/* Two-Column Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
           {/* ── LEFT: Founder & Chairman ── */}
           <div
@@ -2050,26 +2050,26 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div className="flex items-center gap-2">
                 <span className="text-sm">🔷</span>
                 <span className="tracking-wide uppercase text-[11px]">
-                  {t('about.zahid_role', 'Founder & Chairman — Founder\u2019s Message')}
+                  {t('about.zahid_role', 'Founder & Chairman — Founder’s Message')}
                 </span>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] shrink-0">
-                MFCT Leadership
+                MFCT Founder
               </span>
             </div>
 
             {/* Body */}
-            <div className="p-5 sm:p-6 flex flex-col sm:flex-row gap-5 items-start flex-1">
-              {/* Portrait */}
-              <div className="flex flex-col items-center shrink-0 space-y-3">
-                <div className="relative group">
+            <div className="p-6 sm:p-7 flex flex-col gap-6 flex-1">
+              {/* Top: Portrait + Name */}
+              <div className="flex items-center gap-5">
+                <div className="relative group shrink-0">
                   <div
-                    className="absolute -inset-1 rounded-2xl blur-md opacity-30 group-hover:opacity-60 transition duration-300"
+                    className="absolute -inset-1.5 rounded-2xl blur-md opacity-40 group-hover:opacity-70 transition duration-300"
                     style={{ background: 'linear-gradient(135deg, #c8a84b 0%, #1a3c2c 100%)' }}
                   />
                   <div
-                    className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-xl overflow-hidden shadow-lg bg-slate-100"
-                    style={{ border: '2px solid var(--mfct-gold)' }}
+                    className="relative w-36 h-44 sm:w-40 sm:h-52 rounded-2xl overflow-hidden shadow-xl bg-slate-100"
+                    style={{ border: '2.5px solid var(--mfct-gold)' }}
                   >
                     <img
                       src="/Mr Mohammad Zahid.jpeg"
@@ -2080,55 +2080,53 @@ export const HomePage: React.FC<HomePageProps> = ({
                         (e.currentTarget as HTMLImageElement).src = '/Mr%20Mohammad%20Zahid.jpeg';
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute bottom-1.5 left-1 right-1 px-1 py-0.5 rounded bg-black/50 backdrop-blur-md text-white text-[9px] font-medium flex items-center justify-center gap-0.5">
-                      <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute bottom-2 left-2 right-2 px-2 py-1 rounded-lg bg-black/55 backdrop-blur-md text-white text-[10px] font-medium flex items-center justify-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                       <span>Founder & Chairman</span>
                     </div>
                   </div>
                 </div>
-                <div className="text-center space-y-0.5">
-                  <h3 className="text-sm font-black text-slate-900">{t('about.zahid_title', 'Er. Mohammad Zahid')}</h3>
-                  <p className="text-[11px] font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>Founder & Chairman, MFCT</p>
+                <div className="space-y-1 min-w-0">
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">{t('about.zahid_title', 'Er. Mohammad Zahid')}</h3>
+                  <p className="text-xs sm:text-sm font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>Founder & Chairman, MFCT</p>
+                  <p className="text-[11px] text-slate-500">Mohammad Faeem Charitable Trust</p>
                 </div>
               </div>
 
-              {/* Message */}
-              <div className="flex-1 space-y-3 min-w-0">
-                <div
-                  className="p-4 rounded-xl border relative overflow-hidden"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(200, 168, 75, 0.08) 0%, rgba(26, 60, 44, 0.04) 100%)',
-                    borderColor: 'rgba(200, 168, 75, 0.4)',
-                  }}
+              {/* Quote */}
+              <div
+                className="p-4 rounded-xl border relative overflow-hidden"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(200, 168, 75, 0.08) 0%, rgba(26, 60, 44, 0.04) 100%)',
+                  borderColor: 'rgba(200, 168, 75, 0.4)',
+                }}
+              >
+                <Quote
+                  className="w-8 h-8 absolute -right-1 -bottom-1 opacity-10 pointer-events-none"
+                  style={{ color: 'var(--mfct-gold-dark)' }}
+                />
+                <p
+                  className="text-sm sm:text-[15px] font-bold leading-relaxed italic"
+                  style={{ color: 'var(--mfct-dark-green)' }}
                 >
-                  <Quote
-                    className="w-8 h-8 absolute -right-1 -bottom-1 opacity-10 pointer-events-none"
-                    style={{ color: 'var(--mfct-gold-dark)' }}
-                  />
-                  <p
-                    className="text-sm font-bold leading-relaxed italic"
-                    style={{ color: 'var(--mfct-dark-green)' }}
-                  >
-                    {t(
-                      'about.zahid_quote',
-                      '\u201c\u0645\u0947\u0930\u0947 \u0932\u093f\u090f MFCT \u0915\u0947\u0935\u0932 \u090f\u0915 \u0938\u0902\u0938\u094d\u0925\u093e \u0928\u0939\u0940\u0902, \u092c\u0932\u094d\u0915\u093f \u090f\u0915 \u0935\u093f\u091a\u093e\u0930 \u0939\u0948\u2014\u090f\u0915 \u0910\u0938\u093e \u0935\u093f\u091a\u093e\u0930 \u091c\u093f\u0938\u092e\u0947\u0902 \u092e\u0941\u0936\u094d\u0915\u093f\u0932 \u0938\u092e\u092f \u092e\u0947\u0902 \u0915\u094b\u0908 \u092a\u0930\u093f\u0935\u093e\u0930 \u062e\u064f\u062f \u0915\u094b \u0905\u0915\u0947\u0932\u093e \u092e\u0939\u0938\u0942\u0938 \u0928 \u0915\u0930\u0947\u0964\u201d'
-                    )}
-                  </p>
-                </div>
-                <div className="space-y-2 text-xs leading-relaxed text-slate-600">
-                  <p>{t('about.zahid_p1', '\u092e\u0930\u0939\u0942\u092e \u092e\u094b\u0939\u092e\u094d\u092e\u062f \u095e\u093c\u0908\u092e \u0938\u093e\u0939\u092c \u0915\u0940 \u092f\u093e\u0926 \u0915\u094b \u0938\u092e\u093e\u091c \u0915\u0940 \u0938\u0947\u0935\u093e \u0938\u0947 \u091c\u094b\u095c\u0928\u0947 \u0915\u0940 \u092a\u094d\u0930\u0947\u0930\u0923\u093e \u0938\u0947 \u0939\u092e\u0928\u0947 MFCT \u0915\u0940 \u0936\u0941\u0930\u0941\u0906\u0924 \u0915\u0940\u0964')}</p>
-                  <p>{t('about.zahid_p2', '\u092e\u0947\u0930\u093e \u0938\u092a\u0928\u093e \u0939\u0948 \u0915\u093f MFCT \u0915\u0947\u0935\u0932 \u090f\u0915 \u0936\u0939\u0930 \u092f\u093e \u091c\u093f\u0932\u0947 \u0924\u0915 \u0938\u0940\u092e\u093f\u0924 \u0928 \u0930\u0939\u0947, \u092c\u0932\u094d\u0915\u093f \u0939\u0930 \u0909\u0938 \u0935\u094d\u092f\u0915\u094d\u0924\u093f \u0924\u0915 \u092a\u0939\u0941\u0901\u091a\u0947 \u091c\u093f\u0938\u0947 \u0938\u092e\u093e\u091c \u0915\u0947 \u0938\u0939\u092f\u094b\u0917 \u0915\u0940 \u0906\u0935\u0936\u094d\u092f\u0915\u0924\u093e \u0939\u0948\u0964')}</p>
-                </div>
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <h4 className="text-xs font-extrabold text-slate-900">— {t('about.zahid_title', 'Er. Mohammad Zahid')}</h4>
-                  <span
-                    className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold"
-                    style={{ background: 'rgba(26, 60, 44, 0.08)', color: 'var(--mfct-dark-green)' }}
-                  >
-                    MFCT Leadership Council
-                  </span>
-                </div>
+                  {t(
+                    'about.zahid_quote',
+                    '“मेरे लिए MFCT केवल एक संस्था नहीं, बल्कि एक विचार है—एक ऐसा विचार जिसमें मुश्किल समय में कोई परिवार खुद को अकेला महसूस न करे।”'
+                  )}
+                </p>
+              </div>
+
+              {/* Message paragraphs */}
+              <div className="space-y-3 text-sm leading-relaxed text-slate-600 flex-1">
+                <p>{t('about.zahid_p1', 'मरहूम मोहम्मद फ़ईम साहब की याद को समाज की सेवा से जोड़ने की प्रेरणा से हमने MFCT की शुरुआत की। मेरा विश्वास है कि यदि समाज के लोग एक-दूसरे के साथ खड़े हों, तो छोटी-छोटी कोशिशें मिलकर किसी जरूरतमंद परिवार के लिए बहुत बड़ा सहारा बन सकती हैं।')}</p>
+                <p>{t('about.zahid_p2', 'मेरा सपना है कि MFCT केवल एक शहर या जिले तक सीमित न रहे, बल्कि हर उस व्यक्ति तक पहुँचे जिसे समाज के सहयोग की आवश्यकता है।')}</p>
+              </div>
+
+              {/* Sign-off */}
+              <div className="pt-4 border-t border-slate-100">
+                <h4 className="text-sm font-extrabold text-slate-900">- {t('about.zahid_title', 'Er. Mohammad Zahid')}</h4>
+                <p className="text-xs text-slate-500 mt-0.5">Founder & Chairman, MFCT</p>
               </div>
             </div>
           </div>
@@ -2153,7 +2151,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div className="flex items-center gap-2">
                 <span className="text-sm">🔶</span>
                 <span className="tracking-wide uppercase text-[11px]">
-                  {t('about.amreen_role', 'Co-Founder & Secretary\u2013Treasurer — Founder\u2019s Message')}
+                  {t('about.amreen_role', 'Co-Founder & Secretary–Treasurer — Founder’s Message')}
                 </span>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] shrink-0">
@@ -2162,17 +2160,17 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             {/* Body */}
-            <div className="p-5 sm:p-6 flex flex-col sm:flex-row gap-5 items-start flex-1">
-              {/* Portrait */}
-              <div className="flex flex-col items-center shrink-0 space-y-3">
-                <div className="relative group">
+            <div className="p-6 sm:p-7 flex flex-col gap-6 flex-1">
+              {/* Top: Portrait + Name */}
+              <div className="flex items-center gap-5">
+                <div className="relative group shrink-0">
                   <div
-                    className="absolute -inset-1 rounded-2xl blur-md opacity-30 group-hover:opacity-60 transition duration-300"
+                    className="absolute -inset-1.5 rounded-2xl blur-md opacity-40 group-hover:opacity-70 transition duration-300"
                     style={{ background: 'linear-gradient(135deg, #c8a84b 0%, #2e5e42 100%)' }}
                   />
                   <div
-                    className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-xl overflow-hidden shadow-lg bg-slate-100"
-                    style={{ border: '2px solid var(--mfct-gold)' }}
+                    className="relative w-36 h-44 sm:w-40 sm:h-52 rounded-2xl overflow-hidden shadow-xl bg-slate-100"
+                    style={{ border: '2.5px solid var(--mfct-gold)' }}
                   >
                     <img
                       src="/Mrs. Amreen.jpeg"
@@ -2183,59 +2181,53 @@ export const HomePage: React.FC<HomePageProps> = ({
                         (e.currentTarget as HTMLImageElement).src = '/Mrs.%20Amreen.jpeg';
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute bottom-1.5 left-1 right-1 px-1 py-0.5 rounded bg-black/50 backdrop-blur-md text-white text-[9px] font-medium flex items-center justify-center gap-0.5">
-                      <CheckCircle2 className="w-2.5 h-2.5 text-amber-400" />
-                      <span>Co-Founder & Sec\u2013Treasurer</span>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute bottom-2 left-2 right-2 px-2 py-1 rounded-lg bg-black/55 backdrop-blur-md text-white text-[10px] font-medium flex items-center justify-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-amber-400" />
+                      <span>Co-Founder & Sec–Treasurer</span>
                     </div>
                   </div>
                 </div>
-                <div className="text-center space-y-0.5">
-                  <h3 className="text-sm font-black text-slate-900">{t('about.amreen_title', 'Mrs. Amreen')}</h3>
-                  <p className="text-[11px] font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>Co-Founder & Secretary\u2013Treasurer</p>
+                <div className="space-y-1 min-w-0">
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">{t('about.amreen_title', 'Mrs. Amreen')}</h3>
+                  <p className="text-xs sm:text-sm font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>Co-Founder & Secretary–Treasurer, MFCT</p>
+                  <p className="text-[11px] text-slate-500">Mohammad Faeem Charitable Trust</p>
                 </div>
               </div>
 
-              {/* Message */}
-              <div className="flex-1 space-y-3 min-w-0">
-                <div
-                  className="p-4 rounded-xl border relative overflow-hidden"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(200, 168, 75, 0.08) 0%, rgba(46, 94, 66, 0.05) 100%)',
-                    borderColor: 'rgba(200, 168, 75, 0.4)',
-                  }}
+              {/* Quote */}
+              <div
+                className="p-4 rounded-xl border relative overflow-hidden"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(200, 168, 75, 0.08) 0%, rgba(46, 94, 66, 0.05) 100%)',
+                  borderColor: 'rgba(200, 168, 75, 0.4)',
+                }}
+              >
+                <Quote
+                  className="w-8 h-8 absolute -right-1 -bottom-1 opacity-10 pointer-events-none"
+                  style={{ color: 'var(--mfct-gold-dark)' }}
+                />
+                <p
+                  className="text-sm sm:text-[15px] font-bold leading-relaxed italic"
+                  style={{ color: 'var(--mfct-dark-green)' }}
                 >
-                  <Quote
-                    className="w-8 h-8 absolute -right-1 -bottom-1 opacity-10 pointer-events-none"
-                    style={{ color: 'var(--mfct-gold-dark)' }}
-                  />
-                  <p
-                    className="text-sm font-bold leading-relaxed italic"
-                    style={{ color: 'var(--mfct-dark-green)' }}
-                  >
-                    {t(
-                      'about.amreen_quote',
-                      '\u201c\u092e\u0947\u0930\u0947 \u0932\u093f\u090f \u0938\u0947\u0935\u093e \u0915\u093e \u0905\u0930\u094d\u0925 \u0915\u0947\u0935\u0932 \u0915\u093f\u0938\u0940 \u0915\u0940 \u092e\u0926\u0926 \u0915\u0930\u0928\u093e \u0928\u0939\u0940\u0902, \u092c\u0932\u094d\u0915\u093f \u091c\u0930\u0942\u0930\u0924 \u0915\u0947 \u0938\u092e\u092f \u0909\u0938\u0915\u0947 \u0938\u093e\u0925 \u062e\u0691\u0947 \u0939\u094b\u0928\u0947 \u0915\u093e \u090f\u0939\u0938\u093e\u0938 \u0926\u0947\u0928\u093e \u0939\u0948\u0964\u201d'
-                    )}
-                  </p>
-                </div>
-                <div className="space-y-2 text-xs leading-relaxed text-slate-600">
-                  <p>{t('about.amreen_p1', 'MFCT \u0938\u0947 \u091c\u0941\u095c\u0928\u0947 \u0915\u093e \u092e\u0947\u0930\u093e \u0909\u0926\u094d\u0926\u0947\u0936\u094d\u092f \u0939\u0948 \u0915\u093f \u0938\u092e\u093e\u091c \u092e\u0947\u0902 \u0906\u092a\u0938\u0940 \u0938\u0939\u092f\u094b\u0917, \u0938\u0902\u0935\u0947\u0926\u0928\u093e \u0914\u0930 \u0907\u0902\u0938\u093e\u0928\u093f\u092f\u0924 \u0915\u0940 \u092d\u093e\u0935\u0928\u093e \u0915\u094b \u0914\u0930 \u092e\u091c\u092c\u0942\u0924 \u0915\u093f\u092f\u093e \u091c\u093e\u090f\u0964')}</p>
-                  <p>{t('about.amreen_p2', '\u0906\u0908\u090f, \u092e\u093f\u0932\u0915\u0930 \u0938\u0947\u0935\u093e \u0915\u094b \u0905\u092a\u0928\u0940 \u091c\u093f\u092e\u094d\u092e\u0947\u0926\u093e\u0930\u0940 \u0914\u0930 \u0907\u0902\u0938\u093e\u0928\u093f\u092f\u0924 \u0915\u094b \u0905\u092a\u0928\u0940 \u092a\u0939\u091a\u093e\u0928 \u092c\u0928\u093e\u090f\u0902\u0964')}</p>
-                </div>
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <h4 className="text-xs font-extrabold text-slate-900">— {t('about.amreen_title', 'Mrs. Amreen')}</h4>
-                  <span
-                    className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold"
-                    style={{
-                      background: 'rgba(200, 168, 75, 0.15)',
-                      color: 'var(--mfct-gold-dark)',
-                      border: '1px solid rgba(200, 168, 75, 0.3)',
-                    }}
-                  >
-                    MFCT Executive Secretariat
-                  </span>
-                </div>
+                  {t(
+                    'about.amreen_quote',
+                    '“मेरे लिए सेवा का अर्थ केवल किसी की मदद करना नहीं, बल्कि जरूरत के समय उसके साथ खड़े होने का एहसास देना है।”'
+                  )}
+                </p>
+              </div>
+
+              {/* Message paragraphs */}
+              <div className="space-y-3 text-sm leading-relaxed text-slate-600 flex-1">
+                <p>{t('about.amreen_p1', 'MFCT से जुड़ने का मेरा उद्देश्य है कि समाज में आपसी सहयोग, संवेदना और इंसानियत की भावना को और मजबूत किया जाए।')}</p>
+                <p>{t('about.amreen_p2', 'हम चाहते हैं कि MFCT ऐसा मंच बने जहाँ हर सदस्य यह महसूस करे कि वह केवल एक संस्था का हिस्सा नहीं, बल्कि एक बड़े परिवार का हिस्सा है।')}</p>
+              </div>
+
+              {/* Sign-off */}
+              <div className="pt-4 border-t border-slate-100">
+                <h4 className="text-sm font-extrabold text-slate-900">- {t('about.amreen_title', 'Mrs. Amreen')}</h4>
+                <p className="text-xs text-slate-500 mt-0.5">Co-Founder & Secretary–Treasurer, MFCT</p>
               </div>
             </div>
           </div>
@@ -2245,3 +2237,4 @@ export const HomePage: React.FC<HomePageProps> = ({
     </div>
   );
 };
+
