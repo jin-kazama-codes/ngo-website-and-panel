@@ -33,6 +33,8 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
   const [goalINR, setGoalINR] = useState(initialCampaign?.goalINR?.toString() || '250000');
   const [story, setStory] = useState(initialCampaign?.story || '');
   const [isZakatEligible, setIsZakatEligible] = useState(initialCampaign?.isZakatEligible ?? true);
+  const [isSadqaEligible, setIsSadqaEligible] = useState(initialCampaign?.isSadqaEligible ?? false);
+  const [isFitrahEligible, setIsFitrahEligible] = useState(initialCampaign?.isFitrahEligible ?? false);
   const [isUrgent, setIsUrgent] = useState(initialCampaign?.isUrgent ?? false);
   const [docFiles, setDocFiles] = useState<File[]>([]);
   const [docUploaded, setDocUploaded] = useState(!!initialCampaign?.documents?.length);
@@ -139,6 +141,8 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
           beneficiaryRelation,
           goalINR: parseInt(goalINR, 10) || initialCampaign.goalINR,
           isZakatEligible,
+          isSadqaEligible,
+          isFitrahEligible,
           isUrgent,
           mainImage,
           galleryImages,
@@ -165,6 +169,8 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
           daysLeft: 30,
           isVerified: false,
           isZakatEligible,
+          isSadqaEligible,
+          isFitrahEligible,
           isUrgent,
           mainImage,
           galleryImages,
@@ -308,12 +314,13 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
+          {/* Zakat Eligible */}
           <label className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
             <input
               type="checkbox"
               checked={isZakatEligible}
               onChange={(e) => setIsZakatEligible(e.target.checked)}
-              className="w-5 h-5 text-emerald-600 rounded"
+              className="w-5 h-5 text-emerald-600 rounded cursor-pointer"
             />
             <div>
               <span className="font-bold text-slate-900 dark:text-white block text-base">
@@ -325,19 +332,56 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
             </div>
           </label>
 
+          {/* Sadqa Eligible */}
+          <label className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <input
+              type="checkbox"
+              checked={isSadqaEligible}
+              onChange={(e) => setIsSadqaEligible(e.target.checked)}
+              className="w-5 h-5 text-teal-600 rounded cursor-pointer"
+            />
+            <div>
+              <span className="font-bold text-slate-900 dark:text-white block text-base">
+                {tr('सदका पात्र', 'صدقہ کے اہل', 'Sadqa Eligible')}
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {tr('सामान्य सदका व खैरात स्वीकार्य', 'عام صدقہ اور خیرات کے لیے درست', 'Accepts general Sadaqah & charity')}
+              </span>
+            </div>
+          </label>
+
+          {/* Fitrah Eligible */}
+          <label className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <input
+              type="checkbox"
+              checked={isFitrahEligible}
+              onChange={(e) => setIsFitrahEligible(e.target.checked)}
+              className="w-5 h-5 text-amber-600 rounded cursor-pointer"
+            />
+            <div>
+              <span className="font-bold text-slate-900 dark:text-white block text-base">
+                {tr('फ़ितरा पात्र', 'فطرہ کے اہل', 'Fitrah Eligible')}
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {tr('ईद-उल-फ़ित्र फ़ितरा व फ़िद्या पात्र', 'صدقۃ الفطر اور فدیہ کے مستحقین کے لیے', 'Eligible for Fitrah & Fidya contributions')}
+              </span>
+            </div>
+          </label>
+
+          {/* Urgent Priority */}
           <label className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
             <input
               type="checkbox"
               checked={isUrgent}
               onChange={(e) => setIsUrgent(e.target.checked)}
-              className="w-5 h-5 text-rose-600 rounded"
+              className="w-5 h-5 text-rose-600 rounded cursor-pointer"
             />
             <div>
               <span className="font-bold text-slate-900 dark:text-white block text-base">
                 {tr('अति आवश्यक (इमरजेंसी)', 'انتہائی ہنگامی (ارجنٹ)', 'Urgent Priority')}
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                {tr('अस्पताल / जीवन रक्षा हेतु तत्काल', 'ہسپتال / جان بچانے کے لیے فوری', 'Immediate hospital / life threat')}
+                {tr('अस्पताल / जीवन रक्षा हेतु तत्काल', 'ہسپتال / جان بچانے के लिए فوری', 'Immediate hospital / life threat')}
               </span>
             </div>
           </label>

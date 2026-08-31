@@ -278,9 +278,14 @@ export const HomePage: React.FC<HomePageProps> = ({
     return matchesSearch && matchesCat;
   });
 
-  const myCommunityCampaigns = isAuthenticated && activeUser?.communityId
-    ? campaigns.filter(c => c.communityId === activeUser.communityId)
+  const myCommunityCampaigns = isAuthenticated && (activeUser?.communityId || activeUser?.communityName)
+    ? campaigns.filter(c => 
+        (activeUser.communityId && c.communityId === activeUser.communityId) ||
+        (activeUser.communityName && c.communityName && c.communityName.trim().toLowerCase() === activeUser.communityName.trim().toLowerCase())
+      )
     : [];
+
+  const translatedUserCommunity = useDynamicTranslatedText(activeUser?.communityName, language);
 
 
   const categoriesList = [
@@ -1125,33 +1130,27 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
 
-      {/* YOUR COMMUNITY CAMPAIGNS (LOGGED IN) */}
-      {isAuthenticated && activeUser && (
+      {/* YOUR COMMUNITY CAMPAIGNS (LOGGED IN - ONLY SHOWN WHEN USER COMMUNITY HAS AT LEAST 1 CAMPAIGN) */}
+      {isAuthenticated && activeUser && !loading && myCommunityCampaigns.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider block mb-1" style={{ color: 'var(--mfct-gold)' }}>{t('home.your_community', 'Your Community')}</span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>{t('home.community_campaigns_title', 'Campaigns in {{community}}').replace('{{community}}', activeUser.communityName || '')}</h2>
+              <h2 className="text-2xl sm:text-3xl font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>
+                {t('home.community_campaigns_title', 'Campaigns in {{community}}').replace('{{community}}', translatedUserCommunity || activeUser.communityName || '')}
+              </h2>
               <p className="text-xs mt-1" style={{ color: 'var(--mfct-text-muted)' }}>{t('home.community_campaigns_desc', 'Active relief campaigns running in your local neighbourhood.')}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loading ? (
-              [1, 2, 3].map((i) => <CampaignSkeleton key={i} />)
-            ) : myCommunityCampaigns.length > 0 ? (
-              myCommunityCampaigns.slice(0, 3).map((camp) => (
-                <CampaignCard
-                  key={camp.id}
-                  campaign={camp}
-                  onDonate={onDonate}
-                />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-10 rounded-2xl" style={{ color: 'var(--mfct-text-muted)', background: 'var(--mfct-warm-bg-2)', border: '1px solid var(--mfct-border)' }}>
-                {t('home.no_campaigns', 'No active campaigns found in this category.')}
-              </div>
-            )}
+            {myCommunityCampaigns.slice(0, 3).map((camp) => (
+              <CampaignCard
+                key={camp.id}
+                campaign={camp}
+                onDonate={onDonate}
+              />
+            ))}
           </div>
         </section>
       )}

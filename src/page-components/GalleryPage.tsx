@@ -6,10 +6,41 @@ import { MapPin } from 'lucide-react';
 import { CardSkeleton } from '../components/Skeletons';
 import { MembershipBanner } from '../components/MembershipBanner';
 import { useLanguage } from '../context/LanguageContext';
-import { translateGalleryPhoto, translateCategory } from '../lib/translateEntity';
+import { translateCategory, translateCity } from '../lib/translateEntity';
+import { useDynamicTranslatedText } from '../lib/autoTranslate';
+
+const DynamicGalleryCard: React.FC<{ rawP: GalleryPhoto }> = ({ rawP }) => {
+  const { language } = useLanguage();
+  const displayTitle = useDynamicTranslatedText(rawP.title, language);
+  const displayCity = useDynamicTranslatedText(rawP.city, language) || translateCity(rawP.city, language);
+  const displayCat = translateCategory(rawP.category, language);
+
+  return (
+    <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden group">
+      <div className="relative h-64 overflow-hidden bg-slate-100">
+        <img
+          src={rawP.image}
+          alt={displayTitle}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          referrerPolicy="no-referrer"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+        <div className="absolute top-3 left-3 px-3 py-1 bg-white/90 rounded-full text-slate-900 font-bold text-xs shadow-sm">
+          {displayCat}
+        </div>
+        <div className="absolute bottom-4 left-4 right-4 text-white">
+          <span className="text-xs text-emerald-300 font-bold flex items-center gap-1">
+            <MapPin className="w-3.5 h-3.5" /> {displayCity}
+          </span>
+          <h3 className="font-bold text-base text-white mt-1">{displayTitle}</h3>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const GalleryPage: React.FC = () => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,32 +85,9 @@ export const GalleryPage: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-          {paginatedPhotos.map((rawP) => {
-            const p = translateGalleryPhoto(rawP, language);
-            const displayCat = translateCategory(p.category, language);
-            return (
-              <div key={p.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden group">
-                <div className="relative h-64 overflow-hidden bg-slate-100">
-                  <img
-                    src={p.image}
-                    alt={p.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-                  <div className="absolute top-3 left-3 px-3 py-1 bg-white/90 rounded-full text-slate-900 font-bold text-xs shadow-sm">
-                    {displayCat}
-                  </div>
-                  <div className="absolute bottom-4 left-4 right-4 text-white">
-                    <span className="text-xs text-emerald-300 font-bold flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5" /> {p.city}
-                    </span>
-                    <h3 className="font-bold text-base text-white mt-1">{p.title}</h3>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {paginatedPhotos.map((rawP) => (
+            <DynamicGalleryCard key={rawP.id} rawP={rawP} />
+          ))}
         </div>
       )}
 
