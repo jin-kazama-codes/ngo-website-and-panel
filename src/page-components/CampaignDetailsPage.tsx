@@ -82,7 +82,9 @@ const CampaignDonorCard: React.FC<{
           <p className="font-bold text-sm text-slate-900 truncate flex items-center gap-1.5">
             <span>{displayName}</span>
             {d.status === 'verified' && (
-              <BadgeCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" title="Verified UTR" />
+              <span title="Verified UTR" className="inline-flex items-center shrink-0">
+                <BadgeCheck className="w-3.5 h-3.5 text-emerald-600" />
+              </span>
             )}
           </p>
           <div className="flex items-center gap-1.5 text-[11px] text-slate-500 flex-wrap">
