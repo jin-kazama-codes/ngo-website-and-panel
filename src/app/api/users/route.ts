@@ -49,6 +49,10 @@ export async function POST(request: Request) {
       aadhaar_front_url: user.aadhaarFrontUrl || user.aadhaar_front_url || null,
       aadhaar_back_url: user.aadhaarBackUrl || user.aadhaar_back_url || null,
       adderess: user.address || user.adderess || null,
+      religion: user.religion || null,
+      is_malik_e_nisab: typeof user.isMalikENisab === 'boolean' ? user.isMalikENisab : (typeof user.is_malik_e_nisab === 'boolean' ? user.is_malik_e_nisab : null),
+      help_type: user.helpType || user.help_type || null,
+      help_details: user.helpDetails || user.help_details || null,
     };
 
     // Try inserting with all fields, dynamically removing only unsupported columns if any

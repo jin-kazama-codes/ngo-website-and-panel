@@ -6,7 +6,7 @@ import { getCommunities, createCommunity, updateCommunity, deleteCommunity } fro
 import { getUsers, updateUser } from '../../services/userService';
 import { PlusCircle, Edit2, Trash2, X, Building2, CheckCircle2, Camera, Upload, ImageIcon } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { useDynamicTranslatedText } from '../../lib/autoTranslate';
+import { useDynamicTranslatedText, autoTranslateCommunityData } from '../../lib/autoTranslate';
 import { uploadImage } from '../../lib/storage';
 
 const CommunityCard: React.FC<{
@@ -277,6 +277,18 @@ export const Communities: React.FC = () => {
           description: finalFormData.description || '',
           establishedYear: Number(finalFormData.establishedYear) || new Date().getFullYear(),
         } as Omit<Community, 'id'>);
+      }
+
+      // Auto-translate community metadata using Groq AI for instant Hindi & Urdu caching
+      try {
+        await autoTranslateCommunityData(
+          finalFormData.name || '',
+          finalFormData.description || '',
+          finalFormData.city || '',
+          finalFormData.state || ''
+        );
+      } catch (tErr) {
+        console.warn('Community auto-translation notice:', tErr);
       }
 
       if (formData.adminId) {

@@ -33,7 +33,7 @@ import {
   translateCity,
   translateCommunityName
 } from '../lib/translateEntity';
-import { autoTranslateText } from '../lib/autoTranslate';
+import { autoTranslateText, useDynamicTranslatedText } from '../lib/autoTranslate';
 import Link from 'next/link';
 
 export const CampaignDetailsPage: React.FC = () => {
@@ -75,9 +75,13 @@ export const CampaignDetailsPage: React.FC = () => {
     return () => clearInterval(timer);
   }, [rawCampaign]);
 
+  const displayBeneficiaryName = useDynamicTranslatedText(rawCampaign?.beneficiaryName, language);
+  const displayBeneficiaryRelation = useDynamicTranslatedText(rawCampaign?.beneficiaryRelation, language);
+
   useEffect(() => {
     if (!rawCampaign) return;
-    if (language === 'en') {
+    const isPureAscii = /^[\x00-\x7F]*$/.test(rawCampaign.title || '');
+    if (language === 'en' && isPureAscii) {
       setDisplayTitle(rawCampaign.title);
       setDisplayStory(rawCampaign.story);
       return;
@@ -223,7 +227,7 @@ export const CampaignDetailsPage: React.FC = () => {
                 <span>{translateCity(campaign.city, language)}</span>
               </div>
               <span className="text-slate-400">
-                {t('campaigns.beneficiaryLabel', 'Beneficiary')}: <strong className="text-slate-800">{campaign.beneficiaryName}</strong> ({campaign.beneficiaryRelation})
+                {t('campaigns.beneficiaryLabel', 'Beneficiary')}: <strong className="text-slate-800">{displayBeneficiaryName || campaign.beneficiaryName}</strong> ({displayBeneficiaryRelation || campaign.beneficiaryRelation})
               </span>
             </div>
           </div>

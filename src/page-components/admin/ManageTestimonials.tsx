@@ -131,16 +131,11 @@ export const ManageTestimonials: React.FC<ManageTestimonialsProps> = ({ activeUs
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
-  // Multi-Language Story Input State
-  const [inputLang, setInputLang] = useState<Language>('en');
-  const [langData, setLangData] = useState<{
-    en: { name: string; city: string; quote: string };
-    hi: { name: string; city: string; quote: string };
-    ur: { name: string; city: string; quote: string };
-  }>({
-    en: { name: '', city: '', quote: '' },
-    hi: { name: '', city: '', quote: '' },
-    ur: { name: '', city: '', quote: '' },
+  // Story Input State
+  const [formData, setFormData] = useState({
+    name: '',
+    city: '',
+    quote: '',
   });
 
   useEffect(() => {
@@ -172,112 +167,14 @@ export const ManageTestimonials: React.FC<ManageTestimonialsProps> = ({ activeUs
 
   const handleOpenAdd = () => {
     setEditingId(null);
-    setInputLang(language === 'ur' ? 'ur' : language === 'hi' ? 'hi' : 'en');
-    setLangData({
-      en: { name: '', city: '', quote: '' },
-      hi: { name: '', city: '', quote: '' },
-      ur: { name: '', city: '', quote: '' },
-    });
+    setFormData({ name: '', city: '', quote: '' });
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (t: Testimonial) => {
     setEditingId(t.id);
-    setInputLang(language === 'ur' ? 'ur' : language === 'hi' ? 'hi' : 'en');
-    setLangData({
-      en: { name: t.name || '', city: t.city || '', quote: t.quote || '' },
-      hi: { name: '', city: '', quote: '' },
-      ur: { name: '', city: '', quote: '' },
-    });
+    setFormData({ name: t.name || '', city: t.city || '', quote: t.quote || '' });
     setIsModalOpen(true);
-  };
-
-  // Perform full 3-language automatic conversion on demand
-  const handleAutoTranslateAll = async () => {
-    const current = langData[inputLang];
-    if (!current.name && !current.city && !current.quote) {
-      showToast(tr('कृपया नाम, शहर या अनुभव दर्ज करें।', 'براہ کرم نام، شہر یا تاثرات درج کریں۔', 'Please enter Name, City, or Quote to convert.'));
-      return;
-    }
-
-    setIsTranslating(true);
-    try {
-      const result = await autoTranslateStory(current.name, current.city, current.quote);
-
-      setLangData((prev) => ({
-        en: {
-          name: result.en.name || prev.en.name || current.name,
-          city: result.en.city || prev.en.city || current.city,
-          quote: result.en.quote || prev.en.quote || current.quote,
-        },
-        hi: {
-          name: result.hi.name || prev.hi.name || current.name,
-          city: result.hi.city || prev.hi.city || current.city,
-          quote: result.hi.quote || prev.hi.quote || current.quote,
-        },
-        ur: {
-          name: result.ur.name || prev.ur.name || current.name,
-          city: result.ur.city || prev.ur.city || current.city,
-          quote: result.ur.quote || prev.ur.quote || current.quote,
-        },
-      }));
-
-      // Cache translations immediately
-      if (result.hi.quote) setMemoryCache(`hi:${current.quote}`, result.hi.quote);
-      if (result.ur.quote) setMemoryCache(`ur:${current.quote}`, result.ur.quote);
-      if (result.hi.name) setMemoryCache(`hi:${current.name}`, result.hi.name);
-      if (result.ur.name) setMemoryCache(`ur:${current.name}`, result.ur.name);
-
-      showToast(tr('✨ सभी भाषाओं में अनुवाद सफलतापूर्वक पूरा हुआ!', '✨ تمام زبانوں میں ترجمہ کامیابی سے ہو گیا!', '✨ Converted story to Hindi, Urdu, and English successfully!'), 'success');
-    } catch (err) {
-      console.error(err);
-      showToast(tr('अनुवाद सेवा त्रुटि', 'ترجمہ میں خرابی', 'Translation service notice: Check connection or try again'));
-    } finally {
-      setIsTranslating(false);
-    }
-  };
-
-  // Auto-fill target language on tab switch if empty
-  const handleSwitchTab = async (targetLang: Language) => {
-    if (targetLang === inputLang) return;
-    const source = langData[inputLang];
-    const target = langData[targetLang];
-
-    if ((!target.name || !target.quote) && (source.name || source.quote)) {
-      setIsTranslating(true);
-      try {
-        const [tName, tCity, tQuote] = await Promise.all([
-          autoTranslateText(source.name, targetLang),
-          autoTranslateText(source.city, targetLang),
-          autoTranslateText(source.quote, targetLang),
-        ]);
-
-        setLangData((prev) => ({
-          ...prev,
-          [targetLang]: {
-            name: target.name || tName || source.name,
-            city: target.city || tCity || source.city,
-            quote: target.quote || tQuote || source.quote,
-          },
-        }));
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        setIsTranslating(false);
-      }
-    }
-
-    setInputLang(targetLang);
-  };
-
-  const handleFieldChange = (field: 'name' | 'city' | 'quote', value: string) => {
-    setLangData((prev) => ({
-      ...prev,
-      [inputLang]: {
-        ...prev[inputLang],
-        [field]: value,
-      },
-    }));
   };
 
   const handleApprove = async (id: string) => {
@@ -303,7 +200,7 @@ export const ManageTestimonials: React.FC<ManageTestimonialsProps> = ({ activeUs
       setDeleteConfirmId(null);
     } catch (err) {
       console.error(err);
-      showToast(tr('कहानी हटाने में त्रुटि', 'حذف کرنے میں خرابی', 'Failed to delete impact story'));
+      showToast(tr('कहानी हटाने में त्रुटि', 'حذف करने में خرابی', 'Failed to delete impact story'));
     } finally {
       setDeletingId(null);
     }
@@ -311,30 +208,30 @@ export const ManageTestimonials: React.FC<ManageTestimonialsProps> = ({ activeUs
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const current = langData[inputLang];
-    if (!current.name || !current.quote) {
+    if (!formData.name.trim() || !formData.quote.trim()) {
       showToast(tr('नाम और कहानी आवश्यक हैं।', 'نام اور تاثرات درکار ہیں۔', 'Name and Story Quote are required.'));
       return;
     }
 
     setIsSaving(true);
     try {
-      try {
-        const transResult = await autoTranslateStory(current.name, current.city, current.quote);
-        if (transResult.hi.quote) setMemoryCache(`hi:${current.quote}`, transResult.hi.quote);
-        if (transResult.ur.quote) setMemoryCache(`ur:${current.quote}`, transResult.ur.quote);
-        if (transResult.en.quote) setMemoryCache(`en:${current.quote}`, transResult.en.quote);
+      // Auto-translate in background via Groq AI
+      autoTranslateStory(formData.name, formData.city || 'Bareilly', formData.quote)
+        .then((transResult) => {
+          if (transResult.hi.quote) setMemoryCache(`hi:${formData.quote.trim()}`, transResult.hi.quote);
+          if (transResult.ur.quote) setMemoryCache(`ur:${formData.quote.trim()}`, transResult.ur.quote);
+          if (transResult.en.quote) setMemoryCache(`en:${formData.quote.trim()}`, transResult.en.quote);
 
-        if (transResult.hi.name) setMemoryCache(`hi:${current.name}`, transResult.hi.name);
-        if (transResult.ur.name) setMemoryCache(`ur:${current.name}`, transResult.ur.name);
-      } catch (tErr) {
-        console.warn('Auto translation cache notice:', tErr);
-      }
+          if (transResult.hi.name) setMemoryCache(`hi:${formData.name.trim()}`, transResult.hi.name);
+          if (transResult.ur.name) setMemoryCache(`ur:${formData.name.trim()}`, transResult.ur.name);
+          if (transResult.en.name) setMemoryCache(`en:${formData.name.trim()}`, transResult.en.name);
+        })
+        .catch((err) => console.warn('Background translation notice:', err));
 
       const payload = {
-        name: current.name,
-        city: current.city || 'Bareilly',
-        quote: current.quote,
+        name: formData.name,
+        city: formData.city || 'Bareilly',
+        quote: formData.quote,
       };
 
       if (editingId) {
@@ -349,7 +246,7 @@ export const ManageTestimonials: React.FC<ManageTestimonialsProps> = ({ activeUs
           status: normalizedRole === 'member' || normalizedRole === 'premium_donor' ? ('pending' as const) : ('approved' as const),
         };
         await createTestimonial(newStoryData as Omit<Testimonial, 'id'>);
-        showToast(tr('नई कहानी सुरक्षित हो गई!', 'نئی کہانی محفوظ کر دی گئی!', 'Impact story created successfully with auto-translations!'), 'success');
+        showToast(tr('नई कहानी सुरक्षित हो गई!', 'نئی کہانی محفوظ کر دی گئی!', 'Impact story created successfully!'), 'success');
       }
       setIsModalOpen(false);
       await fetchData(false);
@@ -429,7 +326,7 @@ export const ManageTestimonials: React.FC<ManageTestimonialsProps> = ({ activeUs
         </div>
       )}
 
-      {/* Add / Edit Impact Story Modal with Language Toggle & Auto-Translate */}
+      {/* Add / Edit Impact Story Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl animate-fade-in">
@@ -445,13 +342,6 @@ export const ManageTestimonials: React.FC<ManageTestimonialsProps> = ({ activeUs
                       ? tr('कहानी संपादित करें', 'کہانی میں ترمیم کریں', 'Edit Impact Story')
                       : tr('नई कहानी जोड़ें', 'نئی کہانی شامل کریں', 'Add Impact Story')}
                   </h3>
-                  <p className="text-[11px] text-slate-500">
-                    {tr(
-                      'किसी भी भाषा में लिखें — गतिशील रूप से बदलने के लिए टैब पर क्लिक करें।',
-                      'کسی بھی زبان میں لکھیں — خودکار ترجمہ کے لیے ٹیب منتخب کریں۔',
-                      'Write in any language — toggle tabs to convert dynamically.'
-                    )}
-                  </p>
                 </div>
               </div>
               <button
@@ -462,125 +352,52 @@ export const ManageTestimonials: React.FC<ManageTestimonialsProps> = ({ activeUs
               </button>
             </div>
 
-            {/* Language Selection & Auto-Translate Controls */}
-            <div className="px-6 pt-5 pb-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-1.5 bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl">
-                <button
-                  type="button"
-                  onClick={() => handleSwitchTab('en')}
-                  className={`cursor-pointer px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 ${
-                    inputLang === 'en'
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <span>🇬🇧</span> English
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchTab('hi')}
-                  className={`cursor-pointer px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 ${
-                    inputLang === 'hi'
-                      ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <span>🇮🇳</span> हिंदी (Hindi)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchTab('ur')}
-                  className={`cursor-pointer px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 ${
-                    inputLang === 'ur'
-                      ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <span>🇵🇰</span> اردو (Urdu)
-                </button>
-              </div>
-
-              {/* Auto Translate Button */}
-              <button
-                type="button"
-                onClick={handleAutoTranslateAll}
-                disabled={isTranslating}
-                className="cursor-pointer px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold shadow-sm shadow-emerald-500/20 flex items-center gap-1.5 transition-all disabled:opacity-60"
-              >
-                {isTranslating ? (
-                  <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <Sparkles className="w-3.5 h-3.5" />
-                )}
-                <span>{isTranslating ? tr('अनुवाद हो रहा है...', 'ترجمہ ہو رہا ہے...', 'Translating...') : tr('✨ स्वतः अनुवाद करें', '✨ خودکار ترجمہ کریں', '✨ Auto-Convert Story')}</span>
-              </button>
-            </div>
-
             {/* Modal Body Form */}
             <div className="p-6 overflow-y-auto flex-1 space-y-5">
               <form id="testimonial-form" onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      {tr('नाम (Name)', 'نام (Name)', 'Name')} ({inputLang.toUpperCase()})
+                      {tr('नाम (Name)', 'نام (Name)', 'Name')}
                     </label>
                     <input
                       required
                       type="text"
-                      placeholder={
-                        inputLang === 'hi'
-                          ? 'उदा. हाफ़िज़ मोहम्मद'
-                          : inputLang === 'ur'
-                          ? 'مثلاً حافظ محمد'
-                          : 'e.g. Hafiz Mohammed'
-                      }
-                      value={langData[inputLang].name}
-                      onChange={(e) => handleFieldChange('name', e.target.value)}
+                      placeholder={tr('उदा. हाफ़िज़ मोहम्मद', 'مثلاً حافظ محمد', 'e.g. Hafiz Mohammed')}
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                       className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      {tr('शहर (City)', 'شہر (City)', 'City')} ({inputLang.toUpperCase()})
+                      {tr('शहर (City)', 'شہر (City)', 'City')}
                     </label>
                     <input
                       required
                       type="text"
-                      placeholder={
-                        inputLang === 'hi'
-                          ? 'उदा. बरेली, लखनऊ'
-                          : inputLang === 'ur'
-                          ? 'مثلاً بریلی، لکھنؤ'
-                          : 'e.g. Bareilly, Lucknow'
-                      }
-                      value={langData[inputLang].city}
-                      onChange={(e) => handleFieldChange('city', e.target.value)}
+                      placeholder={tr('उदा. बरेली, लखनऊ', 'مثلاً بریلی، لکھنؤ', 'e.g. Bareilly, Lucknow')}
+                      value={formData.city}
+                      onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
                       className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                      {tr('अनुभव / कहानी (Quote)', 'تاثرات / کہانی (Quote)', 'Story Quote')} ({inputLang.toUpperCase()})
-                    </label>
-                    <span className="text-[10px] text-emerald-600 font-semibold">
-                      {tr('हिंदी, उर्दू या अंग्रेजी में लिखें', 'ہندی، اردو یا انگریزی میں ٹائپ کریں', 'Supports typing in Hindi, Urdu, or English')}
-                    </span>
-                  </div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {tr('अनुभव / कहानी (Quote)', 'تاثرات / کہانی (Quote)', 'Story Quote')}
+                  </label>
                   <textarea
                     required
                     rows={4}
-                    placeholder={
-                      inputLang === 'hi'
-                        ? 'उदा. इस संस्था ने समय पर हमारी मदद की और सब कुछ पारदर्शी रहा...'
-                        : inputLang === 'ur'
-                        ? 'مثلاً اس تنظیم نے وقت پر ہماری مدد کی اور شفافیت کے ساتھ پورا نظام کام کرتا ہے...'
-                        : 'e.g. This platform made it so easy to see the direct impact of our contributions. Highly recommended!'
-                    }
-                    value={langData[inputLang].quote}
-                    onChange={(e) => handleFieldChange('quote', e.target.value)}
+                    placeholder={tr(
+                      'उदा. इस संस्था ने समय पर हमारी मदद की और सब कुछ पारदर्शी रहा...',
+                      'مثلاً اس تنظیم نے وقت پر ہماری مدد کی اور شفافیت کے ساتھ پورا نظام کام کرتا ہے...',
+                      'e.g. This platform made it so easy to see the direct impact of our contributions. Highly recommended!'
+                    )}
+                    value={formData.quote}
+                    onChange={(e) => setFormData(prev => ({ ...prev, quote: e.target.value }))}
                     className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-3.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none resize-none transition-all"
                   ></textarea>
                 </div>

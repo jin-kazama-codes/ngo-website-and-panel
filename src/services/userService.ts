@@ -31,6 +31,10 @@ function mapRow(row: Record<string, unknown>): User {
     paymentMethod: row.payment_method as string,
     paymentUtr: row.payment_utr as string,
     paymentScreenshotUrl: row.payment_screenshot_url as string,
+    religion: (row.religion || row.dharam) as string | undefined,
+    isMalikENisab: (row.is_malik_e_nisab ?? row.isMalikENisab) as boolean | undefined,
+    helpType: (row.help_type || row.helpType) as string | undefined,
+    helpDetails: (row.help_details || row.helpDetails) as string | undefined,
   };
 }
 
@@ -96,6 +100,13 @@ export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaa
     paymentMethod: user.paymentMethod,
     paymentUtr: user.paymentUtr,
     paymentScreenshotUrl: user.paymentScreenshotUrl,
+    religion: user.religion,
+    is_malik_e_nisab: user.isMalikENisab,
+    isMalikENisab: user.isMalikENisab,
+    help_type: user.helpType,
+    helpType: user.helpType,
+    help_details: user.helpDetails,
+    helpDetails: user.helpDetails,
   };
 
   const res = await fetch('/api/users', {
@@ -169,6 +180,10 @@ export async function updateUser(id: string, patch: Partial<User>): Promise<void
   if (patch.paymentMethod !== undefined) update.payment_method = patch.paymentMethod;
   if (patch.paymentUtr !== undefined) update.payment_utr = patch.paymentUtr;
   if (patch.paymentScreenshotUrl !== undefined) update.payment_screenshot_url = patch.paymentScreenshotUrl;
+  if (patch.religion !== undefined) update.religion = patch.religion;
+  if (patch.isMalikENisab !== undefined) update.is_malik_e_nisab = patch.isMalikENisab;
+  if (patch.helpType !== undefined) update.help_type = patch.helpType;
+  if (patch.helpDetails !== undefined) update.help_details = patch.helpDetails;
   if (patch.passwordHash !== undefined) {
     update.password = patch.passwordHash;
     update.password_hash = patch.passwordHash;

@@ -111,8 +111,8 @@ export function useDynamicTranslatedText(rawText: string | undefined, targetLang
 }
 
 export async function autoTranslateCampaign(
-  title: string,
-  story: string
+  title?: string,
+  story?: string
 ): Promise<{
   title_hi: string;
   title_ur: string;
@@ -120,24 +120,168 @@ export async function autoTranslateCampaign(
   story_ur: string;
 }> {
   const [title_hi, title_ur, story_hi, story_ur] = await Promise.all([
-    autoTranslateText(title, 'hi'),
-    autoTranslateText(title, 'ur'),
-    autoTranslateText(story, 'hi'),
-    autoTranslateText(story, 'ur'),
+    autoTranslateText(title || '', 'hi'),
+    autoTranslateText(title || '', 'ur'),
+    autoTranslateText(story || '', 'hi'),
+    autoTranslateText(story || '', 'ur'),
   ]);
 
   return {
-    title_hi,
-    title_ur,
-    story_hi,
-    story_ur,
+    title_hi: title_hi || title || '',
+    title_ur: title_ur || title || '',
+    story_hi: story_hi || story || '',
+    story_ur: story_ur || story || '',
+  };
+}
+
+/**
+ * Complete multi-language campaign translation powered by Groq AI.
+ * Translates Title, Beneficiary Name, Beneficiary Relation, and Case Story into Hindi, Urdu, and English.
+ */
+export async function autoTranslateFullCampaign(
+  title?: string,
+  beneficiaryName?: string,
+  beneficiaryRelation?: string,
+  story?: string
+): Promise<{
+  hi: { title: string; beneficiaryName: string; beneficiaryRelation: string; story: string };
+  ur: { title: string; beneficiaryName: string; beneficiaryRelation: string; story: string };
+  en: { title: string; beneficiaryName: string; beneficiaryRelation: string; story: string };
+}> {
+  const [
+    title_hi, title_ur, title_en,
+    bName_hi, bName_ur, bName_en,
+    bRel_hi, bRel_ur, bRel_en,
+    story_hi, story_ur, story_en,
+  ] = await Promise.all([
+    autoTranslateText(title || '', 'hi'),
+    autoTranslateText(title || '', 'ur'),
+    autoTranslateText(title || '', 'en'),
+    autoTranslateText(beneficiaryName || '', 'hi'),
+    autoTranslateText(beneficiaryName || '', 'ur'),
+    autoTranslateText(beneficiaryName || '', 'en'),
+    autoTranslateText(beneficiaryRelation || '', 'hi'),
+    autoTranslateText(beneficiaryRelation || '', 'ur'),
+    autoTranslateText(beneficiaryRelation || '', 'en'),
+    autoTranslateText(story || '', 'hi'),
+    autoTranslateText(story || '', 'ur'),
+    autoTranslateText(story || '', 'en'),
+  ]);
+
+  // Pre-seed local cache
+  if (title) {
+    if (title_hi) setMemoryCache(`hi:${title.trim()}`, title_hi);
+    if (title_ur) setMemoryCache(`ur:${title.trim()}`, title_ur);
+    if (title_en) setMemoryCache(`en:${title.trim()}`, title_en);
+  }
+  if (story) {
+    if (story_hi) setMemoryCache(`hi:${story.trim()}`, story_hi);
+    if (story_ur) setMemoryCache(`ur:${story.trim()}`, story_ur);
+    if (story_en) setMemoryCache(`en:${story.trim()}`, story_en);
+  }
+  if (beneficiaryName) {
+    if (bName_hi) setMemoryCache(`hi:${beneficiaryName.trim()}`, bName_hi);
+    if (bName_ur) setMemoryCache(`ur:${beneficiaryName.trim()}`, bName_ur);
+    if (bName_en) setMemoryCache(`en:${beneficiaryName.trim()}`, bName_en);
+  }
+  if (beneficiaryRelation) {
+    if (bRel_hi) setMemoryCache(`hi:${beneficiaryRelation.trim()}`, bRel_hi);
+    if (bRel_ur) setMemoryCache(`ur:${beneficiaryRelation.trim()}`, bRel_ur);
+    if (bRel_en) setMemoryCache(`en:${beneficiaryRelation.trim()}`, bRel_en);
+  }
+
+  return {
+    hi: {
+      title: title_hi || title || '',
+      beneficiaryName: bName_hi || beneficiaryName || '',
+      beneficiaryRelation: bRel_hi || beneficiaryRelation || '',
+      story: story_hi || story || '',
+    },
+    ur: {
+      title: title_ur || title || '',
+      beneficiaryName: bName_ur || beneficiaryName || '',
+      beneficiaryRelation: bRel_ur || beneficiaryRelation || '',
+      story: story_ur || story || '',
+    },
+    en: {
+      title: title_en || title || '',
+      beneficiaryName: bName_en || beneficiaryName || '',
+      beneficiaryRelation: bRel_en || beneficiaryRelation || '',
+      story: story_en || story || '',
+    },
+  };
+}
+
+/**
+ * Multi-language community translation for name, description, city, and state.
+ */
+export async function autoTranslateCommunityData(
+  name?: string,
+  description?: string,
+  city?: string,
+  state?: string
+): Promise<{
+  hi: { name: string; description: string; city: string; state: string };
+  ur: { name: string; description: string; city: string; state: string };
+  en: { name: string; description: string; city: string; state: string };
+}> {
+  const [
+    name_hi, name_ur, name_en,
+    desc_hi, desc_ur, desc_en,
+    city_hi, city_ur, city_en,
+    state_hi, state_ur, state_en,
+  ] = await Promise.all([
+    autoTranslateText(name || '', 'hi'),
+    autoTranslateText(name || '', 'ur'),
+    autoTranslateText(name || '', 'en'),
+    autoTranslateText(description || '', 'hi'),
+    autoTranslateText(description || '', 'ur'),
+    autoTranslateText(description || '', 'en'),
+    autoTranslateText(city || '', 'hi'),
+    autoTranslateText(city || '', 'ur'),
+    autoTranslateText(city || '', 'en'),
+    autoTranslateText(state || '', 'hi'),
+    autoTranslateText(state || '', 'ur'),
+    autoTranslateText(state || '', 'en'),
+  ]);
+
+  if (name) {
+    if (name_hi) setMemoryCache(`hi:${name.trim()}`, name_hi);
+    if (name_ur) setMemoryCache(`ur:${name.trim()}`, name_ur);
+    if (name_en) setMemoryCache(`en:${name.trim()}`, name_en);
+  }
+  if (description) {
+    if (desc_hi) setMemoryCache(`hi:${description.trim()}`, desc_hi);
+    if (desc_ur) setMemoryCache(`ur:${description.trim()}`, desc_ur);
+    if (desc_en) setMemoryCache(`en:${description.trim()}`, desc_en);
+  }
+
+  return {
+    hi: {
+      name: name_hi || name || '',
+      description: desc_hi || description || '',
+      city: city_hi || city || '',
+      state: state_hi || state || '',
+    },
+    ur: {
+      name: name_ur || name || '',
+      description: desc_ur || description || '',
+      city: city_ur || city || '',
+      state: state_ur || state || '',
+    },
+    en: {
+      name: name_en || name || '',
+      description: desc_en || description || '',
+      city: city_en || city || '',
+      state: state_en || state || '',
+    },
   };
 }
 
 export async function autoTranslateStory(
-  name: string,
-  city: string,
-  quote: string
+  name?: string,
+  city?: string,
+  quote?: string
 ): Promise<{
   hi: { name: string; city: string; quote: string };
   ur: { name: string; city: string; quote: string };
@@ -148,20 +292,20 @@ export async function autoTranslateStory(
     city_hi, city_ur, city_en,
     quote_hi, quote_ur, quote_en
   ] = await Promise.all([
-    autoTranslateText(name, 'hi'),
-    autoTranslateText(name, 'ur'),
-    autoTranslateText(name, 'en'),
-    autoTranslateText(city, 'hi'),
-    autoTranslateText(city, 'ur'),
-    autoTranslateText(city, 'en'),
-    autoTranslateText(quote, 'hi'),
-    autoTranslateText(quote, 'ur'),
-    autoTranslateText(quote, 'en'),
+    autoTranslateText(name || '', 'hi'),
+    autoTranslateText(name || '', 'ur'),
+    autoTranslateText(name || '', 'en'),
+    autoTranslateText(city || '', 'hi'),
+    autoTranslateText(city || '', 'ur'),
+    autoTranslateText(city || '', 'en'),
+    autoTranslateText(quote || '', 'hi'),
+    autoTranslateText(quote || '', 'ur'),
+    autoTranslateText(quote || '', 'en'),
   ]);
 
   return {
-    hi: { name: name_hi || name, city: city_hi || city, quote: quote_hi || quote },
-    ur: { name: name_ur || name, city: city_ur || city, quote: quote_ur || quote },
-    en: { name: name_en || name, city: city_en || city, quote: quote_en || quote },
+    hi: { name: name_hi || name || '', city: city_hi || city || '', quote: quote_hi || quote || '' },
+    ur: { name: name_ur || name || '', city: city_ur || city || '', quote: quote_ur || quote || '' },
+    en: { name: name_en || name || '', city: city_en || city || '', quote: quote_en || quote || '' },
   };
 }

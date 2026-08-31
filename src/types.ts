@@ -48,6 +48,13 @@ export interface User {
   paymentUtr?: string;
   paymentScreenshotUrl?: string;
   familiesHelped?: number;
+  religion?: 'Hindu' | 'Muslim' | 'Sikh' | 'Christian' | string;
+  isMalikENisab?: boolean;
+  is_malik_e_nisab?: boolean;
+  helpType?: 'Zakat' | 'Sadaka' | 'Fitra' | 'Other' | string;
+  help_type?: string;
+  helpDetails?: string;
+  help_details?: string;
 }
 
 export interface Community {

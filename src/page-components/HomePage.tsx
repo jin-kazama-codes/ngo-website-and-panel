@@ -61,6 +61,9 @@ import {
   Headphones,
   Clock,
   User,
+  Quote,
+  HandHeart,
+  Scale,
 } from 'lucide-react';
 import { FaHandsHoldingChild, FaHandHoldingHeart, FaPeopleGroup } from 'react-icons/fa6';
 import { TbShieldCheck } from 'react-icons/tb';
@@ -2002,6 +2005,242 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ── FOUNDERS' MESSAGE SECTION ── */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+        {/* Section Heading */}
+        <div className="text-center space-y-2 mb-10">
+          <div
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+            style={{
+              background: 'rgba(26, 60, 44, 0.08)',
+              color: 'var(--mfct-dark-green)',
+              border: '1px solid rgba(26, 60, 44, 0.15)',
+            }}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+            <span>{t('about.founders_section_title', 'संस्थापकों का संदेश | Founders\u2019 Messages')}</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
+            {t('about.founders_section_subtitle', 'Guiding thoughts and resolute principles that form the bedrock of every decision at MFCT')}
+          </h2>
+        </div>
+
+        {/* Two-Column Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* ── LEFT: Founder & Chairman ── */}
+          <div
+            className="bg-white rounded-3xl border shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl flex flex-col"
+            style={{
+              borderColor: 'rgba(200, 168, 75, 0.35)',
+              boxShadow: '0 10px 30px -5px rgba(26, 60, 44, 0.08)',
+            }}
+          >
+            {/* Header */}
+            <div
+              className="px-5 py-3 border-b flex items-center justify-between gap-3 text-xs font-bold"
+              style={{
+                background: 'linear-gradient(90deg, #0f3322 0%, #1a3c2c 100%)',
+                color: '#f0c868',
+                borderColor: 'rgba(200, 168, 75, 0.25)',
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-sm">🔷</span>
+                <span className="tracking-wide uppercase text-[11px]">
+                  {t('about.zahid_role', 'Founder & Chairman — Founder\u2019s Message')}
+                </span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] shrink-0">
+                MFCT Leadership
+              </span>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 sm:p-6 flex flex-col sm:flex-row gap-5 items-start flex-1">
+              {/* Portrait */}
+              <div className="flex flex-col items-center shrink-0 space-y-3">
+                <div className="relative group">
+                  <div
+                    className="absolute -inset-1 rounded-2xl blur-md opacity-30 group-hover:opacity-60 transition duration-300"
+                    style={{ background: 'linear-gradient(135deg, #c8a84b 0%, #1a3c2c 100%)' }}
+                  />
+                  <div
+                    className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-xl overflow-hidden shadow-lg bg-slate-100"
+                    style={{ border: '2px solid var(--mfct-gold)' }}
+                  >
+                    <img
+                      src="/Mr Mohammad Zahid.jpeg"
+                      alt="Er. Mohammad Zahid - Founder & Chairman, MFCT"
+                      className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = '/Mr%20Mohammad%20Zahid.jpeg';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute bottom-1.5 left-1 right-1 px-1 py-0.5 rounded bg-black/50 backdrop-blur-md text-white text-[9px] font-medium flex items-center justify-center gap-0.5">
+                      <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
+                      <span>Founder & Chairman</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center space-y-0.5">
+                  <h3 className="text-sm font-black text-slate-900">{t('about.zahid_title', 'Er. Mohammad Zahid')}</h3>
+                  <p className="text-[11px] font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>Founder & Chairman, MFCT</p>
+                </div>
+              </div>
+
+              {/* Message */}
+              <div className="flex-1 space-y-3 min-w-0">
+                <div
+                  className="p-4 rounded-xl border relative overflow-hidden"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(200, 168, 75, 0.08) 0%, rgba(26, 60, 44, 0.04) 100%)',
+                    borderColor: 'rgba(200, 168, 75, 0.4)',
+                  }}
+                >
+                  <Quote
+                    className="w-8 h-8 absolute -right-1 -bottom-1 opacity-10 pointer-events-none"
+                    style={{ color: 'var(--mfct-gold-dark)' }}
+                  />
+                  <p
+                    className="text-sm font-bold leading-relaxed italic"
+                    style={{ color: 'var(--mfct-dark-green)' }}
+                  >
+                    {t(
+                      'about.zahid_quote',
+                      '\u201c\u0645\u0947\u0930\u0947 \u0932\u093f\u090f MFCT \u0915\u0947\u0935\u0932 \u090f\u0915 \u0938\u0902\u0938\u094d\u0925\u093e \u0928\u0939\u0940\u0902, \u092c\u0932\u094d\u0915\u093f \u090f\u0915 \u0935\u093f\u091a\u093e\u0930 \u0939\u0948\u2014\u090f\u0915 \u0910\u0938\u093e \u0935\u093f\u091a\u093e\u0930 \u091c\u093f\u0938\u092e\u0947\u0902 \u092e\u0941\u0936\u094d\u0915\u093f\u0932 \u0938\u092e\u092f \u092e\u0947\u0902 \u0915\u094b\u0908 \u092a\u0930\u093f\u0935\u093e\u0930 \u062e\u064f\u062f \u0915\u094b \u0905\u0915\u0947\u0932\u093e \u092e\u0939\u0938\u0942\u0938 \u0928 \u0915\u0930\u0947\u0964\u201d'
+                    )}
+                  </p>
+                </div>
+                <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+                  <p>{t('about.zahid_p1', '\u092e\u0930\u0939\u0942\u092e \u092e\u094b\u0939\u092e\u094d\u092e\u062f \u095e\u093c\u0908\u092e \u0938\u093e\u0939\u092c \u0915\u0940 \u092f\u093e\u0926 \u0915\u094b \u0938\u092e\u093e\u091c \u0915\u0940 \u0938\u0947\u0935\u093e \u0938\u0947 \u091c\u094b\u095c\u0928\u0947 \u0915\u0940 \u092a\u094d\u0930\u0947\u0930\u0923\u093e \u0938\u0947 \u0939\u092e\u0928\u0947 MFCT \u0915\u0940 \u0936\u0941\u0930\u0941\u0906\u0924 \u0915\u0940\u0964')}</p>
+                  <p>{t('about.zahid_p2', '\u092e\u0947\u0930\u093e \u0938\u092a\u0928\u093e \u0939\u0948 \u0915\u093f MFCT \u0915\u0947\u0935\u0932 \u090f\u0915 \u0936\u0939\u0930 \u092f\u093e \u091c\u093f\u0932\u0947 \u0924\u0915 \u0938\u0940\u092e\u093f\u0924 \u0928 \u0930\u0939\u0947, \u092c\u0932\u094d\u0915\u093f \u0939\u0930 \u0909\u0938 \u0935\u094d\u092f\u0915\u094d\u0924\u093f \u0924\u0915 \u092a\u0939\u0941\u0901\u091a\u0947 \u091c\u093f\u0938\u0947 \u0938\u092e\u093e\u091c \u0915\u0947 \u0938\u0939\u092f\u094b\u0917 \u0915\u0940 \u0906\u0935\u0936\u094d\u092f\u0915\u0924\u093e \u0939\u0948\u0964')}</p>
+                </div>
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <h4 className="text-xs font-extrabold text-slate-900">— {t('about.zahid_title', 'Er. Mohammad Zahid')}</h4>
+                  <span
+                    className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold"
+                    style={{ background: 'rgba(26, 60, 44, 0.08)', color: 'var(--mfct-dark-green)' }}
+                  >
+                    MFCT Leadership Council
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── RIGHT: Co-Founder & Secretary–Treasurer ── */}
+          <div
+            className="bg-white rounded-3xl border shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl flex flex-col"
+            style={{
+              borderColor: 'rgba(200, 168, 75, 0.35)',
+              boxShadow: '0 10px 30px -5px rgba(26, 60, 44, 0.08)',
+            }}
+          >
+            {/* Header */}
+            <div
+              className="px-5 py-3 border-b flex items-center justify-between gap-3 text-xs font-bold"
+              style={{
+                background: 'linear-gradient(90deg, #1a3c2c 0%, #2e5e42 100%)',
+                color: '#f0c868',
+                borderColor: 'rgba(200, 168, 75, 0.25)',
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-sm">🔶</span>
+                <span className="tracking-wide uppercase text-[11px]">
+                  {t('about.amreen_role', 'Co-Founder & Secretary\u2013Treasurer — Founder\u2019s Message')}
+                </span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] shrink-0">
+                MFCT Co-Founder
+              </span>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 sm:p-6 flex flex-col sm:flex-row gap-5 items-start flex-1">
+              {/* Portrait */}
+              <div className="flex flex-col items-center shrink-0 space-y-3">
+                <div className="relative group">
+                  <div
+                    className="absolute -inset-1 rounded-2xl blur-md opacity-30 group-hover:opacity-60 transition duration-300"
+                    style={{ background: 'linear-gradient(135deg, #c8a84b 0%, #2e5e42 100%)' }}
+                  />
+                  <div
+                    className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-xl overflow-hidden shadow-lg bg-slate-100"
+                    style={{ border: '2px solid var(--mfct-gold)' }}
+                  >
+                    <img
+                      src="/Mrs. Amreen.jpeg"
+                      alt="Mrs. Amreen - Co-Founder & Secretary-Treasurer, MFCT"
+                      className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = '/Mrs.%20Amreen.jpeg';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute bottom-1.5 left-1 right-1 px-1 py-0.5 rounded bg-black/50 backdrop-blur-md text-white text-[9px] font-medium flex items-center justify-center gap-0.5">
+                      <CheckCircle2 className="w-2.5 h-2.5 text-amber-400" />
+                      <span>Co-Founder & Sec\u2013Treasurer</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center space-y-0.5">
+                  <h3 className="text-sm font-black text-slate-900">{t('about.amreen_title', 'Mrs. Amreen')}</h3>
+                  <p className="text-[11px] font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>Co-Founder & Secretary\u2013Treasurer</p>
+                </div>
+              </div>
+
+              {/* Message */}
+              <div className="flex-1 space-y-3 min-w-0">
+                <div
+                  className="p-4 rounded-xl border relative overflow-hidden"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(200, 168, 75, 0.08) 0%, rgba(46, 94, 66, 0.05) 100%)',
+                    borderColor: 'rgba(200, 168, 75, 0.4)',
+                  }}
+                >
+                  <Quote
+                    className="w-8 h-8 absolute -right-1 -bottom-1 opacity-10 pointer-events-none"
+                    style={{ color: 'var(--mfct-gold-dark)' }}
+                  />
+                  <p
+                    className="text-sm font-bold leading-relaxed italic"
+                    style={{ color: 'var(--mfct-dark-green)' }}
+                  >
+                    {t(
+                      'about.amreen_quote',
+                      '\u201c\u092e\u0947\u0930\u0947 \u0932\u093f\u090f \u0938\u0947\u0935\u093e \u0915\u093e \u0905\u0930\u094d\u0925 \u0915\u0947\u0935\u0932 \u0915\u093f\u0938\u0940 \u0915\u0940 \u092e\u0926\u0926 \u0915\u0930\u0928\u093e \u0928\u0939\u0940\u0902, \u092c\u0932\u094d\u0915\u093f \u091c\u0930\u0942\u0930\u0924 \u0915\u0947 \u0938\u092e\u092f \u0909\u0938\u0915\u0947 \u0938\u093e\u0925 \u062e\u0691\u0947 \u0939\u094b\u0928\u0947 \u0915\u093e \u090f\u0939\u0938\u093e\u0938 \u0926\u0947\u0928\u093e \u0939\u0948\u0964\u201d'
+                    )}
+                  </p>
+                </div>
+                <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+                  <p>{t('about.amreen_p1', 'MFCT \u0938\u0947 \u091c\u0941\u095c\u0928\u0947 \u0915\u093e \u092e\u0947\u0930\u093e \u0909\u0926\u094d\u0926\u0947\u0936\u094d\u092f \u0939\u0948 \u0915\u093f \u0938\u092e\u093e\u091c \u092e\u0947\u0902 \u0906\u092a\u0938\u0940 \u0938\u0939\u092f\u094b\u0917, \u0938\u0902\u0935\u0947\u0926\u0928\u093e \u0914\u0930 \u0907\u0902\u0938\u093e\u0928\u093f\u092f\u0924 \u0915\u0940 \u092d\u093e\u0935\u0928\u093e \u0915\u094b \u0914\u0930 \u092e\u091c\u092c\u0942\u0924 \u0915\u093f\u092f\u093e \u091c\u093e\u090f\u0964')}</p>
+                  <p>{t('about.amreen_p2', '\u0906\u0908\u090f, \u092e\u093f\u0932\u0915\u0930 \u0938\u0947\u0935\u093e \u0915\u094b \u0905\u092a\u0928\u0940 \u091c\u093f\u092e\u094d\u092e\u0947\u0926\u093e\u0930\u0940 \u0914\u0930 \u0907\u0902\u0938\u093e\u0928\u093f\u092f\u0924 \u0915\u094b \u0905\u092a\u0928\u0940 \u092a\u0939\u091a\u093e\u0928 \u092c\u0928\u093e\u090f\u0902\u0964')}</p>
+                </div>
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <h4 className="text-xs font-extrabold text-slate-900">— {t('about.amreen_title', 'Mrs. Amreen')}</h4>
+                  <span
+                    className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold"
+                    style={{
+                      background: 'rgba(200, 168, 75, 0.15)',
+                      color: 'var(--mfct-gold-dark)',
+                      border: '1px solid rgba(200, 168, 75, 0.3)',
+                    }}
+                  >
+                    MFCT Executive Secretariat
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
     </div>
