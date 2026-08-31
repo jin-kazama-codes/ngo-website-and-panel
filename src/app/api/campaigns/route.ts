@@ -90,7 +90,9 @@ export async function POST(request: Request) {
       donors_count: body.donorsCount || body.donors_count || 0,
       days_left: body.daysLeft || body.days_left || 30,
       is_verified: body.isVerified !== undefined ? body.isVerified : true,
-      is_zakat_eligible: body.isZakatEligible !== undefined ? body.isZakatEligible : true,
+      is_zakat_eligible: body.isZakatEligible !== undefined ? body.isZakatEligible : false,
+      is_sadqa_eligible: body.isSadqaEligible !== undefined ? body.isSadqaEligible : false,
+      is_fitrah_eligible: body.isFitrahEligible !== undefined ? body.isFitrahEligible : false,
       is_urgent: body.isUrgent !== undefined ? body.isUrgent : false,
       main_image: [body.mainImage, ...(body.galleryImages || [])].filter(Boolean).join(','),
       story: body.story,
@@ -148,6 +150,8 @@ export async function PATCH(request: Request) {
     if (body.beneficiaryRelation !== undefined) updatePayload.beneficiary_relation = body.beneficiaryRelation;
     if (body.goalINR !== undefined) updatePayload.goal_inr = body.goalINR;
     if (body.isZakatEligible !== undefined) updatePayload.is_zakat_eligible = body.isZakatEligible;
+    if (body.isSadqaEligible !== undefined) updatePayload.is_sadqa_eligible = body.isSadqaEligible;
+    if (body.isFitrahEligible !== undefined) updatePayload.is_fitrah_eligible = body.isFitrahEligible;
     if (body.isUrgent !== undefined) updatePayload.is_urgent = body.isUrgent;
     if (body.mainImage !== undefined || body.galleryImages !== undefined) {
       updatePayload.main_image = [body.mainImage, ...(body.galleryImages || [])].filter(Boolean).join(',');
@@ -210,6 +214,27 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, error: 'Campaign ID is required' }, { status: 400 });
     }
 
+    // 1. Delete associated child donations first to satisfy foreign key constraint
+    const { error: donErr } = await supabaseAdmin
+      .from('donations')
+      .delete()
+      .eq('campaign_id', id);
+
+    if (donErr) {
+      console.warn('Notice deleting child donations:', donErr.message);
+    }
+
+    // 2. Delete pending verifications if any
+    const { error: verErr } = await supabaseAdmin
+      .from('pending_verifications')
+      .delete()
+      .eq('campaign_id', id);
+
+    if (verErr) {
+      console.warn('Notice deleting child verifications:', verErr.message);
+    }
+
+    // 3. Delete the campaign
     const { error } = await supabaseAdmin
       .from('campaigns')
       .delete()

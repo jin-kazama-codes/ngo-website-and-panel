@@ -5,7 +5,7 @@ import { Campaign, DonationCategory } from '../types';
 import { getCampaigns, sortCampaignsByLatest } from '../services/campaignService';
 import { CampaignCard } from '../components/CampaignCard';
 import { CampaignSkeleton } from '../components/CampaignSkeleton';
-import { Search, Grid, List } from 'lucide-react';
+import { Search, Grid, List, Sparkles, Heart, Award, Flame, Layers } from 'lucide-react';
 import { MembershipBanner } from '../components/MembershipBanner';
 import { useLanguage } from '../context/LanguageContext';
 import { translateCity, translateCategory } from '../lib/translateEntity';
@@ -16,6 +16,12 @@ interface CampaignsPageProps {
 
 export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
   const { t, language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedCity, setSelectedCity] = useState<string>('All');
@@ -49,7 +55,10 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
     const matchesCat =
       selectedCategory === 'All' ||
       c.category === selectedCategory ||
-      (selectedCategory === 'Zakat' && c.isZakatEligible);
+      (selectedCategory === 'Zakat' && !!c.isZakatEligible) ||
+      (selectedCategory === 'Sadqa' && !!c.isSadqaEligible) ||
+      (selectedCategory === 'Fitrah' && !!c.isFitrahEligible) ||
+      (selectedCategory === 'Urgent' && !!c.isUrgent);
     const matchesCity = selectedCity === 'All' || c.city === selectedCity;
     return matchesSearch && matchesCat && matchesCity;
   });
@@ -77,8 +86,21 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
     new Set(['Delhi', 'Lucknow', 'Hyderabad', 'Bareilly', 'Mumbai', ...campaigns.map((c) => c.city).filter(Boolean)])
   );
 
+  const filterPills = [
+    { id: 'All', label: tr('सभी', 'تمام', 'All'), icon: Layers },
+    { id: 'Zakat', label: tr('ज़कात पात्र', 'زکوٰۃ اہل', 'Zakat Eligible'), icon: Sparkles, color: 'gold' },
+    { id: 'Sadqa', label: tr('सदका पात्र', 'صدقہ اہل', 'Sadqa Eligible'), icon: Heart, color: 'teal' },
+    { id: 'Fitrah', label: tr('फ़ितरा पात्र', 'فطرہ اہل', 'Fitrah Eligible'), icon: Award, color: 'indigo' },
+    { id: 'Urgent', label: tr('अति आवश्यक', 'اہم / ہنگامی', 'Urgent Need'), icon: Flame, color: 'rose' },
+    { id: 'Medical', label: translateCategory('Medical', language) },
+    { id: 'Education', label: translateCategory('Education', language) },
+    { id: 'Marriage', label: translateCategory('Marriage', language) },
+    { id: 'Food', label: translateCategory('Food', language) },
+    { id: 'Janazah', label: translateCategory('Janazah', language) },
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fade-in">
       <div>
         <h1 className="text-3xl font-black" style={{ color: 'var(--mfct-dark-green)' }}>
           {language === 'hi' ? 'सत्यापित सहायता अभियान' : language === 'ur' ? 'تصدیق شدہ مہمات' : 'Verified Relief Campaigns'}
@@ -114,7 +136,10 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
               style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
             >
               <option value="All">{t('cat.all', 'All Categories')}</option>
-              <option value="Zakat">{t('cat.zakat', 'Zakat Eligible')}</option>
+              <option value="Zakat">{tr('ज़कात पात्र', 'زکوٰۃ کے اہل', 'Zakat Eligible')}</option>
+              <option value="Sadqa">{tr('सदका पात्र', 'صدقہ کے اہل', 'Sadqa Eligible')}</option>
+              <option value="Fitrah">{tr('फ़ितरा पात्र', 'فطرہ کے اہل', 'Fitrah Eligible')}</option>
+              <option value="Urgent">{tr('अति आवश्यक', 'اہم / ہنگامی', 'Urgent Need')}</option>
               <option value="Medical">{translateCategory('Medical', language)}</option>
               <option value="Education">{translateCategory('Education', language)}</option>
               <option value="Marriage">{translateCategory('Marriage', language)}</option>
@@ -154,6 +179,29 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
             </div>
           </div>
         </div>
+
+        {/* Quick Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-1 border-t border-slate-100 dark:border-slate-800">
+          {filterPills.map((pill) => {
+            const isSelected = selectedCategory === pill.id;
+            const Icon = pill.icon;
+
+            return (
+              <button
+                key={pill.id}
+                onClick={() => setSelectedCategory(pill.id)}
+                className={`cursor-pointer px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 whitespace-nowrap transition-all ${
+                  isSelected
+                    ? 'bg-emerald-700 text-white shadow-sm'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300'
+                }`}
+              >
+                {Icon && <Icon className="w-3.5 h-3.5" />}
+                <span>{pill.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {loading ? (
@@ -171,7 +219,7 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
           <p className="font-bold">{t('campaigns.no_results', 'No campaigns found matching your search filters.')}</p>
           <button
             onClick={() => { setSearch(''); setSelectedCategory('All'); setSelectedCity('All'); }}
-            className="mt-3 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+            className="mt-3 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
             style={{ background: 'var(--mfct-warm-bg-2)', color: 'var(--mfct-dark-green)', border: '1px solid var(--mfct-border)' }}
           >
             {t('btn.clear', 'Clear Filters')}

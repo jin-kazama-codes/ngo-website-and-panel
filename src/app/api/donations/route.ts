@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const donorId = searchParams.get('donorId');
+  const campaignId = searchParams.get('campaignId');
   const limitStr = searchParams.get('limit');
   const limit = limitStr ? parseInt(limitStr, 10) : 50;
 
@@ -13,11 +14,40 @@ export async function GET(request: Request) {
     if (donorId) {
       query = query.eq('donor_id', donorId);
     }
+    if (campaignId) {
+      query = query.eq('campaign_id', campaignId);
+    }
 
     const { data, error } = await query;
     if (error) throw error;
     
     let results = data ?? [];
+
+    // Query users for donor avatars if missing
+    try {
+      const userIds = [...new Set(results.map((r: any) => r.donor_id).filter((id: string) => id && id !== 'anonymous' && !id.startsWith('anon_')))];
+      if (userIds.length > 0) {
+        const { data: usersData } = await supabaseAdmin
+          .from('users')
+          .select('id, avatar, name')
+          .in('id', userIds);
+
+        if (usersData && usersData.length > 0) {
+          const userMap = new Map(usersData.map((u: any) => [u.id, u]));
+          results = results.map((r: any) => {
+            const u = userMap.get(r.donor_id);
+            return {
+              ...r,
+              donor_avatar: r.donor_avatar || u?.avatar || null,
+              donor_name: r.donor_name || u?.name || 'Generous Donor',
+            };
+          });
+        }
+      }
+    } catch (uErr) {
+      console.warn('Could not join users for avatars:', uErr);
+    }
+
     function getDonationTime(item: any): number {
       const dateStr = item.created_at || item.date;
       if (dateStr) {
@@ -51,6 +81,7 @@ export async function POST(request: Request) {
       donor_name: body.donorName || body.donor_name,
       donor_id: body.donorId || body.donor_id,
       donor_role: body.donorRole || body.donor_role,
+      donor_avatar: body.donorAvatar || body.donor_avatar || null,
       campaign_id: body.campaignId || body.campaign_id,
       campaign_title: body.campaignTitle || body.campaign_title,
       community_name: body.communityName || body.community_name,

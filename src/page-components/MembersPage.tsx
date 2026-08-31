@@ -97,7 +97,9 @@ const TRANSLATION_MAP: Record<string, { hi: string; ur: string }> = {
   'premium_donor': { hi: 'विशिष्ट दानदाता', ur: 'پریمیم ڈونر' },
 };
 
-// Transliterate / Translate helper
+import { useDynamicTranslatedText } from '../lib/autoTranslate';
+
+// Transliterate / Translate helper with fallback
 function formatTextByLang(text: string | undefined | null, lang: string): string {
   if (!text) return '—';
   if (lang === 'en') return text;
@@ -196,6 +198,181 @@ const UP_DISTRICTS = [
   'Unnao',
   'Varanasi'
 ];
+
+const MemberTableRow: React.FC<{
+  member: any;
+  idx: number;
+  currentPage: number;
+  pageSize: number;
+  language: any;
+  copiedId: string | null;
+  handleCopyId: (id: string) => void;
+}> = ({ member, idx, currentPage, pageSize, language, copiedId, handleCopyId }) => {
+  const serialNumber = (currentPage - 1) * pageSize + idx + 1;
+  const memId = member.membership_id || member.membershipId || `MFCT-${(member.id || '').slice(-6).toUpperCase()}`;
+  const rawName = member.name || 'Member';
+  const dynamicName = useDynamicTranslatedText(rawName, language);
+  const displayName = dynamicName || formatTextByLang(rawName, language);
+  const email = member.email || '—';
+  const communityId = member.community_id || member.communityId || '—';
+  const rawCommName = member.community_name || member.communityName || 'Bareilly Central Care Society (Headquarters)';
+  const dynamicCommName = useDynamicTranslatedText(rawCommName, language);
+  const displayCommName = dynamicCommName || formatTextByLang(rawCommName, language);
+  const rawDistrict = member.city || member.district || 'Bareilly';
+  const dynamicDistrict = useDynamicTranslatedText(rawDistrict, language);
+  const displayDistrict = dynamicDistrict || formatTextByLang(rawDistrict, language);
+
+  const roleRaw = (member.role || 'member').toLowerCase();
+  const roleLabel =
+    roleRaw === 'community_admin'
+      ? language === 'hi'
+        ? 'समुदाय व्यवस्थापक'
+        : language === 'ur'
+        ? 'کمیونٹی ایڈمن'
+        : 'Community Admin'
+      : roleRaw === 'executive_admin'
+      ? language === 'hi'
+        ? 'कार्यकारी व्यवस्थापक'
+        : language === 'ur'
+        ? 'ایگزیکٹو ایڈمن'
+        : 'Executive Admin'
+      : roleRaw === 'premium_donor'
+      ? language === 'hi'
+        ? 'विशिष्ट दानदाता'
+        : language === 'ur'
+        ? 'پریمیم ڈونر'
+        : 'Premium Donor'
+      : language === 'hi'
+      ? 'सदस्य'
+      : language === 'ur'
+      ? 'ممبر'
+      : 'Member';
+
+  const roleBadgeClass =
+    roleRaw === 'community_admin'
+      ? 'bg-blue-50 text-blue-700 border-blue-200'
+      : roleRaw === 'executive_admin'
+      ? 'bg-purple-50 text-purple-700 border-purple-200'
+      : roleRaw === 'premium_donor'
+      ? 'bg-amber-50 text-amber-800 border-amber-300'
+      : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
+  const joinDate = member.created_at || member.joinDate || member.join_date;
+  const formattedDate = joinDate
+    ? new Date(joinDate).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      })
+    : language === 'hi'
+    ? 'सक्रिय'
+    : 'Active';
+
+  return (
+    <tr
+      key={member.id || idx}
+      className="hover:bg-amber-50/40 transition-colors group cursor-default"
+    >
+      {/* 1. S.No */}
+      <td className="py-3.5 px-3 text-center font-bold text-slate-500 whitespace-nowrap">
+        {serialNumber}
+      </td>
+
+      {/* 2. Unique ID */}
+      <td className="py-3.5 px-3 whitespace-nowrap">
+        <button
+          onClick={() => handleCopyId(memId)}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-900 font-mono font-bold text-[11px] hover:bg-amber-100 border border-slate-200/80 transition-colors whitespace-nowrap cursor-pointer"
+          title="Click to copy ID"
+        >
+          <span>{memId}</span>
+          {copiedId === memId ? (
+            <Check className="w-3 h-3 text-emerald-600 shrink-0" />
+          ) : (
+            <Copy className="w-3 h-3 text-slate-400 group-hover:text-slate-600 shrink-0" />
+          )}
+        </button>
+      </td>
+
+      {/* 3. Name */}
+      <td className="py-3.5 px-4 whitespace-nowrap">
+        <div className="flex items-center gap-2.5">
+          {member.avatar && !member.avatar.startsWith('file://') ? (
+            <img
+              src={member.avatar}
+              alt={displayName}
+              className="w-8 h-8 rounded-full object-cover border border-amber-300 shrink-0"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-emerald-800 text-amber-300 font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+              {(rawName || 'M')[0].toUpperCase()}
+            </div>
+          )}
+          <span className="font-bold text-slate-900 text-xs sm:text-[13px] whitespace-nowrap">
+            {displayName}
+          </span>
+        </div>
+      </td>
+
+      {/* 4. Email */}
+      <td className="py-3.5 px-3 whitespace-nowrap">
+        {email !== '—' ? (
+          <div className="flex items-center gap-1.5 text-slate-700 font-medium">
+            <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <a href={`mailto:${email}`} className="hover:underline hover:text-emerald-800">
+              {email}
+            </a>
+          </div>
+        ) : (
+          <span className="text-slate-400">—</span>
+        )}
+      </td>
+
+      {/* 5. Role */}
+      <td className="py-3.5 px-3 whitespace-nowrap">
+        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${roleBadgeClass} whitespace-nowrap`}>
+          <Shield className="w-3 h-3" />
+          <span>{roleLabel}</span>
+        </span>
+      </td>
+
+      {/* 6. Community ID */}
+      <td className="py-3.5 px-3 whitespace-nowrap">
+        {communityId !== '—' ? (
+          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[11px] border border-slate-200">
+            {communityId}
+          </span>
+        ) : (
+          <span className="text-slate-400">—</span>
+        )}
+      </td>
+
+      {/* 7. Community Name */}
+      <td className="py-3.5 px-4 font-semibold text-slate-800 whitespace-nowrap">
+        <div className="flex items-center gap-1.5">
+          <Building2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+          <span>{displayCommName}</span>
+        </div>
+      </td>
+
+      {/* 8. District */}
+      <td className="py-3.5 px-3 font-semibold text-slate-800 whitespace-nowrap">
+        <div className="flex items-center gap-1.5">
+          <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <span>{displayDistrict}</span>
+        </div>
+      </td>
+
+      {/* 9. Join Date */}
+      <td className="py-3.5 px-3 text-right font-medium text-slate-600 whitespace-nowrap">
+        <div className="inline-flex items-center gap-1">
+          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+          <span>{formattedDate}</span>
+        </div>
+      </td>
+    </tr>
+  );
+};
 
 interface MembersPageProps {
   onOpenRegister?: () => void;
@@ -573,169 +750,18 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {paginatedMembers.map((member, idx) => {
-                    const serialNumber = (currentPage - 1) * pageSize + idx + 1;
-                    const memId = member.membership_id || member.membershipId || `MFCT-${(member.id || '').slice(-6).toUpperCase()}`;
-                    const rawName = member.name || 'Member';
-                    const displayName = formatTextByLang(rawName, language);
-                    const email = member.email || '—';
-                    const communityId = member.community_id || member.communityId || '—';
-                    const rawCommName = member.community_name || member.communityName || 'Bareilly Central Care Society (Headquarters)';
-                    const displayCommName = formatTextByLang(rawCommName, language);
-                    const rawDistrict = member.city || member.district || 'Bareilly';
-                    const displayDistrict = formatTextByLang(rawDistrict, language);
-
-                    const roleRaw = (member.role || 'member').toLowerCase();
-                    const roleLabel =
-                      roleRaw === 'community_admin'
-                        ? language === 'hi'
-                          ? 'समुदाय व्यवस्थापक'
-                          : language === 'ur'
-                          ? 'کمیونٹی ایڈمن'
-                          : 'Community Admin'
-                        : roleRaw === 'executive_admin'
-                        ? language === 'hi'
-                          ? 'कार्यकारी व्यवस्थापक'
-                          : language === 'ur'
-                          ? 'ایگزیکٹو ایڈمن'
-                          : 'Executive Admin'
-                        : roleRaw === 'premium_donor'
-                        ? language === 'hi'
-                          ? 'विशिष्ट दानदाता'
-                          : language === 'ur'
-                          ? 'پریمیم ڈونر'
-                          : 'Premium Donor'
-                        : language === 'hi'
-                        ? 'सदस्य'
-                        : language === 'ur'
-                        ? 'ممبر'
-                        : 'Member';
-
-                    const roleBadgeClass =
-                      roleRaw === 'community_admin'
-                        ? 'bg-blue-50 text-blue-700 border-blue-200'
-                        : roleRaw === 'executive_admin'
-                        ? 'bg-purple-50 text-purple-700 border-purple-200'
-                        : roleRaw === 'premium_donor'
-                        ? 'bg-amber-50 text-amber-800 border-amber-300'
-                        : 'bg-emerald-50 text-emerald-700 border-emerald-200';
-
-                    const joinDate = member.created_at || member.joinDate || member.join_date;
-                    const formattedDate = joinDate
-                      ? new Date(joinDate).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric'
-                        })
-                      : language === 'hi'
-                      ? 'सक्रिय'
-                      : 'Active';
-
-                    return (
-                      <tr
-                        key={member.id || idx}
-                        className="hover:bg-amber-50/40 transition-colors group cursor-default"
-                      >
-                        {/* 1. S.No */}
-                        <td className="py-3.5 px-3 text-center font-bold text-slate-500 whitespace-nowrap">
-                          {serialNumber}
-                        </td>
-
-                        {/* 2. Unique ID */}
-                        <td className="py-3.5 px-3 whitespace-nowrap">
-                          <button
-                            onClick={() => handleCopyId(memId)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-900 font-mono font-bold text-[11px] hover:bg-amber-100 border border-slate-200/80 transition-colors whitespace-nowrap"
-                            title="Click to copy ID"
-                          >
-                            <span>{memId}</span>
-                            {copiedId === memId ? (
-                              <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                            ) : (
-                              <Copy className="w-3 h-3 text-slate-400 group-hover:text-slate-600 shrink-0" />
-                            )}
-                          </button>
-                        </td>
-
-                        {/* 3. Name */}
-                        <td className="py-3.5 px-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2.5">
-                            {member.avatar && !member.avatar.startsWith('file://') ? (
-                              <img
-                                src={member.avatar}
-                                alt={displayName}
-                                className="w-8 h-8 rounded-full object-cover border border-amber-300 shrink-0"
-                              />
-                            ) : (
-                              <div className="w-8 h-8 rounded-full bg-emerald-800 text-amber-300 font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
-                                {(rawName || 'M')[0].toUpperCase()}
-                              </div>
-                            )}
-                            <span className="font-bold text-slate-900 text-xs sm:text-[13px] whitespace-nowrap">
-                              {displayName}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* 4. Email */}
-                        <td className="py-3.5 px-3 whitespace-nowrap">
-                          {email !== '—' ? (
-                            <div className="flex items-center gap-1.5 text-slate-700 font-medium">
-                              <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              <a href={`mailto:${email}`} className="hover:underline hover:text-emerald-800">
-                                {email}
-                              </a>
-                            </div>
-                          ) : (
-                            <span className="text-slate-400">—</span>
-                          )}
-                        </td>
-
-                        {/* 5. Role */}
-                        <td className="py-3.5 px-3 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${roleBadgeClass} whitespace-nowrap`}>
-                            <Shield className="w-3 h-3" />
-                            <span>{roleLabel}</span>
-                          </span>
-                        </td>
-
-                        {/* 6. Community ID */}
-                        <td className="py-3.5 px-3 whitespace-nowrap">
-                          {communityId !== '—' ? (
-                            <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[11px] border border-slate-200">
-                              {communityId}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400">—</span>
-                          )}
-                        </td>
-
-                        {/* 7. Community Name */}
-                        <td className="py-3.5 px-4 font-semibold text-slate-800 whitespace-nowrap">
-                          <div className="flex items-center gap-1.5">
-                            <Building2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                            <span>{displayCommName}</span>
-                          </div>
-                        </td>
-
-                        {/* 8. District */}
-                        <td className="py-3.5 px-3 font-semibold text-slate-800 whitespace-nowrap">
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            <span>{displayDistrict}</span>
-                          </div>
-                        </td>
-
-                        {/* 9. Join Date */}
-                        <td className="py-3.5 px-3 text-right font-medium text-slate-600 whitespace-nowrap">
-                          <div className="inline-flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-slate-400" />
-                            <span>{formattedDate}</span>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {paginatedMembers.map((member, idx) => (
+                    <MemberTableRow
+                      key={member.id || idx}
+                      member={member}
+                      idx={idx}
+                      currentPage={currentPage}
+                      pageSize={pageSize}
+                      language={language}
+                      copiedId={copiedId}
+                      handleCopyId={handleCopyId}
+                    />
+                  ))}
                 </tbody>
               </table>
             </div>

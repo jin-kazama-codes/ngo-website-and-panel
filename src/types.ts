@@ -90,6 +90,8 @@ export interface Campaign {
   daysLeft: number;
   isVerified: boolean;
   isZakatEligible: boolean;
+  isSadqaEligible?: boolean;
+  isFitrahEligible?: boolean;
   isUrgent: boolean;
   mainImage: string;
   galleryImages?: string[];
@@ -107,6 +109,7 @@ export interface Donation {
   donorName: string;
   donorId: string;
   donorRole: UserRole;
+  donorAvatar?: string;
   campaignId: string;
   campaignTitle: string;
   communityName: string;

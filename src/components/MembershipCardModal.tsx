@@ -5,7 +5,8 @@ import { User, Donation } from '../types';
 import { ShieldCheck, Download, CheckCircle2, QrCode, X, Sparkles, Building2 } from 'lucide-react';
 import { getUserById } from '../services/userService';
 import { useLanguage } from '../context/LanguageContext';
-import { translateCampaignTitle } from '../lib/translateEntity';
+import { translateCampaignTitle, translateCategory, translateCity } from '../lib/translateEntity';
+import { useDynamicTranslatedText } from '../lib/autoTranslate';
 
 interface MembershipCardModalProps {
   user: User;
@@ -22,6 +23,10 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
 
   const [user, setUser] = useState<User>(initialUser);
   const [loading, setLoading] = useState(true);
+
+  const displayUserName = useDynamicTranslatedText(user.name, language) || user.name;
+  const displayCommunity = useDynamicTranslatedText(user.communityName, language) || user.communityName;
+  const displayCity = useDynamicTranslatedText(user.city, language) || translateCity(user.city, language);
 
   useEffect(() => {
     let isMounted = true;
@@ -109,14 +114,14 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
                 className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold"
                 style={{ background: 'rgba(200,168,75,0.2)', color: 'var(--mfct-gold)', border: '1px solid var(--mfct-gold)' }}
               >
-                <Sparkles className="w-3 h-3" /> {tr('प्रीमियम गोल्ड सदस्य', 'پریمیم گولڈ ممبر', 'Premium Gold Member')}
+                <Sparkles className="w-3.5 h-3.5" /> {tr('प्रीमियम गोल्ड सदस्य', 'پریمیم گولڈ ممبر', 'Premium Gold Member')}
               </span>
             ) : (
               <span
                 className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold"
                 style={{ background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-gold)', border: '1px solid rgba(200,168,75,0.3)' }}
               >
-                <CheckCircle2 className="w-3 h-3" /> {tr('सत्यापित सदस्य', 'تصدیق شدہ ممبر', 'Verified Member')}
+                <CheckCircle2 className="w-3.5 h-3.5" /> {tr('सत्यापित सदस्य', 'تصدیق شدہ ممبر', 'Verified Member')}
               </span>
             )}
           </div>
@@ -124,17 +129,17 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
           <div className="flex items-start gap-4 mb-6 relative z-10">
             <img
               src={user.avatar || 'https://via.placeholder.com/150'}
-              alt={user.name}
+              alt={displayUserName}
               className="w-16 h-16 rounded-2xl object-cover shadow-md"
               style={{ border: '2px solid var(--mfct-gold)' }}
             />
             <div className="flex-1 min-w-0">
-              <h5 className="font-bold text-lg text-white truncate">{user.name}</h5>
+              <h5 className="font-bold text-lg text-white truncate">{displayUserName}</h5>
               <p className="text-xs flex items-center gap-1 mt-0.5" style={{ color: 'rgba(200,168,75,0.85)' }}>
                 <Building2 className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
-                <span className="truncate">{user.communityName || tr('अनिर्धारित समुदाय', 'نامعلوم کمیونٹی', 'Unassigned Community')}</span>
+                <span className="truncate">{displayCommunity || tr('अनिर्धारित समुदाय', 'نامعلوم کمیونٹی', 'Unassigned Community')}</span>
               </p>
-              <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>{user.city || 'Bareilly'}, {user.state || 'Uttar Pradesh'}</p>
+              <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>{displayCity || 'Bareilly'}, {user.state || 'Uttar Pradesh'}</p>
             </div>
           </div>
 
@@ -190,6 +195,10 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, onClose })
     return en;
   };
 
+  const dynamicDonorName = useDynamicTranslatedText(donation.donorName, language);
+  const dynamicCampaignTitle = useDynamicTranslatedText(donation.campaignTitle, language);
+  const displayCategory = translateCategory(donation.category, language);
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-fade-in overflow-y-auto">
       <div
@@ -234,12 +243,12 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, onClose })
         <div className="rounded-2xl p-5 mb-6 text-sm space-y-3" style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)' }}>
           <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
             <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('दानदाता का नाम:', 'عطیہ دہندہ:', 'Donor Name:')}</span>
-            <span className="font-semibold" style={{ color: 'var(--mfct-dark-green)' }}>{donation.donorName}</span>
+            <span className="font-semibold" style={{ color: 'var(--mfct-dark-green)' }}>{dynamicDonorName || donation.donorName}</span>
           </div>
           <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
             <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('अभियान / कारण:', 'فلاحی مہم:', 'Campaign / Cause:')}</span>
             <span className="font-semibold text-right max-w-[280px]" style={{ color: 'var(--mfct-dark-green)' }}>
-              {translateCampaignTitle(donation.campaignTitle, language)}
+              {dynamicCampaignTitle || translateCampaignTitle(donation.campaignTitle, language)}
             </span>
           </div>
           <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
@@ -248,7 +257,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, onClose })
               className="inline-block px-2 py-0.5 rounded font-medium text-xs"
               style={{ background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-dark-green)', border: '1px solid rgba(200,168,75,0.3)' }}
             >
-              {donation.category}
+              {displayCategory}
             </span>
           </div>
           <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>

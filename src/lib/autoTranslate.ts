@@ -5,21 +5,27 @@ import { Language } from '../context/LanguageContext';
 
 const TRANSLATION_CACHE_KEY = 'mfct_translation_cache_v1';
 
+const inFlightPromises = new Map<string, Promise<string>>();
+let runtimeMemoryCache: Record<string, string> | null = null;
+
 export function getMemoryCache(): Record<string, string> {
+  if (runtimeMemoryCache) return runtimeMemoryCache;
   if (typeof window === 'undefined') return {};
   try {
     const raw = localStorage.getItem(TRANSLATION_CACHE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    runtimeMemoryCache = raw ? JSON.parse(raw) : {};
+    return runtimeMemoryCache || {};
   } catch {
     return {};
   }
 }
 
 export function setMemoryCache(key: string, value: string) {
+  const cache = getMemoryCache();
+  cache[key] = value;
+  runtimeMemoryCache = cache;
   if (typeof window === 'undefined') return;
   try {
-    const cache = getMemoryCache();
-    cache[key] = value;
     localStorage.setItem(TRANSLATION_CACHE_KEY, JSON.stringify(cache));
   } catch {}
 }
@@ -44,24 +50,35 @@ export async function autoTranslateText(text: string, targetLang: Language): Pro
     return trimmed;
   }
 
-  try {
-    const response = await fetch('/api/translate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: trimmed, targetLang }),
-    });
-
-    if (!response.ok) return trimmed;
-    const json = await response.json();
-    if (json.success && json.translatedText) {
-      setMemoryCache(cacheKey, json.translatedText);
-      return json.translatedText;
-    }
-  } catch (err) {
-    console.warn('autoTranslateText failed:', err);
+  // Check if an identical request is already in-flight to prevent duplicate network calls
+  if (inFlightPromises.has(cacheKey)) {
+    return inFlightPromises.get(cacheKey)!;
   }
 
-  return trimmed;
+  const promise = (async () => {
+    try {
+      const response = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: trimmed, targetLang }),
+      });
+
+      if (!response.ok) return trimmed;
+      const json = await response.json();
+      if (json.success && json.translatedText) {
+        setMemoryCache(cacheKey, json.translatedText);
+        return json.translatedText;
+      }
+    } catch (err) {
+      console.warn('autoTranslateText failed:', err);
+    } finally {
+      inFlightPromises.delete(cacheKey);
+    }
+    return trimmed;
+  })();
+
+  inFlightPromises.set(cacheKey, promise);
+  return promise;
 }
 
 /**

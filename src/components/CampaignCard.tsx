@@ -84,7 +84,21 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign: rawCampaig
                 className="px-2.5 py-1 rounded-full text-[11px] font-bold shadow-sm flex items-center gap-1"
                 style={{ background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)' }}
               >
-                <Sparkles className="w-3 h-3" /> {t('card.zakat', 'Zakat Eligible')}
+                <Sparkles className="w-3 h-3" /> {language === 'hi' ? 'ज़कात' : language === 'ur' ? 'زکوٰۃ' : 'Zakat Eligible'}
+              </span>
+            )}
+            {campaign.isSadqaEligible && (
+              <span
+                className="px-2.5 py-1 rounded-full text-[11px] font-bold shadow-sm flex items-center gap-1 bg-teal-600 text-white"
+              >
+                <Heart className="w-3 h-3 fill-current" /> {language === 'hi' ? 'सदका' : language === 'ur' ? 'صدقہ' : 'Sadqa'}
+              </span>
+            )}
+            {campaign.isFitrahEligible && (
+              <span
+                className="px-2.5 py-1 rounded-full text-[11px] font-bold shadow-sm flex items-center gap-1 bg-indigo-600 text-white"
+              >
+                {language === 'hi' ? 'फ़ितरा' : language === 'ur' ? 'فطرہ' : 'Fitrah'}
               </span>
             )}
             {campaign.isUrgent && (

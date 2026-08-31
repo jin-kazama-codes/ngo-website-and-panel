@@ -8,6 +8,7 @@ function mapRow(row: Record<string, unknown>): Donation {
     donorName: (row.donorName || row.donor_name) as string,
     donorId: (row.donorId || row.donor_id) as string,
     donorRole: (row.donorRole || row.donor_role) as UserRole,
+    donorAvatar: (row.donorAvatar || row.donor_avatar || row.avatar) as string | undefined,
     campaignId: (row.campaignId || row.campaign_id) as string,
     campaignTitle: (row.campaignTitle || row.campaign_title) as string,
     communityName: (row.communityName || row.community_name) as string,
@@ -44,10 +45,11 @@ export function sortDonationsByLatest(donations: Donation[]): Donation[] {
   });
 }
 
-export async function getDonations(donorId?: string): Promise<Donation[]> {
+export async function getDonations(donorId?: string, campaignId?: string): Promise<Donation[]> {
   try {
     const params = new URLSearchParams();
     if (donorId) params.append('donorId', donorId);
+    if (campaignId) params.append('campaignId', campaignId);
     const res = await fetch(`/api/donations?${params.toString()}`);
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const json = await res.json();
@@ -56,6 +58,10 @@ export async function getDonations(donorId?: string): Promise<Donation[]> {
     console.warn('getDonations warning:', err);
     return [];
   }
+}
+
+export async function getCampaignDonations(campaignId: string): Promise<Donation[]> {
+  return getDonations(undefined, campaignId);
 }
 
 export async function getRecentDonations(limit = 10): Promise<Donation[]> {

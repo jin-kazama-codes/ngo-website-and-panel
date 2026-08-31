@@ -11,6 +11,7 @@ import { uploadImage } from '../lib/storage';
 import { getAccountDetails } from '../services/adminService';
 import { useLanguage } from '../context/LanguageContext';
 import { translateCampaignTitle, translateCategory } from '../lib/translateEntity';
+import { autoTranslateText, useDynamicTranslatedText } from '../lib/autoTranslate';
 
 interface DonationModalProps {
   campaign?: Campaign;
@@ -59,6 +60,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [accountDetails, setAccountDetails] = useState<AccountDetails | null>(null);
+  const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToastMessage({ message, type });
@@ -79,7 +81,22 @@ export const DonationModal: React.FC<DonationModalProps> = ({
     }).catch(console.error);
   }, [campaign, selectedCampaignId]);
 
+  useEffect(() => {
+    if (language === 'en' || !campaigns.length) return;
+    let isMounted = true;
+    campaigns.forEach((c) => {
+      autoTranslateText(c.title, language).then((t) => {
+        if (isMounted && t) {
+          setTranslatedTitles((prev) => ({ ...prev, [c.id]: t }));
+        }
+      });
+    });
+    return () => { isMounted = false; };
+  }, [campaigns, language]);
+
   const activeCampaign = campaigns.find((c) => c.id === selectedCampaignId) || campaigns[0];
+  const dynamicActiveTitle = useDynamicTranslatedText(activeCampaign?.title, language);
+  const dynamicActiveCommunity = useDynamicTranslatedText(activeCampaign?.communityName, language);
 
   // Zakat Rule check
   const isZakatSelected = selectedCategory === 'Zakat';
@@ -126,6 +143,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
         donorName: donorName || tr('उदार दानदाता', 'عطیہ دہندہ', 'Generous Member'),
         donorId: currentUser?.id || 'anonymous',
         donorRole: currentUser?.role || 'member',
+        donorAvatar: currentUser?.avatar || undefined,
         campaignId: activeCampaign.id,
         campaignTitle: activeCampaign.title,
         communityName: activeCampaign.communityName,
@@ -309,7 +327,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               >
                 {filteredCampaigns.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {translateCampaignTitle(c.title, language)} {c.isZakatEligible ? `(${tr('ज़कात पात्र ✓', 'زکوٰۃ اہل ✓', 'Zakat Eligible ✓')})` : ''}
+                    {translatedTitles[c.id] || translateCampaignTitle(c.title, language)} {c.isZakatEligible ? `(${tr('ज़कात पात्र ✓', 'زکوٰۃ اہل ✓', 'Zakat Eligible ✓')})` : ''}
                   </option>
                 ))}
               </select>
@@ -370,7 +388,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 <span className="absolute left-3.5 top-3 font-bold" style={{ color: 'var(--mfct-gold)' }}>₹</span>
                 <input
                   type="number"
-                  placeholder={tr('इच्छानुसार राशि दर्ज करें...', 'अपनी مرضی کی رقم درج کریں...', 'Enter custom amount...')}
+                  placeholder={tr('इच्छानुसार राशि दर्ज करें...', 'अपनी مرضی की رقم درج करें...', 'Enter custom amount...')}
                   value={customAmount}
                   onChange={handleCustomAmountChange}
                   className="w-full pl-8 pr-4 py-2.5 rounded-xl text-sm font-semibold outline-none"
@@ -397,7 +415,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               <div>
                 <span className="text-xs block" style={{ color: 'var(--mfct-text-muted)' }}>{tr('चयनित अभियान:', 'منتخب مہم:', 'Selected Campaign:')}</span>
                 <span className="font-bold truncate max-w-[280px] block" style={{ color: 'var(--mfct-dark-green)' }}>
-                  {translateCampaignTitle(activeCampaign.title, language)}
+                  {dynamicActiveTitle || translateCampaignTitle(activeCampaign.title, language)}
                 </span>
               </div>
               <div className="text-right">
