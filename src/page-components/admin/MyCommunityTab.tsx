@@ -4,16 +4,21 @@ import { Building2, MapPin, Users, Activity, ShieldCheck, Heart, UserCircle, Ind
 import { useLanguage } from '../../context/LanguageContext';
 import { getCommunityById } from '../../services/communityService';
 import { Announcement, getAnnouncementsByCommunity } from '../../services/announcementService';
+import { useDynamicTranslatedText } from '../../lib/autoTranslate';
 
 interface MyCommunityTabProps {
   activeUser: User;
 }
 
 export const MyCommunityTab: React.FC<MyCommunityTabProps> = ({ activeUser }) => {
-  const { t, isHindi } = useLanguage();
+  const { t, language } = useLanguage();
   const [community, setCommunity] = useState<Community | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const displayCommName = useDynamicTranslatedText(activeUser.communityName, language) || activeUser.communityName;
+  const displayCity = useDynamicTranslatedText(activeUser.city, language) || activeUser.city;
+  const displayState = useDynamicTranslatedText(activeUser.state, language) || activeUser.state;
 
   useEffect(() => {
     if (activeUser.communityId) {
@@ -29,22 +34,21 @@ export const MyCommunityTab: React.FC<MyCommunityTabProps> = ({ activeUser }) =>
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <div className="w-10 h-10 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
-        <p className="text-slate-400 text-sm font-medium">{isHindi ? 'डेटा लोड हो रहा है...' : 'Loading community data...'}</p>
+      <div className="flex items-center justify-center p-12">
+        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header section */}
+      {/* Community Header Card */}
       <div
-        className="rounded-2xl p-6 relative overflow-hidden shadow-xl"
+        className="rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl"
         style={{
-          background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0c2016 100%)',
+          background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0d2017 100%)',
           border: '1px solid rgba(200,168,75,0.3)',
-          boxShadow: 'var(--shadow-card)',
+          boxShadow: 'var(--shadow-gold)',
         }}
       >
         {/* Abstract background element */}
@@ -64,11 +68,11 @@ export const MyCommunityTab: React.FC<MyCommunityTabProps> = ({ activeUser }) =>
             </div>
             <div>
               <h2 className="text-2xl font-extrabold text-white mb-1 tracking-tight">
-                {activeUser.communityName || t('admin.tabCommunityHub', 'Community Hub')}
+                {displayCommName || t('admin.tabCommunityHub', 'Community Hub')}
               </h2>
               <div className="flex items-center gap-2 text-sm font-medium" style={{ color: 'rgba(200,168,75,0.85)' }}>
                 <MapPin className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                <span>{activeUser.city || 'City'}, {activeUser.state || 'State'}</span>
+                <span>{[displayCity, displayState].filter(Boolean).join(', ') || 'Bareilly, Uttar Pradesh'}</span>
               </div>
             </div>
           </div>

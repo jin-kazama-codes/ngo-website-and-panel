@@ -9,15 +9,30 @@ const inFlightPromises = new Map<string, Promise<string>>();
 let runtimeMemoryCache: Record<string, string> | null = null;
 
 export function getMemoryCache(): Record<string, string> {
-  if (runtimeMemoryCache) return runtimeMemoryCache;
   if (typeof window === 'undefined') return {};
   try {
     const raw = localStorage.getItem(TRANSLATION_CACHE_KEY);
-    runtimeMemoryCache = raw ? JSON.parse(raw) : {};
+    // If localStorage was cleared externally, raw is null — reset module cache too
+    if (!raw) {
+      runtimeMemoryCache = {};
+      return {};
+    }
+    // If module cache is populated and localStorage still matches, return module cache
+    if (runtimeMemoryCache) return runtimeMemoryCache;
+    runtimeMemoryCache = JSON.parse(raw);
     return runtimeMemoryCache || {};
   } catch {
     return {};
   }
+}
+
+/** Clears both in-memory and localStorage translation caches. */
+export function clearTranslationCache() {
+  runtimeMemoryCache = {};
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(TRANSLATION_CACHE_KEY);
+  } catch {}
 }
 
 export function setMemoryCache(key: string, value: string) {

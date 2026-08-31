@@ -5,7 +5,7 @@ import { Community } from '../../types';
 import { getCommunities, createCommunity, updateCommunity, deleteCommunity } from '../../services/communityService';
 import { PlusCircle, Edit2, Trash2, X, Building2, CheckCircle2, Camera, Upload, ImageIcon } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { translateCommunityName, translateCity } from '../../lib/translateEntity';
+import { translateCommunityName, translateCity, translateState } from '../../lib/translateEntity';
 import { uploadImage } from '../../lib/storage';
 
 export const SuperAdminCommunities: React.FC = () => {
@@ -228,7 +228,7 @@ export const SuperAdminCommunities: React.FC = () => {
                     <h4 className="font-bold text-sm text-white line-clamp-1" title={c.name}>
                       {translateCommunityName(c.name, language)}
                     </h4>
-                    <p className="text-xs text-slate-400">{translateCity(c.city, language)}, {c.state}</p>
+                    <p className="text-xs text-slate-400">{translateCity(c.city, language)}, {translateState(c.state, language)}</p>
                   </div>
                 </div>
                 <div className="text-xs text-slate-400 space-y-1">
