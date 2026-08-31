@@ -41,6 +41,20 @@ const ROLE_MAP: Record<string, { hi: string; ur: string }> = {
   'Community Organiser': { hi: 'सामुदायिक आयोजक', ur: 'کمیونٹی آرگنائزر' },
 };
 
+export const RELIGION_MAP: Record<string, { hi: string; ur: string }> = {
+  Hindu: { hi: 'हिन्दू', ur: 'ہندو' },
+  Muslim: { hi: 'मुस्लिम', ur: 'مسلم' },
+  Sikh: { hi: 'सिख', ur: 'سکھ' },
+  Christian: { hi: 'ईसाई', ur: 'عیسائی' },
+};
+
+export const HELP_TYPE_MAP: Record<string, { hi: string; ur: string }> = {
+  Zakat: { hi: 'ज़कात', ur: 'زکوٰۃ' },
+  Sadaka: { hi: 'सदका', ur: 'صدقہ' },
+  Fitra: { hi: 'फ़ितरा', ur: 'فطرہ' },
+  Other: { hi: 'अन्य', ur: 'دیگر' },
+};
+
 const ADMIN_NAME_MAP: Record<string, { hi: string; ur: string }> = {
   'Delhi Admin': { hi: 'दिल्ली प्रशासक', ur: 'دہلی ایڈمن' },
   'Bareilly Admin': { hi: 'बरेली प्रशासक', ur: 'بریلی ایڈمن' },
@@ -171,6 +185,16 @@ export function translateCategory(cat: string, lang: Language): string {
 export function translateRole(role: string, lang: Language): string {
   if (lang === 'en' || !role) return role;
   return ROLE_MAP[role]?.[lang] || role;
+}
+
+export function translateReligion(religion?: string, lang: Language = 'en'): string {
+  if (!religion || lang === 'en') return religion || '';
+  return RELIGION_MAP[religion]?.[lang] || religion;
+}
+
+export function translateHelpType(helpType?: string, lang: Language = 'en'): string {
+  if (!helpType || lang === 'en') return helpType || '';
+  return HELP_TYPE_MAP[helpType]?.[lang] || helpType;
 }
 
 export function translateAdminName(name: string, lang: Language): string {

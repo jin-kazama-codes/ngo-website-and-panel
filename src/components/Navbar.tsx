@@ -227,10 +227,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               {/* Become a Member */}
-              <button
-                onClick={onOpenRegister}
+              <Link
+                href="/sign-up"
                 className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md"
-                style={{ border: '2px solid var(--mfct-gold)', background: '#fff8e7', minHeight: '48px' }}
+                style={{ border: '2px solid var(--mfct-gold)', background: '#fff8e7', minHeight: '48px', textDecoration: 'none' }}
               >
                 <UserPlus className="w-5 h-5 shrink-0" style={{ color: 'var(--mfct-gold-dark)' }} />
                 <div className="text-left">
@@ -241,7 +241,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {language === 'hi' ? 'ट्रस्ट से जुड़ें' : language === 'ur' ? 'ٹرسٹ سے جڑیں' : 'Join the trust'}
                   </div>
                 </div>
-              </button>
+              </Link>
 
               {/* Login / User Info & Dropdown */}
               {onLogout ? (
@@ -362,25 +362,24 @@ export const Navbar: React.FC<NavbarProps> = ({
                   })()}
                 </div>
               ) : (
-                onOpenLogin && (
-                  <button
-                    onClick={onOpenLogin}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md hover:brightness-110"
-                    style={{
-                      background: 'var(--mfct-dark-green)',
-                      borderColor: 'var(--mfct-dark-green)',
-                      color: '#ffffff',
-                      minHeight: '48px',
-                    }}
-                    title="Login / साइन इन"
-                  >
-                    <UserIcon className="w-5 h-5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
-                    <div className="font-black text-xs tracking-wider flex items-center gap-1.5" style={{ color: '#ffffff' }}>
-                      <span>{t('nav.login', 'LOGIN')}</span>
-                      <ChevronDown className="w-3.5 h-3.5 opacity-80" />
-                    </div>
-                  </button>
-                )
+                <Link
+                  href="/sign-in"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md hover:brightness-110"
+                  style={{
+                    background: 'var(--mfct-dark-green)',
+                    borderColor: 'var(--mfct-dark-green)',
+                    color: '#ffffff',
+                    minHeight: '48px',
+                    textDecoration: 'none',
+                  }}
+                  title="Login / साइन इन"
+                >
+                  <UserIcon className="w-5 h-5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                  <div className="font-black text-xs tracking-wider flex items-center gap-1.5" style={{ color: '#ffffff' }}>
+                    <span>{t('nav.login', 'Login')}</span>
+                    <ChevronDown className="w-3.5 h-3.5 opacity-80" />
+                  </div>
+                </Link>
               )}
             </div>
 
@@ -489,12 +488,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <Shield className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('nav.myCard', 'View ID Card')} ({(currentUser.name || '').replace(/\s*\([^)]*\)/g, '').trim() || 'User'})
               </button>
-              <button
-                onClick={() => { onOpenRegister(); setMobileMenuOpen(false); }}
+              <Link
+                href="/sign-up"
+                onClick={() => setMobileMenuOpen(false)}
                 className="mfct-btn-outline w-full py-2.5 rounded-lg text-xs flex items-center justify-center gap-2 cursor-pointer"
+                style={{ textDecoration: 'none' }}
               >
                 <UserPlus className="w-4 h-4" /> {t('nav.join', 'Become a Member')}
-              </button>
+              </Link>
               <button
                 onClick={() => { onOpenDonate(); setMobileMenuOpen(false); }}
                 className="mfct-btn-gold w-full py-2.5 rounded-lg text-xs flex items-center justify-center gap-2 cursor-pointer"
@@ -510,14 +511,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <LogOut className="w-4 h-4" /> {t('admin.logoutAccount', 'Logout Account')}
                 </button>
               ) : (
-                onOpenLogin && (
-                  <button
-                    onClick={() => { onOpenLogin(); setMobileMenuOpen(false); }}
-                    className="mfct-btn-dark w-full py-2.5 rounded-lg text-xs flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <LogIn className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('nav.login', 'Login')}
-                  </button>
-                )
+                <Link
+                  href="/sign-in"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mfct-btn-dark w-full py-2.5 rounded-lg text-xs flex items-center justify-center gap-2 cursor-pointer"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <LogIn className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('nav.login', 'Login')}
+                </Link>
               )}
             </div>
           </div>

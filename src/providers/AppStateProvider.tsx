@@ -10,10 +10,8 @@ import { getCampaigns, getEmergencyCampaigns, sortCampaignsByLatest } from '../s
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { DonationModal } from '../components/DonationModal';
-import { RegistrationModal } from '../components/RegistrationModal';
 import { MembershipCardModal, ReceiptModal } from '../components/MembershipCardModal';
 import { ZakatCalculatorModal } from '../components/ZakatCalculatorModal';
-import { LoginModal } from '../components/LoginModal';
 
 // ─── Context Types ───────────────────────────────────────────────────────────
 
@@ -134,11 +132,7 @@ export function AppStateProvider({
   const [selectedDonateCampaign, setSelectedDonateCampaign] = useState<Campaign | undefined>(undefined);
   const [presetDonateAmount, setPresetDonateAmount] = useState<number | undefined>(undefined);
   const [presetDonateCategory, setPresetDonateCategory] = useState<'Zakat' | undefined>(undefined);
-  const [pendingDonationAfterRegister, setPendingDonationAfterRegister] = useState(false);
-
   const [showZakatModal, setShowZakatModal] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [showMembershipCardModal, setShowMembershipCardModal] = useState(false);
   const [selectedReceiptDonation, setSelectedReceiptDonation] = useState<Donation | null>(null);
 
@@ -211,8 +205,7 @@ export function AppStateProvider({
     setPresetDonateAmount(amount);
     setPresetDonateCategory(category);
     if (!isAuthenticated) {
-      setPendingDonationAfterRegister(true);
-      setShowRegisterModal(true);
+      router.push('/sign-up');
     } else {
       setShowDonateModal(true);
     }
@@ -292,24 +285,11 @@ export function AppStateProvider({
   };
 
   const handleOpenRegister = () => {
-    setPendingDonationAfterRegister(false);
-    setShowRegisterModal(true);
+    router.push('/sign-up');
   };
 
-  const handleCloseRegisterModal = () => {
-    setShowRegisterModal(false);
-    if (isAuthenticated && pendingDonationAfterRegister) {
-      setPendingDonationAfterRegister(false);
-      setShowDonateModal(true);
-    } else {
-      setPendingDonationAfterRegister(false);
-      setSelectedDonateCampaign(undefined);
-      setPresetDonateAmount(undefined);
-      setPresetDonateCategory(undefined);
-    }
-  };
 
-  const handleOpenLogin = () => setShowLoginModal(true);
+  const handleOpenLogin = () => router.push('/sign-in');
   const handleOpenMembershipCard = () => setShowMembershipCardModal(true);
   const handleOpenZakatCalc = () => setShowZakatModal(true);
   const handleSelectDonationReceipt = (d: Donation) => setSelectedReceiptDonation(d);
@@ -368,25 +348,6 @@ export function AppStateProvider({
           onDonateCalculated={(amount) => {
             handleOpenDonate(undefined, amount, 'Zakat');
           }}
-        />
-      )}
-
-      {showRegisterModal && (
-        <RegistrationModal
-          onClose={handleCloseRegisterModal}
-          onRegistered={handleUserRegistered}
-          hasPendingDonation={pendingDonationAfterRegister}
-        />
-      )}
-
-      {showLoginModal && (
-        <LoginModal
-          onClose={() => setShowLoginModal(false)}
-          currentRole={currentRole}
-          onLoginRole={(role, email, customUser) => {
-            handleLogin(role, email, customUser);
-          }}
-          onOpenRegister={handleOpenRegister}
         />
       )}
 

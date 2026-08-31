@@ -23,7 +23,8 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign: rawCampaig
   const [displayStory, setDisplayStory] = useState(campaign.story);
 
   useEffect(() => {
-    if (language === 'en') {
+    const isPureAscii = /^[\x00-\x7F]*$/.test(rawCampaign.title || '');
+    if (language === 'en' && isPureAscii) {
       setDisplayTitle(rawCampaign.title);
       setDisplayStory(rawCampaign.story);
       return;
@@ -34,7 +35,6 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign: rawCampaig
     setDisplayTitle(tTitle);
     setDisplayStory(tStory);
 
-    // If still in original English (i.e. brand new custom campaign), fetch auto-translation
     if (tTitle === rawCampaign.title && rawCampaign.title) {
       autoTranslateText(rawCampaign.title, language).then(setDisplayTitle);
     }

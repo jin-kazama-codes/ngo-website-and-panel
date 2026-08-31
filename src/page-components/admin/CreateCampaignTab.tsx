@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { DonationCategory, Campaign, Community } from '../../types';
-import { X, Plus, Upload, ArrowLeft, Sparkles } from 'lucide-react';
+import { Plus, Upload, ArrowLeft } from 'lucide-react';
 import { useAppState } from '../../providers/AppStateProvider';
 import { useLanguage } from '../../context/LanguageContext';
 import { getCommunities } from '../../services/communityService';
 import { createCampaign, updateCampaign } from '../../services/campaignService';
 import { uploadImage } from '../../lib/storage';
-import { autoTranslateCampaign } from '../../lib/autoTranslate';
+import { autoTranslateFullCampaign, setMemoryCache } from '../../lib/autoTranslate';
 import { translateCity, translateCommunityName } from '../../lib/translateEntity';
 
 interface CreateCampaignTabProps {
@@ -25,6 +25,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
     if (language === 'ur') return ur;
     return en;
   };
+
   const [title, setTitle] = useState(initialCampaign?.title || '');
   const [category, setCategory] = useState<DonationCategory>(initialCampaign?.category || 'Medical');
   const [beneficiaryName, setBeneficiaryName] = useState(initialCampaign?.beneficiaryName || '');
@@ -77,12 +78,12 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !beneficiaryName || !story) {
-      showToast('Please fill out all required campaign details.', 'error');
+    if (!title.trim() || !beneficiaryName.trim() || !story.trim()) {
+      showToast(tr('कृपया शीर्षक, लाभार्थी का नाम और विवरण भरें।', 'براہ کرم عنوان، مستحق کا نام اور تفصیل درج کریں۔', 'Please fill out all required campaign details.'), 'error');
       return;
     }
     if (!docUploaded && docFiles.length === 0) {
-      showToast('Please attach at least one medical estimate or document.', 'error');
+      showToast(tr('कृपया कम से कम एक दस्तावेज़ या अनुमान संलग्न करें।', 'براہ کرم کم از کم ایک دستاویز منسلک کریں۔', 'Please attach at least one medical estimate or document.'), 'error');
       return;
     }
     setSubmitting(true);
@@ -110,12 +111,22 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
       const existingDocs = initialCampaign?.documents || [];
       const combinedDocs = [...existingDocs, ...uploadedDocs];
 
-      // Automatically generate multi-language translations in Hindi & Urdu
-      try {
-        await autoTranslateCampaign(title, story);
-      } catch (tErr) {
-        console.warn('Auto-translation notice:', tErr);
-      }
+      // Automatic background multi-language translation via Groq AI
+      autoTranslateFullCampaign(title, beneficiaryName, beneficiaryRelation, story)
+        .then((transResult) => {
+          if (transResult.hi.title) setMemoryCache(`hi:${title.trim()}`, transResult.hi.title);
+          if (transResult.ur.title) setMemoryCache(`ur:${title.trim()}`, transResult.ur.title);
+          if (transResult.en.title) setMemoryCache(`en:${title.trim()}`, transResult.en.title);
+
+          if (transResult.hi.story) setMemoryCache(`hi:${story.trim()}`, transResult.hi.story);
+          if (transResult.ur.story) setMemoryCache(`ur:${story.trim()}`, transResult.ur.story);
+          if (transResult.en.story) setMemoryCache(`en:${story.trim()}`, transResult.en.story);
+
+          if (transResult.hi.beneficiaryName) setMemoryCache(`hi:${beneficiaryName.trim()}`, transResult.hi.beneficiaryName);
+          if (transResult.ur.beneficiaryName) setMemoryCache(`ur:${beneficiaryName.trim()}`, transResult.ur.beneficiaryName);
+          if (transResult.en.beneficiaryName) setMemoryCache(`en:${beneficiaryName.trim()}`, transResult.en.beneficiaryName);
+        })
+        .catch((err) => console.warn('Background translation notice:', err));
 
       if (initialCampaign) {
         const updateData: Partial<Campaign> = {
@@ -135,10 +146,10 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
           documents: combinedDocs.length > 0 ? combinedDocs : [{ title: 'Community document', url: '#', verifiedBy: 'Community Leader' }],
         };
         const saved = await updateCampaign(initialCampaign.id, updateData);
-        showToast('Campaign updated successfully!', 'success');
+        showToast(tr('अभियान सफलतापूर्वक अपडेट हो गया!', 'مہم کامیابی سے اپ ڈیٹ ہو گئی!', 'Campaign updated successfully!'), 'success');
         setTimeout(() => {
           onCreate({ ...initialCampaign, ...updateData });
-        }, 1500);
+        }, 1200);
       } else {
         const newCamp: Omit<Campaign, 'id'> = {
           title,
@@ -165,10 +176,10 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
         };
 
         const saved = await createCampaign(newCamp);
-        showToast(tr('सत्यापित समुदाय अभियान सफलतापूर्वक बन गया!', 'تصدیق شدہ کمیونٹی مہم کامیابی سے بن گئی!', 'Campaign submitted for verification successfully!'), 'success');
+        showToast(tr('सत्यापित समुदाय अभियान सफलतापूर्वक बन गया!', 'تصدیق شدہ کمیونٹی مہم کامیابی سے بن گئی!', 'Campaign created successfully!'), 'success');
         setTimeout(() => {
           onCreate(saved);
-        }, 1500);
+        }, 1200);
       }
     } catch (err: any) {
       console.error(err);
@@ -179,7 +190,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
   };
 
   return (
-    <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-sm border border-slate-200 relative">
+    <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-800 relative">
       {toast && (
         <div className={`fixed top-24 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition-all z-[100] flex items-center gap-2 animate-fade-in ${toast.type === 'error' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'}`}>
           <span>{toast.message}</span>
@@ -188,7 +199,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
 
       <button
         onClick={onClose}
-        className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors mb-6 cursor-pointer"
+        className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-6 cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" /> {tr('अभियानों पर वापस जाएं', 'مہمات پر واپس جائیں', 'Back to Campaigns')}
       </button>
@@ -198,7 +209,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
           <Plus className="w-3.5 h-3.5" /> {tr('समुदाय एडमिन', 'کمیونٹی ایڈمن', 'Community Admin')}
         </div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-          {initialCampaign ? tr('अभियान संपादित करें', 'مہم میں ترمیم کریں', 'Edit Campaign') : tr('सत्यापित समुदाय अभियान बनाएं', 'تصدیق شدہ کمیونٹی مہم بنائیں', 'Create Verified Community Campaign')}
+          {initialCampaign ? tr('अभियान संपादित करें', 'مہم میں ترمیم کریں', 'Edit Campaign') : tr('सत्यापित समुदाय अभियान बनाएं', 'تصدیق شدہ کمیونٹی مہم बनाएं', 'Create Verified Community Campaign')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {initialCampaign 
@@ -218,7 +229,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
             placeholder={tr('उदा. बरेली में 10 वर्षीय राहुल के दिल का ऑपरेशन', 'مثلاً بریلی میں 10 سالہ راہل کے دل کا آپریشن', 'e.g. Heart Surgery for 10-Year-Old Rahul in Bareilly')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
           />
         </div>
 
@@ -230,12 +241,12 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as DonationCategory)}
-              className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
             >
               <option value="Medical">{tr('चिकित्सा सहायता', 'طبی امداد', 'Medical Aid')}</option>
               <option value="Education">{tr('शिक्षा सहायता', 'تعلیمی امداد', 'Education Aid')}</option>
               <option value="Marriage">{tr('विवाह सहायता', 'نکاح معاونت', 'Marriage Aid')}</option>
-              <option value="Food">{tr('राशन / भोजन राहत', 'راشن و خوراک', 'Food Relief')}</option>
+              <option value="Food">{tr('राशन / भोजन राहत', 'राशन و خوراک', 'Food Relief')}</option>
               <option value="Janazah">{tr('जनाज़ा व कफ़न सहायता', 'جنازہ و تجہیز و تکفین', 'Janazah Aid')}</option>
             </select>
           </div>
@@ -248,7 +259,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
               required
               value={goalINR}
               onChange={(e) => setGoalINR(e.target.value)}
-              className="w-full p-3.5 rounded-xl border border-slate-200 font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
         </div>
@@ -264,7 +275,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
               placeholder={tr('उदा. मास्टर राहुल', 'مثلاً ماسٹر راہل', 'e.g. Master Rahul')}
               value={beneficiaryName}
               onChange={(e) => setBeneficiaryName(e.target.value)}
-              className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
           <div>
@@ -277,7 +288,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
               placeholder={tr('उदा. दिहाड़ी मजदूर का पुत्र', 'مثلاً دیہاڑی دار مزدور کا بیٹا', 'e.g. Son of Daily Wage Labourer')}
               value={beneficiaryRelation}
               onChange={(e) => setBeneficiaryRelation(e.target.value)}
-              className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
         </div>
@@ -292,12 +303,12 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
             placeholder={tr('बताएं कि इस लाभार्थी को समुदाय की तत्काल सहायता की आवश्यकता क्यों है...', 'وضاحت کریں کہ اس مستحق کو کمیونٹی کی فوری مدد کی کیوں ضرورت ہے...', 'Describe why this beneficiary urgently needs community help...')}
             value={story}
             onChange={(e) => setStory(e.target.value)}
-            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
           ></textarea>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
-          <label className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-100 transition-colors">
+          <label className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
             <input
               type="checkbox"
               checked={isZakatEligible}
@@ -314,7 +325,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
             </div>
           </label>
 
-          <label className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-100 transition-colors">
+          <label className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
             <input
               type="checkbox"
               checked={isUrgent}
@@ -339,7 +350,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
           <select
             value={selectedCommunityId}
             onChange={(e) => setSelectedCommunityId(e.target.value)}
-            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
           >
             {communities.map((c) => (
               <option key={c.id} value={c.id}>{translateCommunityName(c.name, language)} ({translateCity(c.city, language)})</option>
@@ -351,7 +362,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
           <label className="block font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 text-xs">
             {tr('अभियान की मुख्य तस्वीर (वैकल्पिक)', 'مہم کی مرکزی تصویر (اختیاری)', 'Campaign Main Image (optional)')}
           </label>
-          <label className="p-6 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100">
+          <label className="p-6 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
             <input
               type="file"
               accept="image/*"
@@ -376,8 +387,8 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
           </label>
           <label
             className={`p-6 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center ${docUploaded
-              ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
-              : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-800 dark:text-emerald-300'
+              : 'bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
           >
             <input
@@ -408,7 +419,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
           <button
             type="button"
             onClick={onClose}
-            className="py-3.5 px-6 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition-colors cursor-pointer"
+            className="py-3.5 px-6 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
           >
             {tr('रद्द करें', 'منسوخ کریں', 'Cancel')}
           </button>
@@ -418,7 +429,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
             className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-base transition-colors shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none cursor-pointer"
           >
             {submitting 
-              ? tr('सुरक्षित और अनुवाद किया जा रहा है...', 'محفوظ اور خودکار ترجمہ ہو رہا ہے...', 'Saving & Auto-Translating...') 
+              ? tr('सुरक्षित किया जा रहा है...', 'محفوظ ہو رہا ہے...', 'Saving Campaign...') 
               : initialCampaign 
               ? tr('अभियान अपडेट करें', 'مہم اپ ڈیٹ کریں', 'Update Campaign') 
               : tr('सत्यापन हेतु जमा करें', 'تصدیق کے لیے جمع کریں', 'Submit Verified Campaign')}

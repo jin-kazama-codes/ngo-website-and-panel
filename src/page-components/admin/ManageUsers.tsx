@@ -84,7 +84,24 @@ const UserRow: React.FC<{
         </span>
       </td>
       <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
-        {locationText}
+        <div>{locationText}</div>
+        {user.religion && (
+          <div className="mt-1">
+            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold ${
+              user.religion === 'Muslim'
+                ? user.isMalikENisab
+                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                  : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+            }`}>
+              {user.religion === 'Muslim'
+                ? user.isMalikENisab
+                  ? 'Muslim (Nisab)'
+                  : `Muslim (${user.helpType || 'Aid'})`
+                : user.religion}
+            </span>
+          </div>
+        )}
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-1.5">
@@ -196,6 +213,23 @@ const UserMobileCard: React.FC<{
             <span className="text-xs truncate">{locationText}</span>
           </div>
         )}
+        {user.religion && (
+          <div className="pt-0.5">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+              user.religion === 'Muslim'
+                ? user.isMalikENisab
+                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                  : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+            }`}>
+              {user.religion === 'Muslim'
+                ? user.isMalikENisab
+                  ? 'Muslim (Sahib-e-Nisab)'
+                  : `Muslim (Need: ${user.helpType || 'Aid'})`
+                : user.religion}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/60">
@@ -260,6 +294,10 @@ export const ManageUsers: React.FC = () => {
     plainPassword: '',
     communityId: '',
     paymentUtr: '',
+    religion: '',
+    isMalikENisab: undefined,
+    helpType: '',
+    helpDetails: '',
   };
   const [formData, setFormData] = useState(initialFormState);
 
@@ -304,6 +342,10 @@ export const ManageUsers: React.FC = () => {
       state: user.state,
       communityId: user.communityId || '',
       paymentUtr: user.paymentUtr || '',
+      religion: user.religion || '',
+      isMalikENisab: user.isMalikENisab,
+      helpType: user.helpType || '',
+      helpDetails: user.helpDetails || '',
     });
     setAvatarFile(null);
     setDocumentFile(null);
@@ -369,6 +411,13 @@ export const ManageUsers: React.FC = () => {
           documentUrl: docUrl,
           paymentUtr: formData.paymentUtr || undefined,
           paymentScreenshotUrl: screenshotUrl,
+          religion: formData.religion || undefined,
+          isMalikENisab: formData.religion === 'Muslim' ? formData.isMalikENisab : undefined,
+          is_malik_e_nisab: formData.religion === 'Muslim' ? formData.isMalikENisab : undefined,
+          helpType: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpType || undefined) : undefined,
+          help_type: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpType || undefined) : undefined,
+          helpDetails: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpDetails || undefined) : undefined,
+          help_details: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpDetails || undefined) : undefined,
         };
         if (formData.plainPassword) {
           patch.passwordHash = await hashPassword(formData.plainPassword);
@@ -394,6 +443,13 @@ export const ManageUsers: React.FC = () => {
           documentUrl: docUrl,
           paymentUtr: formData.paymentUtr || undefined,
           paymentScreenshotUrl: screenshotUrl,
+          religion: formData.religion || undefined,
+          isMalikENisab: formData.religion === 'Muslim' ? formData.isMalikENisab : undefined,
+          is_malik_e_nisab: formData.religion === 'Muslim' ? formData.isMalikENisab : undefined,
+          helpType: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpType || undefined) : undefined,
+          help_type: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpType || undefined) : undefined,
+          helpDetails: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpDetails || undefined) : undefined,
+          help_details: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpDetails || undefined) : undefined,
         };
         await createUser(newUser);
         showToast(tr('नया उपयोगकर्ता सुरक्षित हो गया', 'نیا صارف کامیابی سے محفوظ ہو گیا', 'User created successfully'), 'success');
@@ -679,6 +735,95 @@ export const ManageUsers: React.FC = () => {
                       ))}
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      {tr('धर्म', 'مذہب', 'Religion')}
+                    </label>
+                    <select
+                      name="religion"
+                      value={formData.religion || ''}
+                      onChange={(e) => {
+                        const rel = e.target.value;
+                        setFormData((prev) => ({
+                          ...prev,
+                          religion: rel as any,
+                          isMalikENisab: rel === 'Muslim' ? prev.isMalikENisab : undefined,
+                          helpType: rel === 'Muslim' ? prev.helpType : '',
+                          helpDetails: rel === 'Muslim' ? prev.helpDetails : '',
+                        }));
+                      }}
+                      className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-colors"
+                    >
+                      <option value="">{tr('-- धर्म चुनें --', '-- مذہب منتخب کریں --', '-- Select Religion --')}</option>
+                      <option value="Hindu">Hindu</option>
+                      <option value="Muslim">Muslim</option>
+                      <option value="Sikh">Sikh</option>
+                      <option value="Christian">Christian</option>
+                    </select>
+                  </div>
+
+                  {formData.religion === 'Muslim' && (
+                    <div className="md:col-span-2 p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-emerald-950 dark:text-emerald-300 mb-1">
+                          {tr('क्या मालिक-ए-निसब हैं?', 'کیا مالکِ نصاب ہیں؟', 'Is Malik-e-Nisab (Sahib-e-Nisab)?')}
+                        </label>
+                        <select
+                          value={formData.isMalikENisab === true ? 'yes' : formData.isMalikENisab === false ? 'no' : ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setFormData((prev) => ({
+                              ...prev,
+                              isMalikENisab: val === 'yes' ? true : val === 'no' ? false : undefined,
+                              helpType: val === 'yes' ? '' : prev.helpType,
+                              helpDetails: val === 'yes' ? '' : prev.helpDetails,
+                            }));
+                          }}
+                          className="w-full bg-white dark:bg-slate-950 border border-emerald-300 dark:border-emerald-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none"
+                        >
+                          <option value="">{tr('-- स्थिति चुनें --', '-- منتخب کریں --', '-- Select Nisab Status --')}</option>
+                          <option value="yes">{tr('हाँ (मालिक-ए-निसब - सक्षम दाता)', 'ہاں (صاحبِ نصاب - ڈونر)', 'Yes (Malik-e-Nisab / Donor)')}</option>
+                          <option value="no">{tr('नहीं (गैर-निसबदार - सहायता पात्र)', 'نہیں (غیر نصاب دار - امداد کے مستحق)', 'No (Non-Nisab / Aid Eligible)')}</option>
+                        </select>
+                      </div>
+
+                      {formData.isMalikENisab === false && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="block text-xs font-bold text-emerald-950 dark:text-emerald-300 mb-1">
+                              {tr('सहायता का प्रकार', 'امداد کی قسم', 'Help Type Needed')}
+                            </label>
+                            <select
+                              name="helpType"
+                              value={formData.helpType || ''}
+                              onChange={handleChange}
+                              className="w-full bg-white dark:bg-slate-950 border border-emerald-300 dark:border-emerald-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none"
+                            >
+                              <option value="">{tr('-- सहायता प्रकार चुनें --', '-- امداد کی قسم منتخب کریں --', '-- Select Help Type --')}</option>
+                              <option value="Zakat">Zakat (ज़कात)</option>
+                              <option value="Sadaka">Sadaka (सदका)</option>
+                              <option value="Fitra">Fitra (फ़ितरा)</option>
+                              <option value="Other">Other (अन्य)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-emerald-950 dark:text-emerald-300 mb-1">
+                              {tr('सहायता विवरण / आवश्यकता', 'امداد کی تفصیل', 'Help Details / Purpose')}
+                            </label>
+                            <input
+                              type="text"
+                              name="helpDetails"
+                              value={formData.helpDetails || ''}
+                              onChange={handleChange}
+                              placeholder={tr('उदा. चिकित्सा खर्च, राशन', 'مثلاً راشن، علاج', 'e.g. Medical, ration')}
+                              className="w-full bg-white dark:bg-slate-950 border border-emerald-300 dark:border-emerald-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="md:col-span-2">
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                       {tr('यूटीआर नंबर (वैकल्पिक)', 'یو ٹی آر نمبر (اختیاری)', 'UTR Number (Optional)')}

@@ -114,8 +114,31 @@ export const MemberDashboard: React.FC<MemberDashboardProps> = ({
           }}
         >
           <span className="text-xs font-bold uppercase tracking-wider block" style={{ color: 'var(--mfct-text-muted)' }}>Member ID</span>
-          <p className="text-lg font-mono font-bold mt-1" style={{ color: 'var(--mfct-mid-green)' }}>{user.membershipId}</p>
+          <p className="text-base font-mono font-bold mt-1.5 truncate" style={{ color: 'var(--mfct-mid-green)' }}>{user.membershipId}</p>
           <span className="text-[11px] mt-1 block" style={{ color: 'var(--mfct-text-muted)' }}>Joined: {user.joinDate}</span>
+        </div>
+
+        <div
+          className="p-5 rounded-2xl transition-all"
+          style={{
+            background: 'var(--mfct-white)',
+            border: '1px solid var(--mfct-border)',
+            boxShadow: 'var(--shadow-card)',
+          }}
+        >
+          <span className="text-xs font-bold uppercase tracking-wider block" style={{ color: 'var(--mfct-text-muted)' }}>Community Status</span>
+          <p className="text-sm font-bold mt-1.5 flex items-center gap-1.5" style={{ color: 'var(--mfct-dark-green)' }}>
+            {user.religion === 'Muslim' ? (
+              user.isMalikENisab ? 'Muslim • Sahib-e-Nisab' : `Muslim • ${user.helpType || 'Aid'} Eligible`
+            ) : user.religion ? (
+              `${user.religion} Member`
+            ) : (
+              'Verified Member'
+            )}
+          </p>
+          <span className="text-[11px] mt-1 block" style={{ color: 'var(--mfct-text-muted)' }}>
+            {user.religion === 'Muslim' && !user.isMalikENisab && user.helpDetails ? user.helpDetails : `${user.city || 'Verified'} Chapter`}
+          </span>
         </div>
       </div>
     </div>

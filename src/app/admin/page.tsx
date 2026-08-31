@@ -1,9 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppStateProvider, useAppState } from '../../providers/AppStateProvider';
 import { AdminPanel } from '../../page-components/admin/AdminPanel';
-import { LoginModal } from '../../components/LoginModal';
 
 function AdminContent() {
   const router = useRouter();
@@ -84,34 +84,35 @@ function AdminContent() {
     );
   }
 
+  useEffect(() => {
+    if (isInitialized && !isAuthenticated) {
+      router.push('/sign-in');
+    }
+  }, [isInitialized, isAuthenticated, router]);
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/20 via-slate-950 to-slate-900 pointer-events-none" />
         
         {/* Header Branding */}
-        <div className="text-center mb-6 z-10 space-y-2">
+        <div className="text-center mb-6 z-10 space-y-4">
           <div className="w-14 h-14 rounded-2xl bg-emerald-600 flex items-center justify-center text-white font-black text-2xl mx-auto shadow-xl shadow-emerald-950">
             M
           </div>
           <h1 className="text-2xl font-black text-white">MFCT Management Desk Portal</h1>
           <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            Restricted System Access. Please authenticate with your account credentials to continue.
+            Restricted System Access. Redirecting to sign in...
           </p>
+          <div className="pt-2">
+            <button
+              onClick={() => router.push('/sign-in')}
+              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-950 transition-all cursor-pointer"
+            >
+              Go to Sign In
+            </button>
+          </div>
         </div>
-
-        <LoginModal
-          onClose={() => {
-            // Only redirect to homepage if user cancels without logging in
-            if (typeof window !== 'undefined' && localStorage.getItem('mfct_is_logged_in') !== 'true') {
-              router.push('/');
-            }
-          }}
-          currentRole={currentRole}
-          onLoginRole={(role, email, customUser) => {
-            handleLogin(role, email, customUser);
-          }}
-        />
       </div>
     );
   }
