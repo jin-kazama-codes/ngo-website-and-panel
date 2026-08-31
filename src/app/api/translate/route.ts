@@ -13,7 +13,7 @@ const LANGUAGE_MAP: Record<string, string> = {
  * Translate using Groq Cloud AI (ultra-fast LLM inference)
  */
 async function translateWithGroq(text: string, targetLang: string): Promise<string | null> {
-  const apiKey = process.env.GROQ_API_KEY || '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';
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return null;
 
   const targetLangLabel = LANGUAGE_MAP[targetLang] || targetLang;
