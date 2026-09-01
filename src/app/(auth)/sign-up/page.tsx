@@ -351,13 +351,12 @@ export default function SignUpPage() {
 
         {/* Logo */}
         <div className="relative z-10">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div
-              className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-105"
-              style={{ background: 'linear-gradient(135deg, #c8a84b 0%, #947728 100%)' }}
-            >
-              <HandHeart className="w-5 h-5 text-white" />
-            </div>
+          <Link href="/" className="flex items-center gap-3 group w-fit">
+            <img
+              src="/mfct-logo.jpeg"
+              alt="MFCT Logo"
+              className="w-12 h-12 rounded-full object-cover shadow-lg border-2 border-[#c8a84b] transition-transform group-hover:scale-105"
+            />
             <div>
               <p className="text-white font-black text-base tracking-tight leading-none">MFCT</p>
               <p className="text-[11px] font-medium leading-none mt-1 text-amber-200/80">Mohammad Faeem Charitable Trust</p>
@@ -443,15 +442,14 @@ export default function SignUpPage() {
         <div ref={formTopRef} className="w-full space-y-6">
           {/* Top Bar for Mobile & Sign In Link */}
           <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-            <div className="lg:hidden flex items-center gap-2.5">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shadow"
-                style={{ background: 'linear-gradient(135deg, #0f3322 0%, #1a3c2c 100%)' }}
-              >
-                <HandHeart className="w-4 h-4 text-amber-300" />
-              </div>
+            <Link href="/" className="lg:hidden flex items-center gap-2.5 group">
+              <img
+                src="/mfct-logo.jpeg"
+                alt="MFCT Logo"
+                className="w-9 h-9 rounded-full object-cover shadow border-2 border-[#c8a84b]/60 group-hover:scale-105 transition-transform"
+              />
               <span className="font-black text-sm text-[#0f3322]">MFCT</span>
-            </div>
+            </Link>
             <div className="text-xs font-medium text-slate-600 ml-auto">
               {tr('पहले से सदस्य हैं?', 'پہلے سے ممبر ہیں؟', 'Already registered?')}{' '}
               <Link href="/sign-in" className="font-bold underline decoration-2 text-[#0f3322] hover:text-emerald-700">

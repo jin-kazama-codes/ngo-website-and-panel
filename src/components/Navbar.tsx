@@ -377,7 +377,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <UserIcon className="w-5 h-5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
                   <div className="font-black text-xs tracking-wider flex items-center gap-1.5" style={{ color: '#ffffff' }}>
                     <span>{t('nav.login', 'Login')}</span>
-                    <ChevronDown className="w-3.5 h-3.5 opacity-80" />
+                    {/* <ChevronDown className="w-3.5 h-3.5 opacity-80" /> */}
                   </div>
                 </Link>
               )}
