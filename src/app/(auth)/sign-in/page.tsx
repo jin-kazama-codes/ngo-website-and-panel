@@ -98,15 +98,17 @@ export default function SignInPage() {
         <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full blur-3xl opacity-15 pointer-events-none" style={{ background: '#2e5e42' }} />
 
         {/* Logo */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #c8a84b 0%, #947728 100%)' }}>
-            <HandHeart className="w-5 h-5 text-white" />
-          </div>
+        <Link href="/" className="relative z-10 flex items-center gap-3 group w-fit">
+          <img
+            src="/mfct-logo.jpeg"
+            alt="MFCT Logo"
+            className="w-12 h-12 rounded-full object-cover shadow-lg border-2 border-[#c8a84b] group-hover:scale-105 transition-transform"
+          />
           <div>
             <p className="text-white font-black text-base tracking-tight leading-none">MFCT</p>
-            <p className="text-[11px] font-medium leading-none mt-0.5" style={{ color: 'rgba(200,168,75,0.8)' }}>Mohammad Faeem Charitable Trust</p>
+            <p className="text-[11px] font-medium leading-none mt-1" style={{ color: 'rgba(200,168,75,0.9)' }}>Mohammad Faeem Charitable Trust</p>
           </div>
-        </div>
+        </Link>
 
         {/* Centre copy */}
         <div className="relative z-10 space-y-6">
@@ -163,15 +165,17 @@ export default function SignInPage() {
         <div className="w-full max-w-md space-y-8">
 
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow" style={{ background: 'linear-gradient(135deg, #0f3322 0%, #1a3c2c 100%)' }}>
-              <HandHeart className="w-5 h-5" style={{ color: '#f0c868' }} />
-            </div>
+          <Link href="/" className="lg:hidden flex items-center gap-3 mb-2 group w-fit">
+            <img
+              src="/mfct-logo.jpeg"
+              alt="MFCT Logo"
+              className="w-10 h-10 rounded-full object-cover shadow border-2 border-[#c8a84b]/60 group-hover:scale-105 transition-transform"
+            />
             <div>
               <p className="font-black text-base" style={{ color: '#0f3322' }}>MFCT</p>
               <p className="text-[11px] text-slate-500 font-medium">Mohammad Faeem Charitable Trust</p>
             </div>
-          </div>
+          </Link>
 
           {/* Heading */}
           <div className="space-y-1">
