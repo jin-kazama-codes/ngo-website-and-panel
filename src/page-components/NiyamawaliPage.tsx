@@ -251,18 +251,20 @@ export const NiyamawaliPage: React.FC = () => {
               {isHindi ? (
                 <>
                   <li>ट्रस्ट द्वारा निर्धारित पात्रता पूरी करने वाला व्यक्ति सदस्य बन सकता है।</li>
-                  <li>सदस्यता स्वैच्छिक होगी।</li>
+                  <li>सदस्यता स्वैच्छिक एवं सामाजिक जिम्मेदारी पर आधारित होगी।</li>
                   <li>सदस्य को ट्रस्ट की वर्तमान नियमावली एवं संबंधित योजनाओं के नियमों को स्वीकार करना होगा।</li>
-                  <li>सदस्यता का रिकॉर्ड डिजिटल/लिखित रूप में रखा जाएगा।</li>
-                  <li>प्रत्येक सदस्य को अपनी व्यक्तिगत जानकारी, मोबाइल नंबर, पता तथा नॉमिनी संबंधी जानकारी सही रखना आवश्यक होगा।</li>
+                  <li>सदस्यता का रिकॉर्ड डिजिटल/लिखित रूप में सुरक्षित रखा जाएगा।</li>
+                  <li>प्रत्येक सदस्य को अपनी व्यक्तिगत जानकारी, मोबाइल नंबर, पता तथा नॉमिनी संबंधी जानकारी सही व अद्यतन रखना आवश्यक होगा।</li>
+                  <li><strong>आयु मानदंड:</strong> आकस्मिक निधन सहायता योजना हेतु सदस्य की आयु 18 से 60 वर्ष के मध्य होनी अनिवार्य है। बेटी पंजीकरण हेतु कोई आयु सीमा/बंधन नहीं है।</li>
                 </>
               ) : (
                 <>
                   <li>Any eligible individual meeting the Trust criteria can register as a member.</li>
-                  <li>Membership is purely voluntary and non-commercial.</li>
-                  <li>Members must abide by the Trust bylaws and scheme regulations.</li>
-                  <li>Membership records are maintained digitally and securely.</li>
+                  <li>Membership is purely voluntary, non-commercial, and community-driven.</li>
+                  <li>Members must abide by the Trust bylaws and respective scheme regulations.</li>
+                  <li>Membership records are maintained digitally and securely on our verified database.</li>
                   <li>Members must maintain updated contact, Aadhaar, address, and nominee details.</li>
+                  <li><strong>Age Criteria:</strong> Age must strictly be 18 to 60 years for bereavement assistance; there is no age barrier for registering daughters.</li>
                 </>
               )}
             </ol>
@@ -348,7 +350,7 @@ export const NiyamawaliPage: React.FC = () => {
                 ? 'यदि किसी सक्रिय एवं वैधानिक सदस्य का आकस्मिक निधन होता है और वह संबंधित योजना की सभी पात्रता शर्तें पूरी करता है, तो MFCT अपने सदस्यों से सामूहिक आर्थिक सहयोग का आह्वान कर सकता है।'
                 : 'Upon the sudden demise of an active verified member who meets scheme eligibility, MFCT issues a collective solidarity appeal to all members.'}
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
               <div className="p-4 rounded-2xl bg-[#ecfdf5] border border-[#a7f3d0] space-y-1">
                 <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider block">
                   {isHindi ? 'सदस्य सहयोग' : 'Member Contribution'}
@@ -365,10 +367,21 @@ export const NiyamawaliPage: React.FC = () => {
                   {isHindi ? 'संभावित सहायता लक्ष्य' : 'Potential Collective Target'}
                 </span>
                 <p className="text-base font-extrabold text-slate-900">
-                  {isHindi ? 'लगभग ₹20-25 लाख तक (अथवा कम/अधिक)' : 'Approx. ₹20-25 Lakh (Estimated Target)'}
+                  {isHindi ? 'लगभग ₹20-25 लाख तक*' : 'Approx. ₹20-25 Lakh*'}
                 </p>
                 <p className="text-[11px] text-amber-700 leading-snug">
                   {isHindi ? 'यह अनुमानित सामूहिक लक्ष्य है, निश्चित लाभ या गारंटी नहीं।' : 'This is an estimated community goal, not a guaranteed return.'}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 space-y-1">
+                <span className="text-xs font-bold text-blue-800 uppercase tracking-wider block">
+                  {isHindi ? 'पात्रता आयु सीमा' : 'Eligible Age Bracket'}
+                </span>
+                <p className="text-base font-extrabold text-blue-950">
+                  {isHindi ? '18 से 60 वर्ष' : '18 to 60 Years'}
+                </p>
+                <p className="text-[11px] text-blue-700 leading-snug">
+                  {isHindi ? 'आकस्मिक निधन सहायता आवेदन हेतु सदस्य की आयु 18 से 60 वर्ष अनिवार्य है।' : 'Member must strictly be between 18 and 60 years at time of demise.'}
                 </p>
               </div>
             </div>
@@ -391,7 +404,7 @@ export const NiyamawaliPage: React.FC = () => {
                 ? 'किसी पात्र एवं सक्रिय सदस्य की बेटी के विवाह के अवसर पर MFCT सामूहिक सहयोग अभियान चला सकता है।'
                 : 'For verified members solemnizing the marriage of their daughter, MFCT initiates a mutual assistance micro-campaign.'}
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
               <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-1">
                 <span className="text-xs font-bold text-rose-800 uppercase tracking-wider block">
                   {isHindi ? 'सदस्य सहयोग' : 'Member Contribution'}
@@ -408,10 +421,21 @@ export const NiyamawaliPage: React.FC = () => {
                   {isHindi ? 'संभावित सहायता लक्ष्य' : 'Potential Collective Target'}
                 </span>
                 <p className="text-base font-extrabold text-slate-900">
-                  {isHindi ? 'लगभग ₹8-10 लाख तक (अथवा कम/अधिक)' : 'Approx. ₹8-10 Lakh (Estimated Target)'}
+                  {isHindi ? 'लगभग ₹8-10 लाख तक*' : 'Approx. ₹8-10 Lakh*'}
                 </p>
                 <p className="text-[11px] text-amber-700 leading-snug">
                   {isHindi ? 'यह भी अनुमानित/संभावित राशि है, निश्चित या गारंटीकृत सहायता नहीं।' : 'Community solidarity target, not a commercial guarantee.'}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-1">
+                <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider block">
+                  {isHindi ? 'बेटी पंजीकरण' : 'Girl Registration'}
+                </span>
+                <p className="text-base font-extrabold text-emerald-950">
+                  {isHindi ? 'कोई आयु सीमा नहीं' : 'No Age Barrier'}
+                </p>
+                <p className="text-[11px] text-emerald-700 leading-snug">
+                  {isHindi ? 'बेटी पंजीकरण हेतु कोई आयु बंधन नहीं (विवाह के समय वैधानिक आयु लागू)।' : 'No age limit for registering daughters (legal marriage age applies at wedding).'}
                 </p>
               </div>
             </div>
@@ -434,16 +458,16 @@ export const NiyamawaliPage: React.FC = () => {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm text-slate-700 pt-1">
               {[
-                { hi: '1. सदस्य की वैधानिक स्थिति', en: '1. Legal and active membership status' },
-                { hi: '2. सदस्यता की अवधि', en: '2. Active membership tenure' },
-                { hi: '3. संबंधित योजना की पात्रता', en: '3. Scheme-specific eligibility criteria' },
-                { hi: '4. आवश्यक सहयोग में सदस्य की भागीदारी', en: '4. Prior participation in community appeals' },
-                { hi: '5. लॉक-इन अवधि, यदि लागू हो', en: '5. Fulfillment of lock-in period' },
-                { hi: '6. सदस्य द्वारा नियमों का पालन', en: '6. Compliance with bylaws and code of conduct' },
-                { hi: '7. आवश्यक दस्तावेज', en: '7. Submission of verified documentary proof' },
-                { hi: '8. घटना/दावे का सत्यापन', en: '8. Multi-tier field ground audit' },
-                { hi: '9. नॉमिनी की वैधता', en: '9. Validity of designated nominee details' },
-                { hi: '10. ट्रस्ट की उपलब्ध व्यवस्था एवं नियम', en: '10. Operational guidelines of the Trust' },
+                { hi: '1. सदस्य की वैधानिक स्थिति (सत्यापित KYC व पहचान)', en: '1. Legal and active membership status (verified KYC)' },
+                { hi: '2. सदस्यता की निरंतर अवधि', en: '2. Active membership tenure & consistency' },
+                { hi: '3. संबंधित योजना की पात्रता (निधन: 18-60 वर्ष, बेटी: कोई आयु सीमा नहीं)', en: '3. Scheme criteria (Death: 18-60 yrs, Girl: No age barrier)' },
+                { hi: '4. आवश्यक अभियानों में सदस्य की पूर्व नियमित भागीदारी', en: '4. Prior active participation in community appeals' },
+                { hi: '5. अनिवार्य लॉक-इन अवधि (180 दिन / 6 माह) का पूर्ण होना', en: '5. Fulfillment of mandatory 180-day lock-in period' },
+                { hi: '6. सदस्य द्वारा नियमावली व आचार संहिता का पूर्ण पालन', en: '6. Compliance with bylaws and code of conduct' },
+                { hi: '7. आवश्यक मूल दस्तावेजों का सत्यापन व जमा होना', en: '7. Submission of verified documentary proof' },
+                { hi: '8. घटना/दावे का भौतिक सत्यापन (Ground Verification)', en: '8. Multi-tier field ground verification audit' },
+                { hi: '9. नॉमिनी की वैधता, बैंक विवरण व रक्त संबंध प्रमाण', en: '9. Validity of designated nominee, bank KYC & blood relation' },
+                { hi: '10. ट्रस्ट की उपलब्ध व्यवस्था एवं मार्गदर्शक नियम', en: '10. Operational guidelines and bylaws of the Trust' },
               ].map((item, idx) => (
                 <div key={idx} className="p-3 rounded-2xl bg-[#f8faf9] border border-slate-200/80">
                   {isHindi ? item.hi : item.en}
@@ -461,14 +485,29 @@ export const NiyamawaliPage: React.FC = () => {
                 8
               </span>
               <h3 className="text-lg font-bold text-slate-900">
-                {isHindi ? 'लॉक-इन एवं पात्रता अवधि (Lock-in Period)' : '8. Lock-in & Qualification Period'}
+                {isHindi ? 'लॉक-इन एवं पात्रता अवधि (Lock-in Period - 180 Days)' : '8. Lock-in & Qualification Period (180 Days)'}
               </h3>
             </div>
-            <p className="text-sm text-slate-700 leading-relaxed">
-              {isHindi
-                ? 'MFCT प्रत्येक योजना के लिए अलग-अलग Lock-in Period निर्धारित कर सकता है। लॉक-इन अवधि का उद्देश्य यह सुनिश्चित करना होगा कि सदस्य केवल सहायता प्राप्त करने के उद्देश्य से तत्काल सदस्य बनकर योजना का अनुचित लाभ न उठाए।'
-                : 'MFCT prescribes lock-in periods for each scheme to ensure genuine long-term solidarity and prevent opportunistic or fraudulent registrations.'}
-            </p>
+            <div className="space-y-2 text-sm text-slate-700 leading-relaxed">
+              <p>
+                {isHindi
+                  ? '1. MFCT की कल्याणकारी योजनाओं (आकस्मिक निधन सहायता एवं बेटी विवाह सहायता) के अंतर्गत सहायता प्राप्त करने हेतु सदस्यता ग्रहण करने की तिथि से न्यूनतम 180 दिन (6 माह) का अनिवार्य Lock-in Period लागू रहेगा।'
+                  : '1. A mandatory standard Lock-in Period of 180 days (6 months) from the verified date of enrollment is applicable for all welfare assistance schemes (bereavement and daughter marriage).'}
+              </p>
+              <p>
+                {isHindi
+                  ? '2. लॉक-इन अवधि का उद्देश्य यह सुनिश्चित करना है कि सदस्य केवल सहायता प्राप्त करने के उद्देश्य से तत्काल सदस्य बनकर व्यवस्था का अनुचित लाभ न उठाए, बल्कि समाज के प्रति निष्ठा और सतत आपसी सहयोग की भावना से जुड़े।'
+                  : '2. The purpose of the lock-in period is to ensure genuine long-term solidarity, continuous mutual cooperation, and prevent opportunistic or fraudulent registrations.'}
+              </p>
+              <p>
+                {isHindi
+                  ? '3. 180 दिन की लॉक-इन अवधि पूर्ण होने तथा सभी नियमों व सहयोगों के पालन के उपरांत ही सदस्य किसी सहायता अभियान हेतु पात्र माना जाएगा।'
+                  : '3. Members become eligible to apply for collective assistance only upon completing 180 days of active, compliant, and verified membership.'}
+              </p>
+            </div>
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 font-semibold">
+              ✓ {isHindi ? 'मानक लॉक-इन अवधि: सदस्यता प्रारंभ से 180 दिन (6 माह) अनिवार्य' : 'Standard Lock-in Period: Mandatory 180 days (6 months) from active enrollment.'}
+            </div>
           </div>
         )}
 
@@ -480,23 +519,31 @@ export const NiyamawaliPage: React.FC = () => {
                 9
               </span>
               <h3 className="text-lg font-bold text-slate-900">
-                {isHindi ? 'नॉमिनी व्यवस्था (Nominee Policy)' : '9. Nominee Designation Policy'}
+                {isHindi ? 'नॉमिनी व्यवस्था (Nominee Policy & Addition Guidelines)' : '9. Nominee Policy & Addition Guidelines'}
               </h3>
             </div>
-            <ol className="space-y-2 text-sm text-slate-700 list-decimal list-inside leading-relaxed">
+            <ol className="space-y-2.5 text-sm text-slate-700 list-decimal list-inside leading-relaxed">
               {isHindi ? (
                 <>
-                  <li>प्रत्येक सदस्य को नॉमिनी घोषित करने का अवसर दिया जाएगा।</li>
-                  <li>सदस्य को नॉमिनी की जानकारी सही एवं अद्यतन रखनी होगी।</li>
-                  <li>नॉमिनी में परिवर्तन निर्धारित प्रक्रिया के अनुसार किया जा सकेगा।</li>
-                  <li>नॉमिनी को लेकर विवाद होने पर ट्रस्ट उपलब्ध दस्तावेजों और लागू कानूनों के आधार पर निर्णय लेगा।</li>
+                  <li><strong>एकाधिक नॉमिनी (Multiple Nominees Percentage-wise):</strong> सदस्य आकस्मिक निधन एवं बेटी विवाह सहायता हेतु एक या एक से अधिक (Multiple) नॉमिनी को प्रतिशत (Percentage-wise Share, कुल 100%) के आधार पर नामांकित कर सकता है।</li>
+                  <li><strong>निधन एवं विवाह दोनों योजनाओं हेतु:</strong> नॉमिनी का नामांकन आकस्मिक निधन सहायता एवं बेटी विवाह सहायता दोनों के लिए अनिवार्य रूप से लागू रहेगा।</li>
+                  <li><strong>बैंक खाता विवरण अनिवार्य (Bank Details Compulsory):</strong> प्रत्येक नॉमिनी का बैंक खाता विवरण (खाता धारक का नाम, बैंक का नाम, खाता संख्या, IFSC कोड एवं पासबुक/चेक प्रमाण) देना अनिवार्य होगा ताकि सहायता राशि सीधे नॉमिनी के खाते में डिजिटल माध्यम से भेजी जा सके।</li>
+                  <li><strong>रक्त संबंध हेतु आधार अनिवार्य (Aadhaar for Blood Relation):</strong> सदस्य और नॉमिनी के बीच वैध रक्त संबंध (Blood Relation) स्थापित एवं सत्यापित करने हेतु नॉमिनी का आधार कार्ड (Aadhaar Card) अनिवार्य रूप से संलग्न करना होगा।</li>
+                  <li><strong>नॉमिनी में संशोधन (Edit / Update Nominee):</strong> सदस्य अपनी प्रोफ़ाइल में निर्धारित प्रशासनिक एवं सत्यापन प्रक्रिया के अनुसार आवश्यकता पड़ने पर नॉमिनी विवरण में संशोधन/अपडेट (Edit Nominee) कर सकते हैं।</li>
+                  <li className="text-amber-900 font-semibold bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                    <strong>विशेष कानूनी प्रावधान:</strong> यदि सदस्य से पूर्व नॉमिनी की मृत्यु हो जाती है, तो नॉमिनी/सहायता का पात्र वह व्यक्ति होगा जिसे सक्षम न्यायालय (Competent Court of Law) द्वारा वैधानिक रूप से उत्तराधिकारी तय/घोषित किया जाएगा।
+                  </li>
                 </>
               ) : (
                 <>
-                  <li>Every member must declare a verified family nominee upon registration.</li>
-                  <li>Members must maintain accurate, up-to-date KYC nominee details.</li>
-                  <li>Nominee updates can be processed through prescribed administrative channels.</li>
-                  <li>In disputes, certified legal heir certificates and statutory laws govern.</li>
+                  <li><strong>Multiple Nominees (Percentage-wise):</strong> Members can declare one or multiple nominees with specified percentage shares (totaling 100%) for both bereavement and daughter marriage welfare schemes.</li>
+                  <li><strong>For Death & Marriage Assistance:</strong> Nominee designation applies across all mutual assistance programs, including death and daughter wedding aid.</li>
+                  <li><strong>Bank Account Details Compulsory:</strong> Accurate bank details (Account Holder Name, Bank Name, Account Number, IFSC Code, and Passbook/Cheque proof) are mandatory for every nominee to ensure direct digital disbursals.</li>
+                  <li><strong>Aadhaar for Blood Relation Verification:</strong> Submission of the nominee's Aadhaar card is compulsory to legally establish and verify blood relationship with the member.</li>
+                  <li><strong>Edit / Update Nominee:</strong> Members can edit and update nominee records through their verified account following standard administrative verification workflows.</li>
+                  <li className="text-amber-900 font-semibold bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                    <strong>Statutory Successorship Rule:</strong> If the nominee dies before the member, the nominee/beneficiary rights shall devolve upon the legal heir determined and designated by the competent court of law.
+                  </li>
                 </>
               )}
             </ol>
@@ -515,18 +562,18 @@ export const NiyamawaliPage: React.FC = () => {
               </h3>
             </div>
             <p className="text-xs text-slate-600">
-              {isHindi ? 'सहायता अभियान शुरू करने से पहले ट्रस्ट आवश्यक दस्तावेज मांग सकता है:' : 'Required documentation before initiating solidarity appeals:'}
+              {isHindi ? 'सहायता अभियान शुरू करने से पहले ट्रस्ट द्वारा आवश्यक दस्तावेजों का सत्यापन किया जाएगा:' : 'Required documentation audited before initiating solidarity appeals:'}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-slate-700 pt-1">
               {[
-                { hi: '• सदस्यता विवरण', en: '• Member KYC Record' },
-                { hi: '• मृत्यु प्रमाणपत्र', en: '• Death Certificate' },
-                { hi: '• आधार/पहचान पत्र', en: '• Aadhaar / ID Proof' },
-                { hi: '• नॉमिनी बैंक पासबुक', en: '• Nominee Bank Proof' },
-                { hi: '• विवाह प्रमाण पत्र / कार्ड', en: '• Wedding Invitation/Card' },
-                { hi: '• अस्पताल बिल / रिपोर्ट', en: '• Medical Bills' },
-                { hi: '• Ground Verification', en: '• Field Ground Audit' },
-                { hi: '• 100% Direct Transfer', en: '• Bank Digital Receipt' },
+                { hi: '• सदस्यता KYC व डिजिटल आईडी', en: '• Member KYC & Digital ID' },
+                { hi: '• मृत्यु प्रमाणपत्र (निधन पर)', en: '• Death Certificate (Bereavement)' },
+                { hi: '• सदस्य आधार / पहचान पत्र', en: '• Member Aadhaar / ID Proof' },
+                { hi: '• नॉमिनी आधार (रक्त संबंध हेतु)', en: '• Nominee Aadhaar (Blood Relation)' },
+                { hi: '• नॉमिनी बैंक पासबुक / विवरण', en: '• Nominee Bank Passbook / KYC' },
+                { hi: '• निकाहनामा / विवाह कार्ड', en: '• Wedding Invitation / Proof' },
+                { hi: '• ग्राउंड भौतिक सत्यापन (Audit)', en: '• Ground Field Physical Audit' },
+                { hi: '• 100% प्रत्यक्ष डिजिटल रसीद', en: '• 100% Direct Bank Transfer Receipt' },
               ].map((item, idx) => (
                 <span key={idx} className="p-2.5 bg-[#f8faf9] rounded-2xl border border-slate-200/80 font-medium">
                   {isHindi ? item.hi : item.en}
