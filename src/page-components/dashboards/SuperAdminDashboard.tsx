@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import { getAuditLogs } from '../../services/adminService';
 import { getCommunities } from '../../services/communityService';
 import { getCampaigns } from '../../services/campaignService';
+import { getUsers } from '../../services/userService';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface DashboardProps {
@@ -26,24 +27,27 @@ export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) =>
   const [communities, setCommunities] = useState<Community[]>([]);
   const [campaignsList, setCampaignsList] = useState<Campaign[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       getCommunities(),
       getCampaigns(),
-      getAuditLogs()
+      getAuditLogs(),
+      getUsers()
     ])
-      .then(([comms, campaigns, logs]) => {
+      .then(([comms, campaigns, logs, userList]) => {
         setCommunities(comms);
         setCampaignsList(campaigns);
         setAuditLogs(logs);
+        setUsers(userList);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  const totalMembers = communities.reduce((sum, c) => sum + c.totalMembers, 0);
+  const totalMembers = users.length;
   const totalRaised = communities.reduce((sum, c) => sum + c.totalRaisedINR, 0);
   const totalCampaign = campaignsList.length;
 
