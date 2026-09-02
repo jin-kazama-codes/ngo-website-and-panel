@@ -111,6 +111,23 @@ export const TermsOfServicePage: React.FC = () => {
                 : 'MFCT provides a transparent giving platform with thorough field verification but is not liable for medical treatment outcomes or third-party service delays.'}
           </p>
         </section>
+
+        <section className="space-y-3">
+          <h2 className="text-xl font-bold text-slate-900">
+            {language === 'hi'
+              ? '6. बाल सुरक्षा मानक (Child Safety & CSAE Prevention Policy)'
+              : language === 'ur'
+                ? '6. بچوں کے تحفظ کے معیارات'
+                : '6. Child Safety Standards & CSAE Prevention Policy'}
+          </h2>
+          <p>
+            {language === 'hi'
+              ? 'MFCT Trust बाल यौन शोषण और दुर्व्यवहार (CSAE / CSAM) के खिलाफ शून्य-सहिष्णुता (Zero Tolerance) नीति का सख्ती से पालन करता है। हमारे प्लेटफॉर्म पर किसी भी प्रकार की बाल शोषण सामग्री या आचरण का प्रसार पूरी तरह से प्रतिबंधित है। यदि कोई उपयोगकर्ता ऐसा आचरण करता है, तो उसका खाता तुरंत समाप्त कर दिया जाएगा और मामले की सूचना कानून प्रवर्तन एवं संबंधित राष्ट्रीय व अंतर्राष्ट्रीय अधिकारियों को दी जाएगी।'
+              : language === 'ur'
+                ? 'ایم ایف سی ٹی ٹرسٹ بچوں کے استحصال اور زیادتی کے خلاف زیرو ٹالرنس پالیسی پر عمل پیرا ہے۔ کسی بھی غیر اخلاقی یا ممنوعہ سرگرمی کی صورت میں اکاؤنٹ فوری طور پر معطل کر کے قانونی کارروائی کی جائے گی۔'
+                : 'MFCT Trust maintains a strict zero-tolerance policy against Child Sexual Abuse and Exploitation (CSAE) and Child Sexual Abuse Material (CSAM). Any attempt to publish, distribute, or facilitate abusive content or conduct involving minors will result in immediate termination of account access, permanent banning, and mandatory reporting to law enforcement and relevant national/international child protection authorities.'}
+          </p>
+        </section>
       </div>
     </div>
   );
