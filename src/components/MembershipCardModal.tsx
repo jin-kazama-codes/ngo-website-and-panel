@@ -97,7 +97,7 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <img
-                src="/mfct-logo.jpeg"
+                src="/mfct-logo.png"
                 alt="MFCT"
                 className="w-9 h-9 rounded-full object-cover shadow-md border border-[var(--mfct-gold)]"
               />
@@ -217,7 +217,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, onClose })
         <div className="flex items-center justify-between pb-5 mb-6" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
           <div className="flex items-center gap-3">
             <img
-              src="/mfct-logo.jpeg"
+              src="/mfct-logo.png"
               alt="MFCT"
               className="w-10 h-10 rounded-full object-cover shadow-md border border-[var(--mfct-gold)]"
             />

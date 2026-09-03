@@ -100,7 +100,7 @@ export default function SignInPage() {
         {/* Logo */}
         <Link href="/" className="relative z-10 flex items-center gap-3 group w-fit">
           <img
-            src="/mfct-logo.jpeg"
+            src="/mfct-logo.png"
             alt="MFCT Logo"
             className="w-12 h-12 rounded-full object-cover shadow-lg border-2 border-[#c8a84b] group-hover:scale-105 transition-transform"
           />
@@ -156,7 +156,7 @@ export default function SignInPage() {
               '"A small act of kindness can bring a great change in someone\'s life."'
             )}
           </p>
-          <p className="text-[11px] font-bold mt-1.5" style={{ color: '#f0c868' }}>— Er. Mohammad Zahid, {tr('संस्थापक और अध्यक्ष', 'بانی و چیئرمین', 'Founder & Chairman')}</p>
+          <p className="text-[11px] font-bold mt-1.5" style={{ color: '#f0c868' }}>-  Er. Mohammad Zahid, {tr('संस्थापक और अध्यक्ष', 'بانی و چیئرمین', 'Founder & Chairman')}</p>
         </div>
       </div>
 
@@ -167,7 +167,7 @@ export default function SignInPage() {
           {/* Mobile logo */}
           <Link href="/" className="lg:hidden flex items-center gap-3 mb-2 group w-fit">
             <img
-              src="/mfct-logo.jpeg"
+              src="/mfct-logo.png"
               alt="MFCT Logo"
               className="w-10 h-10 rounded-full object-cover shadow border-2 border-[#c8a84b]/60 group-hover:scale-105 transition-transform"
             />

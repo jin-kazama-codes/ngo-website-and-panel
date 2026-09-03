@@ -307,7 +307,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           }`} style={{ borderBottom: '1px solid rgba(200,168,75,0.2)', background: 'rgba(0,0,0,0.2)' }}>
             <div className="flex items-center gap-3" title="MFCT Portal">
               <img
-                src="/mfct-logo.jpeg"
+                src="/mfct-logo.png"
                 alt="MFCT"
                 className="w-9 h-9 rounded-full object-cover shadow-md shrink-0 cursor-pointer border border-[var(--mfct-gold)]"
               />

@@ -164,7 +164,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-3.5 sm:gap-4 cursor-pointer group min-w-0"
             >
               <img
-                src="/mfct-logo.jpeg"
+                src="/mfct-logo.png"
                 alt="Mohammad Faeem Charitable Trust (MFCT)"
                 style={{
                   borderRadius: '50%',

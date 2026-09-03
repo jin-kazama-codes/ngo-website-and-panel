@@ -76,7 +76,7 @@ export default function SignUpPage() {
           origin: { y: 0.6 },
           colors: ['#c8a84b', '#0f3322', '#10b981', '#f59e0b'],
         });
-      } catch {}
+      } catch { }
     }, 600);
   };
 
@@ -95,7 +95,7 @@ export default function SignUpPage() {
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-3 group w-fit">
             <img
-              src="/mfct-logo.jpeg"
+              src="/mfct-logo.png"
               alt="MFCT Logo"
               className="w-12 h-12 rounded-full object-cover shadow-lg border-2 border-[#c8a84b] transition-transform group-hover:scale-105"
             />
@@ -197,12 +197,12 @@ export default function SignUpPage() {
           <p className="text-xs italic leading-relaxed text-slate-300">
             {tr(
               '"एक छोटी-सी मदद किसी के जीवन में बड़ा बदलाव ला सकती है।"',
-              '"ایک چھوٹی سی مدد کسی کی زندگی میں बड़ा بدلاؤ لا سکتی ہے۔"',
+              '"ایک چھوٹی سی مدد کسی کی زندگی میں بڑا بدلاؤ لا سکتی ہے۔"',
               '"A small act of solidarity transforms lives and strengthens our community."'
             )}
           </p>
           <p className="text-[11px] font-bold mt-1.5 text-amber-300">
-            — Er. Mohammad Zahid,{' '}
+            - Er. Mohammad Zahid,{' '}
             {tr('संस्थापक और अध्यक्ष', 'بانی و چیئرمین', 'Founder & Chairman')}
           </p>
         </div>
@@ -215,7 +215,7 @@ export default function SignUpPage() {
           <div className="flex items-center justify-between pb-3 border-b border-slate-200 gap-3">
             <Link href="/" className="lg:hidden flex items-center gap-2.5 group">
               <img
-                src="/mfct-logo.jpeg"
+                src="/mfct-logo.png"
                 alt="MFCT Logo"
                 className="w-9 h-9 rounded-full object-cover shadow border-2 border-[#c8a84b]/60 group-hover:scale-105 transition-transform"
               />
@@ -277,8 +277,8 @@ export default function SignUpPage() {
                   {language === 'hi'
                     ? 'Registration Portal Launching Soon • Mohammad Faeem Charitable Trust'
                     : language === 'ur'
-                    ? 'آن لائن رجسٹریشن پورٹل جلد دستیاب ہوگا • محمد فہیم چیریٹیبل ٹرسٹ'
-                    : 'Online Membership Portal Launching Soon • MFCT Trust'}
+                      ? 'آن لائن رجسٹریشن پورٹل جلد دستیاب ہوگا • محمد فہیم چیریٹیبل ٹرسٹ'
+                      : 'Online Membership Portal Launching Soon • MFCT Trust'}
                 </p>
               </div>
 
@@ -912,7 +912,7 @@ export function OriginalSignUpForm() {
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-3 group w-fit">
             <img
-              src="/mfct-logo.jpeg"
+              src="/mfct-logo.png"
               alt="MFCT Logo"
               className="w-12 h-12 rounded-full object-cover shadow-lg border-2 border-[#c8a84b] transition-transform group-hover:scale-105"
             />
@@ -988,7 +988,7 @@ export function OriginalSignUpForm() {
             )}
           </p>
           <p className="text-[11px] font-bold mt-1.5 text-amber-300">
-            — Er. Mohammad Zahid, {tr('संस्थापक और अध्यक्ष', 'بانی و چیئرمین', 'Founder & Chairman')}
+            -  Er. Mohammad Zahid, {tr('संस्थापक और अध्यक्ष', 'بانی و چیئرمین', 'Founder & Chairman')}
           </p>
         </div>
       </div>
@@ -998,7 +998,7 @@ export function OriginalSignUpForm() {
           <div className="flex items-center justify-between pb-2 border-b border-slate-200">
             <Link href="/" className="lg:hidden flex items-center gap-2.5 group">
               <img
-                src="/mfct-logo.jpeg"
+                src="/mfct-logo.png"
                 alt="MFCT Logo"
                 className="w-9 h-9 rounded-full object-cover shadow border-2 border-[#c8a84b]/60 group-hover:scale-105 transition-transform"
               />

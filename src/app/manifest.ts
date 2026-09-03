@@ -13,14 +13,19 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ['charity', 'social', 'nonprofit'],
     icons: [
       {
-        src: '/mfct-logo.jpeg',
-        sizes: 'any',
-        type: 'image/jpeg',
+        src: '/icon.png',
+        sizes: '512x512',
+        type: 'image/png',
       },
       {
         src: '/favicon.ico',
         sizes: 'any',
         type: 'image/x-icon',
+      },
+      {
+        src: '/apple-icon.png',
+        sizes: '180x180',
+        type: 'image/png',
       },
     ],
     screenshots: [
