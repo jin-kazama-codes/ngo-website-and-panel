@@ -160,7 +160,7 @@ export const AboutPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 text-[11px] font-bold tracking-wide">
-                <Sparkles className="w-3 h-3 text-amber-300" /> MFCT Founder
+                <Sparkles className="w-3 h-3 text-amber-300" /> {t('about.mfct_founder_tag', 'MFCT Founder')}
               </span>
             </div>
           </div>
@@ -188,15 +188,10 @@ export const AboutPage: React.FC = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent pointer-events-none" />
 
-                  {/* Floating verification badge */}
-                  <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-bold border border-amber-400/40 flex items-center gap-1 shadow-lg">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Verified Founder</span>
-                  </div>
 
                   <div className="absolute bottom-3 left-3 right-3 px-3 py-1.5 rounded-xl bg-black/65 backdrop-blur-md text-white text-xs font-semibold border border-white/15 flex items-center justify-center gap-1.5 text-center">
                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    <span>Founder & Chairman, MFCT</span>
+                    <span>{t('about.zahid_role_title', 'Founder & Chairman, MFCT')}</span>
                   </div>
                 </div>
               </div>
@@ -206,11 +201,11 @@ export const AboutPage: React.FC = () => {
                   {t('about.zahid_title', 'Er. Mohammad Zahid')}
                 </h3>
                 <p className="text-sm font-bold" style={{ color: 'var(--mfct-mid-green)' }}>
-                  Founder & Chairman, MFCT
+                  {t('about.zahid_role_title', 'Founder & Chairman, MFCT')}
                 </p>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-slate-600 bg-slate-100 font-medium">
                   <Building2 className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Mohammad Faeem Charitable Trust (MFCT)</span>
+                  <span>{t('about.trust_name_full', 'Mohammad Faeem Charitable Trust')}</span>
                 </div>
               </div>
             </div>
@@ -297,7 +292,7 @@ export const AboutPage: React.FC = () => {
                   <h4 className="font-black text-base sm:text-lg text-slate-900">
                     - {t('about.zahid_title', 'Er. Mohammad Zahid')}
                   </h4>
-                  <p className="text-xs text-slate-500 font-semibold mt-0.5">Founder & Chairman, MFCT</p>
+                  <p className="text-xs text-slate-500 font-semibold mt-0.5">{t('about.zahid_role_title', 'Founder & Chairman, MFCT')}</p>
                 </div>
 
               </div>
@@ -330,7 +325,7 @@ export const AboutPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 text-[11px] font-bold tracking-wide">
-                <Sparkles className="w-3 h-3 text-amber-300" /> MFCT Co-Founder
+                <Sparkles className="w-3 h-3 text-amber-300" /> {t('about.mfct_cofounder_tag', 'MFCT Co-Founder')}
               </span>
             </div>
           </div>
@@ -358,29 +353,23 @@ export const AboutPage: React.FC = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent pointer-events-none" />
 
-                  {/* Floating verification badge */}
-                  <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-bold border border-amber-400/40 flex items-center gap-1 shadow-lg">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Verified Co-Founder</span>
-                  </div>
-
                   <div className="absolute bottom-3 left-3 right-3 px-3 py-1.5 rounded-xl bg-black/65 backdrop-blur-md text-white text-xs font-semibold border border-white/15 flex items-center justify-center gap-1.5 text-center">
                     <ShieldCheck className="w-4 h-4 text-amber-400" />
-                    <span>Co-Founder & Secretary - Treasurer</span>
+                    <span>{t('about.amreen_role_short')}</span>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-1.5 pt-1">
                 <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-                  {t('about.amreen_title', 'Mrs. Amreen')}
+                  {t('about.amreen_title', 'Mrs. Amreen Idrisi')}
                 </h3>
                 <p className="text-sm font-bold" style={{ color: 'var(--mfct-mid-green)' }}>
-                  Co-Founder & Secretary - Treasurer, MFCT
+                  {t('about.amreen_role_title', 'Co-Founder & Secretary–Treasurer, MFCT')}
                 </p>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-slate-600 bg-slate-100 font-medium">
                   <Building2 className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Mohammad Faeem Charitable Trust (MFCT)</span>
+                  <span>{t('about.trust_name_full', 'Mohammad Faeem Charitable Trust')}</span>
                 </div>
               </div>
             </div>
@@ -471,10 +460,10 @@ export const AboutPage: React.FC = () => {
               <div className="pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <h4 className="font-black text-base sm:text-lg text-slate-900">
-                    - {t('about.amreen_title', 'Mrs. Amreen')}
+                    - {t('about.amreen_title', 'Mrs. Amreen Idrisi')}
                   </h4>
                   <p className="text-xs text-slate-500 font-semibold mt-0.5">
-                    Co-Founder & Secretary - Treasurer, MFCT
+                    {t('about.amreen_role_title', 'Co-Founder & Secretary–Treasurer, MFCT')}
                   </p>
                 </div>
 

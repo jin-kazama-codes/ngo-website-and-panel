@@ -28,13 +28,7 @@ const MemberItem: React.FC<{ member: User }> = ({ member }) => {
     : `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'User')}&background=random`;
 
   return (
-    <div
-      className="p-3.5 rounded-xl flex items-center justify-between text-xs transition-all"
-      style={{
-        background: 'var(--mfct-warm-bg)',
-        border: '1px solid var(--mfct-border)',
-      }}
-    >
+    <div className="p-3.5 rounded-xl flex items-center justify-between text-xs transition-all bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
       <div className="flex items-center gap-3">
         <img
           src={safeAvatar}
@@ -42,12 +36,11 @@ const MemberItem: React.FC<{ member: User }> = ({ member }) => {
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'User')}&background=random`;
           }}
-          className="w-9 h-9 rounded-full object-cover shrink-0"
-          style={{ border: '2px solid var(--mfct-gold)' }}
+          className="w-9 h-9 rounded-full object-cover shrink-0 border-2 border-amber-500/40"
         />
         <div>
-          <p className="font-bold text-sm" style={{ color: 'var(--mfct-dark-green)' }}>{displayName}</p>
-          <p className="text-[11px]" style={{ color: 'var(--mfct-text-muted)' }}>
+          <p className="font-bold text-sm text-slate-900 dark:text-white">{displayName}</p>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">
             ID: {member.membershipId || member.id.slice(0, 8)} {locationText ? `• ${locationText}` : ''}
           </p>
         </div>
@@ -56,8 +49,8 @@ const MemberItem: React.FC<{ member: User }> = ({ member }) => {
         className="px-2.5 py-0.5 rounded-full text-[10px] font-bold border"
         style={
           member.isVerified
-            ? { background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-dark-green)', border: '1px solid var(--mfct-gold)' }
-            : { background: 'rgba(217,119,6,0.1)', color: '#b45309', border: '1px solid rgba(217,119,6,0.3)' }
+            ? { background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-gold)', border: '1px solid var(--mfct-gold)' }
+            : { background: 'rgba(217,119,6,0.1)', color: '#f59e0b', border: '1px solid rgba(217,119,6,0.3)' }
         }
       >
         {member.isVerified
@@ -106,20 +99,13 @@ export const CommunityMembersTab: React.FC<CommunityMembersTabProps> = ({ active
   }, [activeUser?.communityId]);
 
   return (
-    <div
-      className="rounded-2xl p-6 space-y-4 transition-all"
-      style={{
-        background: 'var(--mfct-white)',
-        border: '1px solid var(--mfct-border)',
-        boxShadow: 'var(--shadow-card)',
-      }}
-    >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
+    <div className="rounded-2xl p-6 space-y-4 transition-all bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h2 className="text-xl font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>
+          <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">
             {tr('समुदाय सदस्य निर्देशिका', 'کمیونٹی ممبرز ڈائرکٹری', 'Community Members Directory')}
           </h2>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--mfct-text-muted)' }}>
+          <p className="text-xs mt-0.5 text-slate-500 dark:text-slate-400">
             {tr(
               'सक्रिय डिजिटल आईडी कार्ड वाले सत्यापित पंजीकृत सामुदायिक सदस्य।',
               'فعال ڈیجیٹل شناختی کارڈ کے ساتھ تصدیق شدہ رجسٹرڈ کمیونٹی ممبران۔',
@@ -131,7 +117,7 @@ export const CommunityMembersTab: React.FC<CommunityMembersTabProps> = ({ active
           className="text-xs px-3 py-1 rounded-xl font-bold self-start sm:self-auto"
           style={{
             background: 'rgba(200,168,75,0.15)',
-            color: 'var(--mfct-dark-green)',
+            color: 'var(--mfct-gold)',
             border: '1px solid var(--mfct-gold)',
           }}
         >
@@ -145,8 +131,7 @@ export const CommunityMembersTab: React.FC<CommunityMembersTabProps> = ({ active
             {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="p-3 rounded-xl h-16 w-full flex items-center gap-3"
-                style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)' }}
+                className="p-3 rounded-xl h-16 w-full flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
               >
                 <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
                 <div className="flex-1 space-y-2">
@@ -158,7 +143,7 @@ export const CommunityMembersTab: React.FC<CommunityMembersTabProps> = ({ active
             ))}
           </div>
         ) : members.length === 0 ? (
-          <div className="flex items-center justify-center p-8 text-sm" style={{ color: 'var(--mfct-text-muted)' }}>
+          <div className="flex items-center justify-center p-8 text-sm text-slate-500 dark:text-slate-400">
             {tr('इस समुदाय के लिए कोई सदस्य नहीं मिला।', 'اس کمیونٹی کے لیے کوئی ممبر نہیں ملا۔', 'No members found for this community.')}
           </div>
         ) : (

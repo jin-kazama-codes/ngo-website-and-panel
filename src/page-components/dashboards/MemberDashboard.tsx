@@ -79,55 +79,27 @@ export const MemberDashboard: React.FC<MemberDashboardProps> = ({
 
       {/* Summary Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div
-          className="p-5 rounded-2xl transition-all"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <span className="text-xs font-bold uppercase tracking-wider block" style={{ color: 'var(--mfct-text-muted)' }}>Total Donated</span>
-          <p className="text-2xl font-extrabold mt-1" style={{ color: 'var(--mfct-dark-green)' }}>₹ {totalDonatedAmount.toLocaleString('en-IN')}</p>
-          <span className="text-[11px] font-semibold mt-1 block" style={{ color: 'var(--mfct-gold-dark)' }}>100% Tax Exempt (80G)</span>
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all overflow-hidden">
+          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">Total Donated</span>
+          <p className="text-2xl font-extrabold mt-1 truncate text-emerald-600 dark:text-emerald-400">₹ {totalDonatedAmount.toLocaleString('en-IN')}</p>
+          <span className="text-[11px] font-semibold mt-1 block truncate text-amber-600 dark:text-amber-400">100% Tax Exempt (80G)</span>
         </div>
 
-        <div
-          className="p-5 rounded-2xl transition-all"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <span className="text-xs font-bold uppercase tracking-wider block" style={{ color: 'var(--mfct-text-muted)' }}>Contributions Made</span>
-          <p className="text-2xl font-extrabold mt-1" style={{ color: 'var(--mfct-dark-green)' }}>{totalDonationsCount} {totalDonationsCount === 1 ? 'Donation' : 'Donations'}</p>
-          <span className="text-[11px] mt-1 block" style={{ color: 'var(--mfct-text-muted)' }}>Across Verified Causes</span>
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all overflow-hidden">
+          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">Contributions Made</span>
+          <p className="text-2xl font-extrabold mt-1 truncate text-slate-900 dark:text-white">{totalDonationsCount} {totalDonationsCount === 1 ? 'Donation' : 'Donations'}</p>
+          <span className="text-[11px] mt-1 block truncate text-slate-500 dark:text-slate-400">Across Verified Causes</span>
         </div>
 
-        <div
-          className="p-5 rounded-2xl transition-all"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <span className="text-xs font-bold uppercase tracking-wider block" style={{ color: 'var(--mfct-text-muted)' }}>Member ID</span>
-          <p className="text-base font-mono font-bold mt-1.5 truncate" style={{ color: 'var(--mfct-mid-green)' }}>{user.membershipId}</p>
-          <span className="text-[11px] mt-1 block" style={{ color: 'var(--mfct-text-muted)' }}>Joined: {user.joinDate}</span>
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all overflow-hidden">
+          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">Member ID</span>
+          <p className="text-base font-mono font-bold mt-1.5 truncate text-emerald-600 dark:text-emerald-400">{user.membershipId}</p>
+          <span className="text-[11px] mt-1 block truncate text-slate-500 dark:text-slate-400">Joined: {user.joinDate}</span>
         </div>
 
-        <div
-          className="p-5 rounded-2xl transition-all"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <span className="text-xs font-bold uppercase tracking-wider block" style={{ color: 'var(--mfct-text-muted)' }}>Community Status</span>
-          <p className="text-sm font-bold mt-1.5 flex items-center gap-1.5" style={{ color: 'var(--mfct-dark-green)' }}>
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all overflow-hidden">
+          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">Community Status</span>
+          <p className="text-sm font-bold mt-1.5 flex items-center gap-1.5 truncate text-slate-900 dark:text-white">
             {user.religion === 'Muslim' ? (
               user.isMalikENisab ? 'Muslim • Sahib-e-Nisab' : `Muslim • ${user.helpType || 'Aid'} Eligible`
             ) : user.religion ? (
@@ -136,7 +108,7 @@ export const MemberDashboard: React.FC<MemberDashboardProps> = ({
               'Verified Member'
             )}
           </p>
-          <span className="text-[11px] mt-1 block" style={{ color: 'var(--mfct-text-muted)' }}>
+          <span className="text-[11px] mt-1 block truncate text-slate-500 dark:text-slate-400">
             {user.religion === 'Muslim' && !user.isMalikENisab && user.helpDetails ? user.helpDetails : `${user.city || 'Verified'} Chapter`}
           </span>
         </div>

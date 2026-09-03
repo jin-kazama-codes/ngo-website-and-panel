@@ -159,56 +159,28 @@ export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) =>
 
       {/* Analytics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div
-          className="p-5 rounded-2xl transition-all overflow-hidden"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <span className="text-xs font-bold uppercase tracking-wider block truncate" style={{ color: 'var(--mfct-text-muted)' }}>{t('admin.statTotalRaised', 'Total Funds Raised')}</span>
-          <p className="text-2xl xl:text-3xl font-black mt-1 truncate" style={{ color: 'var(--mfct-dark-green)' }}>₹{totalRaised.toLocaleString('en-IN')}</p>
-          <span className="text-[11px] font-semibold mt-1 block truncate" style={{ color: 'var(--mfct-gold-dark)' }}>{t('card.raised', 'Total Raised')}</span>
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all overflow-hidden">
+          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">{t('admin.statTotalRaised', 'Total Funds Raised')}</span>
+          <p className="text-2xl xl:text-3xl font-black mt-1 truncate text-emerald-600 dark:text-emerald-400">₹{totalRaised.toLocaleString('en-IN')}</p>
+          <span className="text-[11px] font-semibold mt-1 block truncate text-amber-600 dark:text-amber-400">{t('card.raised', 'Total Raised')}</span>
         </div>
 
-        <div
-          className="p-5 rounded-2xl transition-all overflow-hidden"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <span className="text-xs font-bold uppercase tracking-wider block truncate" style={{ color: 'var(--mfct-text-muted)' }}>{t('admin.statActiveMembers', 'Total Active Members')}</span>
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all overflow-hidden">
+          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">{t('admin.statActiveMembers', 'Total Active Members')}</span>
           <p className="text-2xl xl:text-3xl font-black mt-1 truncate text-slate-900 dark:text-white">{totalMembers.toLocaleString('en-IN')}</p>
-          <span className="text-[11px] font-semibold mt-1 block truncate" style={{ color: 'var(--mfct-mid-green)' }}>{t('admin.tabMembers', 'Members')}</span>
+          <span className="text-[11px] font-semibold mt-1 block truncate text-emerald-600 dark:text-emerald-400">{t('admin.tabMembers', 'Members')}</span>
         </div>
 
-        <div
-          className="p-5 rounded-2xl transition-all overflow-hidden"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <span className="text-xs font-bold uppercase tracking-wider block truncate" style={{ color: 'var(--mfct-text-muted)' }}>{t('admin.statActiveCommunities', 'Active Communities')}</span>
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all overflow-hidden">
+          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">{t('admin.statActiveCommunities', 'Active Communities')}</span>
           <p className="text-2xl xl:text-3xl font-black mt-1 truncate text-slate-900 dark:text-white">{communities.length}</p>
-          <span className="text-[11px] font-semibold mt-1 block truncate" style={{ color: 'var(--mfct-gold-dark)' }}>{t('nav.communities', 'Communities')}</span>
+          <span className="text-[11px] font-semibold mt-1 block truncate text-amber-600 dark:text-amber-400">{t('nav.communities', 'Communities')}</span>
         </div>
 
-        <div
-          className="p-5 rounded-2xl transition-all overflow-hidden"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <span className="text-xs font-bold uppercase tracking-wider block truncate" style={{ color: 'var(--mfct-text-muted)' }}>{t('admin.statTotalCampaigns', 'Total Campaigns')}</span>
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all overflow-hidden">
+          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">{t('admin.statTotalCampaigns', 'Total Campaigns')}</span>
           <p className="text-2xl xl:text-3xl font-black mt-1 truncate text-slate-900 dark:text-white">{totalCampaign}</p>
-          <span className="text-[11px] font-semibold mt-1 block truncate" style={{ color: 'var(--mfct-mid-green)' }}>{t('nav.campaigns', 'Campaigns')}</span>
+          <span className="text-[11px] font-semibold mt-1 block truncate text-emerald-600 dark:text-emerald-400">{t('nav.campaigns', 'Campaigns')}</span>
         </div>
       </div>
 
