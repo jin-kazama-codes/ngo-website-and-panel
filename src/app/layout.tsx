@@ -89,10 +89,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
-      { url: '/mfct-logo.jpeg', type: 'image/jpeg' },
+      { url: '/icon.png', type: 'image/png' },
+      { url: '/logo.svg', type: 'image/svg+xml' },
     ],
     shortcut: '/favicon.ico',
-    apple: '/mfct-logo.jpeg',
+    apple: '/apple-icon.png',
   },
 
   // Verification — add actual codes from Google Search Console, Bing, etc.
@@ -123,7 +124,7 @@ const organizationSchema = {
   name: 'Mohammad Faeem Charitable Trust',
   alternateName: ['MFCT', 'मोहम्मद फ़ईम चैरिटेबल ट्रस्ट'],
   url: BASE_URL,
-  logo: `${BASE_URL}/mfct-logo.jpeg`,
+  logo: `${BASE_URL}/mfct-logo.png`,
   image: `${BASE_URL}/og-image.jpg`,
   description:
     'A transparent, grassroots welfare network providing medical aid, Nikah support, education, and Janazah services to poor families across Uttar Pradesh, India.',

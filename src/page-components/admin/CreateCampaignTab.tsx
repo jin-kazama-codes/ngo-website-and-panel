@@ -218,8 +218,8 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
           {initialCampaign ? tr('अभियान संपादित करें', 'مہم میں ترمیم کریں', 'Edit Campaign') : tr('सत्यापित समुदाय अभियान बनाएं', 'تصدیق شدہ کمیونٹی مہم बनाएं', 'Create Verified Community Campaign')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {initialCampaign 
-            ? tr('अभियान का विवरण और लाभार्थी की जानकारी अपडेट करें।', 'مہم کی تفصیلات اور مستحق کی معلومات اپ ڈیٹ کریں۔', 'Update campaign details and beneficiary information.') 
+          {initialCampaign
+            ? tr('अभियान का विवरण और लाभार्थी की जानकारी अपडेट करें।', 'مہم کی تفصیلات اور مستحق کی معلومات اپ ڈیٹ کریں۔', 'Update campaign details and beneficiary information.')
             : tr('स्थानीय सदस्यों की सहायता के लिए अभियान विवरण दर्ज करें। लाभार्थी के दस्तावेज़ आवश्यक हैं।', 'مقامی اراکین کی مدد کے لیے مہم کی تفصیلات درج کریں۔ مستحق کے دستاویزات درکار ہیں۔', 'Submit cause details for local member support. Requires verified beneficiary documents.')}
         </p>
       </div>
@@ -418,8 +418,8 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
             />
             <Upload className="w-6 h-6 mx-auto mb-2 text-slate-500" />
             <span className="text-sm font-bold">
-              {imageFiles.length > 0 
-                ? tr(`✓ ${imageFiles.length} छवि चुनी गई`, `✓ ${imageFiles.length} تصاویر منتخب کی گئیں`, `✓ ${imageFiles.length} image(s) selected`) 
+              {imageFiles.length > 0
+                ? tr(`✓ ${imageFiles.length} छवि चुनी गई`, `✓ ${imageFiles.length} تصاویر منتخب کی گئیں`, `✓ ${imageFiles.length} image(s) selected`)
                 : tr('मुख्य अभियान की तस्वीर अपलोड करने के लिए क्लिक करें', 'مرکزی تصویر اپلوڈ کرنے کے لیے کلک کریں', 'Click to upload main campaign image(s)')}
             </span>
           </label>
@@ -451,9 +451,9 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
             <Upload className="w-6 h-6 mx-auto mb-2 text-slate-500" />
             <span className="text-sm font-bold">
               {docUploaded
-                ? (docFiles.length > 0 
-                    ? tr(`✓ ${docFiles.length} दस्तावेज़ संलग्न किए गए`, `✓ ${docFiles.length} دستاویزات منسلک ہو گئے`, `✓ ${docFiles.length} file(s) attached`) 
-                    : tr('✓ दस्तावेज़ संलग्न किए गए', '✓ دستاویزات منسلک ہو گئے', '✓ Documents attached'))
+                ? (docFiles.length > 0
+                  ? tr(`✓ ${docFiles.length} दस्तावेज़ संलग्न किए गए`, `✓ ${docFiles.length} دستاویزات منسلک ہو گئے`, `✓ ${docFiles.length} file(s) attached`)
+                  : tr('✓ दस्तावेज़ संलग्न किए गए', '✓ دستاویزات منسلک ہو گئے', '✓ Documents attached'))
                 : tr('अस्पताल का एस्टीमेट या आधार जोड़ें (अधिकतम 1MB)', 'ہسپتال کا تخمینہ یا آدھار منسلک کریں (زیادہ سے زیادہ 1MB)', 'Click to attach hospital estimate / Aadhaar (Max 1MB)')}
             </span>
           </label>
@@ -472,11 +472,11 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
             disabled={submitting}
             className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-base transition-colors shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none cursor-pointer"
           >
-            {submitting 
-              ? tr('सुरक्षित किया जा रहा है...', 'محفوظ ہو رہا ہے...', 'Saving Campaign...') 
-              : initialCampaign 
-              ? tr('अभियान अपडेट करें', 'مہم اپ ڈیٹ کریں', 'Update Campaign') 
-              : tr('सत्यापन हेतु जमा करें', 'تصدیق کے لیے جمع کریں', 'Submit Verified Campaign')}
+            {submitting
+              ? tr('सुरक्षित किया जा रहा है...', 'محفوظ ہو رہا ہے...', 'Saving Campaign...')
+              : initialCampaign
+                ? tr('अभियान अपडेट करें', 'مہم اپ ڈیٹ کریں', 'Update Campaign')
+                : tr('सत्यापन हेतु जमा करें', 'تصدیق کے لیے جمع کریں', 'Submit Verified Campaign')}
           </button>
         </div>
       </form>

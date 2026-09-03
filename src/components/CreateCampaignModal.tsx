@@ -204,8 +204,8 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
             {initialCampaign ? tr('अभियान संपादित करें', 'مہم میں ترمیم کریں', 'Edit Campaign') : tr('सत्यापित समुदाय अभियान बनाएं', 'تصدیق شدہ کمیونٹی مہم بنائیں', 'Create Verified Community Campaign')}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {initialCampaign 
-              ? tr('अभियान का विवरण और लाभार्थी की जानकारी अपडेट करें।', 'مہم کی تفصیلات और مستحق کی معلومات اپ ڈیٹ کریں۔', 'Update campaign details and beneficiary information.') 
+            {initialCampaign
+              ? tr('अभियान का विवरण और लाभार्थी की जानकारी अपडेट करें।', 'مہم کی تفصیلات और مستحق کی معلومات اپ ڈیٹ کریں۔', 'Update campaign details and beneficiary information.')
               : tr('स्थानीय सदस्यों की सहायता के लिए अभियान विवरण दर्ज करें। लाभार्थी के दस्तावेज़ आवश्यक हैं।', 'مقامی اراکین کی مدد के लिए مہم کی تفصیلات درج کریں۔ مستحق کے دستاویزات درکار ہیں۔', 'Submit cause details for local member support. Requires verified beneficiary documents.')}
           </p>
         </div>
@@ -394,8 +394,8 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
               <input type="file" accept="image/*" className="sr-only" onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} />
               <Upload className="w-4 h-4 mx-auto mb-1 text-slate-500" />
               <span className="text-xs font-bold">
-                {imageFile 
-                  ? `✓ ${imageFile.name}` 
+                {imageFile
+                  ? `✓ ${imageFile.name}`
                   : tr('मुख्य अभियान की तस्वीर अपलोड करने के लिए क्लिक करें', 'مرکزی تصویر اپلوڈ کرنے کے لیے کلک کریں', 'Click to upload main campaign image')}
               </span>
             </label>
@@ -422,8 +422,8 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
               />
               <Upload className="w-4 h-4 mx-auto mb-1 text-slate-500" />
               <span className="text-xs font-bold">
-                {docUploaded 
-                  ? `✓ ${docFile?.name ?? tr('दस्तावेज़ संलग्न किए गए', 'دستاویزات منسلک ہو گئے', 'Document Attached')}` 
+                {docUploaded
+                  ? `✓ ${docFile?.name ?? tr('दस्तावेज़ संलग्न किए गए', 'دستاویزات منسلک ہو گئے', 'Document Attached')}`
                   : tr('अस्पताल का एस्टीमेट या आधार जोड़ें', 'ہسپتال کا تخمینہ یا آدھار منسلک کریں', 'Click to attach hospital estimate / Aadhaar')}
               </span>
             </label>
@@ -442,11 +442,11 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ onClos
               disabled={submitting}
               className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-colors shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              {submitting 
-                ? tr('सुरक्षित किया जा रहा है...', 'محفوظ ہو رہا ہے...', 'Saving Campaign...') 
-                : initialCampaign 
-                ? tr('अभियान अपडेट करें', 'مہم اپ ڈیٹ کریں', 'Update Campaign') 
-                : tr('सत्यापन हेतु जमा करें', 'تصدیق کے لیے جمع کریں', 'Submit for Verification')}
+              {submitting
+                ? tr('सुरक्षित किया जा रहा है...', 'محفوظ ہو رہا ہے...', 'Saving Campaign...')
+                : initialCampaign
+                  ? tr('अभियान अपडेट करें', 'مہم اپ ڈیٹ کریں', 'Update Campaign')
+                  : tr('सत्यापन हेतु जमा करें', 'تصدیق کے لیے جمع کریں', 'Submit for Verification')}
             </button>
           </div>
         </form>
