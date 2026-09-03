@@ -287,7 +287,6 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   const translatedUserCommunity = useDynamicTranslatedText(activeUser?.communityName, language);
 
-
   const categoriesList = [
     { id: 'Medical', label: t('cat.medical', 'Medical Aid'), icon: Activity, count: campaigns.filter(c => c.category === 'Medical').length, desc: t('home.cat_medical_desc', 'Hospital & Surgery') },
     { id: 'Education', label: t('cat.education', 'Education'), icon: BookOpen, count: campaigns.filter(c => c.category === 'Education').length, desc: t('home.cat_education_desc', 'Orphans & Students') },
@@ -315,8 +314,6 @@ export const HomePage: React.FC<HomePageProps> = ({
       a: t('home.faq4_a', 'Absolutely! By using the "Help Outside Community" toggle during donation, you can support verified cases across India.'),
     },
   ];
-
-
 
   return (
     <div className="space-y-16 pb-12 animate-fade-in" style={{ color: 'var(--mfct-text-dark)' }}>
@@ -399,7 +396,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               ))}
             </div>
 
-            {/* CTA Buttons (Exact Original Buttons) */}
+            {/* CTA Buttons */}
             <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-1">
               <button
                 onClick={onOpenRegister}
@@ -429,7 +426,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               )}
             </div>
 
-            {/* Live Stats (3 Original Cards) */}
+            {/* Live Stats */}
             <div className="pt-1.5">
               <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-lg">
                 <div
@@ -485,7 +482,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
         </div>
 
-        {/* ── Right Side Bottom Corner: Compact QR Widget (Click to Enlarge) ── */}
+        {/* Right Side Bottom Corner: Compact QR Widget */}
         <div className="absolute bottom-4 sm:bottom-5 right-4 sm:right-6 lg:right-8 z-30 hidden sm:block">
           <div
             onClick={() => setIsQrModalOpen(true)}
@@ -552,7 +549,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
 
-      {/* ── Enlarged QR Code Modal (Mounted via Portal to sit above all page elements) ── */}
+      {/* Enlarged QR Code Modal */}
       {isQrModalOpen && mounted && typeof document !== 'undefined' && createPortal(
         <div
           className="fixed inset-0 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-fade-in"
@@ -838,7 +835,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
 
-      {/* 2.5 ABOUT MFCT BANNER SECTION (Document 2) */}
+      {/* 2.5 ABOUT MFCT BANNER SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div
           className="rounded-3xl p-6 sm:p-8 lg:p-10 text-white shadow-2xl relative overflow-hidden"
@@ -897,7 +894,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </div>
               </div>
 
-              {/* Description paragraph (Multilingual: Hindi / English / Urdu) */}
+              {/* Description paragraph */}
               <p
                 className="text-xs sm:text-sm leading-relaxed text-white/90 font-normal"
               >
@@ -971,7 +968,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     {language === 'hi'
                       ? 'हमारे बारे में और जानें'
                       : language === 'ur'
-                        ? 'ہمارے بارے میں مزید جانیں'
+                        ? 'ہمارے بارے में مزید جانیں'
                         : 'READ MORE ABOUT US'}
                   </span>
                   <ArrowRight className="w-4 h-4" />
@@ -984,7 +981,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
 
-      {/* 3. OUR PROGRAMS / हमारे प्रमुख कार्यक्रम */}
+      {/* 3. OUR PROGRAMS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="text-center space-y-2 max-w-3xl mx-auto">
           <span
@@ -1094,7 +1091,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     </span>
                   </div>
 
-                  {/* Overlapping Round Badge - 100% Full Unclipped Circle */}
+                  {/* Overlapping Round Badge */}
                   <div
                     className="absolute -bottom-4.5 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full flex items-center justify-center shadow-lg z-20 transition-transform duration-300 group-hover:scale-110"
                     style={{
@@ -1130,7 +1127,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
 
-      {/* YOUR COMMUNITY CAMPAIGNS (LOGGED IN - ONLY SHOWN WHEN USER COMMUNITY HAS AT LEAST 1 CAMPAIGN) */}
+      {/* YOUR COMMUNITY CAMPAIGNS */}
       {isAuthenticated && activeUser && !loading && myCommunityCampaigns.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -1304,9 +1301,8 @@ export const HomePage: React.FC<HomePageProps> = ({
           </p>
         </div>
 
-        {/* Steps Grid with Horizontal Connection Line on Large Screens */}
+        {/* Steps Grid */}
         <div className="relative">
-          {/* Subtle Connecting Line across steps on Desktop */}
           <div
             className="hidden lg:block absolute top-12 left-[12%] right-[12%] h-0.5 border-t-2 border-dashed pointer-events-none z-0"
             style={{ borderColor: 'rgba(200, 168, 75, 0.35)' }}
@@ -1423,8 +1419,6 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
 
-
-
       {/* 9. LIFE IMPACT & MEMBERS JOINED COUNTER */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1438,17 +1432,6 @@ export const HomePage: React.FC<HomePageProps> = ({
               <p className="text-4xl font-extrabold" style={{ color: 'var(--mfct-gold)' }}>{testimonials.length}</p>
               <p className="text-xs mt-1" style={{ color: 'rgba(200,168,75,0.7)' }}>{t('home.impact_counter_desc', 'Lives changed and successful relief stories')}</p>
             </div>
-
-            {/* <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/20 text-xs">
-              <div>
-                <span className="text-emerald-200 text-[10px]">Families Helped</span>
-                <p className="font-bold text-lg">1,420</p>
-              </div>
-              <div>
-                <span className="text-emerald-200 text-[10px]">Avg Giving Streak</span>
-                <p className="font-bold text-lg">12 Months</p>
-              </div>
-            </div> */}
           </div>
 
           <div className="rounded-2xl p-6 flex flex-col justify-between space-y-4" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', boxShadow: 'var(--shadow-card)' }}>
@@ -1464,31 +1447,6 @@ export const HomePage: React.FC<HomePageProps> = ({
               )}
               <p className="text-xs mt-1" style={{ color: 'var(--mfct-text-muted)' }}>{t('home.members_counter_desc', 'Registered volunteers and donor members')}</p>
             </div>
-
-            {/* <div className="space-y-2 text-xs pt-2 border-t border-slate-100">
-              {communities.slice(0, 3).map(c => (
-                <div key={c.id} className="flex justify-between items-center text-slate-600">
-                  <span>{c.city} Chapter</span>
-                  <span className="font-bold text-slate-900">{c.totalMembers.toLocaleString('en-IN')} members</span>
-                </div>
-              ))}
-              {communities.length === 0 && (
-                <>
-                  <div className="flex justify-between items-center text-slate-600">
-                    <span>Delhi Chapter</span>
-                    <span className="font-bold text-slate-900">1,240 members</span>
-                  </div>
-                  <div className="flex justify-between items-center text-slate-600">
-                    <span>Hyderabad Old City</span>
-                    <span className="font-bold text-slate-900">2,150 members</span>
-                  </div>
-                  <div className="flex justify-between items-center text-slate-600">
-                    <span>Mumbai Kurla</span>
-                    <span className="font-bold text-slate-900">1,780 members</span>
-                  </div>
-                </>
-              )}
-            </div> */}
           </div>
 
           {/* Communities Joined Card */}
@@ -1570,9 +1528,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         )}
       </section>
 
-
-
-      {/* 15. FAQ ACCORDION (2-COLUMN CONTACT-STYLE LAYOUT) */}
+      {/* 15. FAQ ACCORDION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="text-center max-w-xl mx-auto space-y-1">
           <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-gold)' }}>{t('home.faq_tag', 'Frequently Asked Questions')}</span>
@@ -1664,7 +1620,6 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
         </div>
       </section>
-
 
       {/* 17. CONTACT SECTION */}
       <section
@@ -2020,7 +1975,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             }}
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-            <span>{t('about.founders_section_title', 'संस्थापकों का संदेश | Founders\u2019 Messages')}</span>
+            <span>{t('about.founders_section_title', 'संस्थापकों का संदेश | Founders’ Messages')}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
             {t('about.founders_section_subtitle', 'Guiding thoughts and resolute principles that form the bedrock of every decision at MFCT')}
@@ -2050,11 +2005,11 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div className="flex items-center gap-2">
                 <span className="text-sm">🔷</span>
                 <span className="tracking-wide uppercase text-[11px]">
-                  {t('about.zahid_role', 'Founder & Chairman — Founder’s Message')}
+                  {t('about.zahid_role')}
                 </span>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] shrink-0">
-                MFCT Founder
+                {t('about.mfct_founder_tag')}
               </span>
             </div>
 
@@ -2083,14 +2038,14 @@ export const HomePage: React.FC<HomePageProps> = ({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                     <div className="absolute bottom-2 left-2 right-2 px-2 py-1 rounded-lg bg-black/55 backdrop-blur-md text-white text-[10px] font-medium flex items-center justify-center gap-1">
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                      <span>Founder & Chairman</span>
+                      <span>{t('about.zahid_role_short', 'Founder & Chairman')}</span>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-1 min-w-0">
                   <h3 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">{t('about.zahid_title', 'Er. Mohammad Zahid')}</h3>
-                  <p className="text-xs sm:text-sm font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>Founder & Chairman, MFCT</p>
-                  <p className="text-[11px] text-slate-500">Mohammad Faeem Charitable Trust</p>
+                  <p className="text-xs sm:text-sm font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>{t('about.zahid_role_title', 'Founder & Chairman, MFCT')}</p>
+                  <p className="text-[11px] text-slate-500">{t('about.trust_name_full', 'Mohammad Faeem Charitable Trust')}</p>
                 </div>
               </div>
 
@@ -2126,7 +2081,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               {/* Sign-off */}
               <div className="pt-4 border-t border-slate-100">
                 <h4 className="text-sm font-extrabold text-slate-900">- {t('about.zahid_title', 'Er. Mohammad Zahid')}</h4>
-                <p className="text-xs text-slate-500 mt-0.5">Founder & Chairman, MFCT</p>
+                <p className="text-xs text-slate-500 mt-0.5">{t('about.zahid_role_title', 'Founder & Chairman, MFCT')}</p>
               </div>
             </div>
           </div>
@@ -2155,7 +2110,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </span>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] shrink-0">
-                MFCT Co-Founder
+                {t('about.mfct_cofounder_tag', 'MFCT Co-Founder')}
               </span>
             </div>
 
@@ -2184,14 +2139,14 @@ export const HomePage: React.FC<HomePageProps> = ({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                     <div className="absolute bottom-2 left-2 right-2 px-2 py-1 rounded-lg bg-black/55 backdrop-blur-md text-white text-[10px] font-medium flex items-center justify-center gap-1">
                       <CheckCircle2 className="w-3 h-3 text-amber-400" />
-                      <span>Co-Founder & Sec–Treasurer</span>
+                      <span>{t('about.amreen_role_short_1')}</span>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-1 min-w-0">
-                  <h3 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">{t('about.amreen_title', 'Mrs. Amreen')}</h3>
-                  <p className="text-xs sm:text-sm font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>Co-Founder & Secretary–Treasurer, MFCT</p>
-                  <p className="text-[11px] text-slate-500">Mohammad Faeem Charitable Trust</p>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">{t('about.amreen_title', 'Mrs. Amreen Idrisi')}</h3>
+                  <p className="text-xs sm:text-sm font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>{t('about.amreen_role_title', 'Co-Founder & Secretary–Treasurer, MFCT')}</p>
+                  <p className="text-[11px] text-slate-500">{t('about.trust_name_full', 'Mohammad Faeem Charitable Trust')}</p>
                 </div>
               </div>
 
@@ -2226,8 +2181,8 @@ export const HomePage: React.FC<HomePageProps> = ({
 
               {/* Sign-off */}
               <div className="pt-4 border-t border-slate-100">
-                <h4 className="text-sm font-extrabold text-slate-900">- {t('about.amreen_title', 'Mrs. Amreen')}</h4>
-                <p className="text-xs text-slate-500 mt-0.5">Co-Founder & Secretary–Treasurer, MFCT</p>
+                <h4 className="text-sm font-extrabold text-slate-900">- {t('about.amreen_title', 'Mrs. Amreen Idrisi')}</h4>
+                <p className="text-xs text-slate-500 mt-0.5">{t('about.amreen_role_title', 'Co-Founder & Secretary–Treasurer, MFCT')}</p>
               </div>
             </div>
           </div>
@@ -2237,4 +2192,3 @@ export const HomePage: React.FC<HomePageProps> = ({
     </div>
   );
 };
-

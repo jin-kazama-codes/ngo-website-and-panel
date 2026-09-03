@@ -96,145 +96,75 @@ export const MyCommunityTab: React.FC<MyCommunityTabProps> = ({ activeUser }) =>
       {/* Info Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {/* Card 1: Admin Name */}
-        <div
-          className="rounded-2xl p-6 flex items-start gap-4 transition-all group"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300"
-            style={{
-              background: 'rgba(200,168,75,0.12)',
-              border: '1px solid rgba(200,168,75,0.25)',
-              color: 'var(--mfct-dark-green)',
-            }}
-          >
-            <UserCircle className="w-6 h-6" style={{ color: 'var(--mfct-dark-green)' }} />
+        <div className="rounded-2xl p-6 flex items-start gap-4 transition-all group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+            <UserCircle className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-text-muted)' }}>
+            <h3 className="text-xs font-bold uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">
               Admin Name
             </h3>
-            <p className="font-bold capitalize text-base" style={{ color: 'var(--mfct-dark-green)' }}>
+            <p className="font-bold capitalize text-base text-slate-900 dark:text-white">
               {community?.adminName}
             </p>
           </div>
         </div>
 
         {/* Card 2: Total Released */}
-        <div
-          className="rounded-2xl p-6 flex items-start gap-4 transition-all group"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300"
-            style={{
-              background: 'rgba(200,168,75,0.12)',
-              border: '1px solid rgba(200,168,75,0.25)',
-              color: 'var(--mfct-dark-green)',
-            }}
-          >
-            <IndianRupee className="w-6 h-6" style={{ color: 'var(--mfct-dark-green)' }} />
+        <div className="rounded-2xl p-6 flex items-start gap-4 transition-all group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+            <IndianRupee className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-text-muted)' }}>
+            <h3 className="text-xs font-bold uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">
               Total Released
             </h3>
-            <p className="font-bold text-base" style={{ color: 'var(--mfct-dark-green)' }}>
+            <p className="font-bold text-base text-emerald-600 dark:text-emerald-400">
               ₹{community?.totalRaisedINR?.toLocaleString()}
             </p>
           </div>
         </div>
 
         {/* Card 3: Health Score */}
-        <div
-          className="rounded-2xl p-6 flex items-start gap-4 transition-all group"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300"
-            style={{
-              background: 'rgba(200,168,75,0.12)',
-              border: '1px solid rgba(200,168,75,0.25)',
-              color: 'var(--mfct-dark-green)',
-            }}
-          >
-            <Heart className="w-6 h-6" style={{ color: 'var(--mfct-dark-green)' }} />
+        <div className="rounded-2xl p-6 flex items-start gap-4 transition-all group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+            <Heart className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-text-muted)' }}>
+            <h3 className="text-xs font-bold uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">
               Health Score
             </h3>
-            <p className="font-bold text-base" style={{ color: 'var(--mfct-dark-green)' }}>
+            <p className="font-bold text-base text-slate-900 dark:text-white">
               {community?.healthScore}%
             </p>
           </div>
         </div>
 
         {/* Card 4: Establish Year */}
-        <div
-          className="rounded-2xl p-6 flex items-start gap-4 transition-all group"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300"
-            style={{
-              background: 'rgba(200,168,75,0.12)',
-              border: '1px solid rgba(200,168,75,0.25)',
-              color: 'var(--mfct-dark-green)',
-            }}
-          >
-            <Calendar className="w-6 h-6" style={{ color: 'var(--mfct-dark-green)' }} />
+        <div className="rounded-2xl p-6 flex items-start gap-4 transition-all group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/20 text-blue-600 dark:text-blue-400">
+            <Calendar className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-text-muted)' }}>
+            <h3 className="text-xs font-bold uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">
               Establish Year
             </h3>
-            <p className="font-bold text-base" style={{ color: 'var(--mfct-dark-green)' }}>
+            <p className="font-bold text-base text-slate-900 dark:text-white">
               {community?.establishedYear}
             </p>
           </div>
         </div>
 
         {/* Card 5: Status */}
-        <div
-          className="rounded-2xl p-6 flex items-start gap-4 transition-all group"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300"
-            style={{
-              background: 'rgba(200,168,75,0.12)',
-              border: '1px solid rgba(200,168,75,0.25)',
-              color: 'var(--mfct-dark-green)',
-            }}
-          >
-            <ShieldCheck className="w-6 h-6" style={{ color: 'var(--mfct-dark-green)' }} />
+        <div className="rounded-2xl p-6 flex items-start gap-4 transition-all group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+            <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-text-muted)' }}>
+            <h3 className="text-xs font-bold uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">
               Status
             </h3>
-            <p className="font-bold text-base" style={{ color: 'var(--mfct-dark-green)' }}>
+            <p className="font-bold text-base text-emerald-600 dark:text-emerald-400">
               {community?.verifiedStatus}
             </p>
           </div>

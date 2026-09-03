@@ -167,90 +167,50 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
       {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Members */}
-        <div
-          className="rounded-2xl p-5 transition-all flex items-center justify-between group"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
+        <div className="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all flex items-center justify-between group overflow-hidden">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-text-muted)' }}>Total Members</p>
-            <h3 className="text-2xl font-black mt-1 mb-1" style={{ color: 'var(--mfct-dark-green)' }}>{community?.totalMembers || 0}</h3>
-            <p className="text-xs font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>Active Registered</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Members</p>
+            <h3 className="text-2xl font-black mt-1 mb-1 text-slate-900 dark:text-white">{community?.totalMembers || 0}</h3>
+            <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Active Registered</p>
           </div>
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"
-            style={{ background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.25)', color: 'var(--mfct-dark-green)' }}
-          >
-            <Users className="w-6 h-6" style={{ color: 'var(--mfct-dark-green)' }} />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+            <Users className="w-6 h-6" />
           </div>
         </div>
 
         {/* Active Campaigns */}
-        <div
-          className="rounded-2xl p-5 transition-all flex items-center justify-between group"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
+        <div className="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all flex items-center justify-between group overflow-hidden">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-text-muted)' }}>Active Causes</p>
-            <h3 className="text-2xl font-black mt-1 mb-1" style={{ color: 'var(--mfct-dark-green)' }}>{community?.activeCampaigns || 0}</h3>
-            <p className="text-xs font-semibold" style={{ color: 'var(--mfct-gold-dark)' }}>Live Campaign Causes</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active Causes</p>
+            <h3 className="text-2xl font-black mt-1 mb-1 text-slate-900 dark:text-white">{community?.activeCampaigns || 0}</h3>
+            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">Live Campaign Causes</p>
           </div>
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"
-            style={{ background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.25)', color: 'var(--mfct-gold-dark)' }}
-          >
-            <Heart className="w-6 h-6" style={{ color: 'var(--mfct-gold-dark)' }} />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+            <Heart className="w-6 h-6" />
           </div>
         </div>
 
         {/* Total Funds Raised */}
-        <div
-          className="rounded-2xl p-5 transition-all flex items-center justify-between group"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
+        <div className="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all flex items-center justify-between group overflow-hidden">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-text-muted)' }}>Total Funds Raised</p>
-            <h3 className="text-2xl font-black mt-1 mb-1" style={{ color: 'var(--mfct-dark-green)' }}>₹{(community?.totalRaisedINR || 0).toLocaleString('en-IN')}</h3>
-            <p className="text-xs font-semibold" style={{ color: 'var(--mfct-mid-green)' }}>Escrow Audited</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Funds Raised</p>
+            <h3 className="text-2xl font-black mt-1 mb-1 text-emerald-600 dark:text-emerald-400">₹{(community?.totalRaisedINR || 0).toLocaleString('en-IN')}</h3>
+            <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Escrow Audited</p>
           </div>
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"
-            style={{ background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.25)', color: 'var(--mfct-dark-green)' }}
-          >
-            <IndianRupee className="w-6 h-6" style={{ color: 'var(--mfct-dark-green)' }} />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+            <IndianRupee className="w-6 h-6" />
           </div>
         </div>
 
         {/* Health Score */}
-        <div
-          className="rounded-2xl p-5 transition-all flex items-center justify-between group"
-          style={{
-            background: 'var(--mfct-white)',
-            border: '1px solid var(--mfct-border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
+        <div className="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all flex items-center justify-between group overflow-hidden">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-text-muted)' }}>Community Health</p>
-            <h3 className="text-2xl font-black mt-1 mb-1" style={{ color: 'var(--mfct-dark-green)' }}>{community?.healthScore || 100}%</h3>
-            <p className="text-xs font-semibold" style={{ color: 'var(--mfct-gold-dark)' }}>Grade A Transparency</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Community Health</p>
+            <h3 className="text-2xl font-black mt-1 mb-1 text-slate-900 dark:text-white">{community?.healthScore || 100}%</h3>
+            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">Grade A Transparency</p>
           </div>
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"
-            style={{ background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.25)', color: 'var(--mfct-dark-green)' }}
-          >
-            <Activity className="w-6 h-6" style={{ color: 'var(--mfct-dark-green)' }} />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+            <Activity className="w-6 h-6" />
           </div>
         </div>
       </div>
