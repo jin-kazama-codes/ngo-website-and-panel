@@ -3,6 +3,9 @@ import { User, Community } from '../../types';
 import { CheckCircle2, PlusCircle, Clock, X } from 'lucide-react';
 import { updateEmergencyAidStatus, submitEmergencyAidRequest, getEmergencyAidRequests } from '../../services/adminService';
 import { getCommunities } from '../../services/communityService';
+import { useLanguage } from '../../context/LanguageContext';
+import { translateCategory } from '../../lib/translateEntity';
+import DynamicText from '../../components/DynamicText';
 
 interface EmergencyAidTabProps {
   activeUser: User;
@@ -10,6 +13,7 @@ interface EmergencyAidTabProps {
 }
 
 export const EmergencyAidTab: React.FC<EmergencyAidTabProps> = ({ activeUser, currentRole }) => {
+  const { language } = useLanguage();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState<string>(activeUser.communityId || '');
@@ -124,7 +128,7 @@ export const EmergencyAidTab: React.FC<EmergencyAidTabProps> = ({ activeUser, cu
                 <div className="flex justify-between items-start">
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
-                      {(req.aid_category || req.aidCategory) as string}
+                      {translateCategory((req.aid_category || req.aidCategory) as string, language)}
                     </span>
                   </div>
                   <span className={`text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 ${req.status === 'pending' ? 'bg-amber-950 text-amber-400 border border-amber-800' :
@@ -137,16 +141,18 @@ export const EmergencyAidTab: React.FC<EmergencyAidTabProps> = ({ activeUser, cu
                   </span>
                 </div>
                 <h4 className="font-bold text-sm text-white mt-1">₹{((req.estimated_amount_inr || req.estimatedAmountINR) as number).toLocaleString('en-IN')}</h4>
-                <p className="text-xs text-slate-400 line-clamp-2">{req.description as string}</p>
+                <p className="text-xs text-slate-400 line-clamp-2">
+                  <DynamicText text={req.description as string} lang={language} />
+                </p>
                 <div className="text-[10px] font-bold text-slate-500 mt-2">
-                  Community: {(req.community_name || req.communityName) as string}
+                  Community: <DynamicText text={(req.community_name || req.communityName) as string} lang={language} />
                 </div>
                 <div className="text-[10px] font-bold text-slate-500">
                   Applied on: {new Date((req.created_at || req.createdAt) as string).toLocaleDateString('en-IN')}
                 </div>
                 {isAdmin && (
                   <div className="text-[10px] font-bold text-slate-500 mt-1">
-                    Member Name: {(req.member_name || req.memberName) as string}
+                    Member Name: <DynamicText text={(req.member_name || req.memberName) as string} lang={language} />
                   </div>
                 )}
                 {isAdmin && req.status === 'pending' && (

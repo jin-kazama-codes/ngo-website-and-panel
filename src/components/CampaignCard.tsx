@@ -5,7 +5,7 @@ import { Campaign } from '../types';
 import { ShieldCheck, Sparkles, Clock, Heart, Users, Building2, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useRouter } from 'next/navigation';
-import { translateCampaign, translateCampaignTitle, translateCampaignStory } from '../lib/translateEntity';
+import { translateCampaign, translateCampaignTitle, translateCampaignStory, translateCategory } from '../lib/translateEntity';
 import { autoTranslateText } from '../lib/autoTranslate';
 
 interface CampaignCardProps {
@@ -53,7 +53,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign: rawCampaig
     Zakat: t('cat.zakat', 'Zakat'),
   };
 
-  const displayCategory = categoryTranslations[rawCampaign.category] || campaign.category;
+  const displayCategory = translateCategory(rawCampaign.category, language) || categoryTranslations[rawCampaign.category] || campaign.category;
 
   return (
     <div

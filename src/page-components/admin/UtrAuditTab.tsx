@@ -6,6 +6,7 @@ import { getDonations, updateDonationStatus } from '../../services/donationServi
 import { CheckCircle, XCircle, Search, FileText, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
+import { translateCategory } from '../../lib/translateEntity';
 
 interface UtrAuditTabProps {
   activeUser?: User;
@@ -27,7 +28,7 @@ const DonationAuditRow: React.FC<{
 
   const displayDonorName = useDynamicTranslatedText(donation.donorName, language);
   const displayCampaign = useDynamicTranslatedText(donation.campaignTitle, language);
-  const displayCategory = useDynamicTranslatedText(donation.category, language);
+  const displayCategory = translateCategory(donation.category, language) || useDynamicTranslatedText(donation.category, language);
 
   return (
     <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">

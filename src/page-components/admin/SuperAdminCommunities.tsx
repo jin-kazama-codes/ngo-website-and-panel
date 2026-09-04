@@ -5,7 +5,8 @@ import { Community } from '../../types';
 import { getCommunities, createCommunity, updateCommunity, deleteCommunity } from '../../services/communityService';
 import { PlusCircle, Edit2, Trash2, X, Building2, CheckCircle2, Camera, Upload, ImageIcon } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { translateCommunityName, translateCity, translateState } from '../../lib/translateEntity';
+import { translateCommunityName, translateCity, translateState, translateAdminName } from '../../lib/translateEntity';
+import DynamicText from '../../components/DynamicText';
 import { uploadImage } from '../../lib/storage';
 
 export const SuperAdminCommunities: React.FC = () => {
@@ -226,13 +227,15 @@ export const SuperAdminCommunities: React.FC = () => {
                   </div>
                   <div className="min-w-0 flex-1">
                     <h4 className="font-bold text-sm text-white line-clamp-1" title={c.name}>
-                      {translateCommunityName(c.name, language)}
+                      <DynamicText text={c.name} lang={language} fallback={translateCommunityName(c.name, language)} />
                     </h4>
-                    <p className="text-xs text-slate-400">{translateCity(c.city, language)}, {translateState(c.state, language)}</p>
+                    <p className="text-xs text-slate-400">
+                      <DynamicText text={c.city} lang={language} fallback={translateCity(c.city, language)} />, <DynamicText text={c.state} lang={language} fallback={translateState(c.state, language)} />
+                    </p>
                   </div>
                 </div>
                 <div className="text-xs text-slate-400 space-y-1">
-                  <p><strong className="text-slate-300">{tr('प्रशासक:', 'ایڈمن:', 'Admin:')}</strong> {c.adminName} ({c.adminRoleTitle})</p>
+                  <p><strong className="text-slate-300">{tr('प्रशासक:', 'ایڈمن:', 'Admin:')}</strong> <DynamicText text={c.adminName} lang={language} fallback={translateAdminName(c.adminName, language)} /> ({c.adminRoleTitle})</p>
                   <p><strong className="text-slate-300">{tr('सदस्य:', 'ممبران:', 'Members:')}</strong> {c.totalMembers.toLocaleString('en-IN')}</p>
                   <p><strong className="text-slate-300">{tr('एकत्रित:', 'جمع شدہ:', 'Raised:')}</strong> ₹{c.totalRaisedINR.toLocaleString('en-IN')}</p>
                   <p><strong className="text-slate-300">{tr('स्थिति:', 'حیثیت:', 'Status:')}</strong> 
