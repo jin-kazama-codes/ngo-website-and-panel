@@ -64,7 +64,31 @@ const ROLE_MAP: Record<string, { hi: string; ur: string }> = {
   'Regular Monthly Donor':     { hi: 'नियमित मासिक दानदाता', ur: 'ماہانہ ڈونر' },
   'Grassroots Field Volunteer':{ hi: 'ज़मीनी स्वयंसेवक',    ur: 'فیلڈ رضاکار' },
   'Community Organiser':       { hi: 'सामुदायिक आयोजक',     ur: 'کمیونٹی آرگنائزر' },
+  'district_president':        { hi: 'जिला अध्यक्ष',        ur: 'ضلعی صدر' },
+  'District President':        { hi: 'जिला अध्यक्ष',        ur: 'ضلعی صدر' },
+  'district_coordinator':      { hi: 'जिला समन्वयक',        ur: 'ضلعی کوآرڈینیٹر' },
+  'District Coordinator':      { hi: 'जिला समन्वयक',        ur: 'ضلعی کوآرڈینیٹر' },
+  'district_gen_secretary':    { hi: 'जिला महासचिव',        ur: 'ضلعی جنرل سیکرٹری' },
+  'District General Secretary':{ hi: 'जिला महासचिव',        ur: 'ضلعی جنرل سیکرٹری' },
+  'district_secretary':        { hi: 'जिला सचिव',          ur: 'ضلعی سیکرٹری' },
+  'District Secretary':        { hi: 'जिला सचिव',          ur: 'ضلعی سیکرٹری' },
+  'district_finance_coord':    { hi: 'जिला वित्त समन्वयक',   ur: 'ضلعی فنانس کوآرڈینیٹر' },
+  'District Finance Coordinator': { hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر' },
 };
+
+export const DISTRICT_ROLE_MAP: Record<string, { en: string; hi: string; ur: string }> = {
+  'district_president':         { en: 'District President', hi: 'जिला अध्यक्ष', ur: 'ضلعی صدر' },
+  'district_coordinator':       { en: 'District Coordinator', hi: 'जिला समन्वयक', ur: 'ضلعی کوآرڈینیٹر' },
+  'district_gen_secretary':     { en: 'District General Secretary', hi: 'जिला महासचिव', ur: 'ضلعی جنرل سیکرٹری' },
+  'district_secretary':         { en: 'District Secretary', hi: 'जिला सचिव', ur: 'ضلعی سیکرٹری' },
+  'district_finance_coord':     { en: 'District Finance Coordinator', hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر' },
+  'District President':         { en: 'District President', hi: 'जिला अध्यक्ष', ur: 'ضلعی صدر' },
+  'District Coordinator':       { en: 'District Coordinator', hi: 'जिला समन्वयक', ur: 'ضلعی کوآرڈینیٹر' },
+  'District General Secretary': { en: 'District General Secretary', hi: 'जिला महासचिव', ur: 'ضلعی جنرل سیکرٹری' },
+  'District Secretary':         { en: 'District Secretary', hi: 'जिला सचिव', ur: 'ضلعی سیکرٹری' },
+  'District Finance Coordinator': { en: 'District Finance Coordinator', hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر' },
+};
+
 
 export function detectScript(text: string): 'hi' | 'ur' | 'en' {
   if (!text) return 'en';
@@ -151,6 +175,12 @@ export function translateHelpType(helpType?: string, lang: Language = 'en'): str
 export function translateRole(role: string, lang: Language): string {
   if (!role) return '';
   return resolveEnumTranslation(role, ROLE_MAP, lang);
+}
+
+/** District Role badge labels — fixed enum, supports bidirectional translation. */
+export function translateDistrictRole(districtRole: string, lang: Language): string {
+  if (!districtRole) return '';
+  return resolveEnumTranslation(districtRole, DISTRICT_ROLE_MAP, lang);
 }
 
 // ─── USER-ENTERED CONTENT ─────────────────────────────────────────────────────

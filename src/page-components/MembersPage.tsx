@@ -23,7 +23,9 @@ import {
   Calendar,
   Mail,
   Shield,
-  Hash
+  Hash,
+  Award,
+  Phone
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -78,7 +80,7 @@ const TRANSLATION_MAP: Record<string, { hi: string; ur: string }> = {
   'lucknow': { hi: 'लखनऊ', ur: 'لکھنؤ' },
   'moradabad': { hi: 'मुरादाबाद', ur: 'مرادآباد' },
   'rampur': { hi: 'रामपुर', ur: 'رام پور' },
-  'pilibhit': { hi: 'पीलीभीत', ur: 'پیلی भीت' },
+  'pilibhit': { hi: 'पीलीभीत', ur: 'پیلی بھیت' },
   'shahjahanpur': { hi: 'शाहजहांपुर', ur: 'شاہجہاں پور' },
   'budaun': { hi: 'बदायूँ', ur: 'بدایوں' },
   'bijnor': { hi: 'बिजनौर', ur: 'بجنور' },
@@ -92,7 +94,16 @@ const TRANSLATION_MAP: Record<string, { hi: string; ur: string }> = {
   'gorakhpur': { hi: 'गोरखपुर', ur: 'گورکھپور' },
 
   // Roles
+  'district president': { hi: 'जिला अध्यक्ष', ur: 'ضلعی صدر' },
+  'district_president': { hi: 'जिला अध्यक्ष', ur: 'ضلعی صدر' },
   'district coordinator': { hi: 'जिला समन्वयक', ur: 'ضلعی کوآرڈینیٹر' },
+  'district_coordinator': { hi: 'जिला समन्वयक', ur: 'ضلعی کوآرڈینیٹر' },
+  'district general secretary': { hi: 'जिला महासचिव', ur: 'ضلعی جنرل سیکرٹری' },
+  'district_gen_secretary': { hi: 'जिला महासचिव', ur: 'ضلعی جنرل سیکرٹری' },
+  'district secretary': { hi: 'जिला सचिव', ur: 'ضلعی سیکرٹری' },
+  'district_secretary': { hi: 'जिला सचिव', ur: 'ضلعی سیکرٹری' },
+  'district finance coordinator': { hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر' },
+  'district_finance_coord': { hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر' },
   'general member': { hi: 'साधारण सदस्य', ur: 'عام ممبر' },
   'member': { hi: 'सदस्य', ur: 'ممبر' },
   'executive admin': { hi: 'कार्यकारी व्यवस्थापक', ur: 'ایگزیکٹو ایڈمن' },
@@ -362,10 +373,18 @@ const MemberTableRow: React.FC<{
 
       {/* 5. Role */}
       <td className="py-3.5 px-3 whitespace-nowrap">
-        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${roleBadgeClass} whitespace-nowrap`}>
-          <Shield className="w-3 h-3" />
-          <span>{roleLabel}</span>
-        </span>
+        <div className="flex flex-col gap-1 items-start">
+          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${roleBadgeClass} whitespace-nowrap`}>
+            <Shield className="w-3 h-3" />
+            <span>{roleLabel}</span>
+          </span>
+          {(member.districtRole || member.district_role) && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-300 whitespace-nowrap shadow-xs">
+              <Award className="w-3 h-3 text-amber-600 shrink-0" />
+              <span>{formatTextByLang((member.districtRole || member.district_role) as string, language)}</span>
+            </span>
+          )}
+        </div>
       </td>
 
       {/* 6. Community ID */}
@@ -681,9 +700,164 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
         </div>
       </section>
 
-      {/* ── 3. Members List Table ── */}
+      {/* ── 3. District Executive Committee Showcase (When District Selected or Available) ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
-        
+        {selectedDistrict && (
+          <div className="bg-gradient-to-br from-[#0a2318] to-[#103825] rounded-3xl p-5 sm:p-7 text-white shadow-xl border border-amber-400/30">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-emerald-700/60">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-400 text-slate-950">
+                    {language === 'hi' ? 'जिला टीम' : language === 'ur' ? 'ضلعی ٹیم' : 'DISTRICT CHAPTER'}
+                  </span>
+                  <span className="text-emerald-300 text-xs font-semibold">MFCT Chapter</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-white mt-1 flex items-center gap-2">
+                  <Award className="w-6 h-6 text-amber-400" />
+                  <span>
+                    {language === 'hi'
+                      ? `${formatTextByLang(selectedDistrict, 'hi')} जिला कार्यकारिणी`
+                      : language === 'ur'
+                      ? `${formatTextByLang(selectedDistrict, 'ur')} ضلعی کمیٹی`
+                      : `${selectedDistrict} District Executive Committee`}
+                  </span>
+                </h3>
+                <p className="text-xs text-emerald-100/80 mt-1 max-w-2xl">
+                  {language === 'hi'
+                    ? 'जिले में ट्रस्ट की समग्र गतिविधियों, विस्तार, संचालन एवं सहायता हेतु अधिकृत पदाधिकारी।'
+                    : language === 'ur'
+                    ? 'ضلع میں ٹرسٹ کی سرگرمیوں، تنظیمی توسیع اور رفاہی کاموں کے لیے نامزد عہدیداران۔'
+                    : 'Authorized office-bearers leading trust operations, relief drives, and community coordination in this district.'}
+                </p>
+              </div>
+            </div>
+
+            {/* 5 District Office-Bearer Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 pt-5">
+              {[
+                {
+                  key: 'district_president',
+                  titleEn: 'District President',
+                  titleHi: 'जिला अध्यक्ष',
+                  titleUr: 'ضلعی صدر',
+                  workEn: 'Leadership and coordination of all MFCT activities in the district.',
+                  workHi: 'जिले में एमएफसीटी की सभी गतिविधियों का नेतृत्व और समन्वय।',
+                  workUr: 'ضلع میں ایم ایف سی ٹی کی تمام سرگرمیوں کی قیادت۔',
+                  badge: 'bg-rose-500/20 text-rose-300 border-rose-400/40',
+                },
+                {
+                  key: 'district_coordinator',
+                  titleEn: 'District Coordinator',
+                  titleHi: 'जिला समन्वयक',
+                  titleUr: 'ضلعی کوآرڈینیٹر',
+                  workEn: 'Daily coordination, membership expansion, team formation, and reporting.',
+                  workHi: 'दैनिक समन्वय, सदस्यता विस्तार, टीम गठन और रिपोर्टिंग।',
+                  workUr: 'روزمرہ رابطہ کاری، رکنیت سازی، اور رپورٹنگ۔',
+                  badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40',
+                },
+                {
+                  key: 'district_gen_secretary',
+                  titleEn: 'District General Secretary',
+                  titleHi: 'जिला महासचिव',
+                  titleUr: 'ضلعی جنرل سیکرٹری',
+                  workEn: 'Organizational expansion and coordination of block / city teams.',
+                  workHi: 'संगठनात्मक विस्तार और ब्लॉक / नगर टीमों का समन्वय।',
+                  workUr: 'تنظیمی توسیع اور بلاک / سٹی ٹیموں کی رابطہ کاری۔',
+                  badge: 'bg-purple-500/20 text-purple-300 border-purple-400/40',
+                },
+                {
+                  key: 'district_secretary',
+                  titleEn: 'District Secretary',
+                  titleHi: 'जिला सचिव',
+                  titleUr: 'ضلعی سیکرٹری',
+                  workEn: 'Correspondence, meeting proceedings, and documentation.',
+                  workHi: 'पत्राचार, बैठकों की कार्यवाही और दस्तावेजीकरण।',
+                  workUr: 'خط و کتابت، میٹنگ کارروائی اور دفتری ریکارڈ۔',
+                  badge: 'bg-blue-500/20 text-blue-300 border-blue-400/40',
+                },
+                {
+                  key: 'district_finance_coord',
+                  titleEn: 'District Finance Coordinator',
+                  titleHi: 'जिला वित्त समन्वयक',
+                  titleUr: 'ضلعی فنانس کوآرڈینیٹر',
+                  workEn: 'Financial records and documentary support for official transactions.',
+                  workHi: 'वित्तीय रिकॉर्ड और आधिकारिक लेन-देन के लिए दस्तावेजी सहयोग।',
+                  workUr: 'مالی ریکارڈ اور سرکاری لین دین کے لیے معاونت۔',
+                  badge: 'bg-amber-500/20 text-amber-300 border-amber-400/40',
+                },
+              ].map((roleSlot) => {
+                const assignedMember = users.find((u) => {
+                  const uDist = (u.district || u.city || '').toLowerCase();
+                  const isDist = uDist === selectedDistrict.toLowerCase() || uDist.includes(selectedDistrict.toLowerCase());
+                  const r = (u.districtRole || u.district_role || '').toLowerCase();
+                  return isDist && (r === roleSlot.key || r === roleSlot.titleEn.toLowerCase());
+                });
+
+                const roleTitle = language === 'hi' ? roleSlot.titleHi : language === 'ur' ? roleSlot.titleUr : roleSlot.titleEn;
+                const roleWork = language === 'hi' ? roleSlot.workHi : language === 'ur' ? roleSlot.workUr : roleSlot.workEn;
+
+                return (
+                  <div
+                    key={roleSlot.key}
+                    className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-all shadow-inner"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-1 mb-2.5">
+                        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${roleSlot.badge}`}>
+                          {roleTitle}
+                        </span>
+                      </div>
+
+                      {assignedMember ? (
+                        <div className="space-y-2 mt-2">
+                          <div className="flex items-center gap-2.5">
+                            {assignedMember.avatar ? (
+                              <img
+                                src={assignedMember.avatar}
+                                alt={assignedMember.name}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-amber-400 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-amber-400 text-slate-950 font-black text-sm flex items-center justify-center shrink-0">
+                                {(assignedMember.name || 'U')[0].toUpperCase()}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <h4 className="text-xs font-bold text-white truncate">
+                                {formatTextByLang(assignedMember.name, language)}
+                              </h4>
+                              <p className="text-[10px] text-emerald-200 font-mono truncate">
+                                ID: {assignedMember.membership_id || assignedMember.membershipId || assignedMember.id?.slice(0, 8)}
+                              </p>
+                            </div>
+                          </div>
+
+                          {assignedMember.phone && (
+                            <div className="flex items-center gap-1 text-[11px] text-emerald-200">
+                              <Phone className="w-3 h-3 text-amber-400 shrink-0" />
+                              <span className="font-mono truncate">{assignedMember.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="py-3 text-center border border-dashed border-white/20 rounded-xl bg-black/10 mt-1">
+                          <span className="text-[11px] text-emerald-200/60 font-medium">
+                            {language === 'hi' ? 'पद रिक्त (Open Post)' : language === 'ur' ? 'عہدہ خالی ہے' : 'Post Open'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <p className="text-[10px] text-emerald-100/70 border-t border-white/10 pt-2.5 mt-3 leading-relaxed">
+                      {roleWork}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
           
           {/* Top Bar inside card */}

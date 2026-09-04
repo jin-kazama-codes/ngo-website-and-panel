@@ -123,6 +123,10 @@ export async function PUT(request: Request) {
     if (updates.avatar && typeof updates.avatar === 'string' && updates.avatar.startsWith('file://')) {
       updates.avatar = null;
     }
+    if (updates.districtRole !== undefined) {
+      updates.district_role = updates.districtRole;
+      delete updates.districtRole;
+    }
     delete updates.is_premium;
     delete updates.isPremium;
     delete updates.join_date;

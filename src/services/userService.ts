@@ -23,8 +23,11 @@ function mapRow(row: Record<string, unknown>): User {
     isPremium: row.is_premium as boolean,
     joinDate: row.join_date as string,
     city: row.city as string,
+    district: (row.district || row.city) as string,
     state: row.state as string,
     address: (row.address || row.adderess || row.full_address) as string | undefined,
+    districtRole: (row.district_role || row.districtRole) as string | undefined,
+    district_role: (row.district_role || row.districtRole) as string | undefined,
     passwordHash: (row.password || row.password_hash || row.passwordHash) as string | undefined,
     aadhaarFrontUrl: (row.aadhaar_front_url || row.aadhaarFrontUrl) as string | undefined,
     aadhaarBackUrl: (row.aadhaar_back_url || row.aadhaarBackUrl) as string | undefined,
@@ -92,6 +95,9 @@ export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaa
     isPremium: user.isPremium,
     joinDate: user.joinDate,
     city: user.city,
+    district: user.district || user.city,
+    district_role: user.districtRole || user.district_role,
+    districtRole: user.districtRole || user.district_role,
     state: user.state,
     address: user.address,
     aadhaarFrontUrl: user.aadhaarFrontUrl,
@@ -174,6 +180,14 @@ export async function updateUser(id: string, patch: Partial<User>): Promise<void
   if (patch.email !== undefined) update.email = patch.email;
   if (patch.phone !== undefined) update.phone = patch.phone;
   if (patch.city !== undefined) update.city = patch.city;
+  if (patch.district !== undefined) update.district = patch.district;
+  if (patch.districtRole !== undefined) {
+    update.district_role = patch.districtRole;
+    update.districtRole = patch.districtRole;
+  } else if (patch.district_role !== undefined) {
+    update.district_role = patch.district_role;
+    update.districtRole = patch.district_role;
+  }
   if (patch.state !== undefined) update.state = patch.state;
   if (patch.aadhaarFrontUrl !== undefined) update.aadhaar_front_url = patch.aadhaarFrontUrl;
   if (patch.aadhaarBackUrl !== undefined) update.aadhaar_back_url = patch.aadhaarBackUrl;

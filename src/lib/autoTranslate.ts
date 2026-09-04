@@ -69,6 +69,18 @@ export const AUTO_TRANSLATE_DICTIONARY: Record<string, { hi: string; ur: string;
   'bareilly central care society': { hi: 'बरेली सेंट्रल केयर सोसाइटी', ur: 'بریلی سنٹرل کیئر سوسائٹی', en: 'Bareilly Central Care Society' },
   'rohilkhand educational & nikah trust': { hi: 'रुहेलखंड एजुकेशनल एवं निकाह ट्रस्ट', ur: 'روہیل کھنڈ ایجوکیشنل اینڈ نکاح ٹرسٹ', en: 'Rohilkhand Educational & Nikah Trust' },
   'maharajganj welfare foundation': { hi: 'महराजगंज वेलफेयर फाउंडेशन', ur: 'مہراج گنج ویلفیئر فاؤنڈیشن', en: 'Maharajganj Welfare Foundation' },
+
+  // District Roles
+  'district president': { hi: 'जिला अध्यक्ष', ur: 'ضلعی صدر', en: 'District President' },
+  'district_president': { hi: 'जिला अध्यक्ष', ur: 'ضلعی صدر', en: 'District President' },
+  'district coordinator': { hi: 'जिला समन्वयक', ur: 'ضلعی کوآرڈینیٹر', en: 'District Coordinator' },
+  'district_coordinator': { hi: 'जिला समन्वयक', ur: 'ضلعی کوآرڈینیٹر', en: 'District Coordinator' },
+  'district general secretary': { hi: 'जिला महासचिव', ur: 'ضلعی جنرل سیکرٹری', en: 'District General Secretary' },
+  'district_gen_secretary': { hi: 'जिला महासचिव', ur: 'ضلعی جنرل سیکرٹری', en: 'District General Secretary' },
+  'district secretary': { hi: 'जिला सचिव', ur: 'ضلعی سیکرٹری', en: 'District Secretary' },
+  'district_secretary': { hi: 'जिला सचिव', ur: 'ضلعی سیکرٹری', en: 'District Secretary' },
+  'district finance coordinator': { hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر', en: 'District Finance Coordinator' },
+  'district_finance_coord': { hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر', en: 'District Finance Coordinator' },
 };
 
 export function lookupDictionary(text: string, targetLang: Language): string | null {
