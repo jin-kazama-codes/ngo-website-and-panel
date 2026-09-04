@@ -5,7 +5,7 @@ import { Campaign } from '../types';
 import { ShieldCheck, Sparkles, Clock, Heart, Users, Building2, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useRouter } from 'next/navigation';
-import { translateCampaign, translateCampaignTitle, translateCampaignStory } from '../lib/translateEntity';
+import { translateCampaign, translateCampaignTitle, translateCampaignStory, translateCategory } from '../lib/translateEntity';
 import { autoTranslateText } from '../lib/autoTranslate';
 
 interface CampaignCardProps {

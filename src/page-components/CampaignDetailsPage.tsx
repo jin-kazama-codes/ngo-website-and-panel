@@ -39,7 +39,7 @@ import {
   translateCommunityName,
   detectScript,
 } from '../lib/translateEntity';
-import { autoTranslateText, autoTranslateStory, useDynamicTranslatedText } from '../lib/autoTranslate';
+import { autoTranslateText, useDynamicTranslatedText } from '../lib/autoTranslate';
 import Link from 'next/link';
 
 const CampaignDonorCard: React.FC<{
@@ -207,7 +207,7 @@ export const CampaignDetailsPage: React.FC = () => {
       autoTranslateText(rawCampaign.title, language).then(setDisplayTitle);
     }
     if (rawCampaign.story) {
-      autoTranslateStory(rawCampaign.story, language).then(setDisplayStory);
+      autoTranslateText(rawCampaign.story, language).then(setDisplayStory);
     }
   }, [rawCampaign, language]);
 
