@@ -77,7 +77,7 @@ const DynamicCommunityCard: React.FC<{
           onClick={onOpenRegister}
           className="mfct-btn-dark w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer"
         >
-          <Users className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('communities.join_btn', 'Join Community (₹50)')}
+          <Users className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('communities.join_btn')}
         </button>
       </div>
     </div>
