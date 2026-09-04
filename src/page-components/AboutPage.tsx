@@ -198,10 +198,10 @@ export const AboutPage: React.FC = () => {
 
               <div className="space-y-1.5 pt-1">
                 <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-                  {t('about.zahid_title', 'Er. Mohammad Zahid')}
+                  {t('about.zahid_title')}
                 </h3>
                 <p className="text-sm font-bold" style={{ color: 'var(--mfct-mid-green)' }}>
-                  {t('about.zahid_role_title', 'Founder & Chairman, MFCT')}
+                  {t('about.zahid_role_title')}
                 </p>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-slate-600 bg-slate-100 font-medium">
                   <Building2 className="w-3.5 h-3.5 text-amber-700" />
@@ -290,7 +290,7 @@ export const AboutPage: React.FC = () => {
               <div className="pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <h4 className="font-black text-base sm:text-lg text-slate-900">
-                    - {t('about.zahid_title', 'Er. Mohammad Zahid')}
+                    - {t('about.zahid_title')}
                   </h4>
                   <p className="text-xs text-slate-500 font-semibold mt-0.5">{t('about.zahid_role_title', 'Founder & Chairman, MFCT')}</p>
                 </div>
