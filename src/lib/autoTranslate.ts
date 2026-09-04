@@ -3,21 +3,112 @@
 import { useState, useEffect } from 'react';
 import { Language } from '../context/LanguageContext';
 
-const TRANSLATION_CACHE_KEY = 'mfct_translation_cache_v1';
+const TRANSLATION_CACHE_KEY = 'mfct_translation_cache_v2';
 
 const inFlightPromises = new Map<string, Promise<string>>();
 let runtimeMemoryCache: Record<string, string> | null = null;
+
+// Universal High-Accuracy Dictionary for Indian States, Common Locations, Honorifics & Names
+export const AUTO_TRANSLATE_DICTIONARY: Record<string, { hi: string; ur: string; en?: string }> = {
+  // Names
+  'mohd nayeem': { hi: 'मोहम्मद नईम', ur: 'محمد نعیم', en: 'Mohd Nayeem' },
+  'mohammad nayeem': { hi: 'मोहम्मद नईम', ur: 'محمد نعیم', en: 'Mohammad Nayeem' },
+  'nayeem': { hi: 'नईम', ur: 'نعیم', en: 'Nayeem' },
+  'gulam raza': { hi: 'गुलाम रज़ा', ur: 'غلام رضا', en: 'Gulam Raza' },
+  'ghulam raza': { hi: 'गुलाम रज़ा', ur: 'غلام رضا', en: 'Ghulam Raza' },
+  'farhan ali siddiqui': { hi: 'फरहान अली सिद्दीकी', ur: 'فرحان علی صدیقی', en: 'Farhan Ali Siddiqui' },
+  'dr. shakeel ahmad usmani': { hi: 'डॉ. शकील अहमद उस्मानी', ur: 'ڈاکٹر شکیل احمد عثمانی', en: 'Dr. Shakeel Ahmad Usmani' },
+  'shakeel ahmad usmani': { hi: 'शकील अहमद उस्मानी', ur: 'شکیل احمد عثمانی', en: 'Shakeel Ahmad Usmani' },
+  'er. mohammad zahid': { hi: 'इंजी. मोहम्मद जाहिद', ur: 'انجینئر محمد زاہد', en: 'Er. Mohammad Zahid' },
+  'er mohammad zahid': { hi: 'इंजी. मोहम्मद जाहिद', ur: 'انجینئر محمد زاہد', en: 'Er. Mohammad Zahid' },
+  'mohammad zahid': { hi: 'मोहम्मद जाहिद', ur: 'محمد زاہد', en: 'Mohammad Zahid' },
+  'mohd arshad': { hi: 'मोहम्मद अरशद', ur: 'محمد ارشد', en: 'Mohd Arshad' },
+  'tariq khan': { hi: 'तारिक खान', ur: 'طارق خان', en: 'Tariq Khan' },
+  'salman khan': { hi: 'सलमान खान', ur: 'سلمان خان', en: 'Salman Khan' },
+  'rehan ali': { hi: 'रेहान अली', ur: 'ریحان علی', en: 'Rehan Ali' },
+  'sohail ahmad': { hi: 'सोहेल अहमद', ur: 'سہیل احمد', en: 'Sohail Ahmad' },
+  'imran khan': { hi: 'इमरान खान', ur: 'عمران خان', en: 'Imran Khan' },
+  'adnan siddiqui': { hi: 'अदनान सिद्दीकी', ur: 'عدنان صدیقی', en: 'Adnan Siddiqui' },
+
+  // States & UTs
+  'uttar pradesh': { hi: 'उत्तर प्रदेश', ur: 'اتر پردیش', en: 'Uttar Pradesh' },
+  'up': { hi: 'उत्तर प्रदेश', ur: 'اتر پردیش', en: 'Uttar Pradesh' },
+  'delhi': { hi: 'दिल्ली', ur: 'دہلی', en: 'Delhi' },
+  'bihar': { hi: 'बिहार', ur: 'بہار', en: 'Bihar' },
+  'uttarakhand': { hi: 'उत्तराखंड', ur: 'اتراکھنڈ', en: 'Uttarakhand' },
+  'madhya pradesh': { hi: 'मध्य प्रदेश', ur: 'مدھیہ پردیش', en: 'Madhya Pradesh' },
+  'mp': { hi: 'मध्य प्रदेश', ur: 'مدھیہ پردیش', en: 'Madhya Pradesh' },
+  'rajasthan': { hi: 'राजस्थान', ur: 'راجستھان', en: 'Rajasthan' },
+  'haryana': { hi: 'हरियाणा', ur: 'ہریانہ', en: 'Haryana' },
+  'punjab': { hi: 'पंजाब', ur: 'پنجاب', en: 'Punjab' },
+  'west bengal': { hi: 'पश्चिम बंगाल', ur: 'مغربی بنگال', en: 'West Bengal' },
+  'maharashtra': { hi: 'महाराष्ट्र', ur: 'مہاراشٹر', en: 'Maharashtra' },
+  'gujarat': { hi: 'गुजरात', ur: 'گجرات', en: 'Gujarat' },
+  'jharkhand': { hi: 'झारखंड', ur: 'جھارکھنڈ', en: 'Jharkhand' },
+
+  // Districts & Cities
+  'bareilly': { hi: 'बरेली', ur: 'بریلی', en: 'Bareilly' },
+  'lucknow': { hi: 'लखनऊ', ur: 'لکھنؤ', en: 'Lucknow' },
+  'moradabad': { hi: 'मुरादाबाद', ur: 'مرادآباد', en: 'Moradabad' },
+  'rampur': { hi: 'रामपुर', ur: 'رام پور', en: 'Rampur' },
+  'pilibhit': { hi: 'पीलीभीत', ur: 'پیلی بھیت', en: 'Pilibhit' },
+  'shahjahanpur': { hi: 'शाहजहांपुर', ur: 'شاہجہاں پور', en: 'Shahjahanpur' },
+  'budaun': { hi: 'बदायूँ', ur: 'بدایوں', en: 'Budaun' },
+  'bijnor': { hi: 'बिजनौर', ur: 'بجنور', en: 'Bijnor' },
+  'sambhal': { hi: 'संभल', ur: 'سنبھل', en: 'Sambhal' },
+  'meerut': { hi: 'मेरठ', ur: 'میرٹھ', en: 'Meerut' },
+  'aligarh': { hi: 'अलीगढ़', ur: 'علی گڑھ', en: 'Aligarh' },
+  'agra': { hi: 'आगरा', ur: 'آگرہ', en: 'Agra' },
+  'varanasi': { hi: 'वाराणसी', ur: 'وارانسی', en: 'Varanasi' },
+  'kanpur': { hi: 'कानपुर', ur: 'کانپور', en: 'Kanpur' },
+  'gorakhpur': { hi: 'गोरखपुर', ur: 'گورکھپور', en: 'Gorakhpur' },
+  'maharajganj': { hi: 'महराजगंज', ur: 'مہراج گنج', en: 'Maharajganj' },
+
+  // Common Communities
+  'bareilly central care society (headquarters)': { hi: 'बरेली सेंट्रल केयर सोसाइटी (मुख्यालय)', ur: 'بریلی سنٹرل کیئر سوسائٹی (ہیڈ کوارٹر)', en: 'Bareilly Central Care Society (Headquarters)' },
+  'bareilly central care society': { hi: 'बरेली सेंट्रल केयर सोसाइटी', ur: 'بریلی سنٹرل کیئر سوسائٹی', en: 'Bareilly Central Care Society' },
+  'rohilkhand educational & nikah trust': { hi: 'रुहेलखंड एजुकेशनल एवं निकाह ट्रस्ट', ur: 'روہیل کھنڈ ایجوکیشنل اینڈ نکاح ٹرسٹ', en: 'Rohilkhand Educational & Nikah Trust' },
+  'maharajganj welfare foundation': { hi: 'महराजगंज वेलफेयर फाउंडेशन', ur: 'مہراج گنج ویلفیئر فاؤنڈیشن', en: 'Maharajganj Welfare Foundation' },
+};
+
+export function lookupDictionary(text: string, targetLang: Language): string | null {
+  if (!text) return null;
+  const trimmed = text.trim().toLowerCase();
+  const entry = AUTO_TRANSLATE_DICTIONARY[trimmed];
+  if (entry) {
+    if (targetLang === 'en') return entry.en || text;
+    if (targetLang === 'hi') return entry.hi;
+    if (targetLang === 'ur') return entry.ur;
+  }
+
+  // Reverse lookup if text is in Hindi or Urdu
+  for (const [enKey, val] of Object.entries(AUTO_TRANSLATE_DICTIONARY)) {
+    if (val.hi.toLowerCase() === trimmed || val.ur.toLowerCase() === trimmed) {
+      if (targetLang === 'en') return val.en || enKey.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      if (targetLang === 'hi') return val.hi;
+      if (targetLang === 'ur') return val.ur;
+    }
+  }
+
+  return null;
+}
+
+export function isValidScript(text: string, targetLang: Language): boolean {
+  if (!text) return false;
+  if (targetLang === 'hi') return /[\u0900-\u097F]/.test(text);
+  if (targetLang === 'ur') return /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
+  if (targetLang === 'en') return /[a-zA-Z]/.test(text);
+  return true;
+}
 
 export function getMemoryCache(): Record<string, string> {
   if (typeof window === 'undefined') return {};
   try {
     const raw = localStorage.getItem(TRANSLATION_CACHE_KEY);
-    // If localStorage was cleared externally, raw is null — reset module cache too
     if (!raw) {
       runtimeMemoryCache = {};
       return {};
     }
-    // If module cache is populated and localStorage still matches, return module cache
     if (runtimeMemoryCache) return runtimeMemoryCache;
     runtimeMemoryCache = JSON.parse(raw);
     return runtimeMemoryCache || {};
@@ -45,24 +136,45 @@ export function setMemoryCache(key: string, value: string) {
   } catch {}
 }
 
+export function detectScript(text: string): 'hi' | 'ur' | 'en' {
+  if (!text) return 'en';
+  if (/[\u0900-\u097F]/.test(text)) return 'hi';
+  if (/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text)) return 'ur';
+  return 'en';
+}
+
 /**
  * Universal dynamic translation function for any text / name / story across Hindi, Urdu, English.
- * Does not require hardcoding. Automatically caches responses in localStorage for instant reload.
+ * Automatically caches responses in localStorage for instant reload.
  */
 export async function autoTranslateText(text: string, targetLang: Language): Promise<string> {
   if (!text || !text.trim()) return text || '';
 
   const trimmed = text.trim();
-  const cacheKey = `${targetLang}:${trimmed}`;
-  const cache = getMemoryCache();
-  if (cache[cacheKey]) {
-    return cache[cacheKey];
+  const sourceLang = detectScript(trimmed);
+
+  // If text is already in the target language script, no translation needed
+  if (sourceLang === targetLang) {
+    return trimmed;
   }
 
   // If already pure ASCII and targeting English, no translation needed
   const isPureAscii = /^[\x00-\x7F]*$/.test(trimmed);
   if (targetLang === 'en' && isPureAscii) {
     return trimmed;
+  }
+
+  // 0. Check built-in high-accuracy dictionary (Instant 0ms)
+  const dictMatch = lookupDictionary(trimmed, targetLang);
+  if (dictMatch) {
+    setMemoryCache(`${targetLang}:${trimmed}`, dictMatch);
+    return dictMatch;
+  }
+
+  const cacheKey = `${targetLang}:${trimmed}`;
+  const cache = getMemoryCache();
+  if (cache[cacheKey] && isValidScript(cache[cacheKey], targetLang)) {
+    return cache[cacheKey];
   }
 
   // Check if an identical request is already in-flight to prevent duplicate network calls
@@ -80,7 +192,7 @@ export async function autoTranslateText(text: string, targetLang: Language): Pro
 
       if (!response.ok) return trimmed;
       const json = await response.json();
-      if (json.success && json.translatedText) {
+      if (json.success && json.translatedText && isValidScript(json.translatedText, targetLang)) {
         setMemoryCache(cacheKey, json.translatedText);
         return json.translatedText;
       }
@@ -102,12 +214,29 @@ export async function autoTranslateText(text: string, targetLang: Language): Pro
  */
 export function useDynamicTranslatedText(rawText: string | undefined, targetLang: Language): string {
   const text = rawText || '';
-  const [translated, setTranslated] = useState<string>(() => {
-    if (!text) return '';
-    if (targetLang === 'en' && /^[\x00-\x7F]*$/.test(text)) return text;
+
+  // Pre-calculate immediate sync value from script match, dictionary, or validated cache
+  const getImmediateValue = (str: string, lang: Language): string => {
+    if (!str) return '';
+    const trimmed = str.trim();
+    if (detectScript(trimmed) === lang) return trimmed;
+    if (lang === 'en' && /^[\x00-\x7F]*$/.test(trimmed)) return trimmed;
+
+    // Fast dictionary match
+    const dict = lookupDictionary(trimmed, lang);
+    if (dict) return dict;
+
+    // Cache check
     const cache = getMemoryCache();
-    return cache[`${targetLang}:${text.trim()}`] || text;
-  });
+    const cached = cache[`${lang}:${trimmed}`];
+    if (cached && isValidScript(cached, lang)) {
+      return cached;
+    }
+
+    return str;
+  };
+
+  const [translated, setTranslated] = useState<string>(() => getImmediateValue(text, targetLang));
 
   useEffect(() => {
     if (!text) {
@@ -115,21 +244,17 @@ export function useDynamicTranslatedText(rawText: string | undefined, targetLang
       return;
     }
 
-    if (targetLang === 'en' && /^[\x00-\x7F]*$/.test(text)) {
-      setTranslated(text);
-      return;
-    }
+    const immediate = getImmediateValue(text, targetLang);
+    setTranslated(immediate);
 
-    const cacheKey = `${targetLang}:${text.trim()}`;
-    const cache = getMemoryCache();
-    if (cache[cacheKey]) {
-      setTranslated(cache[cacheKey]);
-      return;
-    }
+    const trimmed = text.trim();
+    if (detectScript(trimmed) === targetLang) return;
+    if (targetLang === 'en' && /^[\x00-\x7F]*$/.test(trimmed)) return;
+    if (immediate !== text && isValidScript(immediate, targetLang)) return;
 
     let isMounted = true;
     autoTranslateText(text, targetLang).then((result) => {
-      if (isMounted && result) {
+      if (isMounted && result && isValidScript(result, targetLang)) {
         setTranslated(result);
       }
     });
@@ -167,8 +292,7 @@ export async function autoTranslateCampaign(
 }
 
 /**
- * Complete multi-language campaign translation powered by Groq AI.
- * Translates Title, Beneficiary Name, Beneficiary Relation, and Case Story into Hindi, Urdu, and English.
+ * Complete multi-language campaign translation powered by Groq AI & translation cascade.
  */
 export async function autoTranslateFullCampaign(
   title?: string,
@@ -199,28 +323,6 @@ export async function autoTranslateFullCampaign(
     autoTranslateText(story || '', 'ur'),
     autoTranslateText(story || '', 'en'),
   ]);
-
-  // Pre-seed local cache
-  if (title) {
-    if (title_hi) setMemoryCache(`hi:${title.trim()}`, title_hi);
-    if (title_ur) setMemoryCache(`ur:${title.trim()}`, title_ur);
-    if (title_en) setMemoryCache(`en:${title.trim()}`, title_en);
-  }
-  if (story) {
-    if (story_hi) setMemoryCache(`hi:${story.trim()}`, story_hi);
-    if (story_ur) setMemoryCache(`ur:${story.trim()}`, story_ur);
-    if (story_en) setMemoryCache(`en:${story.trim()}`, story_en);
-  }
-  if (beneficiaryName) {
-    if (bName_hi) setMemoryCache(`hi:${beneficiaryName.trim()}`, bName_hi);
-    if (bName_ur) setMemoryCache(`ur:${beneficiaryName.trim()}`, bName_ur);
-    if (bName_en) setMemoryCache(`en:${beneficiaryName.trim()}`, bName_en);
-  }
-  if (beneficiaryRelation) {
-    if (bRel_hi) setMemoryCache(`hi:${beneficiaryRelation.trim()}`, bRel_hi);
-    if (bRel_ur) setMemoryCache(`ur:${beneficiaryRelation.trim()}`, bRel_ur);
-    if (bRel_en) setMemoryCache(`en:${beneficiaryRelation.trim()}`, bRel_en);
-  }
 
   return {
     hi: {
@@ -276,17 +378,6 @@ export async function autoTranslateCommunityData(
     autoTranslateText(state || '', 'ur'),
     autoTranslateText(state || '', 'en'),
   ]);
-
-  if (name) {
-    if (name_hi) setMemoryCache(`hi:${name.trim()}`, name_hi);
-    if (name_ur) setMemoryCache(`ur:${name.trim()}`, name_ur);
-    if (name_en) setMemoryCache(`en:${name.trim()}`, name_en);
-  }
-  if (description) {
-    if (desc_hi) setMemoryCache(`hi:${description.trim()}`, desc_hi);
-    if (desc_ur) setMemoryCache(`ur:${description.trim()}`, desc_ur);
-    if (desc_en) setMemoryCache(`en:${description.trim()}`, desc_en);
-  }
 
   return {
     hi: {

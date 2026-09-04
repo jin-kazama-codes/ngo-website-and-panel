@@ -66,6 +66,40 @@ const ROLE_MAP: Record<string, { hi: string; ur: string }> = {
   'Community Organiser':       { hi: 'सामुदायिक आयोजक',     ur: 'کمیونٹی آرگنائزر' },
 };
 
+export function detectScript(text: string): 'hi' | 'ur' | 'en' {
+  if (!text) return 'en';
+  if (/[\u0900-\u097F]/.test(text)) return 'hi';
+  if (/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text)) return 'ur';
+  return 'en';
+}
+
+function resolveEnumTranslation(
+  val: string,
+  map: Record<string, { hi: string; ur: string; en?: string }>,
+  targetLang: Language
+): string {
+  if (!val) return '';
+  const trimmed = val.trim();
+  // 1. Direct key match (e.g. key is 'Medical')
+  if (map[trimmed]) {
+    if (targetLang === 'en') return map[trimmed].en || trimmed;
+    return map[trimmed][targetLang] || trimmed;
+  }
+  // 2. Reverse lookup across entries (e.g. val is 'चिकित्सा सहायता' or 'طبی امداد')
+  for (const [key, item] of Object.entries(map)) {
+    if (
+      key.toLowerCase() === trimmed.toLowerCase() ||
+      item.hi === trimmed ||
+      item.ur === trimmed ||
+      (item.en && item.en.toLowerCase() === trimmed.toLowerCase())
+    ) {
+      if (targetLang === 'en') return item.en || key;
+      return item[targetLang] || (item.en || key);
+    }
+  }
+  return trimmed;
+}
+
 // ─── CACHE HELPERS ────────────────────────────────────────────────────────────
 
 /**
@@ -73,12 +107,18 @@ const ROLE_MAP: Record<string, { hi: string; ur: string }> = {
  * Returns null if not cached or on SSR.
  */
 export function getCachedTranslation(text: string, lang: Language): string | null {
-  if (typeof window === 'undefined' || !text || lang === 'en') return null;
+  if (typeof window === 'undefined' || !text) return null;
+  const trimmed = text.trim();
+  if (detectScript(trimmed) === lang) return trimmed;
   try {
-    const raw = localStorage.getItem('mfct_translation_cache_v1');
+    const raw = localStorage.getItem('mfct_translation_cache_v2') || localStorage.getItem('mfct_translation_cache_v1');
     if (!raw) return null;
     const cache = JSON.parse(raw);
-    return cache[`${lang}:${text.trim()}`] || null;
+    const val = cache[`${lang}:${trimmed}`];
+    if (val && (lang === 'hi' ? /[\u0900-\u097F]/.test(val) : lang === 'ur' ? /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(val) : /[a-zA-Z]/.test(val))) {
+      return val;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -89,94 +129,103 @@ export function getCachedTranslation(text: string, lang: Language): string | nul
 // text as a graceful fallback. Actual translation is triggered by the calling
 // component via `useDynamicTranslatedText(text, language)` from autoTranslate.ts.
 
-/** Category badge labels — fixed enum, always safe to use static map. */
+/** Category badge labels — fixed enum, supports bidirectional translation. */
 export function translateCategory(cat: string, lang: Language): string {
-  if (lang === 'en' || !cat) return cat;
-  return CATEGORY_MAP[cat]?.[lang] || cat;
+  if (!cat) return '';
+  return resolveEnumTranslation(cat, CATEGORY_MAP, lang);
 }
 
-/** Religion badge labels — fixed enum, always safe to use static map. */
+/** Religion badge labels — fixed enum, supports bidirectional translation. */
 export function translateReligion(religion?: string, lang: Language = 'en'): string {
-  if (!religion || lang === 'en') return religion || '';
-  return RELIGION_MAP[religion]?.[lang] || religion;
+  if (!religion) return '';
+  return resolveEnumTranslation(religion, RELIGION_MAP, lang);
 }
 
-/** Help-type badge labels — fixed enum, always safe to use static map. */
+/** Help-type badge labels — fixed enum, supports bidirectional translation. */
 export function translateHelpType(helpType?: string, lang: Language = 'en'): string {
-  if (!helpType || lang === 'en') return helpType || '';
-  return HELP_TYPE_MAP[helpType]?.[lang] || helpType;
+  if (!helpType) return '';
+  return resolveEnumTranslation(helpType, HELP_TYPE_MAP, lang);
 }
 
-/** Role badge labels — fixed enum, always safe to use static map. */
+/** Role badge labels — fixed enum, supports bidirectional translation. */
 export function translateRole(role: string, lang: Language): string {
-  if (lang === 'en' || !role) return role;
-  return ROLE_MAP[role]?.[lang] || role;
+  if (!role) return '';
+  return resolveEnumTranslation(role, ROLE_MAP, lang);
 }
 
 // ─── USER-ENTERED CONTENT ─────────────────────────────────────────────────────
-// The functions below handle arbitrary user-entered text.
-// They return the cached API result if present, otherwise the original text.
-// The actual API call is always handled by `useDynamicTranslatedText()` in the
-// calling component — these are just synchronous cache-read wrappers for contexts
-// where hooks cannot be used.
+// The functions below handle arbitrary user-entered text (saved in English, Hindi, or Urdu).
+// They return the dictionary / cached API result if present, otherwise the original text.
+// The actual API call is handled by `useDynamicTranslatedText()` in the
+// calling component.
 
-/** City / location name — arbitrary user input, routed through API cache. */
+/** City / location name — arbitrary user input, routed through dictionary & API cache. */
 export function translateCity(city: string, lang: Language): string {
-  if (lang === 'en' || !city) return city;
+  if (!city) return '';
+  if (detectScript(city) === lang) return city;
   return getCachedTranslation(city, lang) || city;
 }
 
-/** State / province name — arbitrary user input, routed through API cache. */
+/** State / province name — arbitrary user input, routed through dictionary & API cache. */
 export function translateState(state: string, lang: Language): string {
-  if (lang === 'en' || !state) return state;
+  if (!state) return '';
+  if (detectScript(state) === lang) return state;
   return getCachedTranslation(state, lang) || state;
 }
 
 /** Community name — arbitrary user input, routed through API cache. */
 export function translateCommunityName(name: string, lang: Language): string {
-  if (lang === 'en' || !name) return name;
+  if (!name) return '';
+  if (detectScript(name) === lang) return name;
   return getCachedTranslation(name, lang) || name;
 }
 
 /** Community description — arbitrary user input, routed through API cache. */
 export function translateCommunityDesc(desc: string, lang: Language): string {
-  if (lang === 'en' || !desc) return desc;
+  if (!desc) return '';
+  if (detectScript(desc) === lang) return desc;
   return getCachedTranslation(desc, lang) || desc;
 }
 
 /** Admin / person name — arbitrary user input, routed through API cache. */
 export function translateAdminName(name: string, lang: Language): string {
-  if (lang === 'en' || !name) return name;
+  if (!name) return '';
+  if (detectScript(name) === lang) return name;
   return getCachedTranslation(name, lang) || name;
 }
 
 /** Campaign title — arbitrary user input, routed through API cache. */
 export function translateCampaignTitle(title: string, lang: Language): string {
-  if (lang === 'en' || !title) return title;
+  if (!title) return '';
+  if (detectScript(title) === lang) return title;
   return getCachedTranslation(title, lang) || title;
 }
 
 /** Campaign story / description — arbitrary user input, routed through API cache. */
 export function translateCampaignStory(story: string, lang: Language): string {
-  if (lang === 'en' || !story) return story;
+  if (!story) return '';
+  if (detectScript(story) === lang) return story;
   return getCachedTranslation(story, lang) || story;
 }
 
 /** Donor name — arbitrary user input, routed through API cache. */
 export function translateDonorName(name: string, lang: Language): string {
-  if (lang === 'en' || !name) return name;
+  if (!name) return '';
+  if (detectScript(name) === lang) return name;
   return getCachedTranslation(name, lang) || name;
 }
 
 /** Testimonial quote — arbitrary user input, routed through API cache. */
 export function translateQuote(quote: string, lang: Language): string {
-  if (lang === 'en' || !quote) return quote;
+  if (!quote) return '';
+  if (detectScript(quote) === lang) return quote;
   return getCachedTranslation(quote, lang) || quote;
 }
 
 /** Gallery photo title — arbitrary user input, routed through API cache. */
 export function translateGalleryTitle(title: string, lang: Language): string {
-  if (lang === 'en' || !title) return title;
+  if (!title) return '';
+  if (detectScript(title) === lang) return title;
   return getCachedTranslation(title, lang) || title;
 }
 
@@ -185,18 +234,17 @@ export function translateGalleryTitle(title: string, lang: Language): string {
 // For live translation in UI, use `useDynamicTranslatedText()` per field.
 
 export function translateCampaign(c: Campaign, lang: Language): Campaign {
-  if (lang === 'en') return c;
   return {
     ...c,
     title:         translateCampaignTitle(c.title, lang),
     story:         translateCampaignStory(c.story, lang),
     city:          translateCity(c.city, lang),
     communityName: translateCommunityName(c.communityName, lang),
+    category:      translateCategory(c.category, lang) as any,
   };
 }
 
 export function translateCommunity(c: Community, lang: Language): Community {
-  if (lang === 'en') return c;
   return {
     ...c,
     name:        translateCommunityName(c.name, lang),
@@ -208,7 +256,6 @@ export function translateCommunity(c: Community, lang: Language): Community {
 }
 
 export function translateTestimonial(t: Testimonial, lang: Language): Testimonial {
-  if (lang === 'en') return t;
   return {
     ...t,
     name:  translateDonorName(t.name, lang),
@@ -219,7 +266,6 @@ export function translateTestimonial(t: Testimonial, lang: Language): Testimonia
 }
 
 export function translateGalleryPhoto(p: GalleryPhoto, lang: Language): GalleryPhoto {
-  if (lang === 'en') return p;
   return {
     ...p,
     title: translateGalleryTitle(p.title, lang),
@@ -228,7 +274,6 @@ export function translateGalleryPhoto(p: GalleryPhoto, lang: Language): GalleryP
 }
 
 export function translateCommunityStory(s: CommunityStory, lang: Language): CommunityStory {
-  if (lang === 'en') return s;
   return {
     ...s,
     location: translateCity(s.location, lang),

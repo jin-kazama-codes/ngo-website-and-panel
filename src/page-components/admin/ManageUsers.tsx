@@ -7,7 +7,7 @@ import { getCommunities } from '../../services/communityService';
 import { hashPassword } from '../../lib/auth';
 import { PlusCircle, Edit2, X, Users, CheckCircle2, Search, Upload, Trash2, Mail, Phone, MapPin } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { useDynamicTranslatedText } from '../../lib/autoTranslate';
+import { useDynamicTranslatedText, autoTranslateText } from '../../lib/autoTranslate';
 import { translateReligion, translateHelpType } from '../../lib/translateEntity';
 
 // Interactive Dynamic User Row with real-time language conversion for Desktop Table
@@ -455,6 +455,21 @@ export const ManageUsers: React.FC = () => {
         await createUser(newUser);
         showToast(tr('नया उपयोगकर्ता सुरक्षित हो गया', 'نیا صارف کامیابی سے محفوظ ہو گیا', 'User created successfully'), 'success');
       }
+
+      // Pre-warm translations for name, city, state in Hindi and Urdu
+      if (formData.name) {
+        autoTranslateText(formData.name, 'hi').catch(() => {});
+        autoTranslateText(formData.name, 'ur').catch(() => {});
+      }
+      if (formData.city) {
+        autoTranslateText(formData.city, 'hi').catch(() => {});
+        autoTranslateText(formData.city, 'ur').catch(() => {});
+      }
+      if (formData.state) {
+        autoTranslateText(formData.state, 'hi').catch(() => {});
+        autoTranslateText(formData.state, 'ur').catch(() => {});
+      }
+
       setIsModalOpen(false);
       fetchData();
     } catch (err: any) {

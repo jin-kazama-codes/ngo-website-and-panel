@@ -29,9 +29,15 @@ import { useLanguage } from '../context/LanguageContext';
 
 // Comprehensive Name / Word Translation Map
 const TRANSLATION_MAP: Record<string, { hi: string; ur: string }> = {
+  'mohd nayeem': { hi: 'मोहम्मद नईम', ur: 'محمد نعیم' },
+  'mohammad nayeem': { hi: 'मोहम्मद नईम', ur: 'محمد نعیم' },
+  'nayeem': { hi: 'नईम', ur: 'نعیم' },
+  'er. mohammad zahid': { hi: 'इंजी. मोहम्मद जाहिद', ur: 'انجینئر محمد زاہد' },
+  'er mohammad zahid': { hi: 'इंजी. मोहम्मद जाहिद', ur: 'انجینئر محمد زاہد' },
+  'uttar pradesh': { hi: 'उत्तर प्रदेश', ur: 'اتر پردیش' },
   // Names
-  'gulam raza': { hi: 'गुलाम रज़ा', ur: 'غلام رضا' },
-  'ghulam raza': { hi: 'गुलाम रज़ा', ur: 'غلام رضا' },
+  'gulam raza': { hi: 'गुलाम रज़ा', ur: 'غलाम رضا' },
+  'ghulam raza': { hi: 'गुलाम रज़ा', ur: 'غलाम رضا' },
   'farhan ali siddiqui': { hi: 'फरहान अली सिद्दीकी', ur: 'فرحان علی صدیقی' },
   'dr. shakeel ahmad usmani': { hi: 'डॉ. शकील अहमद उस्मानी', ur: 'ڈاکٹر شکیل احمد عثمانی' },
   'shakeel ahmad usmani': { hi: 'शकील अहमद उस्मानी', ur: 'شکیل احمد عثمانی' },
@@ -99,25 +105,45 @@ const TRANSLATION_MAP: Record<string, { hi: string; ur: string }> = {
 
 import { useDynamicTranslatedText } from '../lib/autoTranslate';
 
-// Transliterate / Translate helper with fallback
+function detectScript(text: string): 'hi' | 'ur' | 'en' {
+  if (/[\u0900-\u097F]/.test(text)) return 'hi';
+  if (/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text)) return 'ur';
+  return 'en';
+}
+
+// Transliterate / Translate helper with bidirectional fallback
 function formatTextByLang(text: string | undefined | null, lang: string): string {
   if (!text) return '—';
-  if (lang === 'en') return text;
+  const trimmed = text.trim();
+  if (detectScript(trimmed) === lang) return trimmed;
 
-  const key = text.trim().toLowerCase();
+  const key = trimmed.toLowerCase();
   if (TRANSLATION_MAP[key]) {
+    if (lang === 'en') {
+      return key.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
     return lang === 'ur' ? TRANSLATION_MAP[key].ur : TRANSLATION_MAP[key].hi;
   }
 
+  // Reverse lookup across entries if input is in Hindi or Urdu
+  for (const [enKey, val] of Object.entries(TRANSLATION_MAP)) {
+    if (val.hi === trimmed || val.ur === trimmed) {
+      if (lang === 'en') {
+        return enKey.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      }
+      return val[lang as 'hi' | 'ur'] || trimmed;
+    }
+  }
+
   // Handle strings with brackets like "Farhan Ali Siddiqui (Executive Admin)"
-  const bracketMatch = text.match(/^(.+?)\s*\((.+?)\)$/);
+  const bracketMatch = trimmed.match(/^(.+?)\s*\((.+?)\)$/);
   if (bracketMatch) {
     const mainPart = formatTextByLang(bracketMatch[1], lang);
     const subPart = formatTextByLang(bracketMatch[2], lang);
     return `${mainPart} (${subPart})`;
   }
 
-  return text;
+  return trimmed;
 }
 
 // UP Districts List
@@ -212,15 +238,21 @@ const MemberTableRow: React.FC<{
   const memId = member.membership_id || member.membershipId || `MFCT-${(member.id || '').slice(-6).toUpperCase()}`;
   const rawName = member.name || 'Member';
   const dynamicName = useDynamicTranslatedText(rawName, language);
-  const displayName = dynamicName || formatTextByLang(rawName, language);
+  const displayName = (language !== 'en' && !/[\u0900-\u097F\u0600-\u06FF]/.test(dynamicName))
+    ? formatTextByLang(rawName, language) || dynamicName
+    : dynamicName;
   const email = member.email || '—';
   const communityId = member.community_id || member.communityId || '—';
   const rawCommName = member.community_name || member.communityName || 'Bareilly Central Care Society (Headquarters)';
   const dynamicCommName = useDynamicTranslatedText(rawCommName, language);
-  const displayCommName = dynamicCommName || formatTextByLang(rawCommName, language);
+  const displayCommName = (language !== 'en' && !/[\u0900-\u097F\u0600-\u06FF]/.test(dynamicCommName))
+    ? formatTextByLang(rawCommName, language) || dynamicCommName
+    : dynamicCommName;
   const rawDistrict = member.city || member.district || 'Bareilly';
   const dynamicDistrict = useDynamicTranslatedText(rawDistrict, language);
-  const displayDistrict = dynamicDistrict || formatTextByLang(rawDistrict, language);
+  const displayDistrict = (language !== 'en' && !/[\u0900-\u097F\u0600-\u06FF]/.test(dynamicDistrict))
+    ? formatTextByLang(rawDistrict, language) || dynamicDistrict
+    : dynamicDistrict;
 
   const roleRaw = (member.role || 'member').toLowerCase();
   const roleLabel =

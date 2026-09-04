@@ -26,6 +26,7 @@ import { getCampaignDonations } from '../../services/donationService';
 
 import { useLanguage } from '../../context/LanguageContext';
 import { translateCampaignTitle, translateCategory } from '../../lib/translateEntity';
+import DynamicText from '../../components/DynamicText';
 
 interface CampaignsTabProps {
   campaignsList: Campaign[];
@@ -408,7 +409,7 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
                   </span>
                 </div>
                 <h4 className="font-bold text-sm text-slate-900 dark:text-white capitalize">
-                  {translateCampaignTitle(c.title, language)}
+                  <DynamicText text={c.title} lang={language} fallback={translateCampaignTitle(c.title, language)} />
                 </h4>
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between text-slate-500 dark:text-slate-400">

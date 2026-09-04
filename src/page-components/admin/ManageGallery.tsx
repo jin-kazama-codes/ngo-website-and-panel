@@ -5,6 +5,8 @@ import { GalleryPhoto, getGalleryPhotos, createGalleryPhoto, updateGalleryPhoto,
 import { PlusCircle, Edit2, Trash2, X, Image as ImageIcon, CheckCircle2, Clock } from 'lucide-react';
 import { User } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
+import { translateCategory, translateCity } from '../../lib/translateEntity';
+import DynamicText from '../../components/DynamicText';
 
 interface ManageGalleryProps {
   activeUser: User;
@@ -217,7 +219,7 @@ export const ManageGallery: React.FC<ManageGalleryProps> = ({ activeUser }) => {
                   referrerPolicy="no-referrer"
                 />
                 <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-white font-bold text-[10px]">
-                  {p.category}
+                  {translateCategory(p.category, language)}
                 </div>
                 {p.status === 'pending' && (
                   <div className="absolute top-2 right-2 px-2.5 py-1 bg-amber-500/90 backdrop-blur-sm rounded text-white font-bold text-[10px] flex items-center gap-1">
@@ -234,8 +236,12 @@ export const ManageGallery: React.FC<ManageGalleryProps> = ({ activeUser }) => {
               </div>
               <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2" title={p.title}>{p.title}</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{p.city}</p>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2" title={p.title}>
+                    <DynamicText text={p.title} lang={language} />
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <DynamicText text={p.city} lang={language} fallback={translateCity(p.city, language)} />
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
                   {p.status === 'pending' && ['community_admin', 'executive_admin', 'super_admin'].includes(normalizedRole) && (

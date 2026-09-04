@@ -53,7 +53,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign: rawCampaig
     Zakat: t('cat.zakat', 'Zakat'),
   };
 
-  const displayCategory = categoryTranslations[rawCampaign.category] || campaign.category;
+  const displayCategory = translateCategory(rawCampaign.category, language) || categoryTranslations[rawCampaign.category] || campaign.category;
 
   return (
     <div

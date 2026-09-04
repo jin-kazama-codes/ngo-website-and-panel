@@ -36,9 +36,10 @@ import {
   translateCampaignTitle,
   translateCampaignStory,
   translateCity,
-  translateCommunityName
+  translateCommunityName,
+  detectScript,
 } from '../lib/translateEntity';
-import { autoTranslateText, useDynamicTranslatedText } from '../lib/autoTranslate';
+import { autoTranslateText, autoTranslateStory, useDynamicTranslatedText } from '../lib/autoTranslate';
 import Link from 'next/link';
 
 const CampaignDonorCard: React.FC<{
@@ -190,8 +191,8 @@ export const CampaignDetailsPage: React.FC = () => {
 
   useEffect(() => {
     if (!rawCampaign) return;
-    const isPureAscii = /^[\x00-\x7F]*$/.test(rawCampaign.title || '');
-    if (language === 'en' && isPureAscii) {
+    const titleScript = detectScript(rawCampaign.title || '');
+    if (language === titleScript) {
       setDisplayTitle(rawCampaign.title);
       setDisplayStory(rawCampaign.story);
       return;
@@ -202,11 +203,11 @@ export const CampaignDetailsPage: React.FC = () => {
     setDisplayTitle(tTitle);
     setDisplayStory(tStory);
 
-    if (tTitle === rawCampaign.title && rawCampaign.title) {
+    if (rawCampaign.title) {
       autoTranslateText(rawCampaign.title, language).then(setDisplayTitle);
     }
-    if (tStory === rawCampaign.story && rawCampaign.story) {
-      autoTranslateText(rawCampaign.story, language).then(setDisplayStory);
+    if (rawCampaign.story) {
+      autoTranslateStory(rawCampaign.story, language).then(setDisplayStory);
     }
   }, [rawCampaign, language]);
 
