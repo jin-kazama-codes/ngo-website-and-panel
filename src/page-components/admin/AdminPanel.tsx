@@ -39,7 +39,9 @@ import {
   MessageSquareQuote,
   Sun,
   Moon,
-  MessageSquare
+  MessageSquare,
+  Calendar,
+  Network,
 
 } from 'lucide-react';
 
@@ -63,6 +65,8 @@ import { UtrAuditTab } from './UtrAuditTab';
 import { FinancialAnalyticsTab } from './FinancialAnalyticsTab';
 import { ContactMessagesTab } from './ContactMessagesTab';
 import { AccountDetailsTab } from './AccountDetailsTab';
+import { MeetingsTab } from './MeetingsTab';
+import { TeamTab } from './TeamTab';
 
 import { getUsers } from '../../services/userService';
 
@@ -208,6 +212,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         { id: 'member', label: `👤 ${t('admin.memberDonor', 'Member / Volunteer')}` }
       ];
     }
+    if (userRole === 'district_president') {
+      return [{ id: 'district_president', label: '🎖️ District President' }];
+    }
+    if (userRole === 'district_coordinator') {
+      return [{ id: 'district_coordinator', label: '🎖️ District Coordinator' }];
+    }
+    if (userRole === 'district_gen_secretary') {
+      return [{ id: 'district_gen_secretary', label: '🎖️ District Gen Sec' }];
+    }
+    if (userRole === 'district_secretary') {
+      return [{ id: 'district_secretary', label: '🎖️ District Secretary' }];
+    }
+    if (userRole === 'district_finance_coord') {
+      return [{ id: 'district_finance_coord', label: '🎖️ District Finance Coord' }];
+    }
     return [{ id: 'member', label: `👤 ${t('admin.memberDonor', 'Member / Volunteer')}` }];
   };
 
@@ -220,49 +239,89 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     community_admin: { label: t('admin.commAdmin', 'Community Admin'), color: 'bg-blue-100 text-blue-800 border-blue-300', icon: <Users className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> },
     executive_admin: { label: t('admin.execAdmin', 'Executive Officer'), color: 'bg-purple-100 text-purple-800 border-purple-300', icon: <UserCheck className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> },
     super_admin: { label: t('admin.superAdmin', 'Super Admin'), color: 'bg-slate-800 text-white border-slate-700', icon: <Shield className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> },
+    district_president: { label: 'District President', color: 'bg-amber-100 text-amber-900 border-amber-300', icon: <Award className="w-3.5 h-3.5 text-amber-600" /> },
+    district_coordinator: { label: 'District Coordinator', color: 'bg-emerald-100 text-emerald-900 border-emerald-300', icon: <Award className="w-3.5 h-3.5 text-emerald-600" /> },
+    district_gen_secretary: { label: 'District General Secretary', color: 'bg-purple-100 text-purple-900 border-purple-300', icon: <Award className="w-3.5 h-3.5 text-purple-600" /> },
+    district_secretary: { label: 'District Secretary', color: 'bg-blue-100 text-blue-900 border-blue-300', icon: <Award className="w-3.5 h-3.5 text-blue-600" /> },
+    district_finance_coord: { label: 'District Finance Coordinator', color: 'bg-orange-100 text-orange-900 border-orange-300', icon: <Award className="w-3.5 h-3.5 text-orange-600" /> },
   };
 
-  const rawRole = (currentRole as string) || 'member';
-  let normalizedRole = rawRole.toLowerCase().trim().replace(' ', '_') as UserRole;
+  const rawRole = ((currentRole as string) || 'member').toLowerCase().trim().replace(/\s+/g, '_');
+  let normalizedRole: UserRole = 'member';
 
   // Extra mapping just in case
-  if (normalizedRole === 'executive_admin' || normalizedRole.includes('executive')) normalizedRole = 'executive_admin';
-  else if (normalizedRole === 'community_admin' || normalizedRole.includes('community')) normalizedRole = 'community_admin';
-  else if (normalizedRole === 'super_admin' || normalizedRole.includes('super')) normalizedRole = 'super_admin';
-  else if (normalizedRole === 'premium_donor' || normalizedRole.includes('premium')) normalizedRole = 'premium_donor';
+  if (rawRole === 'executive_admin' || rawRole.includes('executive')) normalizedRole = 'executive_admin';
+  else if (rawRole === 'community_admin' || rawRole.includes('community')) normalizedRole = 'community_admin';
+  else if (rawRole === 'super_admin' || rawRole.includes('super')) normalizedRole = 'super_admin';
+  else if (rawRole === 'premium_donor' || rawRole.includes('premium')) normalizedRole = 'premium_donor';
+  else if (rawRole === 'district_president' || rawRole.includes('president')) normalizedRole = 'district_president';
+  else if (rawRole === 'district_coordinator' || rawRole.includes('coordinator')) normalizedRole = 'district_coordinator';
+  else if (rawRole === 'district_gen_secretary' || rawRole.includes('gen_sec') || rawRole.includes('general')) normalizedRole = 'district_gen_secretary';
+  else if (rawRole === 'district_secretary' || rawRole.includes('secretary')) normalizedRole = 'district_secretary';
+  else if (rawRole === 'district_finance_coord' || rawRole.includes('finance')) normalizedRole = 'district_finance_coord';
   else normalizedRole = 'member';
+
+  const isSuperOrExecGroup =
+    normalizedRole === 'super_admin' ||
+    normalizedRole === 'executive_admin' ||
+    normalizedRole === 'district_president' ||
+    normalizedRole === 'district_coordinator';
+
+  const isCommunityGroup =
+    normalizedRole === 'community_admin' ||
+    normalizedRole === 'district_gen_secretary' ||
+    normalizedRole === 'district_secretary';
+
+  const isFinanceGroup = normalizedRole === 'district_finance_coord';
+
+  // Automatically switch to financial_analytics if district_finance_coord
+  useEffect(() => {
+    if (isFinanceGroup && activeTab !== 'financial_analytics') {
+      setActiveTab('financial_analytics');
+    }
+  }, [isFinanceGroup, activeTab]);
 
   // Build menu items dynamically based on current selected role
   const getSidebarMenus = () => {
-    const commonMenus = [
+    let commonMenus = [
       { id: 'overview', label: t('admin.tabOverview', 'Dashboard Overview'), icon: LayoutDashboard },
     ];
 
     let roleMenus: { id: string; label: string; icon: any; badge?: string }[] = [];
 
-    if (normalizedRole === 'member') {
+    if (isFinanceGroup) {
+      commonMenus = [];
+      roleMenus = [
+        { id: 'financial_analytics', label: t('admin.tabFinancialAnalytics', 'Financial Analytics'), icon: TrendingUp },
+      ];
+    } else if (normalizedRole === 'member' || normalizedRole === 'premium_donor') {
       roleMenus = [
         { id: 'my_donations', label: t('admin.tabDonations', 'My Donations Receipts'), icon: CreditCard },
         { id: 'community_hub', label: t('admin.tabCommunityHub', 'My Community'), icon: Building2 },
         { id: "community_members", label: t('admin.tabMembers', 'Community Members'), icon: Users },
       ];
-    } else if (normalizedRole === 'community_admin') {
+    } else if (isCommunityGroup) {
       roleMenus = [
         { id: 'financial_analytics', label: t('admin.tabFinancialAnalytics', 'Financial Analytics'), icon: TrendingUp },
         { id: 'kyc_queue', label: t('admin.tabKycQueue', 'KYC Approvals'), icon: UserCheck },
         { id: 'utr_audit', label: t('admin.tabUtrAudit', 'UTR Payment Desk'), icon: ShieldCheck },
         { id: 'campaigns', label: t('admin.tabCampaigns', 'Manage Campaigns'), icon: PlusCircle },
         { id: "community_members", label: t('admin.tabMembers', 'Community Members'), icon: Users },
+        ...(normalizedRole === 'district_secretary' ? [
+          { id: 'meetings_manage', label: t('admin.tabMeetings', 'Meetings & Minutes'), icon: Calendar }
+        ] : []),
+        ...(normalizedRole === 'district_gen_secretary' ? [
+          { id: 'teams_manage', label: t('admin.tabTeams', 'Block & City Teams'), icon: Network }
+        ] : []),
         { id: 'testimonials_manage', label: t('admin.tabTestimonialsManage', 'Impact Stories'), icon: MessageSquareQuote },
         { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
-        { id: 'contact_messages', label: t('admin.tabContactMessages', 'Contact Messages'), icon: MessageSquare },
       ];
-    } else if (normalizedRole === 'executive_admin' || normalizedRole === 'super_admin') {
+    } else if (isSuperOrExecGroup) {
       roleMenus = [
         { id: 'financial_analytics', label: t('admin.tabFinancialAnalytics', 'Financial Analytics'), icon: TrendingUp },
-        { id: 'campaigns', label: t('admin.tabCampaigns', 'Manage Campaigns'), icon: PlusCircle },
         { id: 'kyc_queue', label: t('admin.tabKycQueue', 'KYC Approvals'), icon: UserCheck },
         { id: 'utr_audit', label: t('admin.tabUtrAudit', 'UTR Payment Desk'), icon: ShieldCheck },
+        { id: 'campaigns', label: t('admin.tabCampaigns', 'Manage Campaigns'), icon: PlusCircle },
         { id: 'communities_manage', label: t('admin.tabCommunitiesManage', 'Manage Communities'), icon: Building2 },
         { id: 'users_manage', label: t('admin.tabUsersManage', 'Manage Users'), icon: Users },
         { id: 'testimonials_manage', label: t('admin.tabTestimonialsManage', 'Impact Stories'), icon: MessageSquareQuote },
@@ -302,9 +361,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           style={{ background: 'var(--mfct-dark-green)', color: 'rgba(255,255,255,0.85)', borderRight: '1px solid rgba(200,168,75,0.2)' }}
         >
           {/* Brand & App Title */}
-          <div className={`flex items-center transition-all ${
-            desktopSidebarExpanded ? 'p-4 justify-between' : 'p-3 flex-col gap-2 justify-center'
-          }`} style={{ borderBottom: '1px solid rgba(200,168,75,0.2)', background: 'rgba(0,0,0,0.2)' }}>
+          <div className={`flex items-center transition-all ${desktopSidebarExpanded ? 'p-4 justify-between' : 'p-3 flex-col gap-2 justify-center'
+            }`} style={{ borderBottom: '1px solid rgba(200,168,75,0.2)', background: 'rgba(0,0,0,0.2)' }}>
             <div className="flex items-center gap-3" title="MFCT Portal">
               <img
                 src="/mfct-logo.png"
@@ -377,9 +435,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       key={item.id}
                       onClick={() => selectTab(item.id)}
                       title={item.label}
-                      className={`w-full flex items-center ${
-                        desktopSidebarExpanded ? 'gap-3 px-3 py-2' : 'justify-center p-2.5'
-                      } rounded-xl text-xs font-bold transition-all cursor-pointer`}
+                      className={`w-full flex items-center ${desktopSidebarExpanded ? 'gap-3 px-3 py-2' : 'justify-center p-2.5'
+                        } rounded-xl text-xs font-bold transition-all cursor-pointer`}
                       style={isActive ? {
                         background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)', borderLeft: '3px solid var(--mfct-gold-dark)'
                       } : {
@@ -398,9 +455,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     setMobileNavOpen(false);
                   }}
                   title={t('nav.myCard', 'Digital ID Card')}
-                  className={`w-full flex items-center ${
-                    desktopSidebarExpanded ? 'gap-3 px-3 py-2' : 'justify-center p-2.5'
-                  } rounded-xl text-xs font-bold cursor-pointer transition-all`}
+                  className={`w-full flex items-center ${desktopSidebarExpanded ? 'gap-3 px-3 py-2' : 'justify-center p-2.5'
+                    } rounded-xl text-xs font-bold cursor-pointer transition-all`}
                   style={{ color: 'rgba(255,255,255,0.70)' }}
                 >
                   <QrCode className="w-4 h-4 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
@@ -423,9 +479,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       key={item.id}
                       onClick={() => selectTab(item.id)}
                       title={item.label}
-                      className={`w-full flex items-center ${
-                        desktopSidebarExpanded ? 'justify-between px-3 py-2' : 'justify-center p-2.5'
-                      } rounded-xl text-xs font-bold transition-all cursor-pointer`}
+                      className={`w-full flex items-center ${desktopSidebarExpanded ? 'justify-between px-3 py-2' : 'justify-center p-2.5'
+                        } rounded-xl text-xs font-bold transition-all cursor-pointer`}
                       style={isActive ? {
                         background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)'
                       } : {
@@ -458,9 +513,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 setMobileNavOpen(false);
               }}
               title={t('admin.backToWeb', 'Exit to Public Website')}
-              className={`w-full flex items-center ${
-                desktopSidebarExpanded ? 'justify-center gap-2 py-2 px-3' : 'justify-center p-2.5'
-              } rounded-xl font-bold text-xs transition-all cursor-pointer`}
+              className={`w-full flex items-center ${desktopSidebarExpanded ? 'justify-center gap-2 py-2 px-3' : 'justify-center p-2.5'
+                } rounded-xl font-bold text-xs transition-all cursor-pointer`}
               style={{ background: 'rgba(200,168,75,0.10)', color: 'var(--mfct-gold)', border: '1px solid rgba(200,168,75,0.2)' }}
             >
               <ExternalLink className="w-4 h-4 shrink-0" />
@@ -474,9 +528,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   setMobileNavOpen(false);
                 }}
                 title={t('admin.logoutAccount', 'Logout Account')}
-                className={`w-full flex items-center ${
-                  desktopSidebarExpanded ? 'justify-center gap-2 py-2 px-3' : 'justify-center p-2.5'
-                } rounded-xl font-bold text-xs transition-all cursor-pointer`}
+                className={`w-full flex items-center ${desktopSidebarExpanded ? 'justify-center gap-2 py-2 px-3' : 'justify-center p-2.5'
+                  } rounded-xl font-bold text-xs transition-all cursor-pointer`}
                 style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}
               >
                 <LogOut className="w-4 h-4 shrink-0" />
@@ -487,9 +540,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {/* Current Active User Info */}
             <div
               title={`${activeUser.name} (${activeUser.communityName})`}
-              className={`p-2 rounded-xl flex items-center cursor-default ${
-                desktopSidebarExpanded ? 'gap-2.5' : 'justify-center'
-              }`}
+              className={`p-2 rounded-xl flex items-center cursor-default ${desktopSidebarExpanded ? 'gap-2.5' : 'justify-center'
+                }`}
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(200,168,75,0.15)' }}
             >
               <img src={activeUser.avatar} alt={activeUser.name} className="w-7 h-7 rounded-full object-cover shrink-0" style={{ border: '2px solid var(--mfct-gold)' }} />
@@ -697,7 +749,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {/* 1. OVERVIEW TAB - Renders the selected Role Dashboard */}
             {activeTab === 'overview' && (
               <div>
-                {normalizedRole === 'member' && (
+                {(normalizedRole === 'member' || normalizedRole === 'premium_donor') && (
                   <MemberDashboard
                     user={activeUser}
                     onOpenDonate={() => onOpenDonate()}
@@ -706,7 +758,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   />
                 )}
 
-                {normalizedRole === 'community_admin' && (
+                {isCommunityGroup && (
                   <CommunityAdminDashboard
                     activeUser={activeUser}
                     onOpenCreateCampaign={() => {
@@ -716,7 +768,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     campaignsList={campaignsList.filter(c => c.communityId === activeUser.communityId)}
                   />
                 )}
-                {(normalizedRole === 'executive_admin' || normalizedRole === 'super_admin') &&
+                {isSuperOrExecGroup &&
                   <SuperAdminDashboard
                     activeUser={activeUser}
                   />}
@@ -736,9 +788,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {activeTab === 'campaigns' && (
               <CampaignsTab
                 campaignsList={
-                  (normalizedRole === 'super_admin' || normalizedRole === 'executive_admin')
+                  isSuperOrExecGroup
                     ? campaignsList
-                    : (normalizedRole === 'community_admin')
+                    : isCommunityGroup
                       ? campaignsList.filter(c => c.communityId === activeUser.communityId)
                       : campaignsList.filter(c => c.createdBy === activeUser.id || c.communityId === activeUser.communityId)
                 }
@@ -799,6 +851,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             )}
             {activeTab === 'account_details' && (
               <AccountDetailsTab />
+            )}
+            {activeTab === 'meetings_manage' && (
+              <MeetingsTab activeUser={activeUser} currentRole={normalizedRole} />
+            )}
+            {activeTab === 'teams_manage' && (
+              <TeamTab activeUser={activeUser} currentRole={normalizedRole} />
             )}
           </div>
         </div>

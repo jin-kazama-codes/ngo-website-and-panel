@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Donation, User, UserRole } from '../../types';
 import { getDonations } from '../../services/donationService';
-import { Search, TrendingUp, IndianRupee, Users, FileText } from 'lucide-react';
+import { Search, TrendingUp, IndianRupee, Users, FileText, FileCheck } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
 import { translateCommunityName, translateCategory } from '../../lib/translateEntity';
@@ -161,6 +161,39 @@ export const FinancialAnalyticsTab: React.FC<FinancialAnalyticsTabProps> = ({ ac
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full sm:w-64 pl-9 pr-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-sm"
           />
+        </div>
+      </div>
+
+      {/* District Finance Coordinator / Audit Support Mandate Banner */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-transparent border border-amber-300 dark:border-amber-800/60 p-4 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-start gap-3">
+          <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-xs mt-0.5 shrink-0">
+            <FileCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                {tr('जिला वित्त समन्वयक कार्यक्षेत्र', 'ضلعی فنانس کوآرڈینیٹر ورک اسپیس', 'District Finance Coordinator Desk')}
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                {tr('आधिकारिक दायित्व', 'سرکاری ذمہ داری', 'Official Responsibility')}
+              </span>
+            </div>
+            <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
+              {tr(
+                'आधिकारिक लेन-देन के लिए वित्तीय रिकॉर्ड और दस्तावेजी सहायता।',
+                'سرکاری لین دین کے لیے مالیاتی ریکارڈ اور دستاویزی معاونت۔',
+                'Financial records and documentary support for official transactions.'
+              )}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {tr(
+                'सभी दान पर्चियों, बैंक यूटीआर प्रविष्टियों और बहीखाता विवरणों का आधिकारिक दस्तावेजी सत्यापन।',
+                'تمام عطیات کی رسیدوں، بینک UTR اندراجات اور کھاتہ جاتی تفصیلات کی باضابطہ دستاویزی تصدیق۔',
+                'Official documentary maintenance, transaction receipts audit trail, and banking UTR reconciliation.'
+              )}
+            </p>
+          </div>
         </div>
       </div>
 

@@ -3,9 +3,7 @@ export type UserRole =
   | 'community_admin'
   | 'executive_admin'
   | 'member'
-  | 'premium_donor';
-
-export type DistrictRole =
+  | 'premium_donor'
   | 'district_president'
   | 'district_coordinator'
   | 'district_gen_secretary'
@@ -38,11 +36,11 @@ export interface User {
   phone: string;
   city: string;
   district?: string;
+  districtRole?: string;
+  district_role?: string;
   state: string;
   address?: string;
   role: UserRole;
-  districtRole?: DistrictRole | string;
-  district_role?: DistrictRole | string;
   avatar: string;
   communityId: string;
   communityName: string;

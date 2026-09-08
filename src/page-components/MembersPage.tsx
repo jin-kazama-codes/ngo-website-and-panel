@@ -789,7 +789,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
                 const assignedMember = users.find((u) => {
                   const uDist = (u.district || u.city || '').toLowerCase();
                   const isDist = uDist === selectedDistrict.toLowerCase() || uDist.includes(selectedDistrict.toLowerCase());
-                  const r = (u.districtRole || u.district_role || '').toLowerCase();
+                  const r = (u.districtRole || u.district_role || (u.role as string) || '').toLowerCase();
                   return isDist && (r === roleSlot.key || r === roleSlot.titleEn.toLowerCase());
                 });
 

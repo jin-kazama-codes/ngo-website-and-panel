@@ -89,6 +89,43 @@ export const DISTRICT_ROLE_MAP: Record<string, { en: string; hi: string; ur: str
   'District Finance Coordinator': { en: 'District Finance Coordinator', hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر' },
 };
 
+export const DISTRICT_ROLE_RESPONSIBILITIES: Record<string, { en: string; hi: string; ur: string }> = {
+  district_president: {
+    en: 'Overall district leadership, executive administration, and community outreach representation.',
+    hi: 'समग्र जिला नेतृत्व, कार्यकारी प्रशासन एवं सामुदायिक पहुंच प्रतिनिधित्व।',
+    ur: 'مجموعی ضلعی قیادت، ایگزیکٹو انتظامیہ اور کمیونٹی رسائی کی نمائندگی۔',
+  },
+  district_coordinator: {
+    en: 'Inter-community coordination, program facilitation, and volunteer alignment.',
+    hi: 'अंतर-सामुदायिक समन्वय, कार्यक्रम सुगमीकरण एवं स्वयंसेवक सहयोग।',
+    ur: 'باہمی روابط، پروگرام سہولت کاری اور رضاکارانہ ہم آہنگی۔',
+  },
+  district_gen_secretary: {
+    en: 'District record management, organizational communications, and general secretarial duties.',
+    hi: 'जिला रिकॉर्ड प्रबंधन, संगठनात्मक संचार एवं सामान्य सचिवीय कार्य।',
+    ur: 'ضلعی ریکارڈ مینجمنٹ، تنظیمی مواصلات اور عمومی سیکرٹری فرائض۔',
+  },
+  district_secretary: {
+    en: 'Meeting records, local chapter administration, and executive correspondence.',
+    hi: 'बैठक रिकॉर्ड, स्थानीय शाखा प्रशासन एवं कार्यकारी पत्राचार।',
+    ur: 'میٹنگ ریکارڈ، مقامی برانچ انتظامیہ और ایگزیکٹو خط و کتابت۔',
+  },
+  district_finance_coord: {
+    en: 'Financial records and documentary support for official transactions.',
+    hi: 'आधिकारिक लेन-देन के लिए वित्तीय रिकॉर्ड और दस्तावेजी सहायता।',
+    ur: 'سرکاری لین دین کے لیے مالیاتی ریکارڈ اور دستاویزی معاونت۔',
+  },
+};
+
+export function translateRoleResponsibility(role: string, lang: Language): string {
+  if (!role) return '';
+  const normalized = role.toLowerCase().trim().replace(/\s+/g, '_');
+  const match = DISTRICT_ROLE_RESPONSIBILITIES[normalized];
+  if (!match) return '';
+  return match[lang] || match.en || '';
+}
+
+
 
 export function detectScript(text: string): 'hi' | 'ur' | 'en' {
   if (!text) return 'en';

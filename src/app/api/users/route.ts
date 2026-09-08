@@ -40,6 +40,8 @@ export async function POST(request: Request) {
       membership_id: user.membershipId || `MEM-${Date.now().toString().slice(-4)}`,
       is_verified: user.isVerified ?? false,
       city: user.city || null,
+      district: user.district || user.city || null,
+      district_role: user.districtRole || user.district_role || null,
       state: user.state || null,
       password: user.passwordHash || user.password || null,
       join_date: user.joinDate || user.join_date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
