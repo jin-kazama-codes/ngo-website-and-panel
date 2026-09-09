@@ -14,7 +14,11 @@ export async function GET(request: Request) {
     let query = supabaseAdmin.from('campaigns').select('*');
 
     if (status && status !== 'all') {
-      query = query.eq('status', status);
+      if (status === 'active') {
+        query = query.or('status.eq.active,status.eq.approved,status.eq.pending,status.is.null');
+      } else {
+        query = query.eq('status', status);
+      }
     }
 
     if (category && category !== 'All') {
@@ -61,6 +65,20 @@ export async function GET(request: Request) {
       return timeB - timeA;
     });
 
+    // Compute dynamic days_left from end_date for each campaign
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    results = results.map((camp: any) => {
+      if (camp.end_date) {
+        const end = new Date(camp.end_date);
+        end.setHours(0, 0, 0, 0);
+        const diffMs = end.getTime() - today.getTime();
+        const diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        return { ...camp, days_left: diffDays };
+      }
+      return camp;
+    });
+
     return NextResponse.json({ success: true, data: results });
   } catch (err: any) {
     console.error('Error in GET /api/campaigns:', err);
@@ -71,11 +89,33 @@ export async function GET(request: Request) {
   }
 }
 
+const NUMBER_WORDS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+
+function formatImagesToJsonb(urls: unknown): Record<string, string> {
+  let list: string[] = [];
+  if (Array.isArray(urls)) {
+    list = urls.map(String).map(s => s.trim()).filter(Boolean);
+  } else if (urls && typeof urls === 'object') {
+    list = Object.values(urls as Record<string, unknown>).map(String).map(s => s.trim()).filter(Boolean);
+  } else if (typeof urls === 'string' && urls.trim()) {
+    list = urls.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  const obj: Record<string, string> = {};
+  list.forEach((url, index) => {
+    const key = index < NUMBER_WORDS.length ? `${NUMBER_WORDS[index]}_image` : `image_${index + 1}`;
+    obj[key] = url;
+  });
+  return obj;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
     const nowIso = new Date().toISOString();
+    const rawImages = [body.mainImage, ...(body.galleryImages || [])].filter(Boolean);
+    const mainImageJsonb = formatImagesToJsonb(rawImages.length > 0 ? rawImages : body.main_image);
+
     const newCampaign = {
       id: body.id || `camp_${Date.now()}`,
       title: body.title,
@@ -89,12 +129,17 @@ export async function POST(request: Request) {
       raised_inr: body.raisedINR || body.raised_inr || 0,
       donors_count: body.donorsCount || body.donors_count || 0,
       days_left: body.daysLeft || body.days_left || 30,
+      end_date: (() => {
+        const d = new Date();
+        d.setDate(d.getDate() + (body.daysLeft || body.days_left || 30));
+        return d.toISOString().split('T')[0]; // YYYY-MM-DD
+      })(),
       is_verified: body.isVerified !== undefined ? body.isVerified : true,
       is_zakat_eligible: body.isZakatEligible !== undefined ? body.isZakatEligible : false,
       is_sadqa_eligible: body.isSadqaEligible !== undefined ? body.isSadqaEligible : false,
       is_fitrah_eligible: body.isFitrahEligible !== undefined ? body.isFitrahEligible : false,
       is_urgent: body.isUrgent !== undefined ? body.isUrgent : false,
-      main_image: [body.mainImage, ...(body.galleryImages || [])].filter(Boolean).join(','),
+      main_image: mainImageJsonb,
       story: body.story,
       documents: body.documents || [],
       created_date: body.createdDate || body.created_date || nowIso,
@@ -153,11 +198,20 @@ export async function PATCH(request: Request) {
     if (body.isSadqaEligible !== undefined) updatePayload.is_sadqa_eligible = body.isSadqaEligible;
     if (body.isFitrahEligible !== undefined) updatePayload.is_fitrah_eligible = body.isFitrahEligible;
     if (body.isUrgent !== undefined) updatePayload.is_urgent = body.isUrgent;
-    if (body.mainImage !== undefined || body.galleryImages !== undefined) {
-      updatePayload.main_image = [body.mainImage, ...(body.galleryImages || [])].filter(Boolean).join(',');
+    if (body.mainImage !== undefined || body.galleryImages !== undefined || body.main_image !== undefined) {
+      const rawImages = [body.mainImage, ...(body.galleryImages || [])].filter(Boolean);
+      updatePayload.main_image = formatImagesToJsonb(rawImages.length > 0 ? rawImages : body.main_image);
     }
     if (body.story !== undefined) updatePayload.story = body.story;
     if (body.documents !== undefined) updatePayload.documents = body.documents;
+    if (body.daysLeft !== undefined || body.days_left !== undefined) {
+      const days = body.daysLeft ?? body.days_left;
+      updatePayload.days_left = days;
+      // Recalculate end_date from today
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      updatePayload.end_date = d.toISOString().split('T')[0];
+    }
 
     const { data, error } = await supabaseAdmin
       .from('campaigns')

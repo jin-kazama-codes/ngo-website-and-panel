@@ -3,7 +3,6 @@ export type UserRole =
   | 'community_admin'
   | 'executive_admin'
   | 'member'
-  | 'premium_donor'
   | 'district_president'
   | 'district_coordinator'
   | 'district_gen_secretary'
@@ -46,7 +45,6 @@ export interface User {
   communityName: string;
   membershipId: string;
   isVerified: boolean;
-  isPremium?: boolean;
   joinDate: string;
   passwordHash?: string;
   aadhaarFrontUrl?: string;

@@ -28,6 +28,50 @@ import { useLanguage } from '../../context/LanguageContext';
 import { translateCampaignTitle, translateCategory } from '../../lib/translateEntity';
 import DynamicText from '../../components/DynamicText';
 
+// Inline mini carousel used inside admin campaign cards
+const MiniCarousel: React.FC<{ images: string[]; title: string }> = ({ images, title }) => {
+  const [idx, setIdx] = useState(0);
+  if (!images.length) return null;
+  const go = (n: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIdx((i) => (i + n + images.length) % images.length);
+  };
+  return (
+    <div className="relative w-full h-40 overflow-hidden bg-slate-100 dark:bg-slate-900 group">
+      {images.map((src, i) => (
+        <img
+          key={i}
+          src={src}
+          onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1584515933487-779824d29309?w=800&auto=format&fit=crop&q=60'; }}
+          alt={title}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-400 ${i === idx ? 'opacity-100' : 'opacity-0'}`}
+        />
+      ))}
+      {images.length > 1 && (
+        <>
+          <button type="button" onClick={(e) => go(-1, e)}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <button type="button" onClick={(e) => go(1, e)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-1">
+            {images.map((_, i) => (
+              <button key={i} type="button" onClick={(e) => { e.stopPropagation(); setIdx(i); }}
+                className={`rounded-full transition-all duration-200 cursor-pointer ${i === idx ? 'w-3.5 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'}`} />
+            ))}
+          </div>
+          <div className="absolute bottom-1.5 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded z-10">
+            📷 {idx + 1} / {images.length}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 interface CampaignsTabProps {
   campaignsList: Campaign[];
   onOpenCreateCampaign: (campaign?: Campaign) => void;
@@ -346,16 +390,11 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredCampaigns.map((c) => (
             <div key={c.id} className="p-0 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col shadow-sm">
-              {c.mainImage && (
-                <div className="w-full h-40 overflow-hidden bg-slate-100 dark:bg-slate-900 relative">
-                  <img
-                    src={c.mainImage}
-                    onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1584515933487-779824d29309?w=800&auto=format&fit=crop&q=60' }}
-                    alt={c.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 absolute inset-0"
-                  />
-                </div>
-              )}
+              {/* Mini image carousel for admin card */}
+              <MiniCarousel
+                images={[c.mainImage, ...(c.galleryImages || [])].filter((u): u is string => !!u && typeof u === 'string')}
+                title={c.title}
+              />
               <div className="p-4 space-y-3 flex-1 flex flex-col">
                 <div className="flex items-center justify-between">
                   <div className="flex gap-1.5 items-center flex-wrap">

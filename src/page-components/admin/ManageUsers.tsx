@@ -26,7 +26,7 @@ const UserRow: React.FC<{
 
   const displayName = useDynamicTranslatedText(user.name, language) || user.name;
   const displayCity = useDynamicTranslatedText(user.city, language) || user.city;
-  const displayDistrict = useDynamicTranslatedText(user.district || user.city, language) || user.district || user.city;
+  const displayDistrict = user.district ? (useDynamicTranslatedText(user.district, language) || user.district) : '';
   const displayState = useDynamicTranslatedText(user.state, language) || user.state;
 
   const distRoleKeys = ['district_president', 'district_coordinator', 'district_gen_secretary', 'district_secretary', 'district_finance_coord'];
@@ -40,8 +40,6 @@ const UserRow: React.FC<{
         return tr('कार्यकारी एडमिन', 'ایگزیکٹو ایڈمن', 'EXECUTIVE ADMIN');
       case 'community_admin':
         return tr('सामुदायिक एडमिन', 'کمیونٹی ایڈمن', 'COMMUNITY ADMIN');
-      case 'premium_donor':
-        return tr('प्रीमियम दानदाता', 'پریمیم ڈونر', 'PREMIUM DONOR');
       case 'district_president':
         return tr('जिला अध्यक्ष', 'ضلعی صدر', 'DISTRICT PRESIDENT');
       case 'district_coordinator':
@@ -84,10 +82,6 @@ const UserRow: React.FC<{
         </div>
       </td>
       <td className="px-4 py-3">
-        <p className="text-xs text-slate-700 dark:text-slate-300 font-mono">{user.email || '-'}</p>
-        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{user.phone || '-'}</p>
-      </td>
-      <td className="px-4 py-3">
         <div className="flex flex-col gap-1 items-start">
           <span
             className={`inline-block whitespace-nowrap px-2.5 py-0.5 rounded text-[10px] font-bold ${user.role === 'super_admin'
@@ -105,23 +99,15 @@ const UserRow: React.FC<{
           </span>
         </div>
       </td>
-      {/* District Column */}
-      <td className="px-4 py-3 text-xs font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
-        {user.district || user.city ? (
-          <div className="flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span className="font-bold text-slate-900 dark:text-white">{displayDistrict}</span>
-          </div>
-        ) : (
-          <span className="text-slate-400">-</span>
-        )}
-      </td>
-      {/* District Role Column */}
+      {/* District Role Column (Role + District combined) */}
       <td className="px-4 py-3 whitespace-nowrap">
         {effectiveDistrictRole ? (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 shadow-xs">
-            <Award className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
-            {translateDistrictRole(effectiveDistrictRole, language)}
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 shadow-xs">
+            <Award className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>
+              {translateDistrictRole(effectiveDistrictRole, language)}
+              {displayDistrict ? ` (${displayDistrict})` : ''}
+            </span>
           </span>
         ) : (
           <span className="text-slate-400 text-xs">-</span>
@@ -130,22 +116,6 @@ const UserRow: React.FC<{
       {/* Location Column */}
       <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
         <div>{locationText}</div>
-        {user.religion && (
-          <div className="mt-1">
-            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold ${user.religion === 'Muslim'
-              ? user.isMalikENisab
-                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
-              : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-              }`}>
-              {user.religion === 'Muslim'
-                ? user.isMalikENisab
-                  ? tr('मुस्लिम (साहिब-ए-निसाब)', 'مسلم (صاحبِ نصاب)', 'Muslim (Nisab)')
-                  : `${tr('मुस्लिम', 'مسلم', 'Muslim')} (${translateHelpType(user.helpType, language) || tr('सहायता', 'امداد', 'Aid')})`
-                : translateReligion(user.religion, language)}
-            </span>
-          </div>
-        )}
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-1.5">
@@ -194,7 +164,7 @@ const UserMobileCard: React.FC<{
 
   const displayName = useDynamicTranslatedText(user.name, language) || user.name;
   const displayCity = useDynamicTranslatedText(user.city, language) || user.city;
-  const displayDistrict = useDynamicTranslatedText(user.district || user.city, language) || user.district || user.city;
+  const displayDistrict = user.district ? (useDynamicTranslatedText(user.district, language) || user.district) : '';
   const displayState = useDynamicTranslatedText(user.state, language) || user.state;
 
   const distRoleKeys = ['district_president', 'district_coordinator', 'district_gen_secretary', 'district_secretary', 'district_finance_coord'];
@@ -208,8 +178,6 @@ const UserMobileCard: React.FC<{
         return tr('कार्यकारी एडमिन', 'ایگزیکٹو ایڈمن', 'EXECUTIVE ADMIN');
       case 'community_admin':
         return tr('सामुदायिक एडमिन', 'کمیونٹی ایڈمن', 'COMMUNITY ADMIN');
-      case 'premium_donor':
-        return tr('प्रीमियम दानदाता', 'پریمیم ڈونر', 'PREMIUM DONOR');
       case 'district_president':
         return tr('जिला अध्यक्ष', 'ضلعی صدر', 'DISTRICT PRESIDENT');
       case 'district_coordinator':
@@ -268,21 +236,16 @@ const UserMobileCard: React.FC<{
         </div>
       </div>
 
-      {/* District & District Role Badges */}
-      {(user.district || user.city || effectiveDistrictRole) && (
+      {/* District Role Badge (with district) */}
+      {effectiveDistrictRole && (
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-          {(user.district || user.city) && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold">
-              <MapPin className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-              <span>{tr('जिला:', 'ضلع:', 'District:')} {displayDistrict}</span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 text-[10px] font-extrabold shadow-xs">
+            <Award className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <span>
+              {translateDistrictRole(effectiveDistrictRole, language)}
+              {displayDistrict ? ` (${displayDistrict})` : ''}
             </span>
-          )}
-          {effectiveDistrictRole && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 text-[10px] font-extrabold shadow-xs">
-              <Award className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-              <span>{tr('जिला भूमिका:', 'ضلعی عہدہ:', 'District Role:')} {translateDistrictRole(effectiveDistrictRole, language)}</span>
-            </span>
-          )}
+          </span>
         </div>
       )}
 
@@ -382,7 +345,7 @@ export const ManageUsers: React.FC = () => {
 
   const handleOpenAssignRole = (u: User) => {
     setAssignRoleUser(u);
-    setAssignDistrict(u.district || u.city || '');
+    setAssignDistrict(u.district || '');
     const distRoleKeys = ['district_president', 'district_coordinator', 'district_gen_secretary', 'district_secretary', 'district_finance_coord'];
     const currentDistRole = u.districtRole || u.district_role || '';
     if (currentDistRole && distRoleKeys.includes(currentDistRole)) {
@@ -410,8 +373,8 @@ export const ManageUsers: React.FC = () => {
       });
 
       if (finalDistrict) {
-        autoTranslateText(finalDistrict, 'hi').catch(() => {});
-        autoTranslateText(finalDistrict, 'ur').catch(() => {});
+        autoTranslateText(finalDistrict, 'hi').catch(() => { });
+        autoTranslateText(finalDistrict, 'ur').catch(() => { });
       }
 
       showToast(tr('भूमिका व जिला सफलतापूर्वक सौंपा गया', 'عہدہ اور ضلع کامیابی سے تفویض کیا گیا', 'Role & District assigned successfully!'), 'success');
@@ -453,6 +416,8 @@ export const ManageUsers: React.FC = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [selectedRoleFilter, setSelectedRoleFilter] = useState('all');
   const [selectedDistrictFilter, setSelectedDistrictFilter] = useState('');
+  const [selectedReligionFilter, setSelectedReligionFilter] = useState('all');
+  const [selectedNisabFilter, setSelectedNisabFilter] = useState('all');
 
   useEffect(() => {
     fetchData();
@@ -545,7 +510,7 @@ export const ManageUsers: React.FC = () => {
       const comm = communities.find((c) => c.id === formData.communityId);
       const distRoleKeys = ['district_president', 'district_coordinator', 'district_gen_secretary', 'district_secretary', 'district_finance_coord'];
       const finalDistrictRole = formData.districtRole || (distRoleKeys.includes(formData.role || '') ? formData.role : undefined);
-      const finalDistrict = formData.district?.trim() || formData.city?.trim() || undefined;
+      const finalDistrict = formData.district?.trim() || undefined;
 
       let avatarUrl =
         existingAvatar ||
@@ -595,7 +560,7 @@ export const ManageUsers: React.FC = () => {
           email: formData.email || '',
           phone: formData.phone || '',
           role: (formData.role as UserRole) || 'member',
-          district: finalDistrict || 'Bareilly',
+          district: finalDistrict,
           districtRole: finalDistrictRole,
           district_role: finalDistrictRole,
           avatar: avatarUrl,
@@ -679,6 +644,27 @@ export const ManageUsers: React.FC = () => {
       if (!uDist.includes(selectedDistrictFilter.toLowerCase())) return false;
     }
 
+    // Religion filter
+    if (selectedReligionFilter !== 'all') {
+      const uRel = (u.religion || '').toLowerCase();
+      if (uRel !== selectedReligionFilter.toLowerCase()) return false;
+    }
+
+    // Nisab filter
+    if (selectedNisabFilter !== 'all') {
+      const isNisab = u.isMalikENisab === true || u.is_malik_e_nisab === true;
+      const isNonNisab = u.isMalikENisab === false || u.is_malik_e_nisab === false;
+      const uHelp = (u.helpType || u.help_type || '').toLowerCase();
+
+      if (selectedNisabFilter === 'nisab') {
+        if (!isNisab) return false;
+      } else if (selectedNisabFilter === 'non_nisab') {
+        if (!isNonNisab) return false;
+      } else if (['zakat', 'sadaka', 'fitra', 'other'].includes(selectedNisabFilter.toLowerCase())) {
+        if (uHelp !== selectedNisabFilter.toLowerCase()) return false;
+      }
+    }
+
     const q = searchQuery.toLowerCase().trim();
     if (!q) return true;
     return (
@@ -689,62 +675,110 @@ export const ManageUsers: React.FC = () => {
       (u.city && u.city.toLowerCase().includes(q)) ||
       (u.district && u.district.toLowerCase().includes(q)) ||
       (u.districtRole && u.districtRole.toLowerCase().includes(q)) ||
-      (u.role && u.role.toLowerCase().includes(q))
+      (u.role && u.role.toLowerCase().includes(q)) ||
+      (u.religion && u.religion.toLowerCase().includes(q)) ||
+      (u.helpType && u.helpType.toLowerCase().includes(q))
     );
   });
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 space-y-4 shadow-sm flex flex-col min-h-[500px] transition-colors">
+      {/* Row 1: Manage Users (Left) & Add User Button (Right) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
           <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <Users className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
             <span>{tr('उपयोगकर्ता प्रबंधन', 'صارفین کا انتظام', 'Manage Users')}</span>
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {tr('सभी पंजीकृत उपयोगकर्ताओं को देखें और प्रबंधित करें।', 'تمام رجسٹرڈ صارفین کو دیکھیں اور ان کا انتظام کریں۔', 'View and manage all registered platform users.')}
           </p>
         </div>
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5">
-          {/* Role Filter */}
-          <select
-            value={selectedRoleFilter}
-            onChange={(e) => setSelectedRoleFilter(e.target.value)}
-            className="px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-500 cursor-pointer"
-          >
-            <option value="all">{tr('सभी भूमिकाएं (All Roles)', 'تمام کردار', 'All Roles')}</option>
-            <option value="district_committee">{tr('★ जिला कार्यकारिणी (District Committee)', '★ ضلعی کمیٹی', '★ District Committee')}</option>
-            <option value="district_president">{tr('जिला अध्यक्ष (District President)', 'ضلعی صدر', 'District President')}</option>
-            <option value="district_coordinator">{tr('जिला सहयोजक (District Coordinator)', 'ضلعی کوآرڈینیٹر', 'District Coordinator')}</option>
-            <option value="district_gen_secretary">{tr('जिला महासचिव (District Gen Sec)', 'ضلعی جنرل سیکرٹری', 'District General Secretary')}</option>
-            <option value="district_secretary">{tr('जिला सचिव (District Secretary)', 'ضلعی سیکرٹری', 'District Secretary')}</option>
-            <option value="district_finance_coord">{tr('जिला वित्त समन्वयक (District Finance Coord)', 'ضلعی فنانس کوآرڈینیٹر', 'District Finance Coordinator')}</option>
-            <option value="member">{tr('सदस्य (Member)', 'ممبر', 'Member')}</option>
-            <option value="community_admin">{tr('सामुदायिक एडमिन (Community Admin)', 'کمیونٹی ایڈمن', 'Community Admin')}</option>
-            <option value="executive_admin">{tr('कार्यकारी एडमिन (Executive Admin)', 'ایگزیکٹو ایڈمن', 'Executive Admin')}</option>
-            <option value="super_admin">{tr('सुपर एडमिन (Super Admin)', 'سپر ایڈمن', 'Super Admin')}</option>
-          </select>
 
-          {/* Search Input */}
-          <div className="relative flex-1 sm:flex-initial">
-            <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder={tr('उपयोगकर्ता / जिला खोजें...', 'صارف یا ضلع تلاش کریں...', 'Search user or district...')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-44 lg:w-56 pl-9 pr-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-emerald-500 transition-colors"
-            />
-          </div>
+        <button
+          onClick={handleOpenAdd}
+          className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 flex items-center justify-center gap-1.5 shrink-0 transition-all shadow-sm self-start sm:self-auto"
+        >
+          <PlusCircle className="w-4 h-4" />
+          <span>{tr('+ नया जोड़ें', '+ نیا صارف', '+ Add User')}</span>
+        </button>
+      </div>
 
-          <button
-            onClick={handleOpenAdd}
-            className="cursor-pointer px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 flex items-center justify-center gap-1.5 shrink-0 transition-all shadow-sm"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>{tr('+ नया जोड़ें', '+ نیا صارف', '+ Add User')}</span>
-          </button>
+      {/* Row 2: All Filters & Search */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 pb-1">
+        {/* Role Filter */}
+        <select
+          value={selectedRoleFilter}
+          onChange={(e) => setSelectedRoleFilter(e.target.value)}
+          className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-500 cursor-pointer"
+        >
+          <option value="all">{tr('सभी भूमिकाएं (All Roles)', 'تمام کردار', 'All Roles')}</option>
+          <option value="district_committee">{tr('★ जिला कार्यकारिणी (District Committee)', '★ ضلعی کمیٹی', '★ District Committee')}</option>
+          <option value="district_president">{tr('जिला अध्यक्ष (District President)', 'ضلعی صدر', 'District President')}</option>
+          <option value="district_coordinator">{tr('जिला सहयोजक (District Coordinator)', 'ضلعی کوآرڈینیٹر', 'District Coordinator')}</option>
+          <option value="district_gen_secretary">{tr('जिला महासचिव (District Gen Sec)', 'ضلعی جنرل سیکرٹری', 'District General Secretary')}</option>
+          <option value="district_secretary">{tr('जिला सचिव (District Secretary)', 'ضلعی سیکرٹری', 'District Secretary')}</option>
+          <option value="district_finance_coord">{tr('जिला वित्त समन्वयक (District Finance Coord)', 'ضلعی فنانس کوآرڈینیٹر', 'District Finance Coordinator')}</option>
+          <option value="member">{tr('सदस्य (Member)', 'ممبر', 'Member')}</option>
+          <option value="community_admin">{tr('सामुदायिक एडमिन (Community Admin)', 'کمیونٹی एडمن', 'Community Admin')}</option>
+          <option value="executive_admin">{tr('कार्यकारी एडमिन (Executive Admin)', 'ایگزیکٹو ایڈمن', 'Executive Admin')}</option>
+          <option value="super_admin">{tr('सुपर एडमिन (Super Admin)', 'سپر ایڈمن', 'Super Admin')}</option>
+        </select>
+
+        {/* Religion Filter */}
+        <select
+          value={selectedReligionFilter}
+          onChange={(e) => setSelectedReligionFilter(e.target.value)}
+          className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-500 cursor-pointer"
+        >
+          <option value="all">{tr('सभी धर्म (All Religions)', 'تمام مذاہب', 'All Religions')}</option>
+          <option value="Muslim">{tr('मुस्लिम (Muslim)', 'مسلم', 'Muslim')}</option>
+          <option value="Hindu">{tr('हिंदू (Hindu)', 'ہندو', 'Hindu')}</option>
+          <option value="Sikh">{tr('सिख (Sikh)', 'سکھ', 'Sikh')}</option>
+          <option value="Christian">{tr('ईसाई (Christian)', 'عیسائی', 'Christian')}</option>
+        </select>
+
+        {/* Nisab Filter */}
+        <select
+          value={selectedNisabFilter}
+          onChange={(e) => setSelectedNisabFilter(e.target.value)}
+          className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-500 cursor-pointer"
+        >
+          <option value="all">{tr('सभी निसाब स्थिति (All Nisab)', 'تمام نصاب کی حیثیت', 'All Nisab Status')}</option>
+          <option value="nisab">{tr('★ साहिब-ए-निसब (दाता)', '★ صاحبِ نصاب (ڈونر)', '★ Sahib-e-Nisab (Donor)')}</option>
+          <option value="non_nisab">{tr('गैर-निसबदार (सहायता पात्र)', 'غیر نصاب دار (مستحق)', 'Non-Nisab (Aid Eligible)')}</option>
+          <option value="zakat">{tr('ज़कात पात्र (Zakat)', 'زکوٰۃ مستحق', 'Zakat Eligible')}</option>
+          <option value="sadaka">{tr('सदका पात्र (Sadaka)', 'صدقہ مستحق', 'Sadaka Eligible')}</option>
+          <option value="fitra">{tr('फ़ितरा पात्र (Fitra)', 'فطرہ مستحق', 'Fitra Eligible')}</option>
+        </select>
+
+        {/* Search Input */}
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder={tr('उपयोगकर्ता / जिला खोजें...', 'صارف یا ضلع تلاش کریں...', 'Search user or district...')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-emerald-500 transition-colors"
+          />
         </div>
+
+        {(selectedRoleFilter !== 'all' || selectedReligionFilter !== 'all' || selectedNisabFilter !== 'all' || searchQuery.trim()) && (
+          <button
+            onClick={() => {
+              setSelectedRoleFilter('all');
+              setSelectedReligionFilter('all');
+              setSelectedNisabFilter('all');
+              setSearchQuery('');
+            }}
+            className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+            title={tr('फ़िल्टर हटाएं', 'فلٹرز صاف کریں', 'Clear Filters')}
+          >
+            <X className="w-3.5 h-3.5" />
+            <span>{tr('रीसेट', 'ری سیٹ', 'Reset')}</span>
+          </button>
+        )}
       </div>
 
       <div className="flex-1 min-h-0">
@@ -762,9 +796,8 @@ export const ManageUsers: React.FC = () => {
                     <th className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24"></div></th>
                     <th className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20"></div></th>
                     <th className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-16"></div></th>
-                    <th className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-16"></div></th>
+                    <th className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-28"></div></th>
                     <th className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20"></div></th>
-                    <th className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24"></div></th>
                     <th className="px-4 py-3 text-right"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-12 ml-auto"></div></th>
                   </tr>
                 </thead>
@@ -785,9 +818,8 @@ export const ManageUsers: React.FC = () => {
                         <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
                       </td>
                       <td className="px-4 py-3"><div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-20"></div></td>
-                      <td className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-16"></div></td>
-                      <td className="px-4 py-3"><div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-20"></div></td>
-                      <td className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24"></div></td>
+                      <td className="px-4 py-3"><div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-28"></div></td>
+                      <td className="px-4 py-3"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20"></div></td>
                       <td className="px-4 py-3 text-right"><div className="h-6 w-6 bg-slate-200 dark:bg-slate-800 rounded ml-auto"></div></td>
                     </tr>
                   ))}
@@ -817,9 +849,8 @@ export const ManageUsers: React.FC = () => {
                 <thead className="bg-slate-50 dark:bg-slate-950 text-xs uppercase text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="px-4 py-3">{tr('उपयोगकर्ता', 'صارف', 'User')}</th>
-                    <th className="px-4 py-3">{tr('संपर्क', 'رابطہ', 'Contact')}</th>
+                    {/* <th className="px-4 py-3">{tr('संपर्क', 'رابطہ', 'Contact')}</th> */}
                     <th className="px-4 py-3">{tr('भूमिका', 'کردار', 'Role')}</th>
-                    <th className="px-4 py-3">{tr('जिला', 'ضلع', 'District')}</th>
                     <th className="px-4 py-3">{tr('जिला भूमिका', 'ضلعی عہدہ', 'District Role')}</th>
                     <th className="px-4 py-3">{tr('स्थान', 'مقام', 'Location')}</th>
                     <th className="px-4 py-3 text-right">{tr('कार्रवाई', 'کارروائی', 'Actions')}</th>

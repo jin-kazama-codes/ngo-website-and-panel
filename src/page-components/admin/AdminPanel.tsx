@@ -206,12 +206,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         { id: 'community_admin', label: `🏢 ${t('admin.commAdmin', 'Community Admin')}` }
       ];
     }
-    if (userRole === 'premium_donor') {
-      return [
-        { id: 'premium_donor', label: `⭐ ${t('admin.premDonor', 'Premium Donor')}` },
-        { id: 'member', label: `👤 ${t('admin.memberDonor', 'Member / Volunteer')}` }
-      ];
-    }
     if (userRole === 'district_president') {
       return [{ id: 'district_president', label: '🎖️ District President' }];
     }
@@ -235,7 +229,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // Role metadata for badge styling
   const roleBadges: Record<UserRole, { label: string; color: string; icon: React.ReactNode }> = {
     member: { label: t('admin.memberDonor', 'Member'), color: 'bg-emerald-100 text-emerald-800 border-emerald-300', icon: <Heart className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> },
-    premium_donor: { label: t('admin.premDonor', 'Premium Donor'), color: 'bg-amber-100 text-amber-800 border-amber-300', icon: <Award className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> },
     community_admin: { label: t('admin.commAdmin', 'Community Admin'), color: 'bg-blue-100 text-blue-800 border-blue-300', icon: <Users className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> },
     executive_admin: { label: t('admin.execAdmin', 'Executive Officer'), color: 'bg-purple-100 text-purple-800 border-purple-300', icon: <UserCheck className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> },
     super_admin: { label: t('admin.superAdmin', 'Super Admin'), color: 'bg-slate-800 text-white border-slate-700', icon: <Shield className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> },
@@ -253,7 +246,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   if (rawRole === 'executive_admin' || rawRole.includes('executive')) normalizedRole = 'executive_admin';
   else if (rawRole === 'community_admin' || rawRole.includes('community')) normalizedRole = 'community_admin';
   else if (rawRole === 'super_admin' || rawRole.includes('super')) normalizedRole = 'super_admin';
-  else if (rawRole === 'premium_donor' || rawRole.includes('premium')) normalizedRole = 'premium_donor';
   else if (rawRole === 'district_president' || rawRole.includes('president')) normalizedRole = 'district_president';
   else if (rawRole === 'district_coordinator' || rawRole.includes('coordinator')) normalizedRole = 'district_coordinator';
   else if (rawRole === 'district_gen_secretary' || rawRole.includes('gen_sec') || rawRole.includes('general')) normalizedRole = 'district_gen_secretary';
@@ -294,7 +286,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       roleMenus = [
         { id: 'financial_analytics', label: t('admin.tabFinancialAnalytics', 'Financial Analytics'), icon: TrendingUp },
       ];
-    } else if (normalizedRole === 'member' || normalizedRole === 'premium_donor') {
+    } else if (normalizedRole === 'member') {
       roleMenus = [
         { id: 'my_donations', label: t('admin.tabDonations', 'My Donations Receipts'), icon: CreditCard },
         { id: 'community_hub', label: t('admin.tabCommunityHub', 'My Community'), icon: Building2 },
@@ -323,7 +315,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         { id: 'utr_audit', label: t('admin.tabUtrAudit', 'UTR Payment Desk'), icon: ShieldCheck },
         { id: 'campaigns', label: t('admin.tabCampaigns', 'Manage Campaigns'), icon: PlusCircle },
         { id: 'communities_manage', label: t('admin.tabCommunitiesManage', 'Manage Communities'), icon: Building2 },
-        { id: 'users_manage', label: t('admin.tabUsersManage', 'Manage Users'), icon: Users },
+        ...(normalizedRole === 'super_admin' || normalizedRole === 'executive_admin' ? [
+          { id: 'users_manage', label: t('admin.tabUsersManage', 'Manage Users'), icon: Users },
+        ] : []),
         { id: 'testimonials_manage', label: t('admin.tabTestimonialsManage', 'Impact Stories'), icon: MessageSquareQuote },
         { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
         { id: 'contact_messages', label: t('admin.tabContactMessages', 'Contact Messages'), icon: MessageSquare },
@@ -627,7 +621,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                             {matchedUsers.map(u => (
                               <button
                                 key={u.id}
-                                onClick={() => { setActiveTab('users_manage'); setSearchQuery(''); setSearchFocused(false); }}
+                                onClick={() => {
+                                  if (normalizedRole === 'super_admin' || normalizedRole === 'executive_admin') {
+                                    setActiveTab('users_manage');
+                                  } else {
+                                    setActiveTab('community_members');
+                                  }
+                                  setSearchQuery('');
+                                  setSearchFocused(false);
+                                }}
                                 className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
                               >
                                 <img
@@ -749,7 +751,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {/* 1. OVERVIEW TAB - Renders the selected Role Dashboard */}
             {activeTab === 'overview' && (
               <div>
-                {(normalizedRole === 'member' || normalizedRole === 'premium_donor') && (
+                {(normalizedRole === 'member') && (
                   <MemberDashboard
                     user={activeUser}
                     onOpenDonate={() => onOpenDonate()}

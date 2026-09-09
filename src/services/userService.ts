@@ -23,6 +23,9 @@ function mapRow(row: Record<string, unknown>): User {
     isPremium: row.is_premium as boolean,
     joinDate: row.join_date as string,
     city: row.city as string,
+    district: (row.district as string) || undefined,
+    districtRole: (row.district_role || row.districtRole) as string | undefined,
+    district_role: (row.district_role || row.districtRole) as string | undefined,
     state: row.state as string,
     address: (row.address || row.adderess || row.full_address) as string | undefined,
     passwordHash: (row.password || row.password_hash || row.passwordHash) as string | undefined,
@@ -92,6 +95,9 @@ export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaa
     isPremium: user.isPremium,
     joinDate: user.joinDate,
     city: user.city,
+    district: user.district,
+    districtRole: user.districtRole || user.district_role,
+    district_role: user.districtRole || user.district_role,
     state: user.state,
     address: user.address,
     aadhaarFrontUrl: user.aadhaarFrontUrl,
@@ -168,6 +174,9 @@ export async function updateUser(id: string, patch: Partial<User>): Promise<void
   if (patch.isVerified !== undefined) update.is_verified = patch.isVerified;
   if (patch.avatar !== undefined) update.avatar = patch.avatar;
   if (patch.role !== undefined) update.role = patch.role;
+  if (patch.district !== undefined) update.district = patch.district || null;
+  if (patch.districtRole !== undefined) update.district_role = patch.districtRole || null;
+  if (patch.district_role !== undefined) update.district_role = patch.district_role || null;
   if (patch.communityId !== undefined) update.community_id = patch.communityId;
   if (patch.communityName !== undefined) update.community_name = patch.communityName;
   if (patch.name !== undefined) update.name = patch.name;

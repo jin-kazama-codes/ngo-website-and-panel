@@ -54,6 +54,12 @@ export const HELP_TYPE_MAP: Record<string, { hi: string; ur: string }> = {
 };
 
 const ROLE_MAP: Record<string, { hi: string; ur: string }> = {
+  'super_admin':               { hi: 'सुपर एडमिन',          ur: 'سپر ایڈمن' },
+  'Super Admin':               { hi: 'सुपर एडमिन',          ur: 'سپر ایڈمن' },
+  'executive_admin':           { hi: 'कार्यकारी एडमिन',     ur: 'ایگزیکٹو ایڈمن' },
+  'Executive Admin':           { hi: 'कार्यकारी एडमिन',     ur: 'ایگزیکٹو ایڈمن' },
+  'community_admin':           { hi: 'सामुदायिक प्रशासक',   ur: 'کمیونٹی ایڈمن' },
+  'member':                    { hi: 'सदस्य',               ur: 'ممبر' },
   'Verified Donor':            { hi: 'सत्यापित दानदाता',   ur: 'تصدیق شدہ عطیہ دہندہ' },
   'Beneficiary Father':        { hi: 'लाभार्थी पिता',       ur: 'مستفید والد' },
   'Widow Mother':              { hi: 'विधवा मां',            ur: 'بیوہ ماں' },
@@ -218,6 +224,40 @@ export function translateRole(role: string, lang: Language): string {
 export function translateDistrictRole(districtRole: string, lang: Language): string {
   if (!districtRole) return '';
   return resolveEnumTranslation(districtRole, DISTRICT_ROLE_MAP, lang);
+}
+
+/**
+ * Universal User Role translator.
+ * Checks district role first (if user has districtRole or district_role or a district role key in role),
+ * then falls back to general role (super_admin, executive_admin, community_admin, member, etc.).
+ */
+export function translateUserRole(
+  role?: string,
+  districtRole?: string,
+  lang: Language = 'en'
+): string {
+  const distRoleKeys = [
+    'district_president',
+    'district_coordinator',
+    'district_gen_secretary',
+    'district_secretary',
+    'district_finance_coord',
+  ];
+  const effectiveDistrict = districtRole || (role && distRoleKeys.includes(role.toLowerCase().trim().replace(/\s+/g, '_')) ? role : '');
+
+  if (effectiveDistrict) {
+    const distResult = translateDistrictRole(effectiveDistrict, lang);
+    if (distResult) return distResult;
+  }
+
+  if (role) {
+    const roleResult = translateRole(role, lang);
+    if (roleResult) return roleResult;
+  }
+
+  if (!role && !districtRole) return '';
+  const fallback = (districtRole || role || '').replace(/_/g, ' ');
+  return fallback.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 // ─── USER-ENTERED CONTENT ─────────────────────────────────────────────────────

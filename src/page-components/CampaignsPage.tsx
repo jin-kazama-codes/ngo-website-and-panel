@@ -32,6 +32,12 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     async function load() {
       try {
@@ -100,12 +106,12 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fade-in">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fade-in" suppressHydrationWarning>
       <div>
-        <h1 className="text-3xl font-black" style={{ color: 'var(--mfct-dark-green)' }}>
+        <h1 className="text-3xl font-black" style={{ color: 'var(--mfct-dark-green)' }} suppressHydrationWarning>
           {language === 'hi' ? 'सत्यापित सहायता अभियान' : language === 'ur' ? 'تصدیق شدہ مہمات' : 'Verified Relief Campaigns'}
         </h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--mfct-text-muted)' }}>
+        <p className="text-sm mt-1" style={{ color: 'var(--mfct-text-muted)' }} suppressHydrationWarning>
           {t('campaigns.page_desc', 'Every campaign is verified on-site by local administrators and executive officers.')}
         </p>
       </div>
@@ -134,17 +140,18 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="p-2 rounded-xl text-xs font-semibold outline-none"
               style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
+              suppressHydrationWarning
             >
-              <option value="All">{t('cat.all', 'All Categories')}</option>
-              <option value="Zakat">{tr('ज़कात पात्र', 'زکوٰۃ کے اہل', 'Zakat Eligible')}</option>
-              <option value="Sadqa">{tr('सदका पात्र', 'صدقہ کے اہل', 'Sadqa Eligible')}</option>
-              <option value="Fitrah">{tr('फ़ितरा पात्र', 'فطرہ کے اہل', 'Fitrah Eligible')}</option>
-              <option value="Urgent">{tr('अति आवश्यक', 'اہم / ہنگامی', 'Urgent Need')}</option>
-              <option value="Medical">{translateCategory('Medical', language)}</option>
-              <option value="Education">{translateCategory('Education', language)}</option>
-              <option value="Marriage">{translateCategory('Marriage', language)}</option>
-              <option value="Food">{translateCategory('Food', language)}</option>
-              <option value="Janazah">{translateCategory('Janazah', language)}</option>
+              <option value="All" suppressHydrationWarning>{t('cat.all', 'All Categories')}</option>
+              <option value="Zakat" suppressHydrationWarning>{tr('ज़कात पात्र', 'زکوٰۃ کے اہل', 'Zakat Eligible')}</option>
+              <option value="Sadqa" suppressHydrationWarning>{tr('सदका पात्र', 'صدقہ کے اہل', 'Sadqa Eligible')}</option>
+              <option value="Fitrah" suppressHydrationWarning>{tr('फ़ितरा पात्र', 'فطرہ کے اہل', 'Fitrah Eligible')}</option>
+              <option value="Urgent" suppressHydrationWarning>{tr('अति आवश्यक', 'اہم / ہنگامی', 'Urgent Need')}</option>
+              <option value="Medical" suppressHydrationWarning>{translateCategory('Medical', language)}</option>
+              <option value="Education" suppressHydrationWarning>{translateCategory('Education', language)}</option>
+              <option value="Marriage" suppressHydrationWarning>{translateCategory('Marriage', language)}</option>
+              <option value="Food" suppressHydrationWarning>{translateCategory('Food', language)}</option>
+              <option value="Janazah" suppressHydrationWarning>{translateCategory('Janazah', language)}</option>
             </select>
 
             <select
@@ -152,10 +159,11 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
               onChange={(e) => setSelectedCity(e.target.value)}
               className="p-2 rounded-xl text-xs font-semibold outline-none"
               style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
+              suppressHydrationWarning
             >
-              <option value="All">{t('campaigns.all_cities', 'All Indian Cities')}</option>
+              <option value="All" suppressHydrationWarning>{t('campaigns.all_cities', 'All Indian Cities')}</option>
               {availableCities.map((city) => (
-                <option key={city} value={city}>
+                <option key={city} value={city} suppressHydrationWarning>
                   {translateCity(city, language)}
                 </option>
               ))}

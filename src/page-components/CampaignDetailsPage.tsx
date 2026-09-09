@@ -142,7 +142,7 @@ export const CampaignDetailsPage: React.FC = () => {
         if (u.name && u.avatar) map[u.name.trim().toLowerCase()] = u.avatar;
       });
       setUserAvatars(map);
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -173,15 +173,10 @@ export const CampaignDetailsPage: React.FC = () => {
   }, [params.id]);
 
   useEffect(() => {
-    if (!rawCampaign) return;
-    const allImages = [rawCampaign.mainImage, ...(rawCampaign.galleryImages || [])].filter(Boolean);
-    if (allImages.length <= 1) return;
-
-    const timer = setInterval(() => {
-      setCurrentImageIdx((prev) => (prev + 1) % allImages.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [rawCampaign]);
+    if (rawCampaign?.id) {
+      setCurrentImageIdx(0);
+    }
+  }, [rawCampaign?.id]);
 
   const displayBeneficiaryName = useDynamicTranslatedText(rawCampaign?.beneficiaryName, language);
   const displayBeneficiaryRelation = useDynamicTranslatedText(rawCampaign?.beneficiaryRelation, language);
@@ -358,10 +353,6 @@ export const CampaignDetailsPage: React.FC = () => {
             <img
               key={currentImg}
               src={currentImg}
-              onError={(e) => {
-                e.currentTarget.src =
-                  'https://images.unsplash.com/photo-1584515933487-779824d29309?w=800&auto=format&fit=crop&q=60';
-              }}
               alt={displayTitle}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
             />
@@ -370,6 +361,11 @@ export const CampaignDetailsPage: React.FC = () => {
             {/* Controls if multiple images */}
             {allImages.length > 1 && (
               <>
+                {/* Photo Badge */}
+                <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md z-10">
+                  <span>{currentImageIdx === 0 ? '★ ' + t('admin.cover_photo_title', 'Main Cover Photo') : `📷 Photo ${currentImageIdx + 1} / ${allImages.length}`}</span>
+                </div>
+
                 <button
                   onClick={handlePrevImage}
                   className="cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-md transition-all shadow-md z-10"
@@ -386,7 +382,7 @@ export const CampaignDetailsPage: React.FC = () => {
                 </button>
 
                 {/* Thumbnails Navigation at Bottom */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10 p-1.5 bg-black/50 backdrop-blur-md rounded-2xl border border-white/20">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10 p-1.5 bg-black/50 backdrop-blur-md rounded-2xl border border-white/20 max-w-[90%] overflow-x-auto scrollbar-none">
                   {allImages.map((img, idx) => (
                     <button
                       key={idx}
@@ -394,11 +390,16 @@ export const CampaignDetailsPage: React.FC = () => {
                         e.stopPropagation();
                         setCurrentImageIdx(idx);
                       }}
-                      className={`cursor-pointer w-10 h-8 rounded-lg overflow-hidden border-2 transition-all ${
-                        idx === currentImageIdx ? 'border-emerald-400 scale-105 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
-                      }`}
+                      className={`cursor-pointer w-12 h-9 rounded-lg overflow-hidden border-2 transition-all relative shrink-0 ${idx === currentImageIdx ? 'border-emerald-400 scale-105 shadow-md ring-2 ring-emerald-400/50' : 'border-transparent opacity-60 hover:opacity-100'
+                        }`}
+                      title={idx === 0 ? 'Main Cover Photo' : `Gallery Photo ${idx + 1}`}
                     >
                       <img src={img} alt="" className="w-full h-full object-cover" />
+                      {idx === 0 && (
+                        <div className="absolute top-0 left-0 bg-emerald-600 text-white text-[8px] font-extrabold px-1 rounded-br">
+                          ★
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -556,21 +557,19 @@ export const CampaignDetailsPage: React.FC = () => {
                 <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold self-start sm:self-auto">
                   <button
                     onClick={() => setDonorTab('recent')}
-                    className={`cursor-pointer px-3 py-1.5 rounded-lg transition-all ${
-                      donorTab === 'recent'
-                        ? 'bg-white text-emerald-800 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
+                    className={`cursor-pointer px-3 py-1.5 rounded-lg transition-all ${donorTab === 'recent'
+                      ? 'bg-white text-emerald-800 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                      }`}
                   >
                     {tr('हालिया दान', 'حالیہ', 'Recent')}
                   </button>
                   <button
                     onClick={() => setDonorTab('top')}
-                    className={`cursor-pointer px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${
-                      donorTab === 'top'
-                        ? 'bg-white text-emerald-800 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
+                    className={`cursor-pointer px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${donorTab === 'top'
+                      ? 'bg-white text-emerald-800 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                      }`}
                   >
                     <Award className="w-3.5 h-3.5 text-amber-500" />
                     <span>{tr('सर्वोच्च दान', 'اعلیٰ', 'Top')}</span>

@@ -820,7 +820,6 @@ export default function SignUpPage() {
         communityName: activeCommunity.name,
         membershipId: `SS-${city.substring(0, 3).toUpperCase()}-2024-${Math.floor(1000 + Math.random() * 9000)}`,
         isVerified: false,
-        isPremium: false,
         joinDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
         passwordHash: hashedPassword,
         paymentMethod,

@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       membership_id: user.membershipId || `MEM-${Date.now().toString().slice(-4)}`,
       is_verified: user.isVerified ?? false,
       city: user.city || null,
-      district: user.district || user.city || null,
+      district: user.district || null,
       district_role: user.districtRole || user.district_role || null,
       state: user.state || null,
       password: user.passwordHash || user.password || null,
@@ -126,8 +126,13 @@ export async function PUT(request: Request) {
       updates.avatar = null;
     }
     if (updates.districtRole !== undefined) {
-      updates.district_role = updates.districtRole;
+      updates.district_role = updates.districtRole || null;
       delete updates.districtRole;
+    } else if (updates.district_role !== undefined) {
+      updates.district_role = updates.district_role || null;
+    }
+    if (updates.district !== undefined) {
+      updates.district = updates.district || null;
     }
     delete updates.is_premium;
     delete updates.isPremium;
