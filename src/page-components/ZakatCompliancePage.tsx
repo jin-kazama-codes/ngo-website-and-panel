@@ -35,7 +35,7 @@ export const ZakatCompliancePage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // ─── Searchable Data Items for live filtering ─────────────────────────────
+  // ── Searchable Data Items for live filtering ─────────────────────────────
   const sectionsData = useMemo(() => [
     {
       id: 'part-a',
@@ -374,11 +374,10 @@ export const ZakatCompliancePage: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`p-3 rounded-2xl text-xs sm:text-sm font-black transition-all flex items-center justify-center text-center cursor-pointer border ${
-                  activeTab === tab.id
+                className={`p-3 rounded-2xl text-xs sm:text-sm font-black transition-all flex items-center justify-center text-center cursor-pointer border ${activeTab === tab.id
                     ? 'bg-[#0a2e1d] text-[#e0c068] border-[#c8a84b] shadow-md scale-[1.02]'
                     : 'bg-[#f8faf9] text-slate-700 border-slate-200 hover:bg-[#ebf3ef]'
-                }`}
+                  }`}
               >
                 <span>{isHindi ? tab.labelHi : tab.labelEn}</span>
               </button>
@@ -413,11 +412,10 @@ export const ZakatCompliancePage: React.FC = () => {
                 <button
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
-                    activeCategory === cat.id
+                  className={`px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${activeCategory === cat.id
                       ? 'bg-[#0a2e1d] text-[#e0c068] shadow-sm'
                       : 'bg-[#ebf3ef] text-[#2c4035] hover:bg-[#deede5]'
-                  }`}
+                    }`}
                 >
                   {isHindi ? cat.labelHi : cat.labelEn}
                 </button>
