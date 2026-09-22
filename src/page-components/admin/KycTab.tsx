@@ -29,7 +29,8 @@ import {
   User as UserIcon,
   Image as ImageIcon,
   AlertCircle,
-  Filter
+  Filter,
+  XCircle
 } from 'lucide-react';
 import { DarkListSkeleton } from '../../components/Skeletons';
 import { getUsers, updateUser } from '../../services/userService';
@@ -44,7 +45,7 @@ interface ExecutiveDashboardProps {
   currentRole?: UserRole;
 }
 
-type VerificationFilter = 'all' | 'pending' | 'approved';
+type VerificationFilter = 'all' | 'pending' | 'approved' | 'rejected';
 
 export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUser, currentRole }) => {
   const { language } = useLanguage();
@@ -137,6 +138,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
+  // Mandatory rejection reason modal state
+  const [rejectModalUser, setRejectModalUser] = useState<User | null>(null);
+  const [rejectionReasonInput, setRejectionReasonInput] = useState('');
+  const [rejectionReasonError, setRejectionReasonError] = useState('');
+
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
@@ -168,23 +174,69 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
     loadUsers();
   }, [role, isRestrictedToDistrict, userDistrict, cleanDistrict]);
 
-  const handleAction = async (id: string, approve: boolean) => {
+  const handleApprove = async (id: string) => {
     if (!canPerformKycAction) return;
     try {
       setProcessingId(id);
-      setProcessingAction(approve ? 'approve' : 'reject');
-      await updateUser(id, { isVerified: approve });
+      setProcessingAction('approve');
+      await updateUser(id, { status: 'approved', rejectionReason: '' });
 
       // Update local state
       setUsers((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, isVerified: approve } : u))
+        prev.map((u) => (u.id === id ? { ...u, status: 'approved', isVerified: true, rejectionReason: undefined, rejection_reason: undefined } : u))
       );
 
       if (selectedUser?.id === id) {
-        setSelectedUser((prev) => (prev ? { ...prev, isVerified: approve } : null));
+        setSelectedUser((prev) => (prev ? { ...prev, status: 'approved', isVerified: true, rejectionReason: undefined, rejection_reason: undefined } : null));
       }
     } catch (err) {
-      console.error('Action failed:', err);
+      console.error('Approve failed:', err);
+    } finally {
+      setProcessingId(null);
+      setProcessingAction(null);
+    }
+  };
+
+  const openRejectModal = (u: User) => {
+    setRejectModalUser(u);
+    setRejectionReasonInput(u.rejectionReason || u.rejection_reason || '');
+    setRejectionReasonError('');
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectModalUser || !canPerformKycAction) return;
+    const trimmedReason = rejectionReasonInput.trim();
+    if (!trimmedReason) {
+      setRejectionReasonError(
+        tr(
+          'कृपया अस्वीकृति का कारण अवश्य दर्ज करें।',
+          'براہ کرم مسترد کرنے کی وجہ درج کریں۔',
+          'Rejection reason is mandatory. Please provide a reason.'
+        )
+      );
+      return;
+    }
+
+    const id = rejectModalUser.id;
+    try {
+      setProcessingId(id);
+      setProcessingAction('reject');
+      await updateUser(id, { status: 'reject', rejectionReason: trimmedReason });
+
+      // Update local state
+      setUsers((prev) =>
+        prev.map((u) => (u.id === id ? { ...u, status: 'reject', isVerified: false, rejectionReason: trimmedReason, rejection_reason: trimmedReason } : u))
+      );
+
+      if (selectedUser?.id === id) {
+        setSelectedUser((prev) => (prev ? { ...prev, status: 'reject', isVerified: false, rejectionReason: trimmedReason, rejection_reason: trimmedReason } : null));
+      }
+
+      setRejectModalUser(null);
+      setRejectionReasonInput('');
+      setRejectionReasonError('');
+    } catch (err) {
+      console.error('Reject failed:', err);
     } finally {
       setProcessingId(null);
       setProcessingAction(null);
@@ -234,17 +286,30 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
   // Counts based on active district scope
   const counts = {
     all: districtFilteredUsers.length,
-    pending: districtFilteredUsers.filter((u) => !u.isVerified).length,
-    approved: districtFilteredUsers.filter((u) => !!u.isVerified).length,
+    pending: districtFilteredUsers.filter((u) => {
+      const s = u.status || (u.isVerified ? 'approved' : 'pending');
+      return s === 'pending';
+    }).length,
+    approved: districtFilteredUsers.filter((u) => {
+      const s = u.status || (u.isVerified ? 'approved' : 'pending');
+      return s === 'approved';
+    }).length,
+    rejected: districtFilteredUsers.filter((u) => {
+      const s = u.status;
+      return s === 'reject' || s === 'rejected';
+    }).length,
   };
 
   // Filtered list with status and search
   const filteredUsers = useMemo(() => {
     return districtFilteredUsers.filter((u) => {
+      const uStatus = u.status || (u.isVerified ? 'approved' : 'pending');
+      const isRejected = uStatus === 'reject' || uStatus === 'rejected';
       const matchesFilter =
         activeFilter === 'all' ||
-        (activeFilter === 'pending' && !u.isVerified) ||
-        (activeFilter === 'approved' && !!u.isVerified);
+        (activeFilter === 'pending' && uStatus === 'pending') ||
+        (activeFilter === 'approved' && uStatus === 'approved') ||
+        (activeFilter === 'rejected' && isRejected);
 
       const query = searchQuery.trim().toLowerCase();
       const matchesSearch =
@@ -376,6 +441,21 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
             </button>
 
             <button
+              onClick={() => setActiveFilter('rejected')}
+              className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${activeFilter === 'rejected'
+                ? 'bg-rose-600 text-white shadow-sm'
+                : 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100'
+                }`}
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              <span>{tr('अस्वीकृत', 'مسترد شدہ', 'Rejected')}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'rejected' ? 'bg-white/20 text-white' : 'bg-rose-200/80 dark:bg-rose-900 text-rose-900 dark:text-rose-200'
+                }`}>
+                {counts.rejected}
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveFilter('all')}
               className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${activeFilter === 'all'
                 ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
@@ -444,24 +524,30 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
             <div className="max-w-sm space-y-1">
               <h4 className="font-bold text-base text-slate-900 dark:text-white">
                 {searchQuery
-                  ? tr('कोई मिलान नहीं मिला', 'کوئی نتیجہ نہیں ملا', 'No matching members found')
+                  ? tr('कोई मिलान नहीं मिला', 'کوئی نتیجہ नहीं मिला', 'No matching members found')
                   : activeFilter === 'pending'
                     ? tr('सब कुछ अद्यतन है! कोई लंबित सत्यापन नहीं', 'سب مکمل ہے! کوئی زیر التواء تصدیق نہیں', 'All caught up! No pending verifications')
-                    : tr('कोई सदस्य नहीं मिला', 'کوئی ممبر نہیں ملا', 'No members found')}
+                    : activeFilter === 'rejected'
+                      ? tr('कोई अस्वीकृत आवेदन नहीं है', 'کوئی مسترد شدہ درخواست نہیں', 'No rejected applications')
+                      : tr('कोई सदस्य नहीं मिला', 'کوئی ممبر नहीं मिला', 'No members found')}
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {searchQuery
-                  ? tr('कृपया अलग खोज शब्द का प्रयास करें।', 'براہ کرم کوئی دوسرا لفظ تلاش کریں۔', 'Try adjusting your search criteria.')
+                  ? tr('कृपया अलग खोज शब्द का प्रयास करें।', 'براہ کرم کوئی दूसरा لفظ تلاش کریں۔', 'Try adjusting your search criteria.')
                   : activeFilter === 'pending'
                     ? tr('सभी सदस्य सफलतापूर्वक सत्यापित किए जा चुके हैं।', 'تمام اراکین کی تصدیق مکمل ہو چکی ہے۔', 'All registered members have been reviewed.')
-                    : tr('इस श्रेणी में अभी कोई रिकॉर्ड नहीं है।', 'اس کیٹیگری میں ابھی کوئی ریکارڈ موجود نہیں ہے۔', 'No records found in this category.')}
+                    : activeFilter === 'rejected'
+                      ? tr('कोई अस्वीकृत सदस्य रिकॉर्ड उपलब्ध नहीं है।', 'کوئی مسترد شدہ ریکارڈ موجود نہیں ہے۔', 'No rejected member applications.')
+                      : tr('इस श्रेणी में अभी कोई रिकॉर्ड नहीं है।', 'اس کیٹیگری میں ابھی کوئی ریکارڈ موجود नहीं ہے۔', 'No records found in this category.')}
               </p>
             </div>
           </div>
         ) : (
           <div className="space-y-3.5">
             {filteredUsers.map((u) => {
-              const isApproved = !!u.isVerified;
+              const uStatus = u.status || (u.isVerified ? 'approved' : 'pending');
+              const isApproved = uStatus === 'approved';
+              const isRejected = uStatus === 'reject' || uStatus === 'rejected';
               const hasAadhaar = !!(u.aadhaarFrontUrl || u.aadhaarBackUrl);
               const hasScreenshot = !!u.paymentScreenshotUrl;
 
@@ -499,7 +585,12 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                         {isApproved ? (
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            <span>{tr('सत्यापित', 'تصدیق شدہ', 'Verified')}</span>
+                            <span>{tr('स्वीकृत / सत्यापित', 'تصدیق شدہ', 'Approved & Verified')}</span>
+                          </span>
+                        ) : isRejected ? (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 flex items-center gap-1">
+                            <XCircle className="w-3 h-3 text-rose-600" />
+                            <span>{tr('अस्वीकृत', 'مسترد شدہ', 'Rejected')}</span>
                           </span>
                         ) : (
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
@@ -523,7 +614,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-200">
-                              {tr(`मदद पात्र (${u.helpType || 'सामान्य'})`, `امداد کے اہل (${u.helpType || 'عام'})`, `Eligible for Aid (${u.helpType || 'General'})`)}
+                              {tr(`मदद पात्र (${u.helpType || 'सामान्य'})`, `امداد के اہل (${u.helpType || 'عام'})`, `Eligible for Aid (${u.helpType || 'General'})`)}
                             </span>
                           )
                         )}
@@ -574,6 +665,17 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                           </span>
                         )}
                       </div>
+
+                      {/* Rejection Reason notice if rejected */}
+                      {isRejected && (u.rejectionReason || u.rejection_reason) && (
+                        <div className="mt-2 flex items-start gap-1.5 text-xs text-rose-700 dark:text-rose-400 bg-rose-50/90 dark:bg-rose-950/40 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60 max-w-2xl">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
+                          <div>
+                            <span className="font-bold">{tr('अस्वीकृति कारण:', 'مسترد کرنے کی وجہ:', 'Rejection Reason:')} </span>
+                            <span>{u.rejectionReason || u.rejection_reason}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -591,10 +693,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                     {/* Action buttons restricted to Super Admin, Executive Admin & District Coordinator */}
                     {canPerformKycAction && (
                       <>
-                        {/* Approve Button */}
+                        {/* Approve Button (Visible for Pending and Rejected) */}
                         {!isApproved && (
                           <button
-                            onClick={() => handleAction(u.id, true)}
+                            onClick={() => handleApprove(u.id)}
                             disabled={processingId === u.id}
                             className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
                           >
@@ -603,30 +705,25 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                             ) : (
                               <Check className="w-3.5 h-3.5" />
                             )}
-                            <span>{tr('स्वीकृत करें', 'منظور کریں', 'Approve')}</span>
+                            <span>{isRejected ? tr('पुनः स्वीकृत करें', 'دوبارہ منظور کریں', 'Re-Approve') : tr('स्वीकृत करें', 'منظور کریں', 'Approve')}</span>
                           </button>
                         )}
 
-                        {/* Reject / Revoke Button */}
-                        {isApproved ? (
-                          <button
-                            onClick={() => handleAction(u.id, false)}
-                            disabled={processingId === u.id}
-                            className="cursor-pointer px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 font-bold text-xs flex items-center gap-1 transition-colors border border-rose-200 dark:border-rose-800/60 disabled:opacity-50"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                            <span>{tr('सत्यापन हटाएं', 'منسوخ करें', 'Revoke')}</span>
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleAction(u.id, false)}
-                            disabled={processingId === u.id}
-                            className="cursor-pointer px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 font-bold text-xs flex items-center gap-1 transition-colors border border-rose-200 dark:border-rose-800/60 disabled:opacity-50"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                            <span>{tr('अस्वीकार करें', 'مسترد', 'Reject')}</span>
-                          </button>
-                        )}
+                        {/* Reject / Revoke Button (Must provide reason) */}
+                        <button
+                          onClick={() => openRejectModal(u)}
+                          disabled={processingId === u.id}
+                          className="cursor-pointer px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 font-bold text-xs flex items-center gap-1 transition-colors border border-rose-200 dark:border-rose-800/60 disabled:opacity-50"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>
+                            {isApproved
+                              ? tr('सत्यापन हटाएं', 'منسوخ करें', 'Revoke / Reject')
+                              : isRejected
+                                ? tr('कारण संपादित करें', 'وجہ تبدیل کریں', 'Edit Reason')
+                                : tr('अस्वीकार करें', 'مسترد करें', 'Reject')}
+                          </span>
+                        </button>
                       </>
                     )}
                   </div>
@@ -964,36 +1061,52 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
 
               <div className="flex items-center gap-2.5">
                 {canPerformKycAction ? (
-                  selectedUser.isVerified ? (
+                  selectedUser.status === 'approved' || (selectedUser.isVerified && selectedUser.status !== 'reject' && selectedUser.status !== 'rejected') ? (
                     <button
-                      onClick={() => handleAction(selectedUser.id, false)}
+                      onClick={() => openRejectModal(selectedUser)}
                       disabled={processingId === selectedUser.id}
                       className="cursor-pointer px-5 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 transition-all disabled:opacity-50 flex items-center gap-2"
                     >
-                      {processingId === selectedUser.id && processingAction === 'reject' ? (
-                        <div className="w-3.5 h-3.5 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <X className="w-3.5 h-3.5" />
-                      )}
-                      <span>{tr('सत्यापन रद्द करें (गैर-सत्यापित करें)', 'منسوخ کریں', 'Revoke Verification')}</span>
+                      <X className="w-3.5 h-3.5" />
+                      <span>{tr('अस्वीकार करें (कारण आवश्यक)', 'مسترد کریں (وجہ درکار)', 'Reject (Reason Required)')}</span>
                     </button>
+                  ) : selectedUser.status === 'reject' || selectedUser.status === 'rejected' ? (
+                    <>
+                      <button
+                        onClick={() => openRejectModal(selectedUser)}
+                        disabled={processingId === selectedUser.id}
+                        className="cursor-pointer px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs border border-slate-200 dark:border-slate-700 hover:bg-slate-200 transition-all disabled:opacity-50 flex items-center gap-2"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>{tr('कारण संपादित करें', 'وجہ تبدیل کریں', 'Edit Rejection Reason')}</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleApprove(selectedUser.id)}
+                        disabled={processingId === selectedUser.id}
+                        className="cursor-pointer px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-900/40 transition-all disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {processingId === selectedUser.id && processingAction === 'approve' ? (
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Check className="w-3.5 h-3.5" />
+                        )}
+                        <span>{tr('स्वीकृत एवं सत्यापित करें', 'منظور اور تصدیق کریں', 'Approve & Verify Member')}</span>
+                      </button>
+                    </>
                   ) : (
                     <>
                       <button
-                        onClick={() => handleAction(selectedUser.id, false)}
+                        onClick={() => openRejectModal(selectedUser)}
                         disabled={processingId === selectedUser.id}
                         className="cursor-pointer px-5 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 transition-all disabled:opacity-50 flex items-center gap-2"
                       >
-                        {processingId === selectedUser.id && processingAction === 'reject' ? (
-                          <div className="w-3.5 h-3.5 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <X className="w-3.5 h-3.5" />
-                        )}
+                        <X className="w-3.5 h-3.5" />
                         <span>{tr('अस्वीकार करें', 'مسترد کریں', 'Reject')}</span>
                       </button>
 
                       <button
-                        onClick={() => handleAction(selectedUser.id, true)}
+                        onClick={() => handleApprove(selectedUser.id)}
                         disabled={processingId === selectedUser.id}
                         className="cursor-pointer px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-900/40 transition-all disabled:opacity-50 flex items-center gap-2"
                       >
@@ -1016,6 +1129,135 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                   </span>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mandatory Rejection Reason Modal */}
+      {rejectModalUser && (
+        <div className="fixed inset-0 bg-slate-950/80 z-[110] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+          <div
+            className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-rose-50/60 dark:bg-rose-950/20">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                  <XCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                    {tr('अस्वीकृति का कारण दर्ज करें', 'مسترد کرنے کی وجہ درج کریں', 'Enter Rejection Reason')}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {rejectModalUser.name} • {tr('आईडी:', 'شناخت:', 'ID:')} {rejectModalUser.id}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setRejectModalUser(null);
+                  setRejectionReasonError('');
+                }}
+                className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 sm:p-6 space-y-4">
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                {tr(
+                  'सत्यापन अस्वीकार करने के लिए कारण अनिवार्य है। यह कारण सदस्य को उनके रिकॉर्ड में स्पष्ट रूप से दिखाई देगा:',
+                  'تصدیق مسترد کرنے کی وجہ لازمی ہے۔ یہ وجہ رکن کے ریکارڈ میں نظر آئے گی:',
+                  'A reason is mandatory when rejecting verification. This will be clearly recorded on the member’s profile:'
+                )}
+              </p>
+
+              {/* Quick Preset Reason Chips */}
+              <div>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  {tr('त्वरित कारण चुनें:', 'فوری وجوہات منتخب کریں:', 'Quick select common reasons:')}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    tr('धुंधला या अस्पष्ट आधार कार्ड', 'دھندلا شناختی کارڈ', 'Blurry / Unreadable ID or Aadhaar card'),
+                    tr('विवरण और पहचान पत्र में बेमेल', 'تفصیلات میں فرق', 'Details do not match submitted ID'),
+                    tr('अमान्य या अपठनीय भुगतान रसीद', 'غلط ادائیگی کی رسید', 'Invalid or unreadable payment receipt'),
+                    tr('अधूरे दस्तावेज या पृष्ठ गायब', 'نامکمل دستاویزات', 'Incomplete documents / Missing back page'),
+                    tr('अमान्य या अनुचित प्रोफाइल फोटो', 'غلط پروفائل تصویر', 'Invalid or improper profile photo'),
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => {
+                        setRejectionReasonInput((prev) => (prev ? `${prev}. ${preset}` : preset));
+                        setRejectionReasonError('');
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 hover:bg-purple-100 hover:text-purple-700 dark:bg-slate-800 dark:hover:bg-purple-950/60 dark:hover:text-purple-300 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
+                    >
+                      + {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Textarea */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  {tr('विस्तृत कारण *', 'تفصیلی وجہ *', 'Detailed Rejection Reason *')}
+                </label>
+                <textarea
+                  value={rejectionReasonInput}
+                  onChange={(e) => {
+                    setRejectionReasonInput(e.target.value);
+                    if (rejectionReasonError) setRejectionReasonError('');
+                  }}
+                  rows={4}
+                  placeholder={tr(
+                    'उदा. आधार कार्ड का पिछला भाग गायब है और रसीद साफ नहीं दिख रही है...',
+                    'مثلاً شناختی کارڈ کی پشت غائب ہے...',
+                    'e.g. Back side of Aadhaar card is missing and payment screenshot is illegible...'
+                  )}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 placeholder-slate-400 resize-none font-medium"
+                />
+                {rejectionReasonError && (
+                  <p className="text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1">
+                    <XCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{rejectionReasonError}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setRejectModalUser(null);
+                  setRejectionReasonError('');
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                {tr('रद्द करें', 'منسوخ کریں', 'Cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmReject}
+                disabled={processingId === rejectModalUser.id}
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-900/30 transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+              >
+                {processingId === rejectModalUser.id ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <XCircle className="w-3.5 h-3.5" />
+                )}
+                <span>{tr('अस्वीकार की पुष्टि करें', 'مسترد کرنے کی تصدیق کریں', 'Confirm Rejection')}</span>
+              </button>
             </div>
           </div>
         </div>

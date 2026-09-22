@@ -254,6 +254,12 @@ export async function PATCH(request: Request) {
     if (body.beneficiaryName !== undefined) updatePayload.beneficiary_name = body.beneficiaryName;
     if (body.beneficiaryRelation !== undefined) updatePayload.beneficiary_relation = body.beneficiaryRelation;
     if (body.goalINR !== undefined) updatePayload.goal_inr = body.goalINR;
+    if (body.raisedINR !== undefined || body.raised_inr !== undefined) {
+      updatePayload.raised_inr = body.raisedINR ?? body.raised_inr;
+    }
+    if (body.donorsCount !== undefined || body.donors_count !== undefined) {
+      updatePayload.donors_count = body.donorsCount ?? body.donors_count;
+    }
     if (body.isZakatEligible !== undefined) updatePayload.is_zakat_eligible = body.isZakatEligible;
     if (body.isSadqaEligible !== undefined) updatePayload.is_sadqa_eligible = body.isSadqaEligible;
     if (body.isFitrahEligible !== undefined) updatePayload.is_fitrah_eligible = body.isFitrahEligible;

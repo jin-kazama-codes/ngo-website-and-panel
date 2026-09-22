@@ -6,7 +6,6 @@ import { X, QrCode, Upload, ArrowRight, ShieldCheck, Sparkles, Building2, CheckC
 import confetti from 'canvas-confetti';
 import { getCampaigns } from '../services/campaignService';
 import { createDonation } from '../services/donationService';
-import { updateCampaignRaised } from '../services/campaignService';
 import { uploadImage } from '../lib/storage';
 import { getAccountDetails } from '../services/adminService';
 import { useLanguage } from '../context/LanguageContext';
@@ -117,12 +116,32 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!utrNumber && !screenshotUploaded) {
+    if (!donorName || !donorName.trim()) {
       showToast(
         tr(
-          'कृपया 12 अंकों का यूपीआई यूटीआर नंबर दर्ज करें या भुगतान स्क्रीनशॉट अपलोड करें।',
-          'براہ کرم 12 ہندسوں کا یو پی آئی UTR نمبر درج کریں یا رسید اپلوڈ کریں۔',
-          'Please enter a valid 12-digit UPI UTR number or upload payment screenshot.'
+          'कृपया अपना पूरा नाम दर्ज करें।',
+          'براہ کرم اپنا پورا نام درج کریں۔',
+          'Please enter your full name.'
+        )
+      );
+      return;
+    }
+    if (!utrNumber || !utrNumber.trim()) {
+      showToast(
+        tr(
+          'कृपया बैंक UTR / संदर्भ संख्या दर्ज करें।',
+          'براہ کرم بینک UTR / ٹرانزیکشن نمبر درج کریں۔',
+          'Please enter Bank UTR / Transaction Ref No.'
+        )
+      );
+      return;
+    }
+    if (!screenshotFile && !screenshotUploaded) {
+      showToast(
+        tr(
+          'कृपया भुगतान स्क्रीनशॉट अपलोड करें।',
+          'براہ کرم ادائیگی کی رسید اپلوڈ کریں۔',
+          'Please upload payment screenshot.'
         )
       );
       return;
@@ -136,11 +155,11 @@ export const DonationModal: React.FC<DonationModalProps> = ({
         screenshotUrl = await uploadImage('donations', screenshotFile);
       }
 
-      const finalUtr = utrNumber || `UTR${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+      const finalUtr = utrNumber.trim();
       const donationData: Omit<Donation, 'id'> = {
         transactionId: `TXN${Math.floor(100000000 + Math.random() * 900000000)}`,
         utrNumber: finalUtr,
-        donorName: donorName || tr('उदार दानदाता', 'عطیہ دہندہ', 'Generous Member'),
+        donorName: donorName.trim(),
         donorId: currentUser?.id || 'anonymous',
         donorRole: currentUser?.role || 'member',
         donorAvatar: currentUser?.avatar || undefined,
@@ -158,7 +177,6 @@ export const DonationModal: React.FC<DonationModalProps> = ({
       };
 
       const savedDonation = await createDonation(donationData);
-      await updateCampaignRaised(activeCampaign.id, amount);
 
       setCreatedDonation(savedDonation);
       onDonationSuccess(savedDonation);
@@ -464,7 +482,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
-                  {tr('आपका पूरा नाम', 'آپ کا پورا نام', 'Your Full Name')}
+                  {tr('आपका पूरा नाम', 'آپ کا پورا نام', 'Your Full Name')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -478,10 +496,11 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
-                  {tr('12 अंकों का बैंक UTR / संदर्भ संख्या', '12 ہندسوں کا بینک UTR / ٹرانزیکشن نمبر', '12-Digit Bank UTR / Transaction Ref No')}
+                  {tr('12 अंकों का बैंक UTR / संदर्भ संख्या', '12 ہندسوں کا بینک UTR / ٹرانزیکشن نمبر', '12-Digit Bank UTR / Transaction Ref No')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
+                  required
                   placeholder={tr('उदा. 420199381029', 'مثال: 420199381029', 'e.g. 420199381029')}
                   value={utrNumber}
                   onChange={(e) => setUtrNumber(e.target.value)}
@@ -492,7 +511,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
-                  {tr('या भुगतान स्क्रीनशॉट अपलोड करें', 'یا ادائیگی کی رسید اپلوڈ کریں', 'Or Upload Payment Screenshot')}
+                  {tr('या भुगतान स्क्रीनशॉट अपलोड करें', 'یا ادائیگی کی رسید اپلوڈ کریں', 'Or Upload Payment Screenshot')} <span className="text-red-500">*</span>
                 </label>
                 <label
                   className="p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center"

@@ -108,23 +108,108 @@ export const CommunityMembersTab: React.FC<CommunityMembersTabProps> = ({
   const [members, setMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const districtRoleKeys = [
+    'district_president',
+    'district_coordinator',
+    'district_gen_secretary',
+    'district_secretary',
+    'district_finance_coord',
+  ];
+
+  const rawDistRole = (
+    activeUser?.district_role ||
+    activeUser?.districtRole ||
+    (activeUser?.role as string) ||
+    ''
+  ).toLowerCase().trim().replace(/\s+/g, '_');
+
+  const isDistrictRole =
+    districtRoleKeys.includes(activeUser?.role as string) ||
+    districtRoleKeys.includes(rawDistRole) ||
+    (typeof activeUser?.role === 'string' && activeUser.role.startsWith('district_')) ||
+    rawDistRole.startsWith('district_') ||
+    districtRoleKeys.some((k) => rawDistRole.includes(k.replace('district_', '')));
+
+  const userDistrict = (activeUser?.district || activeUser?.city || '').trim();
+  const cleanDistrict = userDistrict
+    ? userDistrict.replace(/\s+(district|chapter|city|block|zone).*$/i, '').trim() || userDistrict
+    : '';
+
+  const userCity = (activeUser?.city || activeUser?.district || '').trim();
+  const cleanCity = userCity
+    ? userCity.replace(/\s+(district|chapter|city|block|zone).*$/i, '').trim() || userCity
+    : '';
+
   useEffect(() => {
     const fetchMembers = async () => {
       try {
         setLoading(true);
 
-        const dist = activeUser?.district || activeUser?.city;
+        let data: User[] = [];
 
-        const data = await getUsers(
-          activeUser?.communityId || undefined,
-          dist || undefined
-        );
+        if (isDistrictRole && (cleanDistrict || userDistrict)) {
+          // Active user has a district role: fetch all users currently in their district
+          data = await getUsers(cleanDistrict || userDistrict);
+        } else {
+          // Otherwise: fetch by active user's city WITH community ID
+          const targetCity = cleanCity || userCity || cleanDistrict || userDistrict;
+          data = await getUsers(activeUser?.communityId || undefined, targetCity || undefined);
+        }
 
-        const filteredMembers = data.filter(
-          (member) =>
-            member.role !== 'super_admin' &&
-            member.role !== 'executive_admin'
-        );
+        const filteredMembers = data.filter((member) => {
+          if (
+            member.role === 'super_admin' ||
+            member.role === 'executive_admin'
+          ) {
+            return false;
+          }
+
+          if (isDistrictRole && (cleanDistrict || userDistrict)) {
+            const target = userDistrict.toLowerCase().trim();
+            const cleanTarget = (cleanDistrict || target).toLowerCase().trim();
+            const uDistrict = (member.district || '').toLowerCase().trim();
+            const uCity = (member.city || '').toLowerCase().trim();
+            const uComm = (member.communityName || '').toLowerCase().trim();
+
+            return (
+              uDistrict === target ||
+              uDistrict === cleanTarget ||
+              (uDistrict && (target.includes(uDistrict) || cleanTarget.includes(uDistrict) || uDistrict.includes(cleanTarget))) ||
+              uCity === target ||
+              uCity === cleanTarget ||
+              (uCity && (target.includes(uCity) || cleanTarget.includes(uCity) || uCity.includes(cleanTarget))) ||
+              (uComm && (target.includes(uComm) || cleanTarget.includes(uComm) || uComm.includes(cleanTarget)))
+            );
+          }
+
+          if (!isDistrictRole) {
+            // Must match community ID if present
+            if (activeUser?.communityId && member.communityId !== activeUser.communityId) {
+              return false;
+            }
+
+            // Must match active user's city / district if present
+            const targetCity = (cleanCity || userCity || cleanDistrict || userDistrict).toLowerCase().trim();
+            if (targetCity) {
+              const mCity = (member.city || '').toLowerCase().trim();
+              const mDistrict = (member.district || '').toLowerCase().trim();
+              const matches =
+                mCity === targetCity ||
+                mCity.includes(targetCity) ||
+                targetCity.includes(mCity) ||
+                mDistrict === targetCity ||
+                mDistrict.includes(targetCity) ||
+                targetCity.includes(mDistrict);
+              if (!matches) {
+                return false;
+              }
+            }
+
+            return true;
+          }
+
+          return true;
+        });
 
         setMembers(filteredMembers);
       } catch (error) {
@@ -136,15 +221,18 @@ export const CommunityMembersTab: React.FC<CommunityMembersTabProps> = ({
 
     fetchMembers();
   }, [
+    isDistrictRole,
+    cleanDistrict,
+    userDistrict,
+    cleanCity,
+    userCity,
     activeUser?.communityId,
     activeUser?.district,
     activeUser?.city,
+    activeUser?.role,
+    activeUser?.district_role,
+    activeUser?.districtRole,
   ]);
-
-  const isDistrictRole = !!(
-    activeUser?.district ||
-    (activeUser?.role as string)?.startsWith('district_')
-  );
 
   return (
     <div className="space-y-4">
@@ -264,11 +352,17 @@ export const CommunityMembersTab: React.FC<CommunityMembersTabProps> = ({
             </div>
           ) : members.length === 0 ? (
             <div className="flex items-center justify-center p-8 text-sm text-slate-500 dark:text-slate-400">
-              {tr(
-                'इस समुदाय के लिए कोई सदस्य नहीं मिला।',
-                'اس کمیونٹی کے لیے کوئی ممبر نہیں ملا۔',
-                'No members found for this community.'
-              )}
+              {isDistrictRole
+                ? tr(
+                  'इस जिले के लिए कोई सदस्य नहीं मिला।',
+                  'اس ضلع کے لیے کوئی ممبر نہیں ملا۔',
+                  'No members found for this district.'
+                )
+                : tr(
+                  'इस समुदाय के लिए कोई सदस्य नहीं मिला।',
+                  'اس کمیونٹی کے لیے کوئی ممبر نہیں ملا۔',
+                  'No members found for this community.'
+                )}
             </div>
           ) : (
             members.map((member) => (

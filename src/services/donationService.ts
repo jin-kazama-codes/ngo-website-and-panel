@@ -18,6 +18,8 @@ function mapRow(row: Record<string, unknown>): Donation {
     paymentMethod: ((row.paymentMethod || row.payment_method) as Donation['paymentMethod']) || 'UPI',
     paymentScreenshotUrl: (row.paymentScreenshotUrl || row.payment_screenshot_url) as string | undefined,
     status: ((row.status as Donation['status']) || 'verified'),
+    rejectionReason: (row.rejectionReason || row.rejection_reason) as string | undefined,
+    rejection_reason: (row.rejection_reason || row.rejectionReason) as string | undefined,
     date: (row.date as string) || '',
     receiptNumber: (row.receiptNumber || row.receipt_number) as string,
   };
@@ -90,12 +92,28 @@ export async function createDonation(donation: Omit<Donation, 'id'>): Promise<Do
 
 export async function updateDonationStatus(
   id: string,
-  status: Donation['status']
+  status: Donation['status'],
+  rejectionReason?: string
 ): Promise<void> {
   const res = await fetch('/api/donations', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, status }),
+    body: JSON.stringify({ id, status, rejectionReason, rejection_reason: rejectionReason }),
   });
   if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+}
+
+export async function updateDonation(
+  id: string,
+  updates: Partial<Donation>
+): Promise<Donation> {
+  const res = await fetch('/api/donations', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, ...updates }),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const json = await res.json();
+  if (!json.success && !json.data) throw new Error(json.error || 'Failed to update donation');
+  return mapRow(json.data);
 }

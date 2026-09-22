@@ -12,6 +12,7 @@ const createEmptyUser = (role: UserRole, idPrefix: string): User => ({
   communityId: '',
   communityName: '',
   membershipId: '',
+  status: 'pending',
   isVerified: false,
   joinDate: '',
   city: '',

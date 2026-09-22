@@ -55,7 +55,7 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
       getDonations()
         .then((donations) => {
           const communityDonations = donations.filter(d =>
-            d.status === 'pending_verification' &&
+            (d.status === 'pending_verification' || d.status === 'pending') &&
             (d.communityName === activeUser.communityName)
           );
           setPendingUtrCount(communityDonations.length);

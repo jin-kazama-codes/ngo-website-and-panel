@@ -162,18 +162,52 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { id, status } = body;
+    const { id } = body;
     
-    if (!id || !status) {
-      return NextResponse.json({ success: false, error: 'Missing id or status' }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Missing donation id' }, { status: 400 });
     }
 
-    const { data, error } = await supabaseAdmin
+    const updatePayload: any = {};
+    if (body.status !== undefined) updatePayload.status = body.status;
+    if (body.rejectionReason !== undefined || body.rejection_reason !== undefined) {
+      updatePayload.rejection_reason = body.rejectionReason ?? body.rejection_reason ?? null;
+    }
+    if (body.utrNumber !== undefined || body.utr_number !== undefined) {
+      updatePayload.utr_number = body.utrNumber ?? body.utr_number;
+    }
+    if (body.paymentScreenshotUrl !== undefined || body.payment_screenshot_url !== undefined) {
+      updatePayload.payment_screenshot_url = body.paymentScreenshotUrl ?? body.payment_screenshot_url;
+    }
+    if (body.donorName !== undefined || body.donor_name !== undefined) {
+      updatePayload.donor_name = body.donorName ?? body.donor_name;
+    }
+    if (body.amountINR !== undefined || body.amount_inr !== undefined) {
+      updatePayload.amount_inr = body.amountINR ?? body.amount_inr;
+    }
+
+    let { data, error } = await supabaseAdmin
       .from('donations')
-      .update({ status })
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single();
+
+    if (error && (error.message?.includes('rejection_reason') || error.code === '42703')) {
+      // Fallback if rejection_reason column not yet added to table
+      const fallback = { ...updatePayload };
+      delete fallback.rejection_reason;
+      const retry = await supabaseAdmin
+        .from('donations')
+        .update(fallback)
+        .eq('id', id)
+        .select()
+        .single();
+      if (!retry.error) {
+        data = { ...retry.data, rejection_reason: updatePayload.rejection_reason };
+        error = null;
+      }
+    }
 
     if (error) {
       console.error('Supabase error updating donation:', error);

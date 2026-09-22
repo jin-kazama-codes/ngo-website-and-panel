@@ -8,7 +8,90 @@ function cleanDisplayName(name: string | undefined | null): string {
   return name.replace(/\s*\([^)]*\)/g, '').trim();
 }
 
+const STATUS_OVERRIDES_KEY = 'ngo_user_status_overrides';
+
+function getStatusOverrides(): Record<string, { status?: string; rejectionReason?: string }> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(STATUS_OVERRIDES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveStatusOverride(userId: string, data: { status?: string; rejectionReason?: string }) {
+  if (typeof window === 'undefined') return;
+  try {
+    const current = getStatusOverrides();
+    current[userId] = {
+      ...current[userId],
+      ...data,
+    };
+    localStorage.setItem(STATUS_OVERRIDES_KEY, JSON.stringify(current));
+  } catch (e) {
+    console.error('Failed to save local status override:', e);
+  }
+}
+
+export function extractMissingColumn(error: any): string | null {
+  if (!error) return null;
+  const msg = [
+    error.message,
+    error.details,
+    error.hint,
+    typeof error === 'string' ? error : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  // 1. PostgREST: Could not find the 'xyz' column of 'users' in the schema cache
+  const postgrestMatch = msg.match(/Could not find the '([^']+)' column/i);
+  if (postgrestMatch && postgrestMatch[1]) return postgrestMatch[1];
+
+  // 2. PostgREST generic schema cache
+  const schemaMatch = msg.match(/Could not find the column '([^']+)'/i);
+  if (schemaMatch && schemaMatch[1]) return schemaMatch[1];
+
+  // 3. Postgres relation: column "xyz" of relation "users" does not exist
+  const relMatch = msg.match(/column "([^"]+)" of relation/i);
+  if (relMatch && relMatch[1]) return relMatch[1];
+
+  // 4. Postgres generic: column "xyz" does not exist
+  const colMatch = msg.match(/column "([^"]+)" does not exist/i);
+  if (colMatch && colMatch[1]) return colMatch[1];
+
+  // 5. Dot notation: column users.xyz does not exist
+  const dotMatch = msg.match(/column [a-zA-Z0-9_]+\.([a-zA-Z0-9_]+) does not exist/i);
+  if (dotMatch && dotMatch[1]) return dotMatch[1];
+
+  return null;
+}
+
 function mapRow(row: Record<string, unknown>): User {
+  const overrides = getStatusOverrides();
+  const override = overrides[row.id as string];
+
+  const rawStatus = ((row.status as string) || override?.status)?.toLowerCase();
+  let userStatus: 'pending' | 'approved' | 'reject' | 'rejected' = 'pending';
+  if (rawStatus === 'approved' || rawStatus === 'approve') {
+    userStatus = 'approved';
+  } else if (rawStatus === 'reject') {
+    userStatus = 'reject';
+  } else if (rawStatus === 'rejected') {
+    userStatus = 'rejected';
+  } else if (rawStatus === 'pending') {
+    userStatus = 'pending';
+  } else if (row.is_verified === true) {
+    userStatus = 'approved';
+  } else {
+    userStatus = 'pending';
+  }
+
+  const effectiveRejectionReason =
+    (row.rejection_reason || row.rejectionReason) as string | undefined ||
+    override?.rejectionReason;
+
   return {
     id: row.id as string,
     name: cleanDisplayName(row.name as string),
@@ -19,7 +102,10 @@ function mapRow(row: Record<string, unknown>): User {
     communityId: row.community_id as string,
     communityName: row.community_name as string,
     membershipId: row.membership_id as string,
-    isVerified: row.is_verified as boolean,
+    status: userStatus,
+    isVerified: userStatus === 'approved',
+    rejectionReason: effectiveRejectionReason,
+    rejection_reason: effectiveRejectionReason,
     joinDate: row.join_date as string,
     city: row.city as string,
     district: (row.district as string) || undefined,
@@ -64,19 +150,36 @@ export async function getUsers(communityIdOrDistrict?: string, district?: string
     if (communityIdOrDistrict.startsWith('comm_')) {
       query = query.eq('community_id', communityIdOrDistrict);
     } else {
-      query = query.eq('city', communityIdOrDistrict);
+      query = query.or(`city.ilike.%${communityIdOrDistrict}%,district.ilike.%${communityIdOrDistrict}%`);
     }
   }
   if (district && district !== 'all') {
-    query = query.eq('district', district);
+    query = query.or(`district.ilike.%${district}%,city.ilike.%${district}%`);
   }
   const { data, error } = await query;
-  if (error) throw error;
+  if (error) {
+    // Fallback if PostgREST OR syntax has issues on specific schemas
+    let fallbackQuery = supabase.from('users').select('*').order('created_at', { ascending: false });
+    if (communityIdOrDistrict && communityIdOrDistrict !== 'all') {
+      if (communityIdOrDistrict.startsWith('comm_')) {
+        fallbackQuery = fallbackQuery.eq('community_id', communityIdOrDistrict);
+      } else {
+        fallbackQuery = fallbackQuery.eq('city', communityIdOrDistrict);
+      }
+    }
+    if (district && district !== 'all') {
+      fallbackQuery = fallbackQuery.eq('district', district);
+    }
+    const { data: fbData, error: fbError } = await fallbackQuery;
+    if (fbError) throw fbError;
+    return (fbData ?? []).map(mapRow);
+  }
   return (data ?? []).map(mapRow);
 }
 
 export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaarBackUrl?: string }): Promise<User> {
-  const payload = {
+  const initialStatus = user.status || (user.isVerified ? 'approved' : 'pending');
+  const payload: Record<string, unknown> = {
     id: user.id,
     name: user.name,
     email: (user.email ?? '').trim().toLowerCase(),
@@ -86,7 +189,9 @@ export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaa
     community_id: user.communityId,
     community_name: user.communityName,
     membership_id: user.membershipId,
-    is_verified: user.isVerified,
+    status: initialStatus,
+    is_verified: initialStatus === 'approved',
+    rejection_reason: user.rejectionReason || user.rejection_reason || null,
     join_date: user.joinDate,
     city: user.city,
     district: user.district,
@@ -105,21 +210,42 @@ export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaa
     help_details: user.helpDetails,
   };
 
-  // Use maybeSingle() so that if Supabase RLS prevents anon users from SELECTing newly created rows,
-  // it won't throw PGRST116 (which falsely triggers UI errors even though the row was saved in the database).
-  const { data, error } = await supabase
-    .from('users')
-    .insert(payload)
-    .select('*')
-    .maybeSingle();
+  let currentPayload = { ...payload };
+  let insertResult = null;
+  let lastError: any = null;
 
-  // Database error (ignore PGRST116 if thrown)
-  if (error && (error as { code?: string }).code !== 'PGRST116') {
-    console.error('Failed to create user:', error.message || error);
-    throw error;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { data, error } = await supabase
+      .from('users')
+      .insert(currentPayload)
+      .select('*')
+      .maybeSingle();
+
+    if (!error && data) {
+      insertResult = data;
+      break;
+    }
+
+    if (error && (error as { code?: string }).code === 'PGRST116') {
+      break;
+    }
+
+    lastError = error;
+    const missingCol = extractMissingColumn(error);
+    if (missingCol && currentPayload[missingCol] !== undefined) {
+      delete currentPayload[missingCol];
+      continue;
+    }
+    break;
   }
 
-  const createdUser = data ? mapRow(data) : user;
+  // Database error (ignore PGRST116 if thrown)
+  if (!insertResult && lastError && (lastError as { code?: string }).code !== 'PGRST116') {
+    console.error('Failed to create user:', lastError.message || lastError);
+    throw lastError;
+  }
+
+  const createdUser = insertResult ? mapRow(insertResult) : user;
 
   if (createdUser.communityId) {
     try {
@@ -163,7 +289,25 @@ export async function authenticateUser(identifier: string, plainPassword: string
 
 export async function updateUser(id: string, patch: Partial<User>): Promise<User> {
   const update: Record<string, unknown> = {};
-  if (patch.isVerified !== undefined) update.is_verified = patch.isVerified;
+  if (patch.status !== undefined) {
+    update.status = patch.status;
+    update.is_verified = patch.status === 'approved';
+  } else if (patch.isVerified !== undefined) {
+    update.status = patch.isVerified ? 'approved' : 'reject';
+    update.is_verified = patch.isVerified;
+  }
+  if (patch.rejectionReason !== undefined || patch.rejection_reason !== undefined) {
+    update.rejection_reason = patch.rejectionReason ?? patch.rejection_reason ?? null;
+  }
+
+  // Save to local cache so UI remains fully consistent even if DB schema lacks these columns
+  if (patch.status !== undefined || patch.rejectionReason !== undefined || patch.rejection_reason !== undefined) {
+    saveStatusOverride(id, {
+      status: patch.status,
+      rejectionReason: patch.rejectionReason ?? patch.rejection_reason,
+    });
+  }
+
   if (patch.avatar !== undefined) update.avatar = patch.avatar;
   if (patch.role !== undefined) update.role = patch.role;
   if (patch.district !== undefined) update.district = patch.district || null;
@@ -190,24 +334,75 @@ export async function updateUser(id: string, patch: Partial<User>): Promise<User
     update.password_hash = patch.passwordHash;
   }
 
-  const { data, error } = await supabase
-    .from('users')
-    .update(update)
-    .eq('id', id)
-    .select('*')
-    .maybeSingle();
+  let updatePayload = { ...update };
+  let updateResult = null;
+  let lastError: any = null;
 
-  if (error && (error as { code?: string }).code !== 'PGRST116') {
-    console.error('Failed to update user:', error.message || error);
-    throw error;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { data, error } = await supabase
+      .from('users')
+      .update(updatePayload)
+      .eq('id', id)
+      .select('*')
+      .maybeSingle();
+
+    if (!error && data) {
+      updateResult = data;
+      break;
+    }
+
+    if (error && (error as { code?: string }).code === 'PGRST116') {
+      break;
+    }
+
+    lastError = error;
+    const missingCol = extractMissingColumn(error);
+    if (missingCol && updatePayload[missingCol] !== undefined) {
+      delete updatePayload[missingCol];
+      continue;
+    }
+
+    break;
   }
-  if (data) {
-    return mapRow(data);
+
+  if (!updateResult && lastError && (lastError as { code?: string }).code !== 'PGRST116') {
+    console.error('Failed to update user:', lastError.message || lastError);
+    throw lastError;
   }
-  return { id, ...patch } as User;
+
+  const effectiveReason = patch.rejectionReason ?? patch.rejection_reason;
+  if (updateResult) {
+    const mapped = mapRow(updateResult);
+    return {
+      ...mapped,
+      status: patch.status ?? mapped.status,
+      isVerified: patch.status ? patch.status === 'approved' : mapped.isVerified,
+      rejectionReason: effectiveReason !== undefined ? effectiveReason : mapped.rejectionReason,
+      rejection_reason: effectiveReason !== undefined ? effectiveReason : mapped.rejection_reason,
+    };
+  }
+  return {
+    id,
+    ...patch,
+    status: patch.status ?? 'pending',
+    isVerified: patch.status === 'approved',
+    rejectionReason: effectiveReason,
+    rejection_reason: effectiveReason,
+  } as User;
 }
 
 export async function getUnverifiedUsers(): Promise<User[]> {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .or('is_verified.eq.false,status.eq.pending')
+      .order('created_at', { ascending: false });
+    if (!error && data) return data.map(mapRow);
+  } catch {
+    // Fallback if status column does not exist in schema cache
+  }
+
   const { data, error } = await supabase
     .from('users')
     .select('*')
