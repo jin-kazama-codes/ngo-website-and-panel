@@ -5,7 +5,7 @@ import { User, Donation } from '../types';
 import { ShieldCheck, Download, CheckCircle2, QrCode, X, Sparkles, Building2 } from 'lucide-react';
 import { getUserById } from '../services/userService';
 import { useLanguage } from '../context/LanguageContext';
-import { translateCampaignTitle, translateCategory, translateCity } from '../lib/translateEntity';
+import { translateCampaignTitle, translateCategory, translateCity, translateDistrictRole } from '../lib/translateEntity';
 import { useDynamicTranslatedText } from '../lib/autoTranslate';
 
 interface MembershipCardModalProps {
@@ -27,6 +27,19 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
   const displayUserName = useDynamicTranslatedText(user.name, language) || user.name;
   const displayCommunity = useDynamicTranslatedText(user.communityName, language) || user.communityName;
   const displayCity = useDynamicTranslatedText(user.city, language) || translateCity(user.city, language);
+
+  const distRoleKeys = [
+    'district_president',
+    'district_coordinator',
+    'district_gen_secretary',
+    'district_secretary',
+    'district_finance_coord',
+  ];
+  const rawDistRole = (user.districtRole || (user as any).district_role || (distRoleKeys.includes(user.role as any) ? user.role : ''))?.trim() || '';
+  let cleanDistKey = rawDistRole.toLowerCase().replace(/\s+/g, '_');
+  if (cleanDistKey === 'district_general_secretary') cleanDistKey = 'district_gen_secretary';
+  if (cleanDistKey === 'district_finance_coordinator') cleanDistKey = 'district_finance_coord';
+  const distRoleTitle = cleanDistKey ? (translateDistrictRole(cleanDistKey, language as any) || rawDistRole) : '';
 
   useEffect(() => {
     let isMounted = true;
@@ -109,12 +122,12 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
               </div>
             </div>
 
-            {user.isPremium ? (
+            {distRoleTitle ? (
               <span
                 className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold"
-                style={{ background: 'rgba(200,168,75,0.2)', color: 'var(--mfct-gold)', border: '1px solid var(--mfct-gold)' }}
+                style={{ background: 'rgba(244,63,94,0.2)', color: '#fda4af', border: '1px solid rgba(244,63,94,0.45)' }}
               >
-                <Sparkles className="w-3.5 h-3.5" /> {tr('प्रीमियम गोल्ड सदस्य', 'پریمیم گولڈ ممبر', 'Premium Gold Member')}
+                <ShieldCheck className="w-3.5 h-3.5 text-rose-300" /> {distRoleTitle}{user.district ? ` (${user.district})` : ''}
               </span>
             ) : (
               <span

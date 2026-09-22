@@ -4,6 +4,7 @@ function mapRow(row: Record<string, unknown>): Community {
   return {
     id: (row.id as string),
     name: (row.name as string) || '',
+    district: (row.district || row.district_name) as string || '',
     city: (row.city as string) || '',
     state: (row.state as string) || '',
     adminName: (row.adminName || row.admin_name) as string,
@@ -59,6 +60,7 @@ function mapToDb(community: Partial<Community>): Record<string, any> {
   const mapped: Record<string, any> = {
     id: community.id,
     name: community.name,
+    district: community.district,
     city: community.city,
     state: community.state,
     admin_name: community.adminName,

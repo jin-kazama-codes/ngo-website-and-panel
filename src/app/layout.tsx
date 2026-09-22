@@ -162,6 +162,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>
+        {process.env.NEXT_PUBLIC_ENV === 'development' && (
+          <div style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: 'linear-gradient(90deg, #f59e0b, #ef4444)',
+            color: '#000',
+            textAlign: 'center',
+            fontSize: '12px',
+            fontWeight: 700,
+            padding: '4px 0',
+            zIndex: 99999,
+            letterSpacing: '0.05em',
+            fontFamily: 'monospace',
+          }}>
+            ⚠️ DEV ENVIRONMENT — Using <code style={{background:'rgba(0,0,0,0.15)',padding:'0 4px',borderRadius:'3px'}}>dev</code> schema — Dummy Data Only — Changes won&apos;t affect production
+          </div>
+        )}
         <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>

@@ -1,36 +1,85 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Campaign, Donation } from '../../types';
-import { 
-  PlusCircle, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Check, 
-  X, 
-  Clock, 
-  Flame, 
-  Users, 
-  HeartHandshake, 
-  BadgeCheck, 
-  Sparkles, 
-  Heart, 
-  Award, 
+import { Campaign, Donation, User, UserRole } from '../../types';
+import {
+  PlusCircle,
+  Eye,
+  Edit,
+  Trash2,
+  Check,
+  X,
+  Clock,
+  Flame,
+  Users,
+  HeartHandshake,
+  BadgeCheck,
+  Sparkles,
+  Heart,
+  Award,
   RotateCcw,
   Layers,
-  AlertTriangle
+  AlertTriangle,
+  Filter
 } from 'lucide-react';
 import { useAppState } from '../../providers/AppStateProvider';
 import { updateCampaignStatus, deleteCampaign } from '../../services/campaignService';
 import { getCampaignDonations } from '../../services/donationService';
+import { getCommunities } from '../../services/communityService';
+import { STANDARD_DISTRICTS } from '../../data/districtsData';
 
 import { useLanguage } from '../../context/LanguageContext';
 import { translateCampaignTitle, translateCategory } from '../../lib/translateEntity';
 import DynamicText from '../../components/DynamicText';
 
+// Inline mini carousel used inside admin campaign cards
+const MiniCarousel: React.FC<{ images: string[]; title: string }> = ({ images, title }) => {
+  const [idx, setIdx] = useState(0);
+  if (!images.length) return null;
+  const go = (n: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIdx((i) => (i + n + images.length) % images.length);
+  };
+  return (
+    <div className="relative w-full h-40 overflow-hidden bg-slate-100 dark:bg-slate-900 group">
+      {images.map((src, i) => (
+        <img
+          key={i}
+          src={src}
+          onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1584515933487-779824d29309?w=800&auto=format&fit=crop&q=60'; }}
+          alt={title}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-400 ${i === idx ? 'opacity-100' : 'opacity-0'}`}
+        />
+      ))}
+      {images.length > 1 && (
+        <>
+          <button type="button" onClick={(e) => go(-1, e)}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <button type="button" onClick={(e) => go(1, e)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-1">
+            {images.map((_, i) => (
+              <button key={i} type="button" onClick={(e) => { e.stopPropagation(); setIdx(i); }}
+                className={`rounded-full transition-all duration-200 cursor-pointer ${i === idx ? 'w-3.5 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'}`} />
+            ))}
+          </div>
+          <div className="absolute bottom-1.5 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded z-10">
+            📷 {idx + 1} / {images.length}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 interface CampaignsTabProps {
   campaignsList: Campaign[];
   onOpenCreateCampaign: (campaign?: Campaign) => void;
+  activeUser?: User;
+  currentRole?: UserRole;
 }
 
 type FilterType = 'all' | 'zakat' | 'sadqa' | 'fitrah' | 'urgent' | 'pending';
@@ -38,8 +87,13 @@ type FilterType = 'all' | 'zakat' | 'sadqa' | 'fitrah' | 'urgent' | 'pending';
 export const CampaignsTab: React.FC<CampaignsTabProps> = ({
   campaignsList,
   onOpenCreateCampaign,
+  activeUser: propActiveUser,
+  currentRole: propCurrentRole,
 }) => {
-  const { currentRole, handleCampaignUpdated } = useAppState();
+  const appState = useAppState();
+  const activeUser = propActiveUser || appState?.activeUser;
+  const currentRole = propCurrentRole || appState?.currentRole;
+  const handleCampaignUpdated = appState?.handleCampaignUpdated;
   const { language } = useLanguage();
   const tr = (hi: string, ur: string, en: string) => {
     if (language === 'hi') return hi;
@@ -55,6 +109,126 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
   const [selectedCampaignForDonors, setSelectedCampaignForDonors] = useState<Campaign | null>(null);
   const [campaignDonors, setCampaignDonors] = useState<Donation[]>([]);
   const [loadingDonors, setLoadingDonors] = useState<boolean>(false);
+  const [selectedDistrictFilter, setSelectedDistrictFilter] = useState<string>('');
+  const [communities, setCommunities] = useState<any[]>([]);
+
+  // Resolve role and district scope matching Communities component
+  const rawDistRole = (
+    activeUser?.district_role ||
+    activeUser?.districtRole ||
+    (activeUser?.role as string) ||
+    ''
+  ).toLowerCase().trim().replace(/\s+/g, '_');
+
+  const isSuperOrExecutive =
+    currentRole === 'super_admin' ||
+    currentRole === 'executive_admin' ||
+    activeUser?.role === 'super_admin' ||
+    activeUser?.role === 'executive_admin';
+
+  const districtRoleKeys = [
+    'district_president',
+    'district_coordinator',
+    'district_gen_secretary',
+    'district_secretary',
+    'district_finance_coord',
+  ];
+
+  const isDistrictRole =
+    districtRoleKeys.includes(currentRole as string) ||
+    districtRoleKeys.includes(rawDistRole) ||
+    (typeof currentRole === 'string' && currentRole.startsWith('district_')) ||
+    rawDistRole.startsWith('district_') ||
+    rawDistRole.includes('president') ||
+    rawDistRole.includes('coordinator') ||
+    rawDistRole.includes('secretary') ||
+    rawDistRole.includes('finance');
+
+  const isRestrictedToDistrict = !isSuperOrExecutive && isDistrictRole;
+
+  const districtRoleTitle =
+    currentRole === 'district_president' || rawDistRole.includes('president')
+      ? tr('जिला अध्यक्ष दृश्य', 'ضلعی صدر منظر', 'District President View')
+      : currentRole === 'district_coordinator' || rawDistRole.includes('coordinator')
+        ? tr('जिला संयोजक दृश्य', 'ضلعی کوآرڈینیٹر منظر', 'District Coordinator View')
+        : currentRole === 'district_gen_secretary' || rawDistRole.includes('gen_sec')
+          ? tr('जिला महासचिव दृश्य', 'ضلعی جنرل سیکرٹری منظر', 'District General Secretary View')
+          : currentRole === 'district_secretary' || rawDistRole.includes('secretary')
+            ? tr('जिला सचिव दृश्य', 'ضلعی سیکرٹری منظر', 'District Secretary View')
+            : currentRole === 'district_finance_coord' || rawDistRole.includes('finance')
+              ? tr('जिला वित्त समन्वयक दृश्य', 'ضلعی فنانس کوآرڈینیٹر منظر', 'District Finance Coordinator View')
+              : tr('जिला स्तरीय दृश्य', 'ضلعی سطحی منظر', 'District Level View');
+
+  const userDistrict = (activeUser?.district || activeUser?.city || '').trim();
+
+  // Load communities for reliable campaign -> district mapping
+  useEffect(() => {
+    getCommunities()
+      .then((data) => setCommunities(data || []))
+      .catch((err) => console.error('Failed to load communities for campaigns mapping:', err));
+  }, []);
+
+  const commById = useMemo(() => {
+    const map = new Map<string, any>();
+    communities.forEach((c) => map.set(c.id, c));
+    return map;
+  }, [communities]);
+
+  const commByName = useMemo(() => {
+    const map = new Map<string, any>();
+    communities.forEach((c) => map.set(c.name.toLowerCase().trim(), c));
+    return map;
+  }, [communities]);
+
+  const getCampaignDistrict = (c: Campaign): string => {
+    if ((c as any).district) return String((c as any).district);
+    if (c.communityId && commById.has(c.communityId)) {
+      const comm = commById.get(c.communityId)!;
+      return comm.district || comm.city || '';
+    }
+    if (c.communityName && commByName.has(c.communityName.toLowerCase().trim())) {
+      const comm = commByName.get(c.communityName.toLowerCase().trim())!;
+      return comm.district || comm.city || '';
+    }
+    return c.city || '';
+  };
+
+  // 1. District filtering
+  const districtFilteredCampaigns = useMemo(() => {
+    let list = campaignsList;
+
+    if (isRestrictedToDistrict && userDistrict) {
+      const target = userDistrict.toLowerCase().trim();
+      list = list.filter((c) => {
+        const campDistrict = getCampaignDistrict(c).toLowerCase().trim();
+        const campCity = (c.city || '').toLowerCase().trim();
+        return (
+          campDistrict === target ||
+          (campDistrict && target.includes(campDistrict)) ||
+          (target && campDistrict.includes(target)) ||
+          campCity === target ||
+          (campCity && target.includes(campCity)) ||
+          (target && campCity.includes(target))
+        );
+      });
+    } else if (selectedDistrictFilter) {
+      const target = selectedDistrictFilter.toLowerCase().trim();
+      list = list.filter((c) => {
+        const campDistrict = getCampaignDistrict(c).toLowerCase().trim();
+        const campCity = (c.city || '').toLowerCase().trim();
+        return (
+          campDistrict === target ||
+          (campDistrict && target.includes(campDistrict)) ||
+          (target && campDistrict.includes(target)) ||
+          campCity === target ||
+          (campCity && target.includes(campCity)) ||
+          (target && campCity.includes(target))
+        );
+      });
+    }
+
+    return list;
+  }, [campaignsList, isRestrictedToDistrict, userDistrict, selectedDistrictFilter, commById, commByName]);
 
   useEffect(() => {
     if (selectedCampaignForDonors?.id) {
@@ -99,7 +273,7 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
       const newStatus = isApprove ? 'active' : 'rejected';
       const isVerified = isApprove;
       const updated = await updateCampaignStatus(id, newStatus, isVerified);
-      handleCampaignUpdated(updated);
+      if (handleCampaignUpdated) handleCampaignUpdated(updated);
       showToast(
         isApprove
           ? tr('अभियान स्वीकृत कर दिया गया', 'مہم منظور کر لی گئی', 'Campaign approved successfully')
@@ -116,17 +290,17 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
 
   const isAdmin = currentRole === 'super_admin' || currentRole === 'executive_admin';
 
-  // Filter counts
+  // Filter counts based on active district scope
   const counts = {
-    all: campaignsList.length,
-    zakat: campaignsList.filter((c) => !!c.isZakatEligible).length,
-    sadqa: campaignsList.filter((c) => !!c.isSadqaEligible).length,
-    fitrah: campaignsList.filter((c) => !!c.isFitrahEligible).length,
-    urgent: campaignsList.filter((c) => !!c.isUrgent).length,
-    pending: campaignsList.filter((c) => c.status === 'pending_approval' || c.status === 'pending').length,
+    all: districtFilteredCampaigns.length,
+    zakat: districtFilteredCampaigns.filter((c) => !!c.isZakatEligible).length,
+    sadqa: districtFilteredCampaigns.filter((c) => !!c.isSadqaEligible).length,
+    fitrah: districtFilteredCampaigns.filter((c) => !!c.isFitrahEligible).length,
+    urgent: districtFilteredCampaigns.filter((c) => !!c.isUrgent).length,
+    pending: districtFilteredCampaigns.filter((c) => c.status === 'pending_approval' || c.status === 'pending').length,
   };
 
-  const filteredCampaigns = campaignsList.filter((c) => {
+  const filteredCampaigns = districtFilteredCampaigns.filter((c) => {
     if (activeFilter === 'zakat') return !!c.isZakatEligible;
     if (activeFilter === 'sadqa') return !!c.isSadqaEligible;
     if (activeFilter === 'fitrah') return !!c.isFitrahEligible;
@@ -174,523 +348,627 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
   const targetDeleteCamp = deleteConfirmId ? campaignsList.find((c) => c.id === deleteConfirmId) : null;
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-5 shadow-sm">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white">
-            {tr('सामुदायिक अभियान प्रबंधक', 'کمیونٹی مہمات کا انتظام', 'Community Campaign Manager')}
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {tr('सत्यापित सामुदायिक अभियानों की समीक्षा करें और प्रकाशित करें।', 'تصدیق شدہ کمیونٹی مہمات کا جائزہ لیں और شائع کریں۔', 'Review and publish verified community fundraising causes.')}
-          </p>
-        </div>
-        <button
-          onClick={() => onOpenCreateCampaign()}
-          className="cursor-pointer px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 flex items-center gap-1.5 self-start sm:self-auto transition-all shadow-sm"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>{tr('+ नया अभियान बनाएं', '+ नई مہم شامل کریں', '+ Create New Campaign')}</span>
-        </button>
-      </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div
+        className="rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-6"
+        style={{
+          background:
+            'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0a1c12 100%)',
+          border: '1px solid rgba(200,168,75,0.3)',
+          boxShadow: 'var(--shadow-card)',
+        }}
+      >
+        {/* Decorative Glow */}
+        <div
+          className="absolute top-0 right-0 -mr-20 -mt-20 w-72 h-72 rounded-full blur-3xl pointer-events-none"
+          style={{
+            background: 'rgba(200,168,75,0.18)',
+          }}
+        />
 
-      {/* Filter Tabs Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {/* All */}
-        <button
-          onClick={() => setActiveFilter('all')}
-          className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
-            activeFilter === 'all'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-          }`}
-        >
-          <Layers className="w-3.5 h-3.5" />
-          <span>{tr('सभी अभियान', 'تمام مہمات', 'All Campaigns')}</span>
-          <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-            activeFilter === 'all' ? 'bg-white/20 dark:bg-slate-900/20 text-white dark:text-slate-900' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-          }`}>
-            {counts.all}
-          </span>
-        </button>
-
-        {/* Zakat Eligible */}
-        <button
-          onClick={() => setActiveFilter('zakat')}
-          className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
-            activeFilter === 'zakat'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
-          }`}
-        >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>{tr('ज़कात पात्र', 'زکوٰۃ کے اہل', 'Zakat Eligible')}</span>
-          <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-            activeFilter === 'zakat' ? 'bg-white/20 text-white' : 'bg-emerald-200/80 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200'
-          }`}>
-            {counts.zakat}
-          </span>
-        </button>
-
-        {/* Sadqa Eligible */}
-        <button
-          onClick={() => setActiveFilter('sadqa')}
-          className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
-            activeFilter === 'sadqa'
-              ? 'bg-teal-600 text-white shadow-sm'
-              : 'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 hover:bg-teal-100 dark:hover:bg-teal-900/50'
-          }`}
-        >
-          <Heart className="w-3.5 h-3.5 fill-teal-400 text-teal-400" />
-          <span>{tr('सदका पात्र', 'صدقہ کے اہل', 'Sadqa Eligible')}</span>
-          <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-            activeFilter === 'sadqa' ? 'bg-white/20 text-white' : 'bg-teal-200/80 dark:bg-teal-900 text-teal-800 dark:text-teal-200'
-          }`}>
-            {counts.sadqa}
-          </span>
-        </button>
-
-        {/* Fitrah Eligible */}
-        <button
-          onClick={() => setActiveFilter('fitrah')}
-          className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
-            activeFilter === 'fitrah'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/50'
-          }`}
-        >
-          <Award className="w-3.5 h-3.5 text-indigo-400" />
-          <span>{tr('फ़ितरा पात्र', 'فطرہ کے اہل', 'Fitrah Eligible')}</span>
-          <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-            activeFilter === 'fitrah' ? 'bg-white/20 text-white' : 'bg-indigo-200/80 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200'
-          }`}>
-            {counts.fitrah}
-          </span>
-        </button>
-
-        {/* Urgent */}
-        <button
-          onClick={() => setActiveFilter('urgent')}
-          className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
-            activeFilter === 'urgent'
-              ? 'bg-rose-600 text-white shadow-sm'
-              : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-rose-900/50'
-          }`}
-        >
-          <Flame className="w-3.5 h-3.5 text-rose-500" />
-          <span>{tr('अति आवश्यक', 'اہم / ہنگامی', 'Urgent')}</span>
-          <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-            activeFilter === 'urgent' ? 'bg-white/20 text-white' : 'bg-rose-200/80 dark:bg-rose-900 text-rose-800 dark:text-rose-200'
-          }`}>
-            {counts.urgent}
-          </span>
-        </button>
-
-        {/* Pending Approval */}
-        {counts.pending > 0 && (
-          <button
-            onClick={() => setActiveFilter('pending')}
-            className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
-              activeFilter === 'pending'
-                ? 'bg-amber-600 text-white shadow-sm'
-                : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/50'
-            }`}
+        {/* Header Content */}
+        <div className="flex items-start gap-4 relative z-10">
+          {/* Icon */}
+          <div
+            className="p-3.5 rounded-2xl shrink-0 mt-0.5"
+            style={{
+              background: 'rgba(200,168,75,0.15)',
+              border: '1px solid rgba(200,168,75,0.35)',
+            }}
           >
-            <Clock className="w-3.5 h-3.5 text-amber-500" />
-            <span>{tr('स्वीकृति लंबित', 'زیر التواء', 'Pending')}</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-              activeFilter === 'pending' ? 'bg-white/20 text-white' : 'bg-amber-200/80 dark:bg-amber-900 text-amber-800 dark:text-amber-200'
-            }`}>
-              {counts.pending}
-            </span>
-          </button>
-        )}
-      </div>
-
-      {/* Campaigns Grid or Multilingual Empty State */}
-      {filteredCampaigns.length === 0 ? (
-        <div className="py-14 px-6 text-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex flex-col items-center justify-center space-y-4 animate-fade-in">
-          <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 shadow-inner">
-            <HeartHandshake className="w-8 h-8" />
+            <HeartHandshake
+              className="w-6 h-6"
+              style={{
+                color: 'var(--mfct-gold)',
+              }}
+            />
           </div>
 
-          <div className="max-w-md space-y-1.5">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-              {emptyState.title}
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              {emptyState.desc}
+          {/* Title & Description */}
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+              {tr(
+                'सामुदायिक अभियान प्रबंधक',
+                'کمیونٹی مہمات کا انتظام',
+                'Community Campaign Manager'
+              )}
+            </h1>
+
+            <p
+              className="text-xs sm:text-sm mt-1 max-w-4xl"
+              style={{
+                color: 'rgba(200,168,75,0.9)',
+              }}
+            >
+              {tr(
+                'सत्यापित सामुदायिक अभियानों की समीक्षा करें और प्रकाशित करें।',
+                'تصدیق شدہ کمیونٹی مہمات کا جائزہ لیں اور شائع کریں۔',
+                'Review and publish verified community fundraising causes.'
+              )}
             </p>
           </div>
-
-          <div className="flex items-center gap-3 pt-2 flex-wrap justify-center">
-            {activeFilter !== 'all' && (
-              <button
-                onClick={() => setActiveFilter('all')}
-                className="cursor-pointer px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center gap-1.5 transition-colors"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>{tr('सभी अभियान देखें', 'تمام مہمات دیکھیں', 'View All Campaigns')}</span>
-              </button>
-            )}
-            <button
-              onClick={() => onOpenCreateCampaign()}
-              className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>{tr('+ नया अभियान बनाएं', '+ नई مہم بنائیں', '+ Create New Campaign')}</span>
-            </button>
-          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredCampaigns.map((c) => (
-            <div key={c.id} className="p-0 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col shadow-sm">
-              {c.mainImage && (
-                <div className="w-full h-40 overflow-hidden bg-slate-100 dark:bg-slate-900 relative">
-                  <img
-                    src={c.mainImage}
-                    onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1584515933487-779824d29309?w=800&auto=format&fit=crop&q=60' }}
-                    alt={c.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 absolute inset-0"
-                  />
-                </div>
+
+        {/* Action Button */}
+        <div className="relative z-10 flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => onOpenCreateCampaign()}
+            className="cursor-pointer px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-lg hover:brightness-110 active:scale-95"
+            style={{
+              background:
+                'linear-gradient(135deg, var(--mfct-gold) 0%, #d4af37 100%)',
+              color: 'var(--mfct-dark-green)',
+              boxShadow: '0 4px 15px rgba(200,168,75,0.35)',
+            }}
+          >
+            <PlusCircle className="w-4 h-4" />
+
+            <span>
+              {tr(
+                '+ नया अभियान बनाएं',
+                '+ نئی مہم شامل کریں',
+                '+ Create New Campaign'
               )}
-              <div className="p-4 space-y-3 flex-1 flex flex-col">
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-1.5 items-center flex-wrap">
-                    {/* Category */}
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-                      {translateCategory(c.category, language)}
+            </span>
+          </button>
+        </div>
+      </div>
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-5 shadow-sm">
+        {/* District Role Filter Indicator Banner */}
+        {isRestrictedToDistrict && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Award className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                  <span>{districtRoleTitle}</span>
+                  {userDistrict && (
+                    <span className="px-2 py-0.5 rounded-md bg-amber-200/80 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200 text-[10px] font-bold">
+                      {userDistrict}
                     </span>
-
-                    {/* Zakat Badge */}
-                    {c.isZakatEligible && (
-                      <span className="text-[10px] font-bold tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800 flex items-center gap-1">
-                        <Sparkles className="w-2.5 h-2.5 text-amber-600" />
-                        <span>{tr('ज़कात', 'زکوٰۃ', 'Zakat')}</span>
-                      </span>
-                    )}
-
-                    {/* Sadqa Badge */}
-                    {c.isSadqaEligible && (
-                      <span className="text-[10px] font-bold tracking-wider text-teal-800 dark:text-teal-300 bg-teal-100 dark:bg-teal-950 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800 flex items-center gap-1">
-                        <Heart className="w-2.5 h-2.5 fill-teal-600 text-teal-600" />
-                        <span>{tr('सदका', 'صدقہ', 'Sadqa')}</span>
-                      </span>
-                    )}
-
-                    {/* Fitrah Badge */}
-                    {c.isFitrahEligible && (
-                      <span className="text-[10px] font-bold tracking-wider text-indigo-800 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-950 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 flex items-center gap-1">
-                        <Award className="w-2.5 h-2.5 text-indigo-600" />
-                        <span>{tr('फ़ितरा', 'فطرہ', 'Fitrah')}</span>
-                      </span>
-                    )}
-
-                    {/* Urgent Badge */}
-                    {c.isUrgent && (
-                      <span className="text-[10px] font-bold tracking-wider text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-950 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-800 flex items-center gap-1">
-                        <Flame className="w-2.5 h-2.5" />
-                        <span>{tr('अति आवश्यक', 'اہم', 'Urgent')}</span>
-                      </span>
-                    )}
-
-                    {/* Pending Approval Badge */}
-                    {(c.status === 'pending_approval' || c.status === 'pending') && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        <span>{tr('स्वीकृति लंबित', 'زیر التواء', 'Pending')}</span>
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 shrink-0 ml-1">
-                    {c.daysLeft} {tr('दिन शेष', 'دن باقی', 'days left')}
-                  </span>
-                </div>
-                <h4 className="font-bold text-sm text-slate-900 dark:text-white capitalize">
-                  <DynamicText text={c.title} lang={language} fallback={translateCampaignTitle(c.title, language)} />
-                </h4>
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between text-slate-500 dark:text-slate-400">
-                    <span>{tr('एकत्रित:', 'جمع شدہ:', 'Raised:')} ₹{(c.raisedINR || 0).toLocaleString('en-IN')}</span>
-                    <span>{tr('लक्ष्य:', 'ہدف:', 'Goal:')} ₹{c.goalINR.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <div
-                      className="bg-emerald-500 h-full rounded-full"
-                      style={{ width: `${Math.min(100, (c.raisedINR / c.goalINR) * 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="pt-3 mt-auto border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-end gap-2">
-                  {isAdmin && (c.status === 'pending_approval' || c.status === 'pending') && (
-                    <>
-                      <button
-                        onClick={() => handleAction(c.id, true)}
-                        disabled={processingId === c.id}
-                        className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-white dark:hover:text-white bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-500 dark:hover:bg-emerald-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50 border border-emerald-200 dark:border-transparent"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>{tr('स्वीकार करें', 'منظور کریں', 'Approve')}</span>
-                      </button>
-                      <button
-                        onClick={() => handleAction(c.id, false)}
-                        disabled={processingId === c.id}
-                        className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-white bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-500 dark:hover:bg-rose-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50 border border-rose-200 dark:border-transparent"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                        <span>{tr('अस्वीकार करें', 'مسترد کریں', 'Reject')}</span>
-                      </button>
-                    </>
                   )}
-                  <button
-                    onClick={() => setSelectedCampaignForDonors(c)}
-                    className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 hover:text-white bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-600 dark:hover:bg-emerald-600 rounded-lg flex items-center gap-1 transition-colors border border-emerald-200 dark:border-emerald-800"
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    <span>{tr('दानदाता सूची', 'معاونین', 'Donors')} ({c.donorsCount || 0})</span>
-                  </button>
-                  <button
-                    onClick={() => router.push(`/campaigns/${c.id}`)}
-                    className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg flex items-center gap-1 transition-colors"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>{tr('विवरण देखें', 'تفصیلات دیکھیں', 'View Details')}</span>
-                  </button>
-                  <button
-                    onClick={() => onOpenCreateCampaign(c)}
-                    className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg flex items-center gap-1 transition-colors"
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                    <span>{tr('संपादित करें', 'ترمیم', 'Edit')}</span>
-                  </button>
-                  <button
-                    onClick={() => setDeleteConfirmId(c.id)}
-                    disabled={processingId === c.id}
-                    className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>{tr('हटाएं', 'حذف کریں', 'Delete')}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-[100] text-sm font-bold text-white transition-all transform duration-300 ease-out ${toastMessage.type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'
-          }`}>
-          {toastMessage.message}
-        </div>
-      )}
-
-      {/* Campaign Donors List Modal */}
-      {selectedCampaignForDonors && (
-        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-sm z-[110] flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl relative max-h-[88vh] flex flex-col">
-            <button
-              onClick={() => setSelectedCampaignForDonors(null)}
-              className="cursor-pointer absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-full transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Modal Header */}
-            <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-4 mb-4">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
-                <HeartHandshake className="w-5 h-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate">
-                  {translateCampaignTitle(selectedCampaignForDonors.title, language)}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {tr('दानदाता सूची एवं सत्यापन विवरण', 'معاونین اور تصدیقی ریکارڈ', 'Donors & Verification Ledger')} • {campaignDonors.length} {tr('सहयोग', 'عطیات', 'contributions')}
+                </p>
+                <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                  {tr(
+                    `केवल आपके जिले (${userDistrict || 'निर्दिष्ट जिला'}) के अभियान दिखाए जा रहे हैं।`,
+                    `صرف آپ کے ضلع (${userDistrict || 'مخصوص ضلع'}) کی مہمات دکھائی جا رہی ہیں۔`,
+                    `Showing only campaigns belonging to your designated district (${userDistrict || 'Assigned District'}).`
+                  )}
                 </p>
               </div>
             </div>
+            <span className="self-start sm:self-auto px-3 py-1 rounded-full bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300 font-bold text-[11px] shrink-0">
+              {districtFilteredCampaigns.length} {tr('अभियान', 'مہمات', districtFilteredCampaigns.length === 1 ? 'Campaign' : 'Campaigns')}
+            </span>
+          </div>
+        )}
 
-            {/* Campaign Summary bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs mb-4">
-              <div>
-                <span className="text-slate-500 block text-[10px] uppercase font-bold">{tr('एकत्रित', 'جمع شدہ', 'Raised')}</span>
-                <span className="font-extrabold text-emerald-600 text-sm">₹{(selectedCampaignForDonors.raisedINR || 0).toLocaleString('en-IN')}</span>
-              </div>
-              <div>
-                <span className="text-slate-500 block text-[10px] uppercase font-bold">{tr('लक्ष्य', 'ہدف', 'Goal')}</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">₹{selectedCampaignForDonors.goalINR.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="col-span-2 sm:col-span-1">
-                <span className="text-slate-500 block text-[10px] uppercase font-bold">{tr('दानदाता', 'معاونین', 'Total Donors')}</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">{campaignDonors.length || selectedCampaignForDonors.donorsCount || 0}</span>
-              </div>
-            </div>
+        {/* Filter Controls Row */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
+          {/* Filter Tabs Bar */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none flex-1">
+            {/* All */}
+            <button
+              onClick={() => setActiveFilter('all')}
+              className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${activeFilter === 'all'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>{tr('सभी अभियान', 'تمام مہمات', 'All Campaigns')}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'all' ? 'bg-white/20 dark:bg-slate-900/20 text-white dark:text-slate-900' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                }`}>
+                {counts.all}
+              </span>
+            </button>
 
-            {/* Donors List Scrollable Area */}
-            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 min-h-[160px]">
-              {loadingDonors ? (
-                <div className="space-y-3 p-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-14 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse"></div>
-                  ))}
-                </div>
-              ) : campaignDonors.length === 0 ? (
-                <div className="text-center py-10 space-y-2 text-slate-500 dark:text-slate-400">
-                  <HeartHandshake className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto" />
-                  <p className="text-sm font-medium">{tr('इस अभियान में अभी तक कोई दान दर्ज नहीं हुआ है।', 'اس مہم کے لیے ابھی کوئی عطیہ نہیں ہے۔', 'No donations recorded for this campaign yet.')}</p>
-                </div>
-              ) : (
-                campaignDonors.map((don, idx) => {
-                  const isAnonymous = !don.donorName || don.donorName.toLowerCase().includes('anonymous') || don.donorName.toLowerCase().includes('गुमनाम');
-                  const displayName = isAnonymous
-                    ? tr('गुमनाम दानदाता', 'گمنام معاون', 'Anonymous Supporter')
-                    : don.donorName;
-                  const initial = displayName.trim().charAt(0).toUpperCase();
-                  const avatarUrl = !isAnonymous ? don.donorAvatar : null;
+            {/* Zakat Eligible */}
+            <button
+              onClick={() => setActiveFilter('zakat')}
+              className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${activeFilter === 'zakat'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
+                }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>{tr('ज़कात पात्र', 'زکوٰۃ کے اہل', 'Zakat Eligible')}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'zakat' ? 'bg-white/20 text-white' : 'bg-emerald-200/80 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200'
+                }`}>
+                {counts.zakat}
+              </span>
+            </button>
 
-                  return (
-                    <div
-                      key={don.id || idx}
-                      className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-between gap-3 text-xs"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="relative w-9 h-9 shrink-0">
-                          {avatarUrl ? (
-                            <img
-                              src={avatarUrl}
-                              alt={displayName}
-                              className="w-9 h-9 rounded-xl object-cover ring-1 ring-emerald-200"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                const fallback = e.currentTarget.parentElement?.querySelector('.avatar-fallback') as HTMLElement;
-                                if (fallback) fallback.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div
-                            className={`avatar-fallback w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-extrabold items-center justify-center ${avatarUrl ? 'hidden' : 'flex'}`}
-                          >
-                            {initial}
-                          </div>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-bold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
-                            <span>{displayName}</span>
-                            {don.status === 'verified' ? (
-                              <BadgeCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            ) : (
-                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold">Pending</span>
-                            )}
-                          </p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                            {don.date ? new Date(don.date).toLocaleDateString() : 'N/A'}{' '}
-                            {don.utrNumber ? `• UTR: ${don.utrNumber}` : ''}
-                            {don.category ? ` • ${don.category}` : ''}
-                          </p>
-                        </div>
-                      </div>
+            {/* Sadqa Eligible */}
+            <button
+              onClick={() => setActiveFilter('sadqa')}
+              className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${activeFilter === 'sadqa'
+                ? 'bg-teal-600 text-white shadow-sm'
+                : 'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 hover:bg-teal-100 dark:hover:bg-teal-900/50'
+                }`}
+            >
+              <Heart className="w-3.5 h-3.5 text-teal-500" />
+              <span>{tr('सदका पात्र', 'صدقہ کے اہل', 'Sadqa Eligible')}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'sadqa' ? 'bg-white/20 text-white' : 'bg-teal-200/80 dark:bg-teal-900 text-teal-800 dark:text-teal-200'
+                }`}>
+                {counts.sadqa}
+              </span>
+            </button>
 
-                      <div className="text-right shrink-0">
-                        <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm block">
-                          ₹{don.amountINR.toLocaleString('en-IN')}
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-mono block uppercase">
-                          {don.paymentMethod || 'UPI'}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+            {/* Fitrah Eligible */}
+            <button
+              onClick={() => setActiveFilter('fitrah')}
+              className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${activeFilter === 'fitrah'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/50'
+                }`}
+            >
+              <Award className="w-3.5 h-3.5 text-indigo-500" />
+              <span>{tr('फ़ितरा / फ़िद्या', 'فطرہ / فدیہ', 'Fitrah')}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'fitrah' ? 'bg-white/20 text-white' : 'bg-indigo-200/80 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200'
+                }`}>
+                {counts.fitrah}
+              </span>
+            </button>
 
-            {/* Modal Footer */}
-            <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+            {/* Urgent */}
+            <button
+              onClick={() => setActiveFilter('urgent')}
+              className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${activeFilter === 'urgent'
+                ? 'bg-rose-600 text-white shadow-sm'
+                : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-rose-900/50'
+                }`}
+            >
+              <Flame className="w-3.5 h-3.5 text-rose-500" />
+              <span>{tr('अति आवश्यक', 'اہم / ہنگامی', 'Urgent')}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'urgent' ? 'bg-white/20 text-white' : 'bg-rose-200/80 dark:bg-rose-900 text-rose-800 dark:text-rose-200'
+                }`}>
+                {counts.urgent}
+              </span>
+            </button>
+
+            {/* Pending Approval */}
+            {counts.pending > 0 && (
               <button
-                onClick={() => setSelectedCampaignForDonors(null)}
-                className="cursor-pointer px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                onClick={() => setActiveFilter('pending')}
+                className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${activeFilter === 'pending'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/50'
+                  }`}
               >
-                {tr('बंद करें', 'بند کریں', 'Close')}
+                <Clock className="w-3.5 h-3.5 text-amber-500" />
+                <span>{tr('स्वीकृति लंबित', 'زیر التواء', 'Pending')}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'pending' ? 'bg-white/20 text-white' : 'bg-amber-200/80 dark:bg-amber-900 text-amber-800 dark:text-amber-200'
+                  }`}>
+                  {counts.pending}
+                </span>
               </button>
+            )}
+          </div>
+
+          {/* District Filter Dropdown for Super Admins / Executive Admins */}
+          {!isRestrictedToDistrict && (
+            <div className="flex items-center gap-2 shrink-0 self-start md:self-auto">
+              <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <select
+                value={selectedDistrictFilter}
+                onChange={(e) => setSelectedDistrictFilter(e.target.value)}
+                className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:border-emerald-500 outline-none cursor-pointer"
+              >
+                <option value="">{tr('सभी जिले (All Districts)', 'تمام اضلاع', 'All Districts')}</option>
+                {STANDARD_DISTRICTS.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {language === 'hi' ? d.nameHi : language === 'ur' ? d.nameUr : d.nameEn}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {/* Campaigns Grid or Multilingual Empty State */}
+        {filteredCampaigns.length === 0 ? (
+          <div className="py-14 px-6 text-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex flex-col items-center justify-center space-y-4 animate-fade-in">
+            <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 shadow-inner">
+              <HeartHandshake className="w-8 h-8" />
+            </div>
+
+            <div className="max-w-md space-y-1.5">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                {emptyState.title}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                {emptyState.desc}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2 flex-wrap justify-center">
+              {activeFilter !== 'all' && (
+                <button
+                  onClick={() => setActiveFilter('all')}
+                  className="cursor-pointer px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>{tr('सभी अभियान देखें', 'تمام مہمات دیکھیں', 'View All Campaigns')}</span>
+                </button>
+              )}
               <button
-                onClick={() => {
-                  const cid = selectedCampaignForDonors.id;
-                  setSelectedCampaignForDonors(null);
-                  router.push(`/campaigns/${cid}`);
-                }}
+                onClick={() => onOpenCreateCampaign()}
                 className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors"
               >
-                <Eye className="w-3.5 h-3.5" />
-                <span>{tr('अभियान पृष्ठ पर जाएं', 'مہم کے صفحے پر جائیں', 'Open Campaign Page')}</span>
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>{tr('+ नया अभियान बनाएं', '+ नई مہم بنائیں', '+ Create New Campaign')}</span>
               </button>
             </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredCampaigns.map((c) => (
+              <div key={c.id} className="p-0 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col shadow-sm">
+                {/* Mini image carousel for admin card */}
+                <MiniCarousel
+                  images={[c.mainImage, ...(c.galleryImages || [])].filter((u): u is string => !!u && typeof u === 'string')}
+                  title={c.title}
+                />
+                <div className="p-4 space-y-3 flex-1 flex flex-col">
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-1.5 items-center flex-wrap">
+                      {/* Category */}
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                        {translateCategory(c.category, language)}
+                      </span>
 
-      {/* Delete Confirmation Modal */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-[120] flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl relative">
-            <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
+                      {/* Zakat Badge */}
+                      {c.isZakatEligible && (
+                        <span className="text-[10px] font-bold tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+                          <span>{tr('ज़कात', 'زکوٰۃ', 'Zakat')}</span>
+                        </span>
+                      )}
 
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-              {tr('अभियान हटाएं?', 'مہم حذف کریں؟', 'Delete Campaign?')}
-            </h3>
+                      {/* Sadqa Badge */}
+                      {c.isSadqaEligible && (
+                        <span className="text-[10px] font-bold tracking-wider text-teal-800 dark:text-teal-300 bg-teal-100 dark:bg-teal-950 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800 flex items-center gap-1">
+                          <Heart className="w-2.5 h-2.5 fill-teal-600 text-teal-600" />
+                          <span>{tr('सदका', 'صدقہ', 'Sadqa')}</span>
+                        </span>
+                      )}
 
-            {targetDeleteCamp && (
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 truncate">
-                {translateCampaignTitle(targetDeleteCamp.title, language)}
-              </p>
-            )}
+                      {/* Fitrah Badge */}
+                      {c.isFitrahEligible && (
+                        <span className="text-[10px] font-bold tracking-wider text-indigo-800 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-950 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 flex items-center gap-1">
+                          <Award className="w-2.5 h-2.5 text-indigo-600" />
+                          <span>{tr('फ़ितरा', 'فطرہ', 'Fitrah')}</span>
+                        </span>
+                      )}
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-              {targetDeleteCamp && (targetDeleteCamp.donorsCount > 0 || (targetDeleteCamp.raisedINR || 0) > 0) ? (
-                <span className="text-amber-600 dark:text-amber-400 font-semibold block mb-1">
-                  {tr(
-                    `इस अभियान में ${targetDeleteCamp.donorsCount || 0} दान (₹${(targetDeleteCamp.raisedINR || 0).toLocaleString('en-IN')}) दर्ज हैं। इसे हटाने पर इसके सभी दान रिकॉर्ड भी हटा दिए जाएंगे।`,
-                    `اس مہم میں عطیات درج ہیں۔ مہم حذف کرنے پر اس کے تمام عطیات بھی حذف کر دیے جائیں گے۔`,
-                    `This campaign has ${targetDeleteCamp.donorsCount || 0} donation(s) (₹${(targetDeleteCamp.raisedINR || 0).toLocaleString('en-IN')}). Deleting this will also remove all associated donation records.`
-                  )}
-                </span>
-              ) : null}
-              {tr('यह क्रिया पूर्ववत नहीं की जा सकती। क्या आप वाकई इस अभियान को स्थायी रूप से हटाना चाहते हैं?', 'اس عمل کو واپس نہیں لیا جا سکتا۔ کیا آپ واقعی اس مہم کو مستقل طور پر حذف کرنا چاہتے ہیں؟', 'This action cannot be undone. Are you sure you want to permanently delete this campaign?')}
-            </p>
+                      {/* Urgent Badge */}
+                      {c.isUrgent && (
+                        <span className="text-[10px] font-bold tracking-wider text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-950 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-800 flex items-center gap-1">
+                          <Flame className="w-2.5 h-2.5" />
+                          <span>{tr('अति आवश्यक', 'اہم', 'Urgent')}</span>
+                        </span>
+                      )}
 
-            <div className="flex items-center gap-3">
+                      {/* Pending Approval Badge */}
+                      {(c.status === 'pending_approval' || c.status === 'pending') && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span>{tr('स्वीकृति लंबित', 'زیر التواء', 'Pending')}</span>
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 shrink-0 ml-1">
+                      {c.daysLeft} {tr('दिन शेष', 'دن باقی', 'days left')}
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white capitalize">
+                    <DynamicText text={c.title} lang={language} fallback={translateCampaignTitle(c.title, language)} />
+                  </h4>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between text-slate-500 dark:text-slate-400">
+                      <span>{tr('एकत्रित:', 'جمع شدہ:', 'Raised:')} ₹{(c.raisedINR || 0).toLocaleString('en-IN')}</span>
+                      <span>{tr('लक्ष्य:', 'ہدف:', 'Goal:')} ₹{c.goalINR.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="bg-emerald-500 h-full rounded-full"
+                        style={{ width: `${Math.min(100, (c.raisedINR / c.goalINR) * 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="pt-3 mt-auto border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-end gap-2">
+                    {isAdmin && (c.status === 'pending_approval' || c.status === 'pending') && (
+                      <>
+                        <button
+                          onClick={() => handleAction(c.id, true)}
+                          disabled={processingId === c.id}
+                          className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-white dark:hover:text-white bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-500 dark:hover:bg-emerald-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50 border border-emerald-200 dark:border-transparent"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>{tr('स्वीकार करें', 'منظور کریں', 'Approve')}</span>
+                        </button>
+                        <button
+                          onClick={() => handleAction(c.id, false)}
+                          disabled={processingId === c.id}
+                          className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-white bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-500 dark:hover:bg-rose-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50 border border-rose-200 dark:border-transparent"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>{tr('अस्वीकार करें', 'مسترد کریں', 'Reject')}</span>
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => setSelectedCampaignForDonors(c)}
+                      className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 hover:text-white bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-600 dark:hover:bg-emerald-600 rounded-lg flex items-center gap-1 transition-colors border border-emerald-200 dark:border-emerald-800"
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      <span>{tr('दानदाता सूची', 'معاونین', 'Donors')} ({c.donorsCount || 0})</span>
+                    </button>
+                    <button
+                      onClick={() => router.push(`/campaigns/${c.id}`)}
+                      className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg flex items-center gap-1 transition-colors"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>{tr('विवरण देखें', 'تفصیلات دیکھیں', 'View Details')}</span>
+                    </button>
+                    <button
+                      onClick={() => onOpenCreateCampaign(c)}
+                      className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg flex items-center gap-1 transition-colors"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      <span>{tr('संपादित करें', 'ترمیم', 'Edit')}</span>
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirmId(c.id)}
+                      disabled={processingId === c.id}
+                      className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{tr('हटाएं', 'حذف کریں', 'Delete')}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Toast Notification */}
+        {toastMessage && (
+          <div className={`fixed top-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-[100] text-sm font-bold text-white transition-all transform duration-300 ease-out ${toastMessage.type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'
+            }`}>
+            {toastMessage.message}
+          </div>
+        )}
+
+        {/* Campaign Donors List Modal */}
+        {selectedCampaignForDonors && (
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-sm z-[110] flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl relative max-h-[88vh] flex flex-col">
               <button
-                onClick={() => setDeleteConfirmId(null)}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-                disabled={processingId === deleteConfirmId}
+                onClick={() => setSelectedCampaignForDonors(null)}
+                className="cursor-pointer absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-full transition-colors"
               >
-                {tr('रद्द करें', 'منسوخ', 'Cancel')}
+                <X className="w-5 h-5" />
               </button>
-              <button
-                onClick={() => confirmDelete(deleteConfirmId)}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 active:bg-rose-800 shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
-                disabled={processingId === deleteConfirmId}
-              >
-                {processingId === deleteConfirmId ? (
-                  <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+
+              {/* Modal Header */}
+              <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-4 mb-4">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
+                  <HeartHandshake className="w-5 h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate">
+                    {translateCampaignTitle(selectedCampaignForDonors.title, language)}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {tr('दानदाता सूची एवं सत्यापन विवरण', 'معاونین اور تصدیقی ریکارڈ', 'Donors & Verification Ledger')} • {campaignDonors.length} {tr('सहयोग', 'عطیات', 'contributions')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Campaign Summary bar */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs mb-4">
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">{tr('एकत्रित', 'جمع شدہ', 'Raised')}</span>
+                  <span className="font-extrabold text-emerald-600 text-sm">₹{(selectedCampaignForDonors.raisedINR || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">{tr('लक्ष्य', 'ہدف', 'Goal')}</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">₹{selectedCampaignForDonors.goalINR.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="col-span-2 sm:col-span-1">
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">{tr('दानदाता', 'معاونین', 'Total Donors')}</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">{campaignDonors.length || selectedCampaignForDonors.donorsCount || 0}</span>
+                </div>
+              </div>
+
+              {/* Donors List Scrollable Area */}
+              <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 min-h-[160px]">
+                {loadingDonors ? (
+                  <div className="space-y-3 p-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-14 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : campaignDonors.length === 0 ? (
+                  <div className="text-center py-10 space-y-2 text-slate-500 dark:text-slate-400">
+                    <HeartHandshake className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto" />
+                    <p className="text-sm font-medium">{tr('इस अभियान में अभी तक कोई दान दर्ज नहीं हुआ है।', 'اس مہم کے لیے ابھی کوئی عطیہ نہیں ہے۔', 'No donations recorded for this campaign yet.')}</p>
+                  </div>
                 ) : (
-                  <Trash2 className="w-3.5 h-3.5" />
+                  campaignDonors.map((don, idx) => {
+                    const isAnonymous = !don.donorName || don.donorName.toLowerCase().includes('anonymous') || don.donorName.toLowerCase().includes('गुमनाम');
+                    const displayName = isAnonymous
+                      ? tr('गुमनाम दानदाता', 'گمنام معاون', 'Anonymous Supporter')
+                      : don.donorName;
+                    const initial = displayName.trim().charAt(0).toUpperCase();
+                    const avatarUrl = !isAnonymous ? don.donorAvatar : null;
+
+                    return (
+                      <div
+                        key={don.id || idx}
+                        className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-between gap-3 text-xs"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="relative w-9 h-9 shrink-0">
+                            {avatarUrl ? (
+                              <img
+                                src={avatarUrl}
+                                alt={displayName}
+                                className="w-9 h-9 rounded-xl object-cover ring-1 ring-emerald-200"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const fallback = e.currentTarget.parentElement?.querySelector('.avatar-fallback') as HTMLElement;
+                                  if (fallback) fallback.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            <div
+                              className={`avatar-fallback w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-extrabold items-center justify-center ${avatarUrl ? 'hidden' : 'flex'}`}
+                            >
+                              {initial}
+                            </div>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
+                              <span>{displayName}</span>
+                              {don.status === 'verified' ? (
+                                <BadgeCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              ) : (
+                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold">Pending</span>
+                              )}
+                            </p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                              {don.date ? new Date(don.date).toLocaleDateString() : 'N/A'}{' '}
+                              {don.utrNumber ? `• UTR: ${don.utrNumber}` : ''}
+                              {don.category ? ` • ${don.category}` : ''}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm block">
+                            ₹{don.amountINR.toLocaleString('en-IN')}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono block uppercase">
+                            {don.paymentMethod || 'UPI'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
-                <span>
-                  {processingId === deleteConfirmId 
-                    ? tr('हटाया जा रहा है...', 'حذف کیا جا رہا ہے...', 'Deleting...') 
-                    : tr('हाँ, हटाएं', 'ہاں، حذف کریں', 'Yes, Delete')}
-                </span>
-              </button>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                <button
+                  onClick={() => setSelectedCampaignForDonors(null)}
+                  className="cursor-pointer px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                  {tr('बंद करें', 'بند کریں', 'Close')}
+                </button>
+                <button
+                  onClick={() => {
+                    const cid = selectedCampaignForDonors.id;
+                    setSelectedCampaignForDonors(null);
+                    router.push(`/campaigns/${cid}`);
+                  }}
+                  className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>{tr('अभियान पृष्ठ पर जाएं', 'مہم کے صفحے پر جائیں', 'Open Campaign Page')}</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirmId && (
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-[120] flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl relative">
+              <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                {tr('अभियान हटाएं?', 'مہم حذف کریں؟', 'Delete Campaign?')}
+              </h3>
+
+              {targetDeleteCamp && (
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 truncate">
+                  {translateCampaignTitle(targetDeleteCamp.title, language)}
+                </p>
+              )}
+
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                {targetDeleteCamp && (targetDeleteCamp.donorsCount > 0 || (targetDeleteCamp.raisedINR || 0) > 0) ? (
+                  <span className="text-amber-600 dark:text-amber-400 font-semibold block mb-1">
+                    {tr(
+                      `इस अभियान में ${targetDeleteCamp.donorsCount || 0} दान (₹${(targetDeleteCamp.raisedINR || 0).toLocaleString('en-IN')}) दर्ज हैं। इसे हटाने पर इसके सभी दान रिकॉर्ड भी हटा दिए जाएंगे।`,
+                      `اس مہم میں عطیات درج ہیں۔ مہم حذف کرنے پر اس کے تمام عطیات بھی حذف کر دیے جائیں گے۔`,
+                      `This campaign has ${targetDeleteCamp.donorsCount || 0} donation(s) (₹${(targetDeleteCamp.raisedINR || 0).toLocaleString('en-IN')}). Deleting this will also remove all associated donation records.`
+                    )}
+                  </span>
+                ) : null}
+                {tr('यह क्रिया पूर्ववत नहीं की जा सकती। क्या आप वाकई इस अभियान को स्थायी रूप से हटाना चाहते हैं?', 'اس عمل کو واپس نہیں لیا جا سکتا۔ کیا آپ واقعی اس مہم کو مستقل طور پر حذف کرنا چاہتے ہیں؟', 'This action cannot be undone. Are you sure you want to permanently delete this campaign?')}
+              </p>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                  disabled={processingId === deleteConfirmId}
+                >
+                  {tr('रद्द करें', 'منسوخ', 'Cancel')}
+                </button>
+                <button
+                  onClick={() => confirmDelete(deleteConfirmId)}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 active:bg-rose-800 shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                  disabled={processingId === deleteConfirmId}
+                >
+                  {processingId === deleteConfirmId ? (
+                    <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <Trash2 className="w-3.5 h-3.5" />
+                  )}
+                  <span>
+                    {processingId === deleteConfirmId
+                      ? tr('हटाया जा रहा है...', 'حذف کیا جا رہا ہے...', 'Deleting...')
+                      : tr('हाँ, हटाएं', 'ہاں، حذف کریں', 'Yes, Delete')}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

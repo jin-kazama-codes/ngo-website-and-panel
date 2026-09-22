@@ -217,6 +217,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
                   <li><Link href="/campaigns" className="hover:text-white transition-colors block">{language === 'hi' ? 'सभी अभियान' : language === 'ur' ? 'تمام مہمات' : 'Verified Campaigns'}</Link></li>
                   <li><Link href="/communities" className="hover:text-white transition-colors block">{language === 'hi' ? 'समुदाय नेटवर्क' : language === 'ur' ? 'کمیونٹی نیٹ ورک' : 'Local Communities'}</Link></li>
                   <li><Link href="/niyamawali" className="hover:text-white transition-colors text-emerald-300 font-medium block">{language === 'hi' ? 'नियमावली (27 नियम)' : language === 'ur' ? 'قواعد و ضوابط' : 'Niyamawali (27 Bylaws)'}</Link></li>
+                  <li><Link href="/zakat-compliance" className="hover:text-white transition-colors text-amber-300 font-medium block">{language === 'hi' ? 'ज़कात व सदक़ा नीति' : 'Zakat & Sadaqah Compliance'}</Link></li>
                   <li><Link href="/about" className="hover:text-white transition-colors block">{language === 'hi' ? 'हमारे बारे में' : language === 'ur' ? 'ہمارے بارے میں' : 'About Us'}</Link></li>
                   <li><Link href="/gallery" className="hover:text-white transition-colors block">{language === 'hi' ? 'गैलरी एवं फोटो' : language === 'ur' ? 'گیلری' : 'Gallery'}</Link></li>
                   <li><Link href="/members" className="hover:text-white transition-colors block">{language === 'hi' ? 'सदस्य सूची' : language === 'ur' ? 'ممبر لسٹ' : 'Member Directory'}</Link></li>
@@ -288,6 +289,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <Link href="/niyamawali" className="hover:text-white transition-colors text-emerald-300 font-semibold">
               {language === 'hi' ? 'नियम एवं दिशानिर्देश' : language === 'ur' ? 'قواعد و ضوابط' : 'Rules & Guidelines'}
+            </Link>
+            <span className="opacity-30">|</span>
+            <Link href="/zakat-compliance" className="hover:text-white transition-colors text-amber-300 font-semibold">
+              {language === 'hi' ? 'ज़कात व सदक़ा नीति' : 'Zakat Compliance'}
             </Link>
             <span className="opacity-30">|</span>
             <Link href="/privacy" className="hover:text-white transition-colors">

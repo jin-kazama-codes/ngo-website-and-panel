@@ -23,9 +23,14 @@ import {
   Calendar,
   Mail,
   Shield,
-  Hash
+  Hash,
+  Award,
+  Phone,
+  Network
 } from 'lucide-react';
+import { TableSkeleton } from '../components/Skeletons';
 import { useLanguage } from '../context/LanguageContext';
+import { ORGANIZATIONAL_HIERARCHY } from '../data/districtsData';
 
 // Comprehensive Name / Word Translation Map
 const TRANSLATION_MAP: Record<string, { hi: string; ur: string }> = {
@@ -78,7 +83,7 @@ const TRANSLATION_MAP: Record<string, { hi: string; ur: string }> = {
   'lucknow': { hi: 'लखनऊ', ur: 'لکھنؤ' },
   'moradabad': { hi: 'मुरादाबाद', ur: 'مرادآباد' },
   'rampur': { hi: 'रामपुर', ur: 'رام پور' },
-  'pilibhit': { hi: 'पीलीभीत', ur: 'پیلی भीت' },
+  'pilibhit': { hi: 'पीलीभीत', ur: 'پیلی بھیت' },
   'shahjahanpur': { hi: 'शाहजहांपुर', ur: 'شاہجہاں پور' },
   'budaun': { hi: 'बदायूँ', ur: 'بدایوں' },
   'bijnor': { hi: 'बिजनौर', ur: 'بجنور' },
@@ -92,7 +97,16 @@ const TRANSLATION_MAP: Record<string, { hi: string; ur: string }> = {
   'gorakhpur': { hi: 'गोरखपुर', ur: 'گورکھپور' },
 
   // Roles
+  'district president': { hi: 'जिला अध्यक्ष', ur: 'ضلعی صدر' },
+  'district_president': { hi: 'जिला अध्यक्ष', ur: 'ضلعی صدر' },
   'district coordinator': { hi: 'जिला समन्वयक', ur: 'ضلعی کوآرڈینیٹر' },
+  'district_coordinator': { hi: 'जिला समन्वयक', ur: 'ضلعی کوآرڈینیٹر' },
+  'district general secretary': { hi: 'जिला महासचिव', ur: 'ضلعی جنرل سیکرٹری' },
+  'district_gen_secretary': { hi: 'जिला महासचिव', ur: 'ضلعی جنرل سیکرٹری' },
+  'district secretary': { hi: 'जिला सचिव', ur: 'ضلعی سیکرٹری' },
+  'district_secretary': { hi: 'जिला सचिव', ur: 'ضلعی سیکرٹری' },
+  'district finance coordinator': { hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر' },
+  'district_finance_coord': { hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر' },
   'general member': { hi: 'साधारण सदस्य', ur: 'عام ممبر' },
   'member': { hi: 'सदस्य', ur: 'ممبر' },
   'executive admin': { hi: 'कार्यकारी व्यवस्थापक', ur: 'ایگزیکٹو ایڈمن' },
@@ -362,10 +376,18 @@ const MemberTableRow: React.FC<{
 
       {/* 5. Role */}
       <td className="py-3.5 px-3 whitespace-nowrap">
-        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${roleBadgeClass} whitespace-nowrap`}>
-          <Shield className="w-3 h-3" />
-          <span>{roleLabel}</span>
-        </span>
+        <div className="flex flex-col gap-1 items-start">
+          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${roleBadgeClass} whitespace-nowrap`}>
+            <Shield className="w-3 h-3" />
+            <span>{roleLabel}</span>
+          </span>
+          {(member.districtRole || member.district_role) && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-300 whitespace-nowrap shadow-xs">
+              <Award className="w-3 h-3 text-amber-600 shrink-0" />
+              <span>{formatTextByLang((member.districtRole || member.district_role) as string, language)}</span>
+            </span>
+          )}
+        </div>
       </td>
 
       {/* 6. Community ID */}
@@ -420,6 +442,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(15);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showHierarchyModal, setShowHierarchyModal] = useState<boolean>(false);
 
   // Fetch Users from Database
   useEffect(() => {
@@ -681,9 +704,183 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
         </div>
       </section>
 
-      {/* ── 3. Members List Table ── */}
+      {/* ── 3. District Executive Committee Showcase (When District Selected or Available) ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
-        
+        {selectedDistrict && (
+          <div className="bg-gradient-to-br from-[#0a2318] to-[#103825] rounded-3xl p-5 sm:p-7 text-white shadow-xl border border-amber-400/30">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-emerald-700/60">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-400 text-slate-950">
+                    {language === 'hi' ? 'जिला टीम' : language === 'ur' ? 'ضلعی ٹیم' : 'DISTRICT CHAPTER'}
+                  </span>
+                  <span className="text-emerald-300 text-xs font-semibold">MFCT Chapter</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-white mt-1 flex items-center gap-2">
+                  <Award className="w-6 h-6 text-amber-400" />
+                  <span>
+                    {language === 'hi'
+                      ? `${formatTextByLang(selectedDistrict, 'hi')} जिला कार्यकारिणी`
+                      : language === 'ur'
+                      ? `${formatTextByLang(selectedDistrict, 'ur')} ضلعی کمیٹی`
+                      : `${selectedDistrict} District Executive Committee`}
+                  </span>
+                </h3>
+                <p className="text-xs text-emerald-100/80 mt-1 max-w-2xl">
+                  {language === 'hi'
+                    ? 'जिले में ट्रस्ट की समग्र गतिविधियों, विस्तार, संचालन एवं सहायता हेतु अधिकृत पदाधिकारी।'
+                    : language === 'ur'
+                    ? 'ضلع میں ٹرسٹ کی سرگرمیوں، تنظیمی توسیع اور رفاہی کاموں کے لیے نامزد عہدیداران۔'
+                    : 'Authorized office-bearers leading trust operations, relief drives, and community coordination in this district.'}
+                </p>
+              </div>
+
+              {/* Organizational Hierarchy Modal Button (Image 2) */}
+              <button
+                onClick={() => setShowHierarchyModal(true)}
+                className="px-4 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs flex items-center gap-2 transition-all shadow-md self-start sm:self-auto cursor-pointer"
+              >
+                <Network className="w-4 h-4 text-slate-950" />
+                <span>{language === 'hi' ? 'संगठनात्मक ढांचा' : language === 'ur' ? 'تنظیمی ڈھانچہ' : 'Organizational Hierarchy'}</span>
+              </button>
+            </div>
+
+            {/* 5 District Office-Bearer Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 pt-5">
+              {[
+                {
+                  slotNumber: '01',
+                  key: 'district_president',
+                  titleEn: 'District President',
+                  titleHi: 'जिला अध्यक्ष',
+                  titleUr: 'ضلعی صدر',
+                  workEn: 'Leadership and coordination of all MFCT activities in the district.',
+                  workHi: 'जिले में समस्त गतिविधियों का नेतृत्व एवं समन्वय।',
+                  workUr: 'ضلع میں تمام سرگرمیوں کی قیادت اور رابطہ کاری۔',
+                  badge: 'bg-rose-500/20 text-rose-300 border-rose-400/40',
+                },
+                {
+                  slotNumber: '02',
+                  key: 'district_coordinator',
+                  titleEn: 'District Coordinator',
+                  titleHi: 'जिला संयोजक',
+                  titleUr: 'ضلعی کوآرڈینیٹر',
+                  workEn: 'Daily coordination, membership expansion, team formation, and reporting.',
+                  workHi: 'दैनिक समन्वय, सदस्यता विस्तार, टीम गठन एवं रिपोर्टिंग।',
+                  workUr: 'روزمرہ رابطہ کاری، رکنیت سازی، ٹیم کی تشکیل اور رپورٹنگ۔',
+                  badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40',
+                },
+                {
+                  slotNumber: '03',
+                  key: 'district_gen_secretary',
+                  titleEn: 'District General Secretary / Org Incharge',
+                  titleHi: 'जिला महासचिव / संगठन प्रभारी',
+                  titleUr: 'ضلعی جنرل سیکرٹری / انچارج تنظیم',
+                  workEn: 'Organizational expansion and coordination of block / city teams.',
+                  workHi: 'संगठन विस्तार एवं ब्लॉक / नगर टीमों का समन्वय।',
+                  workUr: 'تنظیمی توسیع اور بلاک / بلدیاتی ٹیموں کی رابطہ کاری۔',
+                  badge: 'bg-purple-500/20 text-purple-300 border-purple-400/40',
+                },
+                {
+                  slotNumber: '04',
+                  key: 'district_secretary',
+                  titleEn: 'District Secretary',
+                  titleHi: 'जिला सचिव',
+                  titleUr: 'ضلعی سیکرٹری',
+                  workEn: 'Correspondence, meeting proceedings, and documentation.',
+                  workHi: 'पत्राचार, बैठक कार्यवाही एवं दस्तावेजीकरण।',
+                  workUr: 'خط و کتابت، میٹنگ کی کارروائی اور دفتری ریکارڈ۔',
+                  badge: 'bg-blue-500/20 text-blue-300 border-blue-400/40',
+                },
+                {
+                  slotNumber: '05',
+                  key: 'district_finance_coord',
+                  titleEn: 'District Finance Coordinator',
+                  titleHi: 'जिला वित्त समन्वयक',
+                  titleUr: 'ضلعی فنانس کوآرڈینیٹر',
+                  workEn: 'Financial records and documentary support for official transactions.',
+                  workHi: 'वित्तीय रिकॉर्ड एवं आधिकारिक लेन-देन के दस्तावेजी सहयोग।',
+                  workUr: 'مالیاتی ریکارڈ اور سرکاری لین دین میں دستاویزی معاونت۔',
+                  badge: 'bg-amber-500/20 text-amber-300 border-amber-400/40',
+                },
+              ].map((roleSlot) => {
+                const assignedMember = users.find((u) => {
+                  const uDist = (u.district || u.city || '').toLowerCase();
+                  const isDist = uDist === selectedDistrict.toLowerCase() || uDist.includes(selectedDistrict.toLowerCase());
+                  const r = (u.districtRole || u.district_role || (u.role as string) || '').toLowerCase();
+                  return isDist && (r === roleSlot.key || r === roleSlot.titleEn.toLowerCase());
+                });
+
+                const roleTitle = language === 'hi' ? roleSlot.titleHi : language === 'ur' ? roleSlot.titleUr : roleSlot.titleEn;
+                const roleWork = language === 'hi' ? roleSlot.workHi : language === 'ur' ? roleSlot.workUr : roleSlot.workEn;
+
+                return (
+                  <div
+                    key={roleSlot.key}
+                    className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-all shadow-inner"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-1 mb-2.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="w-5 h-5 rounded-md flex items-center justify-center font-black text-[10px] bg-amber-400 text-slate-950 shrink-0">
+                            {roleSlot.slotNumber}
+                          </span>
+                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border truncate ${roleSlot.badge}`}>
+                            {roleTitle}
+                          </span>
+                        </div>
+                      </div>
+
+                      {assignedMember ? (
+                        <div className="space-y-2 mt-2">
+                          <div className="flex items-center gap-2.5">
+                            {assignedMember.avatar ? (
+                              <img
+                                src={assignedMember.avatar}
+                                alt={assignedMember.name}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-amber-400 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-amber-400 text-slate-950 font-black text-sm flex items-center justify-center shrink-0">
+                                {(assignedMember.name || 'U')[0].toUpperCase()}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <h4 className="text-xs font-bold text-white truncate">
+                                {formatTextByLang(assignedMember.name, language)}
+                              </h4>
+                              <p className="text-[10px] text-emerald-200 font-mono truncate">
+                                ID: {assignedMember.membership_id || assignedMember.membershipId || assignedMember.id?.slice(0, 8)}
+                              </p>
+                            </div>
+                          </div>
+
+                          {assignedMember.phone && (
+                            <div className="flex items-center gap-1 text-[11px] text-emerald-200">
+                              <Phone className="w-3 h-3 text-amber-400 shrink-0" />
+                              <span className="font-mono truncate">{assignedMember.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="py-3 text-center border border-dashed border-white/20 rounded-xl bg-black/10 mt-1">
+                          <span className="text-[11px] text-emerald-200/60 font-medium">
+                            {language === 'hi' ? 'पद रिक्त (Open Post)' : language === 'ur' ? 'عہدہ خالی ہے' : 'Post Open'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <p className="text-[10px] text-emerald-100/70 border-t border-white/10 pt-2.5 mt-3 leading-relaxed">
+                      {roleWork}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
           
           {/* Top Bar inside card */}
@@ -741,11 +938,8 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
 
           {/* Table View */}
           {loading ? (
-            <div className="p-16 text-center space-y-3">
-              <div className="w-10 h-10 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-xs font-bold text-slate-500">
-                {language === 'hi' ? 'सदस्य सूची लोड हो रही है...' : 'Loading members directory...'}
-              </p>
+            <div className="p-4">
+              <TableSkeleton rows={8} cols={6} />
             </div>
           ) : paginatedMembers.length === 0 ? (
             <div className="p-16 text-center space-y-3">
@@ -848,6 +1042,94 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
           )}
 
         </div>
+
+        {/* ── Organizational Hierarchy Modal (Digital Implementation of Image 2) ── */}
+        {showHierarchyModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8 relative">
+              <button
+                onClick={() => setShowHierarchyModal(false)}
+                className="absolute right-5 top-5 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+
+              {/* Modal Header */}
+              <div className="text-center pb-5 border-b border-slate-200 dark:border-slate-800">
+                <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest bg-amber-400 text-slate-950 inline-block mb-2">
+                  {language === 'hi' ? 'संगठनात्मक ढांचा' : language === 'ur' ? 'تنظیمی ڈھانچہ' : 'Organizational Framework'}
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                  {language === 'hi'
+                    ? 'MFCT संगठनात्मक ढांचा एवं कार्यप्रणाली'
+                    : language === 'ur'
+                    ? 'MFCT تنظیمی ڈھانچہ اور درجہ بندی'
+                    : 'MFCT Organizational Hierarchy & Workflow'}
+                </h2>
+                <p className="text-xs text-slate-500 mt-1 max-w-lg mx-auto">
+                  {language === 'hi'
+                    ? 'केंद्रीय नेतृत्व से लेकर जमीनी स्तर के स्वयंसेवकों तक 8-स्तरीय पारदर्शी प्रशासनिक श्रृंखला।'
+                    : language === 'ur'
+                    ? 'مرکزی قیادت سے لے کر نچلی سطح کے رضاکاروں تک شفاف 8 درجاتی تنظیمی سلسلہ۔'
+                    : 'Transparent 8-tier administrative chain connecting central apex leadership with grassroots volunteers.'}
+                </p>
+              </div>
+
+              {/* 8-Tier Hierarchy Flowchart (Exact digital twin of Image 2) */}
+              <div className="py-6 max-w-md mx-auto space-y-2">
+                {ORGANIZATIONAL_HIERARCHY.map((tier, idx) => {
+                  const title = language === 'hi' ? tier.titleHi : language === 'ur' ? tier.titleUr : tier.titleEn;
+                  const desc = language === 'hi' ? tier.descHi : language === 'ur' ? tier.descUr : tier.descEn;
+
+                  return (
+                    <React.Fragment key={tier.level}>
+                      <div
+                        className={`p-3.5 rounded-2xl border text-center transition-all shadow-xs ${
+                          tier.isGoldHighlight
+                            ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 border-amber-400 font-extrabold'
+                            : 'bg-emerald-950 text-white border-emerald-700/80 font-bold'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="text-[10px] uppercase font-mono tracking-wider opacity-75">
+                            Level {tier.level}
+                          </span>
+                          <span className="text-[10px] uppercase tracking-wider font-bold opacity-90">
+                            {tier.roleScope}
+                          </span>
+                        </div>
+                        <h3 className="text-sm sm:text-base font-black tracking-wide">
+                          {title}
+                        </h3>
+                        <p className={`text-[11px] mt-0.5 leading-tight ${tier.isGoldHighlight ? 'text-slate-900' : 'text-emerald-200/90'}`}>
+                          {desc}
+                        </p>
+                      </div>
+
+                      {/* Downward connecting arrow if not last item */}
+                      {idx < ORGANIZATIONAL_HIERARCHY.length - 1 && (
+                        <div className="flex justify-center -my-1">
+                          <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-500 text-xs font-bold shadow-xs">
+                            ↓
+                          </div>
+                        </div>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                <button
+                  onClick={() => setShowHierarchyModal(false)}
+                  className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-colors cursor-pointer"
+                >
+                  {language === 'hi' ? 'बंद करें' : language === 'ur' ? 'بند کریں' : 'Close'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </main>
 

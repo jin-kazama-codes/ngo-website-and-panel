@@ -8,6 +8,7 @@ import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, Chevr
 import { FaFacebookF, FaInstagram, FaWhatsapp } from 'react-icons/fa6';
 import { useLanguage } from '../context/LanguageContext';
 import { LanguageSelector } from './LanguageSelector';
+import { translateDistrictRole } from '../lib/translateEntity';
 
 interface NavbarProps {
   currentPage: string;
@@ -39,6 +40,67 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const { t, isHindi, language } = useLanguage();
 
+  const displayName = (currentUser.name || 'User').replace(/\s*\([^)]*\)/g, '').trim() || 'User';
+
+  const distRoleKeys = [
+    'district_president',
+    'district_coordinator',
+    'district_gen_secretary',
+    'district_secretary',
+    'district_finance_coord',
+  ];
+
+  const rawDistRole = (
+    currentUser.districtRole ||
+    (currentUser as any).district_role ||
+    (distRoleKeys.includes(currentUser.role as any) ? currentUser.role : '')
+  )?.trim() || '';
+
+  let cleanDistKey = rawDistRole.toLowerCase().replace(/\s+/g, '_');
+  if (cleanDistKey === 'district_general_secretary') cleanDistKey = 'district_gen_secretary';
+  if (cleanDistKey === 'district_finance_coordinator') cleanDistKey = 'district_finance_coord';
+
+  const hasDistrictRole = Boolean(cleanDistKey);
+  const userDistrict = currentUser.district?.trim();
+
+  let roleIcon = <Heart className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} />;
+  let roleLabel = t('admin.memberDonor', 'Member');
+
+  if (currentUser.role === 'super_admin') {
+    roleIcon = <Shield className="w-3.5 h-3.5 text-emerald-400" />;
+    roleLabel = t('admin.superAdmin', 'Super Admin');
+  } else if (currentUser.role === 'executive_admin') {
+    roleIcon = <Building2 className="w-3.5 h-3.5 text-blue-400" />;
+    roleLabel = isHindi ? 'मुख्य प्रशासक' : language === 'ur' ? 'ایگزیکٹو ایڈمن' : 'NGO Admin';
+  } else if (currentUser.role === 'community_admin') {
+    roleIcon = <Award className="w-3.5 h-3.5 text-purple-400" />;
+    roleLabel = t('admin.commAdmin', 'Community Admin');
+  } else if (hasDistrictRole) {
+    if (cleanDistKey === 'district_president') {
+      roleIcon = <Shield className="w-3.5 h-3.5 text-rose-400" />;
+      roleLabel = translateDistrictRole('district_president', language as any) || (isHindi ? 'जिला अध्यक्ष' : language === 'ur' ? 'ضلعی صدر' : 'District President');
+    } else if (cleanDistKey === 'district_gen_secretary') {
+      roleIcon = <Award className="w-3.5 h-3.5 text-indigo-400" />;
+      roleLabel = translateDistrictRole('district_gen_secretary', language as any) || (isHindi ? 'जिला महासचिव' : language === 'ur' ? 'ضلعی جنرل سیکرٹری' : 'District General Secretary');
+    } else if (cleanDistKey === 'district_secretary') {
+      roleIcon = <Award className="w-3.5 h-3.5 text-violet-400" />;
+      roleLabel = translateDistrictRole('district_secretary', language as any) || (isHindi ? 'जिला सचिव' : language === 'ur' ? 'ضلعی سیکرٹری' : 'District Secretary');
+    } else if (cleanDistKey === 'district_coordinator') {
+      roleIcon = <Award className="w-3.5 h-3.5 text-cyan-400" />;
+      roleLabel = translateDistrictRole('district_coordinator', language as any) || (isHindi ? 'जिला समन्वयक' : language === 'ur' ? 'ضلعی کوآرڈینیٹر' : 'District Coordinator');
+    } else if (cleanDistKey === 'district_finance_coord') {
+      roleIcon = <Award className="w-3.5 h-3.5 text-yellow-500" />;
+      roleLabel = translateDistrictRole('district_finance_coord', language as any) || (isHindi ? 'जिला वित्त समन्वयक' : language === 'ur' ? 'ضلعی فنانس کوآرڈینیٹر' : 'District Finance Coord');
+    } else {
+      roleIcon = <Award className="w-3.5 h-3.5 text-amber-400" />;
+      roleLabel = translateDistrictRole(cleanDistKey, language as any) || translateDistrictRole(rawDistRole, language as any) || rawDistRole;
+    }
+  }
+
+  const displayRoleWithDistrict = hasDistrictRole && userDistrict
+    ? `${roleLabel} (${userDistrict})`
+    : roleLabel;
+
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 20) {
@@ -56,6 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'campaigns', label: t('nav.campaigns', 'Campaigns'), path: '/campaigns' },
     { id: 'communities', label: t('nav.communities', 'Communities'), path: '/communities' },
     { id: 'niyamawali', label: language === 'hi' ? 'नियमावली' : language === 'ur' ? 'قواعد و ضوابط' : 'Niyamawali', path: '/niyamawali' },
+    { id: 'zakat-compliance', label: language === 'hi' ? 'ज़कात व सदक़ा नीति' : 'Zakat and Sadaqah Compliance', path: '/zakat-compliance' },
     { id: 'about', label: t('nav.about', 'About'), path: '/about' },
     { id: 'gallery', label: t('nav.gallery', 'Gallery'), path: '/gallery' },
     { id: 'members', label: language === 'hi' ? 'सदस्य सूची' : language === 'ur' ? 'ممبر لسٹ' : 'Members', path: '/members' },
@@ -75,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Left / Center Info */}
             <div className="flex items-center gap-2 text-xs font-bold tracking-wider" style={{ color: 'var(--mfct-gold)' }}>
               <span style={{ fontSize: '14px' }}>✦</span>
-              <span>{language === 'hi' ? 'याद उनकी, सेवा हमारी' : language === 'ur' ? 'یاد ان کی، خدمت ہماری' : 'In Their Memory, In Our Service'}</span>
+              <span>{language === 'hi' ? 'याद उनकी, सेवा हमारी' : 'Yaad Unki, Seva Hamari'}</span>
               <span style={{ fontSize: '14px' }}>✦</span>
               <span className="hidden sm:inline mx-3 opacity-60">|</span>
               <span className="hidden sm:inline" style={{ color: '#e0c068' }}>Regd. No.: 258/2026</span>
@@ -202,7 +265,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="font-semibold block mt-1"
                   style={{ color: '#666', fontSize: 'clamp(0.78rem, 2.9vw, 0.82rem)', letterSpacing: '0.01em' }}
                 >
-                  {language === 'hi' ? 'याद उनकी, सेवा हमारी' : language === 'ur' ? 'یاد ان کی، خدمت ہماری' : 'In Their Memory, In Our Service'}
+                  {language === 'hi' ? 'याद उनकी, सेवा हमारी' : 'Yaad Unki, Seva Hamari'}
                 </span>
               </div>
             </Link>
@@ -246,120 +309,100 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Login / User Info & Dropdown */}
               {onLogout ? (
                 <div className="relative">
-                  {(() => {
-                    const displayName = (currentUser.name || 'User').replace(/\s*\([^)]*\)/g, '').trim() || 'User';
-                    let roleIcon = <Heart className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} />;
-                    let roleLabel = t('admin.memberDonor', 'Member');
-                    if (currentUser.role === 'super_admin') {
-                      roleIcon = <Shield className="w-3.5 h-3.5 text-emerald-400" />;
-                      roleLabel = t('admin.superAdmin', 'Super Admin');
-                    } else if (currentUser.role === 'executive_admin') {
-                      roleIcon = <Building2 className="w-3.5 h-3.5 text-blue-400" />;
-                      roleLabel = isHindi ? 'मुख्य प्रशासक' : 'NGO Admin';
-                    } else if (currentUser.role === 'community_admin') {
-                      roleIcon = <Award className="w-3.5 h-3.5 text-purple-400" />;
-                      roleLabel = t('admin.commAdmin', 'Community Admin');
-                    } else if (currentUser.isPremium) {
-                      roleIcon = <Sparkles className="w-3.5 h-3.5 text-amber-400" />;
-                      roleLabel = isHindi ? 'प्रमुख दानदाता' : 'Premium Donor';
-                    }
+                  <button
+                    onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                    className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md hover:brightness-105"
+                    style={{
+                      background: 'var(--mfct-dark-green)',
+                      borderColor: 'var(--mfct-dark-green)',
+                      minHeight: '48px',
+                    }}
+                    title={`${displayName} - ${displayRoleWithDistrict}`}
+                  >
+                    <div className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: 'rgba(200,168,75,0.2)', border: '1.5px solid var(--mfct-gold)' }}>
+                      {currentUser.avatar && currentUser.avatar !== 'https://via.placeholder.com/150' ? (
+                        <img
+                          src={currentUser.avatar}
+                          alt={displayName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <UserIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                      )}
+                    </div>
+                    <div className="text-left max-w-[140px] sm:max-w-[160px]">
+                      <div className="font-bold text-xs text-white truncate leading-tight">
+                        {displayName}
+                      </div>
+                      <div className="text-[10px] truncate leading-tight" style={{ color: 'var(--mfct-gold)' }} title={displayRoleWithDistrict}>
+                        {displayRoleWithDistrict}
+                      </div>
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                  </button>
 
-                    return (
-                      <>
-                        <button
-                          onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                          className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md hover:brightness-105"
-                          style={{
-                            background: 'var(--mfct-dark-green)',
-                            borderColor: 'var(--mfct-dark-green)',
-                            minHeight: '48px',
-                          }}
-                          title={displayName}
-                        >
-                          <div className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: 'rgba(200,168,75,0.2)', border: '1.5px solid var(--mfct-gold)' }}>
-                            {currentUser.avatar && currentUser.avatar !== 'https://via.placeholder.com/150' ? (
-                              <img
-                                src={currentUser.avatar}
-                                alt={displayName}
-                                className="w-full h-full object-cover"
-                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                              />
-                            ) : (
-                              <UserIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                  {/* Profile Dropdown Menu */}
+                  {profileMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setProfileMenuOpen(false)} />
+                      <div
+                        className="absolute right-0 mt-2 w-64 rounded-2xl shadow-2xl z-50 overflow-hidden animate-fade-in"
+                        style={{
+                          background: 'var(--mfct-dark-green)',
+                          border: '1px solid rgba(200,168,75,0.35)',
+                          boxShadow: '0 12px 32px rgba(0,0,0,0.4)'
+                        }}
+                      >
+                        {/* Header Info with Role below email & smaller */}
+                        <div className="p-3.5" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)', background: 'rgba(0,0,0,0.25)' }}>
+                          <p className="text-sm font-bold text-white truncate">{displayName}</p>
+                          <p className="text-xs truncate font-medium mt-0.5" style={{ color: 'var(--mfct-gold)' }}>{currentUser.email || currentUser.phone || 'member@sevasangam.org'}</p>
+
+                          <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(200,168,75,0.25)', color: '#ffffff' }}>
+                            {roleIcon}
+                            <span>{roleLabel}</span>
+                            {hasDistrictRole && userDistrict && (
+                              <span className="text-emerald-300 text-[10px] font-semibold">({userDistrict})</span>
                             )}
                           </div>
-                          <div className="text-left max-w-[120px]">
-                            <div className="font-bold text-xs text-white truncate leading-tight">
-                              {displayName}
-                            </div>
-                            <div className="text-[10px] truncate leading-tight" style={{ color: 'var(--mfct-gold)' }}>
-                              {roleLabel}
-                            </div>
-                          </div>
-                          <ChevronDown className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
-                        </button>
+                        </div>
 
-                        {/* Profile Dropdown Menu */}
-                        {profileMenuOpen && (
-                          <>
-                            <div className="fixed inset-0 z-40" onClick={() => setProfileMenuOpen(false)} />
-                            <div
-                              className="absolute right-0 mt-2 w-64 rounded-2xl shadow-2xl z-50 overflow-hidden animate-fade-in"
-                              style={{
-                                background: 'var(--mfct-dark-green)',
-                                border: '1px solid rgba(200,168,75,0.35)',
-                                boxShadow: '0 12px 32px rgba(0,0,0,0.4)'
-                              }}
-                            >
-                              {/* Header Info with Role below email & smaller */}
-                              <div className="p-3.5" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)', background: 'rgba(0,0,0,0.25)' }}>
-                                <p className="text-sm font-bold text-white truncate">{displayName}</p>
-                                <p className="text-xs truncate font-medium mt-0.5" style={{ color: 'var(--mfct-gold)' }}>{currentUser.email || 'superadmin@sevasangam.org'}</p>
+                        {/* Body Options */}
+                        <div className="p-2.5 space-y-1">
+                          {/* Admin Portal Link */}
+                          <Link
+                            href="/admin"
+                            onClick={() => { setProfileMenuOpen(false); onNavigateToAdmin(); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
+                          >
+                            <LayoutDashboard className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                            <span>{t('nav.adminPortal', 'Admin Portal')}</span>
+                          </Link>
 
-                                <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(200,168,75,0.25)', color: '#ffffff' }}>
-                                  {roleIcon}
-                                  <span>{roleLabel}</span>
-                                </div>
-                              </div>
+                          {/* ID Card Link */}
+                          <button
+                            onClick={() => { setProfileMenuOpen(false); onOpenMembershipCard(); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
+                          >
+                            <Shield className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                            <span>{t('nav.myCard', 'View ID Card')}</span>
+                          </button>
 
-                              {/* Body Options */}
-                              <div className="p-2.5 space-y-1">
-                                {/* Admin Portal Link */}
-                                <Link
-                                  href="/admin"
-                                  onClick={() => { setProfileMenuOpen(false); onNavigateToAdmin(); }}
-                                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
-                                >
-                                  <LayoutDashboard className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                                  <span>{t('nav.adminPortal', 'Admin Portal')}</span>
-                                </Link>
+                          <div className="my-1 border-t" style={{ borderColor: 'rgba(200,168,75,0.15)' }} />
 
-                                {/* ID Card Link */}
-                                <button
-                                  onClick={() => { setProfileMenuOpen(false); onOpenMembershipCard(); }}
-                                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
-                                >
-                                  <Shield className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                                  <span>{t('nav.myCard', 'View ID Card')}</span>
-                                </button>
-
-                                <div className="my-1 border-t" style={{ borderColor: 'rgba(200,168,75,0.15)' }} />
-
-                                {/* Logout Button */}
-                                <button
-                                  onClick={() => { setProfileMenuOpen(false); onLogout(); }}
-                                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-400 hover:bg-rose-950/50 hover:text-rose-300 transition-colors text-xs font-bold text-left cursor-pointer"
-                                >
-                                  <LogOut className="w-4 h-4" />
-                                  <span>{t('nav.logout', 'Logout')}</span>
-                                </button>
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </>
-                    );
-                  })()}
+                          {/* Logout Button */}
+                          <button
+                            onClick={() => { setProfileMenuOpen(false); onLogout(); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-400 hover:bg-rose-950/50 hover:text-rose-300 transition-colors text-xs font-bold text-left cursor-pointer"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            <span>{t('nav.logout', 'Logout')}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <Link
@@ -418,7 +461,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   key={link.id}
                   href={link.path}
                   onClick={() => onPageChange(link.id)}
-                  className="px-4 py-2.5 text-xs font-semibold transition-all duration-150 cursor-pointer relative"
+                  className="px-2.5 xl:px-3.5 py-2.5 text-xs font-semibold transition-all duration-150 cursor-pointer relative whitespace-nowrap"
                   style={{
                     color: isActive ? 'var(--mfct-gold)' : 'rgba(255,255,255,0.88)',
                     borderBottom: isActive ? '3px solid var(--mfct-gold)' : '3px solid transparent',
@@ -464,6 +507,29 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             <div className="pt-3 flex flex-col gap-2" style={{ borderTop: '1px solid rgba(200,168,75,0.15)' }}>
+              {onLogout && (
+                <div className="p-3 rounded-xl mb-1 flex items-center gap-3" style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(200,168,75,0.25)' }}>
+                  <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: 'rgba(200,168,75,0.2)', border: '1.5px solid var(--mfct-gold)' }}>
+                    {currentUser.avatar && currentUser.avatar !== 'https://via.placeholder.com/150' ? (
+                      <img
+                        src={currentUser.avatar}
+                        alt={displayName}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <UserIcon className="w-5 h-5" style={{ color: 'var(--mfct-gold)' }} />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-sm text-white truncate">{displayName}</div>
+                    <div className="inline-flex items-center gap-1.5 text-[11px] font-medium mt-0.5" style={{ color: 'var(--mfct-gold)' }}>
+                      {roleIcon}
+                      <span className="truncate">{displayRoleWithDistrict}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
               {onOpenZakatCalc && (
                 <button
                   onClick={() => { onOpenZakatCalc(); setMobileMenuOpen(false); }}
@@ -486,7 +552,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
                 style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.80)', border: '1px solid rgba(255,255,255,0.10)' }}
               >
-                <Shield className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('nav.myCard', 'View ID Card')} ({(currentUser.name || '').replace(/\s*\([^)]*\)/g, '').trim() || 'User'})
+                <Shield className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('nav.myCard', 'View ID Card')} ({displayName})
               </button>
               <Link
                 href="/sign-up"

@@ -29,6 +29,21 @@ export async function getPendingVerifications(): Promise<PendingVerificationItem
   }
 }
 
+export async function createAuditLog(log: Omit<AuditLog, 'id' | 'timestamp'>): Promise<void> {
+  try {
+    await supabase.from('audit_logs').insert([{
+      action: log.action,
+      performed_by: log.performedBy,
+      role: log.role,
+      details: log.details,
+      ip_address: log.ipAddress,
+      timestamp: new Date().toISOString(),
+    }]);
+  } catch (err) {
+    console.warn('Audit log insert failed:', err);
+  }
+}
+
 export async function approveVerification(id: string, reviewerName: string): Promise<void> {
   await fetch('/api/verifications', {
     method: 'POST',
@@ -57,100 +72,6 @@ export async function rejectVerification(id: string, reviewerName: string): Prom
     details: `Rejected verification item #${id}`,
     ipAddress: 'system',
   });
-}
-
-// ─── Audit Logs ───────────────────────────────────────────────────────────────
-function mapAuditLog(row: Record<string, unknown>): AuditLog {
-  return {
-    id: row.id as string,
-    timestamp: row.timestamp as string,
-    action: row.action as string,
-    performedBy: row.performed_by as string,
-    role: row.role as UserRole,
-    details: row.details as string,
-    ipAddress: row.ip_address as string,
-  };
-}
-
-export async function getAuditLogs(limit = 50): Promise<AuditLog[]> {
-  try {
-    const { data, error } = await supabase
-      .from('audit_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(limit);
-    if (error) throw error;
-    return (data ?? []).map(mapAuditLog);
-  } catch (err) {
-    console.error('getAuditLogs error:', err);
-    return [];
-  }
-}
-
-export async function createAuditLog(log: Omit<AuditLog, 'id' | 'timestamp'>): Promise<void> {
-  try {
-    await supabase.from('audit_logs').insert({
-      timestamp: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
-      action: log.action,
-      performed_by: log.performedBy,
-      role: log.role,
-      details: log.details,
-      ip_address: log.ipAddress,
-    });
-  } catch (err) {
-    console.error('createAuditLog error:', err);
-  }
-}
-
-// ─── Emergency Aid Requests ───────────────────────────────────────────────────
-export async function submitEmergencyAidRequest(req: {
-  memberId: string;
-  memberName: string;
-  communityId: string;
-  communityName: string;
-  aidCategory: string;
-  estimatedAmountINR: number;
-  description: string;
-  hospitalDetails?: string;
-}): Promise<void> {
-  const { error } = await supabase.from('emergency_aid_requests').insert({
-    member_id: req.memberId,
-    member_name: req.memberName,
-    community_id: req.communityId,
-    community_name: req.communityName,
-    aid_category: req.aidCategory,
-    estimated_amount_inr: req.estimatedAmountINR,
-    description: req.description,
-    hospital_details: req.hospitalDetails ?? null,
-    status: 'pending',
-  });
-  if (error) throw error;
-}
-
-export async function getEmergencyAidRequests(): Promise<Record<string, unknown>[]> {
-  const { data, error } = await supabase
-    .from('emergency_aid_requests')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return data ?? [];
-}
-
-export async function updateEmergencyAidStatus(id: string | number, status: 'approved' | 'rejected'): Promise<void> {
-  const res = await fetch('/api/emergency-campaigns', {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, status }),
-  });
-  
-  if (!res.ok) {
-    throw new Error(`HTTP error ${res.status}`);
-  }
-  
-  const json = await res.json();
-  if (!json.success) {
-    throw new Error(json.error || `Failed to update: No record found with id ${id}`);
-  }
 }
 
 // ─── Announcements ────────────────────────────────────────────────────────────

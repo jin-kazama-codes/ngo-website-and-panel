@@ -3,13 +3,20 @@ export type UserRole =
   | 'community_admin'
   | 'executive_admin'
   | 'member'
-  | 'premium_donor';
+  | 'premium_donor'
+  | 'district_president'
+  | 'district_coordinator'
+  | 'district_gen_secretary'
+  | 'district_secretary'
+  | 'district_finance_coord';
 
 export type DonationCategory =
   | 'General'
   | 'Sadakah'
+  | 'Sadaqah'
   | 'Zakat'
   | 'Fitrah'
+  | 'Fitra'
   | 'Medical'
   | 'Education'
   | 'Marriage'
@@ -30,6 +37,9 @@ export interface User {
   email?: string;
   phone: string;
   city: string;
+  district?: string;
+  districtRole?: string;
+  district_role?: string;
   state: string;
   address?: string;
   role: UserRole;
@@ -60,6 +70,7 @@ export interface User {
 export interface Community {
   id: string;
   name: string;
+  district?: string;
   city: string;
   state: string;
   adminName: string;
@@ -88,6 +99,8 @@ export interface Campaign {
   raisedINR: number;
   donorsCount: number;
   daysLeft: number;
+  endDate?: string;
+  end_date?: string;
   isVerified: boolean;
   isZakatEligible: boolean;
   isSadqaEligible?: boolean;
@@ -193,3 +206,32 @@ export interface AccountDetails {
   created_at?: string;
   updated_at?: string;
 }
+
+export type DistrictRoleKey =
+  | 'district_president'
+  | 'district_coordinator'
+  | 'district_gen_secretary'
+  | 'district_secretary'
+  | 'district_finance_coord';
+
+export interface DistrictPostDefinition {
+  slotNumber: string; // '01', '02', etc.
+  key: DistrictRoleKey;
+  titleEn: string;
+  titleHi: string;
+  titleUr: string;
+  dutyEn: string;
+  dutyHi: string;
+  dutyUr: string;
+  color: string;
+}
+
+export interface DistrictCommitteeRecord {
+  district: string;
+  president?: User;
+  coordinator?: User;
+  genSecretary?: User;
+  secretary?: User;
+  financeCoord?: User;
+}
+

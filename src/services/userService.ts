@@ -20,9 +20,11 @@ function mapRow(row: Record<string, unknown>): User {
     communityName: row.community_name as string,
     membershipId: row.membership_id as string,
     isVerified: row.is_verified as boolean,
-    isPremium: row.is_premium as boolean,
     joinDate: row.join_date as string,
     city: row.city as string,
+    district: (row.district as string) || undefined,
+    districtRole: (row.district_role || row.districtRole) as string | undefined,
+    district_role: (row.district_role || row.districtRole) as string | undefined,
     state: row.state as string,
     address: (row.address || row.adderess || row.full_address) as string | undefined,
     passwordHash: (row.password || row.password_hash || row.passwordHash) as string | undefined,
@@ -56,22 +58,18 @@ export async function getUserByPhone(phone: string): Promise<User | null> {
   return mapRow(data);
 }
 
-export async function getUsers(communityId?: string): Promise<User[]> {
-  try {
-    const url = communityId ? `/api/users?communityId=${encodeURIComponent(communityId)}` : '/api/users';
-    const res = await fetch(url);
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && Array.isArray(json.data)) {
-        return json.data.map(mapRow);
-      }
-    }
-  } catch (err) {
-    console.warn('API fetch users failed, using client fallback:', err);
-  }
-
+export async function getUsers(communityIdOrDistrict?: string, district?: string): Promise<User[]> {
   let query = supabase.from('users').select('*').order('created_at', { ascending: false });
-  if (communityId) query = query.eq('community_id', communityId);
+  if (communityIdOrDistrict && communityIdOrDistrict !== 'all') {
+    if (communityIdOrDistrict.startsWith('comm_')) {
+      query = query.eq('community_id', communityIdOrDistrict);
+    } else {
+      query = query.eq('city', communityIdOrDistrict);
+    }
+  }
+  if (district && district !== 'all') {
+    query = query.eq('district', district);
+  }
   const { data, error } = await query;
   if (error) throw error;
   return (data ?? []).map(mapRow);
@@ -85,43 +83,43 @@ export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaa
     phone: user.phone,
     role: user.role,
     avatar: user.avatar,
-    communityId: user.communityId,
-    communityName: user.communityName,
-    membershipId: user.membershipId,
-    isVerified: user.isVerified,
-    isPremium: user.isPremium,
-    joinDate: user.joinDate,
+    community_id: user.communityId,
+    community_name: user.communityName,
+    membership_id: user.membershipId,
+    is_verified: user.isVerified,
+    join_date: user.joinDate,
     city: user.city,
+    district: user.district,
+    district_role: user.districtRole || user.district_role,
     state: user.state,
     address: user.address,
-    aadhaarFrontUrl: user.aadhaarFrontUrl,
-    aadhaarBackUrl: user.aadhaarBackUrl,
-    passwordHash: user.passwordHash,
-    paymentMethod: user.paymentMethod,
-    paymentUtr: user.paymentUtr,
-    paymentScreenshotUrl: user.paymentScreenshotUrl,
+    aadhaar_front_url: user.aadhaarFrontUrl,
+    aadhaar_back_url: user.aadhaarBackUrl,
+    password: user.passwordHash,
+    payment_method: user.paymentMethod,
+    payment_utr: user.paymentUtr,
+    payment_screenshot_url: user.paymentScreenshotUrl,
     religion: user.religion,
     is_malik_e_nisab: user.isMalikENisab,
-    isMalikENisab: user.isMalikENisab,
     help_type: user.helpType,
-    helpType: user.helpType,
     help_details: user.helpDetails,
-    helpDetails: user.helpDetails,
   };
 
-  const res = await fetch('/api/users', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  // Use maybeSingle() so that if Supabase RLS prevents anon users from SELECTing newly created rows,
+  // it won't throw PGRST116 (which falsely triggers UI errors even though the row was saved in the database).
+  const { data, error } = await supabase
+    .from('users')
+    .insert(payload)
+    .select('*')
+    .maybeSingle();
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to create user');
+  // Database error (ignore PGRST116 if thrown)
+  if (error && (error as { code?: string }).code !== 'PGRST116') {
+    console.error('Failed to create user:', error.message || error);
+    throw error;
   }
 
-  const json = await res.json();
-  const createdUser = json.data ? mapRow(json.data) : user;
+  const createdUser = data ? mapRow(data) : user;
 
   if (createdUser.communityId) {
     try {
@@ -163,11 +161,14 @@ export async function authenticateUser(identifier: string, plainPassword: string
   }
 }
 
-export async function updateUser(id: string, patch: Partial<User>): Promise<void> {
+export async function updateUser(id: string, patch: Partial<User>): Promise<User> {
   const update: Record<string, unknown> = {};
   if (patch.isVerified !== undefined) update.is_verified = patch.isVerified;
   if (patch.avatar !== undefined) update.avatar = patch.avatar;
   if (patch.role !== undefined) update.role = patch.role;
+  if (patch.district !== undefined) update.district = patch.district || null;
+  if (patch.districtRole !== undefined) update.district_role = patch.districtRole || null;
+  if (patch.district_role !== undefined) update.district_role = patch.district_role || null;
   if (patch.communityId !== undefined) update.community_id = patch.communityId;
   if (patch.communityName !== undefined) update.community_name = patch.communityName;
   if (patch.name !== undefined) update.name = patch.name;
@@ -189,16 +190,21 @@ export async function updateUser(id: string, patch: Partial<User>): Promise<void
     update.password_hash = patch.passwordHash;
   }
 
-  const res = await fetch('/api/users', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, ...update }),
-  });
+  const { data, error } = await supabase
+    .from('users')
+    .update(update)
+    .eq('id', id)
+    .select('*')
+    .maybeSingle();
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to update user');
+  if (error && (error as { code?: string }).code !== 'PGRST116') {
+    console.error('Failed to update user:', error.message || error);
+    throw error;
   }
+  if (data) {
+    return mapRow(data);
+  }
+  return { id, ...patch } as User;
 }
 
 export async function getUnverifiedUsers(): Promise<User[]> {
@@ -212,12 +218,18 @@ export async function getUnverifiedUsers(): Promise<User[]> {
 }
 
 export async function deleteUser(id: string): Promise<void> {
-  const res = await fetch(`/api/users?id=${id}`, {
-    method: 'DELETE',
-  });
+  try {
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', id);
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to delete user');
+    if (error) {
+      console.error('Failed to delete user:', error);
+      throw new Error(error.message || 'Failed to delete user');
+    }
+  } catch (err) {
+    console.error('deleteUser error:', err);
+    throw err;
   }
 }

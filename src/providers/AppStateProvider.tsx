@@ -140,7 +140,6 @@ export function AppStateProvider({
     if (role === 'super_admin') return USER_SUPER_ADMIN;
     if (role === 'executive_admin') return USER_EXECUTIVE_ADMIN;
     if (role === 'community_admin') return USER_COMMUNITY_ADMIN;
-    if (role === 'premium_donor') return CURRENT_USER_PREMIUM;
     return USER_MEMBER;
   };
 
@@ -170,6 +169,7 @@ export function AppStateProvider({
       localStorage.setItem('email', userEmail);
       localStorage.setItem('name', userWithEmail.name || '');
       localStorage.setItem('avatar', userWithEmail.avatar || '');
+      localStorage.setItem('city', userWithEmail.city || '');
       localStorage.setItem('community_id', userWithEmail.communityId || '');
       localStorage.setItem('id', userWithEmail.id);
       localStorage.setItem('email', userEmail ?? '');
@@ -194,6 +194,7 @@ export function AppStateProvider({
       localStorage.removeItem('name');
       localStorage.removeItem('avatar');
       localStorage.removeItem('community_id');
+      localStorage.removeItem('city');
       localStorage.removeItem('login_info');
       localStorage.removeItem('mfct_user_info');
       router.push('/');
@@ -238,6 +239,7 @@ export function AppStateProvider({
         name: newUser.name,
         avatar: newUser.avatar,
         community_id: newUser.communityId,
+        city: newUser.city,
       };
       localStorage.setItem('mfct_is_logged_in', 'true');
       localStorage.setItem('mfct_user_role', newUser.role);
@@ -246,6 +248,7 @@ export function AppStateProvider({
       localStorage.setItem('email', newUser.email || '');
       localStorage.setItem('name', newUser.name || '');
       localStorage.setItem('avatar', newUser.avatar || '');
+      localStorage.setItem('city', newUser.city || '');
       localStorage.setItem('community_id', newUser.communityId || '');
       localStorage.setItem('login_info', JSON.stringify(loginInfo));
       localStorage.setItem('mfct_user_info', JSON.stringify(loginInfo));
@@ -277,8 +280,6 @@ export function AppStateProvider({
       setActiveUser(USER_EXECUTIVE_ADMIN);
     } else if (role === 'community_admin') {
       setActiveUser(USER_COMMUNITY_ADMIN);
-    } else if (role === 'premium_donor') {
-      setActiveUser(CURRENT_USER_PREMIUM);
     } else {
       setActiveUser(USER_MEMBER);
     }
@@ -302,6 +303,7 @@ export function AppStateProvider({
     emergency: '/emergency',
     communities: '/communities',
     niyamawali: '/niyamawali',
+    'zakat-compliance': '/zakat-compliance',
     about: '/about',
     rules: '/rules',
     gallery: '/gallery',

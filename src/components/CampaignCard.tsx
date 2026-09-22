@@ -43,6 +43,22 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign: rawCampaig
     }
   }, [rawCampaign.title, rawCampaign.story, language]);
 
+  // Build image list: mainImage first, then gallery
+  const allImages: string[] = [
+    campaign.mainImage,
+    ...(campaign.galleryImages || []),
+  ].filter((u): u is string => !!u && typeof u === 'string');
+
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  // Reset carousel when campaign changes
+  useEffect(() => { setActiveIdx(0); }, [campaign.id]);
+
+  const goTo = (idx: number, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setActiveIdx((idx + allImages.length) % allImages.length);
+  };
+
   const categoryTranslations: Record<string, string> = {
     Medical: t('cat.medical', 'Medical Aid'),
     Education: t('cat.education', 'Education'),
@@ -60,18 +76,62 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign: rawCampaig
       className="rounded-2xl transition-all duration-300 overflow-hidden flex flex-col group"
       style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', boxShadow: 'var(--shadow-card)' }}
     >
-      {/* Card Image Banner */}
+      {/* Card Image Carousel */}
       <div className="relative h-52 overflow-hidden" style={{ background: 'var(--mfct-warm-bg-2)' }}>
-        <img
-          src={campaign.mainImage}
-          alt={displayTitle}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          referrerPolicy="no-referrer"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20"></div>
+        {/* Images — cross-fade via opacity */}
+        {allImages.map((src, idx) => (
+          <img
+            key={idx}
+            src={src}
+            alt={displayTitle}
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${idx === activeIdx ? 'opacity-100 scale-105' : 'opacity-0 scale-100'}`}
+            referrerPolicy="no-referrer"
+          />
+        ))}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none z-10" />
+
+        {/* Prev / Next arrows — only when multiple images */}
+        {allImages.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={(e) => goTo(activeIdx - 1, e)}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+              aria-label="Previous image"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+            <button
+              type="button"
+              onClick={(e) => goTo(activeIdx + 1, e)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+              aria-label="Next image"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+
+            {/* Dot indicators */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1">
+              {allImages.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={(e) => goTo(idx, e)}
+                  className={`rounded-full transition-all duration-200 cursor-pointer ${idx === activeIdx ? 'w-4 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'}`}
+                  aria-label={`Image ${idx + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Image counter badge */}
+            <div className="absolute bottom-2.5 right-2.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow z-20">
+              <span>📷 {activeIdx + 1} / {allImages.length}</span>
+            </div>
+          </>
+        )}
 
         {/* Badges Overlay Top */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-1 flex-wrap">
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-1 flex-wrap z-20">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span
               className="px-2.5 py-1 rounded-full text-[11px] font-bold shadow-sm"
@@ -119,7 +179,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign: rawCampaig
         </div>
 
         {/* Community Title Bottom Overlay */}
-        <div className="absolute bottom-3 left-3 right-3 text-white">
+        <div className="absolute bottom-3 left-3 right-12 z-20">
           <p className="text-[11px] font-medium flex items-center gap-1" style={{ color: 'var(--mfct-gold)' }}>
             <Building2 className="w-3 h-3 shrink-0" />
             <span className="truncate">{campaign.communityName} • {campaign.city}</span>
@@ -147,10 +207,10 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign: rawCampaig
           <div className="flex items-baseline justify-between text-xs font-semibold">
             <span className="font-bold text-sm" style={{ color: 'var(--mfct-dark-green)' }}>
               ₹{campaign.raisedINR.toLocaleString('en-IN')}{' '}
-              <span className="font-normal text-xs" style={{ color: 'var(--mfct-text-muted)' }}>{t('card.raised', 'raised')}</span>
+              <span className="font-normal text-xs" style={{ color: 'var(--mfct-text-muted)' }}>{t('card.raised', 'Raised')}</span>
             </span>
             <span style={{ color: 'var(--mfct-text-muted)' }}>
-              {t('card.ofGoal', 'Goal')}: ₹{campaign.goalINR.toLocaleString('en-IN')}
+              {t('card.ofGoal', 'of Goal')}: ₹{campaign.goalINR.toLocaleString('en-IN')}
             </span>
           </div>
 
@@ -182,13 +242,13 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign: rawCampaig
             className="py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex-1 cursor-pointer"
             style={{ background: 'var(--mfct-warm-bg-2)', color: 'var(--mfct-dark-green)', border: '1px solid var(--mfct-border)' }}
           >
-            {t('card.viewDetail', 'Read Story & Docs')}
+            {t('card.viewDetail', 'View Detail')}
           </button>
           <button
             onClick={() => onDonate(rawCampaign)}
             className="mfct-btn-gold py-2.5 px-4 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
           >
-            <Heart className="w-3.5 h-3.5 fill-current" /> {t('card.donateNow', 'Donate')}
+            <Heart className="w-3.5 h-3.5 fill-current" /> {t('card.donateNow', 'Donate Now')}
           </button>
         </div>
       </div>

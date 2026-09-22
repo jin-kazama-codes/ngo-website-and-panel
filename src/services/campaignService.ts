@@ -1,8 +1,138 @@
 import { Campaign, DonationCategory } from '../types';
 
+export const CATEGORY_FALLBACK_IMAGES: Record<string, string> = {
+  Medical: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
+  Food: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80',
+  Education: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80',
+  Marriage: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+  Janazah: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
+  Emergency: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
+  'Emergency Relief': 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
+};
+
+export function getCategoryFallbackImage(category?: string): string {
+  if (!category) return CATEGORY_FALLBACK_IMAGES.Medical;
+  return CATEGORY_FALLBACK_IMAGES[category] || CATEGORY_FALLBACK_IMAGES.Medical;
+}
+
+const NUMBER_WORDS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+
+export function formatImagesToJsonb(urls: unknown): Record<string, string> {
+  let list: string[] = [];
+  if (Array.isArray(urls)) {
+    list = urls.map(String).map(s => s.trim()).filter(Boolean);
+  } else if (urls && typeof urls === 'object') {
+    list = Object.values(urls as Record<string, unknown>).map(String).map(s => s.trim()).filter(Boolean);
+  } else if (typeof urls === 'string' && urls.trim()) {
+    list = urls.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  const obj: Record<string, string> = {};
+  list.forEach((url, index) => {
+    const key = index < NUMBER_WORDS.length ? `${NUMBER_WORDS[index]}_image` : `image_${index + 1}`;
+    obj[key] = url;
+  });
+  return obj;
+}
+
+export function extractImages(row: Record<string, unknown>): { mainImage: string; galleryImages: string[] } {
+  const raw = row.mainImage || row.main_image;
+  let list: string[] = [];
+
+  const parseItem = (val: unknown): string[] => {
+    if (!val) return [];
+    if (Array.isArray(val)) {
+      return val.flatMap(parseItem);
+    }
+    if (typeof val === 'object') {
+      return Object.values(val as Record<string, unknown>).flatMap(parseItem);
+    }
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (!trimmed || trimmed === '[object Object]') return [];
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          return parseItem(parsed);
+        } catch {
+          return trimmed.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      }
+      return trimmed.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    return [];
+  };
+
+  list = parseItem(raw);
+
+  const rawGallery = row.galleryImages || row.gallery_images;
+  if (rawGallery) {
+    list = [...list, ...parseItem(rawGallery)];
+  }
+
+  // Filter out unreachable local mobile schemes and invalid paths
+  const cleaned = list.filter(url => typeof url === 'string' && url.length > 5 && !url.startsWith('file://') && !url.startsWith('content://') && !url.startsWith('ph://'));
+
+  const unique = Array.from(new Set(cleaned));
+  const category = (row.category as string) || 'Medical';
+  const defaultImage = getCategoryFallbackImage(category);
+  const mainImage = unique[0] || defaultImage;
+  const galleryImages = unique.slice(1);
+  return { mainImage, galleryImages };
+}
+
+export function calculateDaysLeft(row: Record<string, unknown>): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // 1. Dynamic calculation from end_date or endDate
+  const endDateVal = (row.end_date || row.endDate) as string | undefined;
+  if (endDateVal) {
+    const end = new Date(endDateVal);
+    if (!isNaN(end.getTime())) {
+      end.setHours(0, 0, 0, 0);
+      const diffMs = end.getTime() - today.getTime();
+      return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    }
+  }
+
+  // 2. Dynamic calculation from created_date / created_at + static days
+  const createdDateVal = (row.created_at || row.created_date || row.createdDate) as string | undefined;
+  const staticDays = Number(row.days_left ?? row.daysLeft);
+  if (createdDateVal && !isNaN(staticDays) && staticDays > 0) {
+    const created = new Date(createdDateVal);
+    if (!isNaN(created.getTime())) {
+      const end = new Date(created);
+      end.setDate(end.getDate() + staticDays);
+      end.setHours(0, 0, 0, 0);
+      const diffMs = end.getTime() - today.getTime();
+      return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    }
+  }
+
+  // 3. Fallback to static number if present and valid
+  if (!isNaN(staticDays) && staticDays >= 0) {
+    return staticDays;
+  }
+
+  return 30;
+}
+
 function mapRow(row: Record<string, unknown>): Campaign {
-  const rawMainImage = (row.mainImage || row.main_image || '') as string;
-  const splitImages = rawMainImage ? rawMainImage.split(',') : [];
+  const { mainImage, galleryImages } = extractImages(row);
+
+  const rawDocs = ((row.documents ?? row.documents) as any[]) || [];
+  const metaDoc = Array.isArray(rawDocs) ? rawDocs.find((d: any) => d && d.title === '__meta__') : null;
+  const cleanDocs = Array.isArray(rawDocs) ? rawDocs.filter((d: any) => d && d.title !== '__meta__') : [];
+
+  const createdBy = (row.created_by || row.createdBy || metaDoc?.created_by || 'admin') as string;
+  const createdDate = (
+    row.createdDate ||
+    row.created_date ||
+    metaDoc?.created_date ||
+    (row.created_at
+      ? new Date(row.created_at as string).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+      : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }))
+  ) as string;
 
   return {
     id: (row.id as string) || `camp_${Date.now()}`,
@@ -16,18 +146,20 @@ function mapRow(row: Record<string, unknown>): Campaign {
     goalINR: Number(row.goalINR ?? row.goal_inr ?? 100000),
     raisedINR: Number(row.raisedINR ?? row.raised_inr ?? 0),
     donorsCount: Number(row.donorsCount ?? row.donors_count ?? 0),
-    daysLeft: Number(row.daysLeft ?? row.days_left ?? 30),
+    daysLeft: calculateDaysLeft(row),
+    endDate: (row.end_date || row.endDate) as string | undefined,
+    end_date: (row.end_date || row.endDate) as string | undefined,
     isVerified: Boolean(row.isVerified ?? row.is_verified ?? true),
     isZakatEligible: Boolean(row.isZakatEligible ?? row.is_zakat_eligible ?? false),
     isSadqaEligible: Boolean(row.isSadqaEligible || row.is_sadqa_eligible || row.is_sadaqah_eligible),
     isFitrahEligible: Boolean(row.isFitrahEligible || row.is_fitrah_eligible || row.is_fitra_eligible),
     isUrgent: Boolean(row.isUrgent ?? row.is_urgent ?? false),
-    mainImage: splitImages[0] || 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
-    galleryImages: splitImages.slice(1) || [],
+    mainImage,
+    galleryImages,
     story: (row.story as string) || '',
-    documents: ((row.documents ?? row.documents) as Campaign['documents']) || [],
-    createdDate: (row.created_at || row.createdDate || row.created_date) as string,
-    createdBy: (row.createdBy || row.created_by) as string,
+    documents: cleanDocs,
+    createdDate,
+    createdBy,
     status: row.status === 'approved' ? 'active' : row.status === 'pending' ? 'pending_approval' : (row.status as Campaign['status']) || 'active',
   };
 }
@@ -181,8 +313,7 @@ export async function updateCampaignStatus(
 }
 
 function mapEmergencyRow(row: any): Campaign {
-  const rawMainImage = (row.mainImage || row.main_image || '') as string;
-  const splitImages = rawMainImage ? rawMainImage.split(',') : [];
+  const { mainImage, galleryImages } = extractImages(row);
 
   return {
     id: `emergency_${row.id}`,
@@ -200,8 +331,8 @@ function mapEmergencyRow(row: any): Campaign {
     isVerified: row.status === 'approved',
     isZakatEligible: true,
     isUrgent: true,
-    mainImage: splitImages[0],
-    galleryImages: splitImages.slice(1) || [],
+    mainImage,
+    galleryImages,
     story: row.description || '',
     documents: [],
     createdBy: row.member_id,

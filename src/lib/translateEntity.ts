@@ -54,6 +54,12 @@ export const HELP_TYPE_MAP: Record<string, { hi: string; ur: string }> = {
 };
 
 const ROLE_MAP: Record<string, { hi: string; ur: string }> = {
+  'super_admin':               { hi: 'सुपर एडमिन',          ur: 'سپر ایڈمن' },
+  'Super Admin':               { hi: 'सुपर एडमिन',          ur: 'سپر ایڈمن' },
+  'executive_admin':           { hi: 'कार्यकारी एडमिन',     ur: 'ایگزیکٹو ایڈمن' },
+  'Executive Admin':           { hi: 'कार्यकारी एडमिन',     ur: 'ایگزیکٹو ایڈمن' },
+  'community_admin':           { hi: 'सामुदायिक प्रशासक',   ur: 'کمیونٹی ایڈمن' },
+  'member':                    { hi: 'सदस्य',               ur: 'ممبر' },
   'Verified Donor':            { hi: 'सत्यापित दानदाता',   ur: 'تصدیق شدہ عطیہ دہندہ' },
   'Beneficiary Father':        { hi: 'लाभार्थी पिता',       ur: 'مستفید والد' },
   'Widow Mother':              { hi: 'विधवा मां',            ur: 'بیوہ ماں' },
@@ -64,7 +70,68 @@ const ROLE_MAP: Record<string, { hi: string; ur: string }> = {
   'Regular Monthly Donor':     { hi: 'नियमित मासिक दानदाता', ur: 'ماہانہ ڈونر' },
   'Grassroots Field Volunteer':{ hi: 'ज़मीनी स्वयंसेवक',    ur: 'فیلڈ رضاکار' },
   'Community Organiser':       { hi: 'सामुदायिक आयोजक',     ur: 'کمیونٹی آرگنائزر' },
+  'district_president':        { hi: 'जिला अध्यक्ष',        ur: 'ضلعی صدر' },
+  'District President':        { hi: 'जिला अध्यक्ष',        ur: 'ضلعی صدر' },
+  'district_coordinator':      { hi: 'जिला समन्वयक',        ur: 'ضلعی کوآرڈینیٹر' },
+  'District Coordinator':      { hi: 'जिला समन्वयक',        ur: 'ضلعی کوآرڈینیٹر' },
+  'district_gen_secretary':    { hi: 'जिला महासचिव',        ur: 'ضلعی جنرل سیکرٹری' },
+  'District General Secretary':{ hi: 'जिला महासचिव',        ur: 'ضلعی جنرل سیکرٹری' },
+  'district_secretary':        { hi: 'जिला सचिव',          ur: 'ضلعی سیکرٹری' },
+  'District Secretary':        { hi: 'जिला सचिव',          ur: 'ضلعی سیکرٹری' },
+  'district_finance_coord':    { hi: 'जिला वित्त समन्वयक',   ur: 'ضلعی فنانس کوآرڈینیٹر' },
+  'District Finance Coordinator': { hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر' },
 };
+
+export const DISTRICT_ROLE_MAP: Record<string, { en: string; hi: string; ur: string }> = {
+  'district_president':         { en: 'District President', hi: 'जिला अध्यक्ष', ur: 'ضلعی صدر' },
+  'district_coordinator':       { en: 'District Coordinator', hi: 'जिला समन्वयक', ur: 'ضلعی کوآرڈینیٹر' },
+  'district_gen_secretary':     { en: 'District General Secretary', hi: 'जिला महासचिव', ur: 'ضلعی جنرل سیکرٹری' },
+  'district_secretary':         { en: 'District Secretary', hi: 'जिला सचिव', ur: 'ضلعی سیکرٹری' },
+  'district_finance_coord':     { en: 'District Finance Coordinator', hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر' },
+  'District President':         { en: 'District President', hi: 'जिला अध्यक्ष', ur: 'ضلعی صدر' },
+  'District Coordinator':       { en: 'District Coordinator', hi: 'जिला समन्वयक', ur: 'ضلعی کوآرڈینیٹر' },
+  'District General Secretary': { en: 'District General Secretary', hi: 'जिला महासचिव', ur: 'ضلعی جنرل سیکرٹری' },
+  'District Secretary':         { en: 'District Secretary', hi: 'जिला सचिव', ur: 'ضلعی سیکرٹری' },
+  'District Finance Coordinator': { en: 'District Finance Coordinator', hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر' },
+};
+
+export const DISTRICT_ROLE_RESPONSIBILITIES: Record<string, { en: string; hi: string; ur: string }> = {
+  district_president: {
+    en: 'Overall district leadership, executive administration, and community outreach representation.',
+    hi: 'समग्र जिला नेतृत्व, कार्यकारी प्रशासन एवं सामुदायिक पहुंच प्रतिनिधित्व।',
+    ur: 'مجموعی ضلعی قیادت، ایگزیکٹو انتظامیہ اور کمیونٹی رسائی کی نمائندگی۔',
+  },
+  district_coordinator: {
+    en: 'Inter-community coordination, program facilitation, and volunteer alignment.',
+    hi: 'अंतर-सामुदायिक समन्वय, कार्यक्रम सुगमीकरण एवं स्वयंसेवक सहयोग।',
+    ur: 'باہمی روابط، پروگرام سہولت کاری اور رضاکارانہ ہم آہنگی۔',
+  },
+  district_gen_secretary: {
+    en: 'District record management, organizational communications, and general secretarial duties.',
+    hi: 'जिला रिकॉर्ड प्रबंधन, संगठनात्मक संचार एवं सामान्य सचिवीय कार्य।',
+    ur: 'ضلعی ریکارڈ مینجمنٹ، تنظیمی مواصلات اور عمومی سیکرٹری فرائض۔',
+  },
+  district_secretary: {
+    en: 'Meeting records, local chapter administration, and executive correspondence.',
+    hi: 'बैठक रिकॉर्ड, स्थानीय शाखा प्रशासन एवं कार्यकारी पत्राचार।',
+    ur: 'میٹنگ ریکارڈ، مقامی برانچ انتظامیہ और ایگزیکٹو خط و کتابت۔',
+  },
+  district_finance_coord: {
+    en: 'Financial records and documentary support for official transactions.',
+    hi: 'आधिकारिक लेन-देन के लिए वित्तीय रिकॉर्ड और दस्तावेजी सहायता।',
+    ur: 'سرکاری لین دین کے لیے مالیاتی ریکارڈ اور دستاویزی معاونت۔',
+  },
+};
+
+export function translateRoleResponsibility(role: string, lang: Language): string {
+  if (!role) return '';
+  const normalized = role.toLowerCase().trim().replace(/\s+/g, '_');
+  const match = DISTRICT_ROLE_RESPONSIBILITIES[normalized];
+  if (!match) return '';
+  return match[lang] || match.en || '';
+}
+
+
 
 export function detectScript(text: string): 'hi' | 'ur' | 'en' {
   if (!text) return 'en';
@@ -151,6 +218,46 @@ export function translateHelpType(helpType?: string, lang: Language = 'en'): str
 export function translateRole(role: string, lang: Language): string {
   if (!role) return '';
   return resolveEnumTranslation(role, ROLE_MAP, lang);
+}
+
+/** District Role badge labels — fixed enum, supports bidirectional translation. */
+export function translateDistrictRole(districtRole: string, lang: Language): string {
+  if (!districtRole) return '';
+  return resolveEnumTranslation(districtRole, DISTRICT_ROLE_MAP, lang);
+}
+
+/**
+ * Universal User Role translator.
+ * Checks district role first (if user has districtRole or district_role or a district role key in role),
+ * then falls back to general role (super_admin, executive_admin, community_admin, member, etc.).
+ */
+export function translateUserRole(
+  role?: string,
+  districtRole?: string,
+  lang: Language = 'en'
+): string {
+  const distRoleKeys = [
+    'district_president',
+    'district_coordinator',
+    'district_gen_secretary',
+    'district_secretary',
+    'district_finance_coord',
+  ];
+  const effectiveDistrict = districtRole || (role && distRoleKeys.includes(role.toLowerCase().trim().replace(/\s+/g, '_')) ? role : '');
+
+  if (effectiveDistrict) {
+    const distResult = translateDistrictRole(effectiveDistrict, lang);
+    if (distResult) return distResult;
+  }
+
+  if (role) {
+    const roleResult = translateRole(role, lang);
+    if (roleResult) return roleResult;
+  }
+
+  if (!role && !districtRole) return '';
+  const fallback = (districtRole || role || '').replace(/_/g, ' ');
+  return fallback.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 // ─── USER-ENTERED CONTENT ─────────────────────────────────────────────────────
