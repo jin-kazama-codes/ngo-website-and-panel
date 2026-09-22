@@ -188,9 +188,11 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const getCategoryLabel = (cat: DonationCategory) => {
     switch (cat) {
       case 'General': return tr('सामान्य', 'عام عطیہ', 'General');
-      case 'Sadakah': return tr('सदक़ा', 'صدقہ', 'Sadakah');
+      case 'Sadakah':
+      case 'Sadaqah': return tr('सदक़ा', 'صدقہ', 'Sadaqah');
       case 'Zakat': return tr('ज़कात', 'زکوٰۃ', 'Zakat');
-      case 'Fitrah': return tr('फ़ितरा', 'فطرہ', 'Fitrah');
+      case 'Fitrah':
+      case 'Fitra': return tr('फ़ितरा', 'فطرہ', 'Fitra');
       case 'Medical': return tr('चिकित्सा', 'طبی امداد', 'Medical');
       case 'Education': return tr('शिक्षा', 'تعلیم', 'Education');
       case 'Marriage': return tr('विवाह सहायता', 'شادی امداد', 'Marriage');
@@ -255,13 +257,9 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 {(
                   [
                     'General',
-                    'Sadakah',
+                    'Sadaqah',
                     'Zakat',
-                    'Fitrah',
-                    'Medical',
-                    'Education',
-                    'Marriage',
-                    'Emergency Relief',
+                    'Fitra',
                   ] as DonationCategory[]
                 ).map((cat) => (
                   <button
@@ -287,31 +285,9 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                     }}
                   >
                     <span>{getCategoryLabel(cat)}</span>
-                    {cat === 'Zakat' && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)' }}>
-                        {tr('ज़कात', 'زکوٰۃ', 'Zakat')}
-                      </span>
-                    )}
                   </button>
                 ))}
               </div>
-
-              {isZakatSelected && (
-                <div
-                  className="mt-2.5 p-3 rounded-xl text-xs flex items-start gap-2"
-                  style={{ background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.3)', color: 'var(--mfct-dark-green)' }}
-                >
-                  <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--mfct-gold)' }} />
-                  <div>
-                    <span className="font-bold">{tr('ज़कात अनुपालन नियम:', 'زکوٰۃ کا اصول:', 'Zakat Compliance Rule:')}</span>{' '}
-                    {tr(
-                      'ज़कात केवल सख्ती से ज़कात-पात्र सत्यापित अभियानों में ही दी जा सकती है। अन्य अभियान स्वतः हटा दिए गए हैं।',
-                      'زکوٰۃ صرف اور صرف مستحقِ زکوٰۃ مہمات میں ہی دی جا سکتی ہے۔ غیر مستحق مہمات فلٹر کر دی گئی ہیں۔',
-                      'Zakat can only be donated to strictly Zakat Eligible verified campaigns. Non-eligible campaigns have been filtered out automatically.'
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Campaign Selection */}
@@ -334,7 +310,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             </div>
 
             {/* Outside Community Toggle */}
-            <div className="p-4 rounded-2xl flex items-center justify-between" style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)' }}>
+            {/* <div className="p-4 rounded-2xl flex items-center justify-between" style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)' }}>
               <div className="flex items-center gap-3">
                 <Building2 className="w-5 h-5" style={{ color: 'var(--mfct-gold)' }} />
                 <div>
@@ -360,7 +336,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                   style={{ background: isOutsideCommunity ? 'var(--mfct-dark-green)' : '#cbd5e1' }}
                 ></div>
               </label>
-            </div>
+            </div> */}
 
             {/* Amount Presets */}
             <div>

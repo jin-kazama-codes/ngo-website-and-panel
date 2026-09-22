@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { User, UserRole } from '../../types';
 import {
   UserCheck,
@@ -34,6 +34,8 @@ import {
 import { DarkListSkeleton } from '../../components/Skeletons';
 import { getUsers, updateUser } from '../../services/userService';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAppState } from '../../providers/AppStateProvider';
+import { STANDARD_DISTRICTS } from '../../data/districtsData';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
 import { translateCity } from '../../lib/translateEntity';
 
@@ -52,11 +54,84 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
     return en;
   };
 
+  // Safe fallback to AppStateProvider context if props are not explicitly supplied
+  let contextUser: User | undefined;
+  let contextRole: UserRole | undefined;
+  try {
+    const appState = useAppState();
+    contextUser = appState?.activeUser;
+    contextRole = appState?.currentRole;
+  } catch {
+    // Outside AppStateProvider fallback
+  }
+
+  const user = activeUser || contextUser;
+  const role = currentRole || contextRole;
+
+  const rawDistRole = (
+    user?.district_role ||
+    user?.districtRole ||
+    (user?.role as string) ||
+    ''
+  ).toLowerCase().trim().replace(/\s+/g, '_');
+
+  const isSuperOrExecutive =
+    role === 'super_admin' ||
+    role === 'executive_admin' ||
+    user?.role === 'super_admin' ||
+    user?.role === 'executive_admin';
+
+  const isDistrictCoordinator =
+    role === 'district_coordinator' ||
+    rawDistRole === 'district_coordinator' ||
+    rawDistRole.includes('coordinator');
+
+  const canPerformKycAction = isSuperOrExecutive || isDistrictCoordinator;
+
+  const districtRoleKeys = [
+    'district_president',
+    'district_coordinator',
+    'district_gen_secretary',
+    'district_secretary',
+    'district_finance_coord',
+  ];
+
+  const isDistrictRole =
+    districtRoleKeys.includes(role as string) ||
+    districtRoleKeys.includes(rawDistRole) ||
+    (typeof role === 'string' && role.startsWith('district_')) ||
+    rawDistRole.startsWith('district_') ||
+    rawDistRole.includes('president') ||
+    rawDistRole.includes('coordinator') ||
+    rawDistRole.includes('secretary') ||
+    rawDistRole.includes('finance');
+
+  const isRestrictedToDistrict = !isSuperOrExecutive && isDistrictRole;
+
+  const districtRoleTitle =
+    role === 'district_president' || rawDistRole.includes('president')
+      ? tr('जिला अध्यक्ष दृश्य', 'ضلعی صدر منظر', 'District President View')
+      : role === 'district_coordinator' || rawDistRole.includes('coordinator')
+        ? tr('जिला संयोजक दृश्य', 'ضلعی کوآرڈینیٹر منظر', 'District Coordinator View')
+        : role === 'district_gen_secretary' || rawDistRole.includes('gen_sec')
+          ? tr('जिला महासचिव दृश्य', 'ضلعی جنرل سیکرٹری منظر', 'District General Secretary View')
+          : role === 'district_secretary' || rawDistRole.includes('secretary')
+            ? tr('जिला सचिव दृश्य', 'ضلعی سیکرٹری منظر', 'District Secretary View')
+            : role === 'district_finance_coord' || rawDistRole.includes('finance')
+              ? tr('जिला वित्त समन्वयक दृश्य', 'ضلعی فنانس کوآرڈینیٹر منظر', 'District Finance Coordinator View')
+              : tr('जिला स्तरीय दृश्य', 'ضلعی سطحی منظر', 'District Level View');
+
+  const userDistrict = (user?.district || '').trim();
+  const cleanDistrict = userDistrict
+    ? userDistrict.replace(/\s+(district|chapter|city|block|zone).*$/i, '').trim() || userDistrict
+    : '';
+
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [activeFilter, setActiveFilter] = useState<VerificationFilter>('pending');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDistrictFilter, setSelectedDistrictFilter] = useState<string>('');
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [processingAction, setProcessingAction] = useState<'approve' | 'reject' | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -71,9 +146,17 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const communityFilter = currentRole === 'community_admin' && activeUser?.communityId ? activeUser.communityId : undefined;
-      const allUsers = await getUsers(communityFilter);
-      setUsers(allUsers || []);
+
+      // Super Admin and Executive Admin: view all registered users across all districts.
+      // District President, General Secretary, Coordinator, and other district-level roles:
+      // strictly view and fetch data pertaining to their specific district.
+      let fetchedUsers: User[] = [];
+      if (isRestrictedToDistrict && userDistrict) {
+        fetchedUsers = await getUsers(cleanDistrict || userDistrict);
+      } else {
+        fetchedUsers = await getUsers();
+      }
+      setUsers(fetchedUsers || []);
     } catch (err) {
       console.error('Failed to load users for KYC verification:', err);
     } finally {
@@ -83,14 +166,15 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
 
   useEffect(() => {
     loadUsers();
-  }, [currentRole, activeUser?.communityId]);
+  }, [role, isRestrictedToDistrict, userDistrict, cleanDistrict]);
 
   const handleAction = async (id: string, approve: boolean) => {
+    if (!canPerformKycAction) return;
     try {
       setProcessingId(id);
       setProcessingAction(approve ? 'approve' : 'reject');
       await updateUser(id, { isVerified: approve });
-      
+
       // Update local state
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? { ...u, isVerified: approve } : u))
@@ -107,128 +191,245 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
     }
   };
 
-  // Counts
+  // District filtering
+  const districtFilteredUsers = useMemo(() => {
+    let list = users;
+
+    if (isRestrictedToDistrict && userDistrict) {
+      const target = userDistrict.toLowerCase().trim();
+      const cleanTarget = (cleanDistrict || target).toLowerCase().trim();
+      list = list.filter((u) => {
+        const uDistrict = (u.district || '').toLowerCase().trim();
+        const uCity = (u.city || '').toLowerCase().trim();
+        const uComm = (u.communityName || '').toLowerCase().trim();
+        return (
+          uDistrict === target ||
+          uDistrict === cleanTarget ||
+          (uDistrict && (target.includes(uDistrict) || cleanTarget.includes(uDistrict) || uDistrict.includes(cleanTarget))) ||
+          uCity === target ||
+          uCity === cleanTarget ||
+          (uCity && (target.includes(uCity) || cleanTarget.includes(uCity) || uCity.includes(cleanTarget))) ||
+          (uComm && (target.includes(uComm) || cleanTarget.includes(uComm) || uComm.includes(cleanTarget)))
+        );
+      });
+    } else if (selectedDistrictFilter) {
+      const target = selectedDistrictFilter.toLowerCase().trim();
+      list = list.filter((u) => {
+        const uDistrict = (u.district || '').toLowerCase().trim();
+        const uCity = (u.city || '').toLowerCase().trim();
+        return (
+          uDistrict === target ||
+          (uDistrict && target.includes(uDistrict)) ||
+          (target && uDistrict.includes(target)) ||
+          uCity === target ||
+          (uCity && target.includes(uCity)) ||
+          (target && uCity.includes(target))
+        );
+      });
+    }
+
+    return list;
+  }, [users, isRestrictedToDistrict, userDistrict, cleanDistrict, selectedDistrictFilter]);
+
+  // Counts based on active district scope
   const counts = {
-    all: users.length,
-    pending: users.filter((u) => !u.isVerified).length,
-    approved: users.filter((u) => !!u.isVerified).length,
+    all: districtFilteredUsers.length,
+    pending: districtFilteredUsers.filter((u) => !u.isVerified).length,
+    approved: districtFilteredUsers.filter((u) => !!u.isVerified).length,
   };
 
-  // Filtered list
-  const filteredUsers = users.filter((u) => {
-    const matchesFilter =
-      activeFilter === 'all' ||
-      (activeFilter === 'pending' && !u.isVerified) ||
-      (activeFilter === 'approved' && !!u.isVerified);
+  // Filtered list with status and search
+  const filteredUsers = useMemo(() => {
+    return districtFilteredUsers.filter((u) => {
+      const matchesFilter =
+        activeFilter === 'all' ||
+        (activeFilter === 'pending' && !u.isVerified) ||
+        (activeFilter === 'approved' && !!u.isVerified);
 
-    const query = searchQuery.trim().toLowerCase();
-    const matchesSearch =
-      !query ||
-      u.name?.toLowerCase().includes(query) ||
-      u.phone?.toLowerCase().includes(query) ||
-      u.email?.toLowerCase().includes(query) ||
-      u.city?.toLowerCase().includes(query) ||
-      u.membershipId?.toLowerCase().includes(query) ||
-      u.paymentUtr?.toLowerCase().includes(query);
+      const query = searchQuery.trim().toLowerCase();
+      const matchesSearch =
+        !query ||
+        u.name?.toLowerCase().includes(query) ||
+        u.phone?.toLowerCase().includes(query) ||
+        u.email?.toLowerCase().includes(query) ||
+        u.city?.toLowerCase().includes(query) ||
+        u.district?.toLowerCase().includes(query) ||
+        u.membershipId?.toLowerCase().includes(query) ||
+        u.paymentUtr?.toLowerCase().includes(query);
 
-    return matchesFilter && matchesSearch;
-  });
+      return matchesFilter && matchesSearch;
+    });
+  }, [districtFilteredUsers, activeFilter, searchQuery]);
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
-      {/* Verification Queue Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-        {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 flex items-center justify-center shrink-0 font-bold shadow-sm">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="font-black text-xl sm:text-2xl text-slate-900 dark:text-white">
-                {tr('सदस्य पंजीकरण एवं केवाईसी सत्यापन', 'اراکین رجسٹریشن اور KYC تصدیق', 'Member Registrations & KYC Verification')}
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                {tr('नए पंजीकृत सदस्यों के दस्तावेज़, आधार कार्ड और भुगतान सत्यापन की समीक्षा करें।', 'نئے رجسٹرڈ اراکین کے دستاویزات، آدھار کارڈ اور ادائیگی کا جائزہ لیں۔', 'Review member documents, Aadhaar identity proofs, and fee payment verification records.')}
-              </p>
-            </div>
+      {/* 1. Header Banner */}
+      <div
+        className="rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-6"
+        style={{
+          background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0a1c12 100%)',
+          border: '1px solid rgba(200,168,75,0.3)',
+          boxShadow: 'var(--shadow-card)',
+        }}
+      >
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-72 h-72 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(200,168,75,0.18)' }} />
+
+        <div className="flex items-start gap-4 relative z-10">
+          <div
+            className="p-3.5 rounded-2xl shrink-0 mt-0.5"
+            style={{
+              background: 'rgba(200,168,75,0.15)',
+              border: '1px solid rgba(200,168,75,0.35)',
+            }}
+          >
+            <ShieldCheck className="w-6 h-6" style={{ color: 'var(--mfct-gold)' }} />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+              {tr('सदस्य पंजीकरण एवं केवाईसी सत्यापन', 'اراکین رجسٹریشن اور KYC تصدیق', 'Member Registrations & KYC Verification')}
+            </h1>
+            <p className="text-xs sm:text-sm mt-1 max-w-4xl" style={{ color: 'rgba(200,168,75,0.9)' }}>
+              {tr(
+                'नए पंजीकृत सदस्यों के दस्तावेज़, आधार कार्ड और भुगतान सत्यापन की समीक्षा करें।',
+                'نئے رجسٹرڈ اراکین کے دستاویزات، آدھار کارڈ اور ادائیگی کا جائزہ لیں۔',
+                'Review member documents, Aadhaar identity proofs, and fee payment verification records.'
+              )}
+            </p>
           </div>
         </div>
+      </div>
 
-        {/* Filter Pills & Search Bar */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      {/* Verification Queue Card */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+        {/* District Role Filter Indicator Banner */}
+        {isRestrictedToDistrict && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Award className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                  <span>{districtRoleTitle}</span>
+                  {userDistrict && (
+                    <span className="px-2 py-0.5 rounded-md bg-amber-200/80 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200 text-[10px] font-bold">
+                      {userDistrict}
+                    </span>
+                  )}
+                </p>
+                <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                  {tr(
+                    `केवल आपके जिले (${userDistrict || 'निर्दिष्ट जिला'}) के सदस्यों का केवाईसी दिखाया जा रहा है।`,
+                    `صرف آپ کے ضلع (${userDistrict || 'مخصوص ضلع'}) کے اراکین کی کے وائی سی دکھائی جا رہی ہے۔`,
+                    `Showing only member KYC registrations belonging to your designated district (${userDistrict || 'Assigned District'}).`
+                  )}
+                  {!canPerformKycAction && (
+                    <span className="block mt-0.5 font-semibold text-rose-700 dark:text-rose-400">
+                      {tr(
+                        '(केवल दृश्य मोड: सत्यापन की कार्रवाई केवल जिला संयोजक या केंद्रीय व्यवस्थापक कर सकते हैं)',
+                        '(صرف دیکھنے کا موڈ: صرف ڈسٹرکٹ کوآرڈینیٹر یا سینٹرل ایڈمن تصدیق کر سکتے ہیں)',
+                        '(View Only: KYC actions can only be performed by District Coordinator or Central Admins)'
+                      )}
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+            <span className="self-start sm:self-auto px-3 py-1 rounded-full bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300 font-bold text-[11px] shrink-0">
+              {districtFilteredUsers.length} {tr('सदस्य', 'اراکین', districtFilteredUsers.length === 1 ? 'Member' : 'Members')}
+            </span>
+          </div>
+        )}
+
+        {/* Filter Pills & Controls Bar */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           {/* Filter Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none flex-1">
             <button
               onClick={() => setActiveFilter('pending')}
-              className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${
-                activeFilter === 'pending'
-                  ? 'bg-amber-500 text-white shadow-sm'
-                  : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100'
-              }`}
+              className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${activeFilter === 'pending'
+                ? 'bg-amber-500 text-white shadow-sm'
+                : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100'
+                }`}
             >
               <Clock className="w-3.5 h-3.5" />
               <span>{tr('लंबित सत्यापन', 'زیر التواء', 'Pending Approval')}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                activeFilter === 'pending' ? 'bg-white/20 text-white' : 'bg-amber-200/80 dark:bg-amber-900 text-amber-900 dark:text-amber-200'
-              }`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'pending' ? 'bg-white/20 text-white' : 'bg-amber-200/80 dark:bg-amber-900 text-amber-900 dark:text-amber-200'
+                }`}>
                 {counts.pending}
               </span>
             </button>
 
             <button
               onClick={() => setActiveFilter('approved')}
-              className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${
-                activeFilter === 'approved'
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100'
-              }`}
+              className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${activeFilter === 'approved'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100'
+                }`}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>{tr('सत्यापित / स्वीकृत', 'تصدیق شدہ', 'Approved & Verified')}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                activeFilter === 'approved' ? 'bg-white/20 text-white' : 'bg-emerald-200/80 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200'
-              }`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'approved' ? 'bg-white/20 text-white' : 'bg-emerald-200/80 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200'
+                }`}>
                 {counts.approved}
               </span>
             </button>
 
             <button
               onClick={() => setActiveFilter('all')}
-              className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${
-                activeFilter === 'all'
-                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-              }`}
+              className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${activeFilter === 'all'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
             >
               <UserCheck className="w-3.5 h-3.5" />
               <span>{tr('सभी सदस्य', 'تمام اراکین', 'All Registrations')}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                activeFilter === 'all' ? 'bg-white/20 dark:bg-slate-900/20 text-white dark:text-slate-900' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-              }`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'all' ? 'bg-white/20 dark:bg-slate-900/20 text-white dark:text-slate-900' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                }`}>
                 {counts.all}
               </span>
             </button>
           </div>
 
-          {/* Search Box */}
-          <div className="relative w-full md:w-72">
-            <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-            <input
-              type="text"
-              placeholder={tr('नाम, फ़ोन, ईमेल, UTR या शहर खोजें...', 'نام، فون، ای میل، UTR تلاش کریں...', 'Search name, phone, email, UTR...')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-white"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+          {/* Right Controls: District Filter Dropdown & Search Box */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+            {!isRestrictedToDistrict && (
+              <div className="flex items-center gap-2 shrink-0">
+                <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <select
+                  value={selectedDistrictFilter}
+                  onChange={(e) => setSelectedDistrictFilter(e.target.value)}
+                  className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:border-emerald-500 outline-none cursor-pointer"
+                >
+                  <option value="">{tr('सभी जिले (All Districts)', 'تمام اضلاع', 'All Districts')}</option>
+                  {STANDARD_DISTRICTS.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {language === 'hi' ? d.nameHi : language === 'ur' ? d.nameUr : d.nameEn}
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
+
+            {/* Search Box */}
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder={tr('नाम, फ़ोन, ईमेल, UTR या शहर खोजें...', 'نام، فون، ای میل، UTR تلاش کریں...', 'Search name, phone, email, UTR...')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-7 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -245,15 +446,15 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                 {searchQuery
                   ? tr('कोई मिलान नहीं मिला', 'کوئی نتیجہ نہیں ملا', 'No matching members found')
                   : activeFilter === 'pending'
-                  ? tr('सब कुछ अद्यतन है! कोई लंबित सत्यापन नहीं', 'سب مکمل ہے! کوئی زیر التواء تصدیق نہیں', 'All caught up! No pending verifications')
-                  : tr('कोई सदस्य नहीं मिला', 'کوئی ممبر نہیں ملا', 'No members found')}
+                    ? tr('सब कुछ अद्यतन है! कोई लंबित सत्यापन नहीं', 'سب مکمل ہے! کوئی زیر التواء تصدیق نہیں', 'All caught up! No pending verifications')
+                    : tr('कोई सदस्य नहीं मिला', 'کوئی ممبر نہیں ملا', 'No members found')}
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {searchQuery
                   ? tr('कृपया अलग खोज शब्द का प्रयास करें।', 'براہ کرم کوئی دوسرا لفظ تلاش کریں۔', 'Try adjusting your search criteria.')
                   : activeFilter === 'pending'
-                  ? tr('सभी सदस्य सफलतापूर्वक सत्यापित किए जा चुके हैं।', 'تمام اراکین کی تصدیق مکمل ہو چکی ہے۔', 'All registered members have been reviewed.')
-                  : tr('इस श्रेणी में अभी कोई रिकॉर्ड नहीं है।', 'اس کیٹیگری میں ابھی کوئی ریکارڈ موجود نہیں ہے۔', 'No records found in this category.')}
+                    ? tr('सभी सदस्य सफलतापूर्वक सत्यापित किए जा चुके हैं।', 'تمام اراکین کی تصدیق مکمل ہو چکی ہے۔', 'All registered members have been reviewed.')
+                    : tr('इस श्रेणी में अभी कोई रिकॉर्ड नहीं है।', 'اس کیٹیگری میں ابھی کوئی ریکارڈ موجود نہیں ہے۔', 'No records found in this category.')}
               </p>
             </div>
           </div>
@@ -387,41 +588,46 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                       <span>{tr('पूर्ण विवरण देखें', 'مکمل تفصیلات', 'View Full Details')}</span>
                     </button>
 
-                    {/* Approve Button */}
-                    {!isApproved && (
-                      <button
-                        onClick={() => handleAction(u.id, true)}
-                        disabled={processingId === u.id}
-                        className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
-                      >
-                        {processingId === u.id && processingAction === 'approve' ? (
-                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <Check className="w-3.5 h-3.5" />
+                    {/* Action buttons restricted to Super Admin, Executive Admin & District Coordinator */}
+                    {canPerformKycAction && (
+                      <>
+                        {/* Approve Button */}
+                        {!isApproved && (
+                          <button
+                            onClick={() => handleAction(u.id, true)}
+                            disabled={processingId === u.id}
+                            className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
+                          >
+                            {processingId === u.id && processingAction === 'approve' ? (
+                              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <Check className="w-3.5 h-3.5" />
+                            )}
+                            <span>{tr('स्वीकृत करें', 'منظور کریں', 'Approve')}</span>
+                          </button>
                         )}
-                        <span>{tr('स्वीकृत करें', 'منظور کریں', 'Approve')}</span>
-                      </button>
-                    )}
 
-                    {/* Reject / Revoke Button */}
-                    {isApproved ? (
-                      <button
-                        onClick={() => handleAction(u.id, false)}
-                        disabled={processingId === u.id}
-                        className="cursor-pointer px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 font-bold text-xs flex items-center gap-1 transition-colors border border-rose-200 dark:border-rose-800/60 disabled:opacity-50"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                        <span>{tr('सत्यापन हटाएं', 'منسوخ کریں', 'Revoke')}</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleAction(u.id, false)}
-                        disabled={processingId === u.id}
-                        className="cursor-pointer px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 font-bold text-xs flex items-center gap-1 transition-colors border border-rose-200 dark:border-rose-800/60 disabled:opacity-50"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                        <span>{tr('अस्वीकार करें', 'مسترد', 'Reject')}</span>
-                      </button>
+                        {/* Reject / Revoke Button */}
+                        {isApproved ? (
+                          <button
+                            onClick={() => handleAction(u.id, false)}
+                            disabled={processingId === u.id}
+                            className="cursor-pointer px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 font-bold text-xs flex items-center gap-1 transition-colors border border-rose-200 dark:border-rose-800/60 disabled:opacity-50"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            <span>{tr('सत्यापन हटाएं', 'منسوخ करें', 'Revoke')}</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleAction(u.id, false)}
+                            disabled={processingId === u.id}
+                            className="cursor-pointer px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 font-bold text-xs flex items-center gap-1 transition-colors border border-rose-200 dark:border-rose-800/60 disabled:opacity-50"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            <span>{tr('अस्वीकार करें', 'مسترد', 'Reject')}</span>
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -757,21 +963,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
               </button>
 
               <div className="flex items-center gap-2.5">
-                {selectedUser.isVerified ? (
-                  <button
-                    onClick={() => handleAction(selectedUser.id, false)}
-                    disabled={processingId === selectedUser.id}
-                    className="cursor-pointer px-5 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 transition-all disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {processingId === selectedUser.id && processingAction === 'reject' ? (
-                      <div className="w-3.5 h-3.5 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <X className="w-3.5 h-3.5" />
-                    )}
-                    <span>{tr('सत्यापन रद्द करें (गैर-सत्यापित करें)', 'منسوخ کریں', 'Revoke Verification')}</span>
-                  </button>
-                ) : (
-                  <>
+                {canPerformKycAction ? (
+                  selectedUser.isVerified ? (
                     <button
                       onClick={() => handleAction(selectedUser.id, false)}
                       disabled={processingId === selectedUser.id}
@@ -782,22 +975,45 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                       ) : (
                         <X className="w-3.5 h-3.5" />
                       )}
-                      <span>{tr('अस्वीकार करें', 'مسترد کریں', 'Reject')}</span>
+                      <span>{tr('सत्यापन रद्द करें (गैर-सत्यापित करें)', 'منسوخ کریں', 'Revoke Verification')}</span>
                     </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleAction(selectedUser.id, false)}
+                        disabled={processingId === selectedUser.id}
+                        className="cursor-pointer px-5 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 transition-all disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {processingId === selectedUser.id && processingAction === 'reject' ? (
+                          <div className="w-3.5 h-3.5 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <X className="w-3.5 h-3.5" />
+                        )}
+                        <span>{tr('अस्वीकार करें', 'مسترد کریں', 'Reject')}</span>
+                      </button>
 
-                    <button
-                      onClick={() => handleAction(selectedUser.id, true)}
-                      disabled={processingId === selectedUser.id}
-                      className="cursor-pointer px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-900/40 transition-all disabled:opacity-50 flex items-center gap-2"
-                    >
-                      {processingId === selectedUser.id && processingAction === 'approve' ? (
-                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Check className="w-3.5 h-3.5" />
-                      )}
-                      <span>{tr('स्वीकृत एवं सत्यापित करें', 'منظور اور تصدیق کریں', 'Approve & Verify Member')}</span>
-                    </button>
-                  </>
+                      <button
+                        onClick={() => handleAction(selectedUser.id, true)}
+                        disabled={processingId === selectedUser.id}
+                        className="cursor-pointer px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-900/40 transition-all disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {processingId === selectedUser.id && processingAction === 'approve' ? (
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Check className="w-3.5 h-3.5" />
+                        )}
+                        <span>{tr('स्वीकृत एवं सत्यापित करें', 'منظور اور تصدیق کریں', 'Approve & Verify Member')}</span>
+                      </button>
+                    </>
+                  )
+                ) : (
+                  <span className="text-xs text-slate-500 dark:text-slate-400 italic px-2">
+                    {tr(
+                      'केवल सुपर एडमिन, कार्यकारी एडमिन और जिला संयोजक ही सत्यापन कार्रवाई कर सकते हैं।',
+                      'صرف سپر ایڈمن، ایگزیکٹو ایڈمن اور ڈسٹرکٹ کوآرڈینیٹر ہی کارروائی کر سکتے ہیں۔',
+                      'Only Super Admin, Executive Admin & District Coordinator can perform KYC actions.'
+                    )}
+                  </span>
                 )}
               </div>
             </div>
@@ -830,3 +1046,5 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
     </div>
   );
 };
+
+export const KycTab = ExecutiveDashboard;

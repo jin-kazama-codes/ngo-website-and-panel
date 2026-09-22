@@ -7,6 +7,7 @@ import { uploadImage } from '../../lib/storage';
 import { Save, Plus, Trash2, Edit2, Loader2, Building, Hash, Code, Smartphone, QrCode, UploadCloud, X } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
+import { AccountCardSkeleton } from '../../components/Skeletons';
 
 const AccountDetailsCard: React.FC<{
   detail: AccountDetails;
@@ -262,18 +263,16 @@ export const AccountDetailsTab: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between animate-pulse">
           <div>
             <div className="h-6 w-48 bg-slate-200 dark:bg-slate-800 rounded-md mb-2"></div>
             <div className="h-4 w-72 bg-slate-200 dark:bg-slate-800 rounded-md"></div>
           </div>
           <div className="h-10 w-40 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[1, 2].map((i) => (
-            <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 h-64"></div>
-          ))}
+        <div className="max-w-4xl mx-auto w-full space-y-6">
+          <AccountCardSkeleton />
         </div>
       </div>
     );

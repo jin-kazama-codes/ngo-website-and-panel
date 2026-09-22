@@ -3,6 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
+import { getUsers } from '../../services/userService';
+import {
+  getTeams,
+  createTeam,
+  updateTeam,
+  DistrictTeamUnit,
+  TeamMember,
+} from '../../services/teamService';
+import { STANDARD_DISTRICTS } from '../../data/districtsData';
+
 import {
   Users,
   Plus,
@@ -22,143 +32,20 @@ import {
   UserPlus,
   Network,
   ExternalLink,
+  Trash2,
+  UserCheck,
+  Sparkles,
+  CheckSquare,
+  Square,
+  Check,
 } from 'lucide-react';
 
-export interface TeamMember {
+export interface NewMemberDraft {
   id: string;
   name: string;
   role: string;
   phone: string;
-  appointedDate: string;
 }
-
-export interface DistrictTeamUnit {
-  id: string;
-  unitName: string;
-  unitType: 'block' | 'city';
-  tehsilOrZone: string;
-  district: string;
-  presidentName: string;
-  presidentPhone: string;
-  secretaryName: string;
-  secretaryPhone: string;
-  coordinatorName?: string;
-  coordinatorPhone?: string;
-  formedDate: string;
-  activeVolunteersCount: number;
-  status: 'active' | 'in_formation';
-  objectives: string;
-  members: TeamMember[];
-}
-
-const DEFAULT_TEAMS: DistrictTeamUnit[] = [
-  {
-    id: 'team-block-1',
-    unitName: 'Nawabganj Block Executive Unit (नवाबगंज ब्लॉक कार्यकारिणी)',
-    unitType: 'block',
-    tehsilOrZone: 'Nawabganj Tehsil',
-    district: 'Bareilly District',
-    presidentName: 'Mohammad Rashid Khan',
-    presidentPhone: '+91 98371 22410',
-    secretaryName: 'Zubair Ahmad Qureshi',
-    secretaryPhone: '+91 94120 88712',
-    coordinatorName: 'Dr. Shakeel Farooqui',
-    coordinatorPhone: '+91 99270 44102',
-    formedDate: '2026-06-15',
-    activeVolunteersCount: 28,
-    status: 'active',
-    objectives: 'Rural welfare, emergency medical aid dispatch, orphan scholarship verification, and widow pension drives across 42 village panchayats.',
-    members: [
-      { id: 'm-1', name: 'Salman Mansoori', role: 'Vice President (उपाध्यक्ष)', phone: '+91 98370 11223', appointedDate: '2026-06-20' },
-      { id: 'm-2', name: 'Irfan Ansari', role: 'Youth Coordinator (युवा समन्वयक)', phone: '+91 94111 22334', appointedDate: '2026-07-05' },
-      { id: 'm-3', name: 'Haider Ali', role: 'Relief Incharge (राहत प्रभारी)', phone: '+91 98378 99887', appointedDate: '2026-07-12' },
-    ],
-  },
-  {
-    id: 'team-block-2',
-    unitName: 'Baheri Tehsil & Block Unit (बहेड़ी ब्लॉक व तहसील इकाई)',
-    unitType: 'block',
-    tehsilOrZone: 'Baheri Tehsil',
-    district: 'Bareilly District',
-    presidentName: 'Haji Mukhtar Husain',
-    presidentPhone: '+91 98375 66710',
-    secretaryName: 'Nadeem Akhtar',
-    secretaryPhone: '+91 94122 33441',
-    coordinatorName: 'Maulana Imran Raza',
-    coordinatorPhone: '+91 97580 11980',
-    formedDate: '2026-07-10',
-    activeVolunteersCount: 34,
-    status: 'active',
-    objectives: 'Education assistance, hospital referral helpline, free medicine camps, and verification of genuine beneficiaries.',
-    members: [
-      { id: 'm-4', name: 'Wasim Akram', role: 'Joint Secretary (सह-सचिव)', phone: '+91 99271 88776', appointedDate: '2026-07-15' },
-      { id: 'm-5', name: 'Tariq Mehmood', role: 'Treasurer (कोषाध्यक्ष)', phone: '+91 98374 55443', appointedDate: '2026-07-20' },
-    ],
-  },
-  {
-    id: 'team-city-1',
-    unitName: 'Bareilly Central City Unit (बरेली नगर केंद्रीय कार्यकारिणी)',
-    unitType: 'city',
-    tehsilOrZone: 'Bareilly City North & South Zone',
-    district: 'Bareilly District',
-    presidentName: 'Syed Arshad Ali',
-    presidentPhone: '+91 98370 00112',
-    secretaryName: 'Mohammad Danish',
-    secretaryPhone: '+91 94125 77665',
-    coordinatorName: 'Farhan Zaidi',
-    coordinatorPhone: '+91 98970 22331',
-    formedDate: '2026-05-18',
-    activeVolunteersCount: 45,
-    status: 'active',
-    objectives: 'Urban poverty alleviation, ration distribution for destitute households, winter warmth blanket drive, and civic counseling desk.',
-    members: [
-      { id: 'm-6', name: 'Rehan Siddiqui', role: 'City Vice President (नगर उपाध्यक्ष)', phone: '+91 98372 33445', appointedDate: '2026-05-25' },
-      { id: 'm-7', name: 'Bilal Khan', role: 'Media & Public Relations (मीडिया प्रभारी)', phone: '+91 94110 55667', appointedDate: '2026-06-01' },
-      { id: 'm-8', name: 'Nasiruddin', role: 'Ward Coordinator (वार्ड समन्वयक)', phone: '+91 98373 66778', appointedDate: '2026-06-10' },
-    ],
-  },
-  {
-    id: 'team-block-3',
-    unitName: 'Faridpur Block Unit (फरीदपुर ब्लॉक इकाई)',
-    unitType: 'block',
-    tehsilOrZone: 'Faridpur Tehsil',
-    district: 'Bareilly District',
-    presidentName: 'Chaudhary Shahid Hasan',
-    presidentPhone: '+91 98376 77889',
-    secretaryName: 'Mustafa Kamal',
-    secretaryPhone: '+91 94121 99887',
-    coordinatorName: 'Anwar Husain',
-    coordinatorPhone: '+91 99275 66554',
-    formedDate: '2026-08-01',
-    activeVolunteersCount: 22,
-    status: 'in_formation',
-    objectives: 'Organization expansion, booth and village level membership drives, youth volunteer induction.',
-    members: [
-      { id: 'm-9', name: 'Kashif Raza', role: 'Organizing Secretary (संगठन सचिव)', phone: '+91 98379 11224', appointedDate: '2026-08-05' },
-    ],
-  },
-  {
-    id: 'team-city-2',
-    unitName: 'Qilla & Civil Lines Town Chapter (किला एवं सिविल लाइंस नगर मंडल)',
-    unitType: 'city',
-    tehsilOrZone: 'Old City & Civil Lines Ward 12-24',
-    district: 'Bareilly District',
-    presidentName: 'Advocate Sohail Ahmed',
-    presidentPhone: '+91 98377 44332',
-    secretaryName: 'Rizwan Khan',
-    secretaryPhone: '+91 94129 66554',
-    coordinatorName: 'Shariq Jameel',
-    coordinatorPhone: '+91 98971 77889',
-    formedDate: '2026-08-14',
-    activeVolunteersCount: 26,
-    status: 'active',
-    objectives: 'Legal aid camp for underprivileged, identity documentation camp (Aadhaar/Voter), and emergency blood donation circle.',
-    members: [
-      { id: 'm-10', name: 'Ziaul Haq', role: 'Ward Secretary (वार्ड सचिव)', phone: '+91 98378 22119', appointedDate: '2026-08-20' },
-      { id: 'm-11', name: 'Adnan Qazi', role: 'Blood Bank Incharge (रक्तदान प्रभारी)', phone: '+91 94112 88990', appointedDate: '2026-08-25' },
-    ],
-  },
-];
 
 interface TeamTabProps {
   activeUser: User;
@@ -173,161 +60,398 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
     return en;
   };
 
-  const [teams, setTeams] = useState<DistrictTeamUnit[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('mfct_district_teams');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {}
-      }
-    }
-    return DEFAULT_TEAMS;
-  });
+  // Role-based access flags
+  const rawDistRole = (
+    activeUser?.district_role ||
+    activeUser?.districtRole ||
+    (activeUser?.role as string) ||
+    ''
+  ).toLowerCase().trim().replace(/\s+/g, '_');
+
+  const isSuperOrExecutive =
+    currentRole === 'super_admin' ||
+    currentRole === 'executive_admin' ||
+    activeUser?.role === 'super_admin' ||
+    activeUser?.role === 'executive_admin';
+
+  const isGenSecretary = currentRole === 'district_gen_secretary';
+  const isDistrictPresident = currentRole === 'district_president';
+
+  const userCity = (activeUser?.district || activeUser?.city || '').trim();
+
+  const [teams, setTeams] = useState<DistrictTeamUnit[]>([]);
+  const [isLoadingTeams, setIsLoadingTeams] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [approvingTeamId, setApprovingTeamId] = useState<string | null>(null);
+  const [cityFilter, setCityFilter] = useState<string>('all');
+
+  const [registeredUsers, setRegisteredUsers] = useState<User[]>([]);
+
+  // Load teams from API + registered users on mount
+  useEffect(() => {
+    let isMounted = true;
+
+    getTeams()
+      .then((fetched) => {
+        if (isMounted) setTeams(fetched);
+      })
+      .catch(() => { })
+      .finally(() => {
+        if (isMounted) setIsLoadingTeams(false);
+      });
+
+    getUsers()
+      .then((users) => {
+        if (isMounted && Array.isArray(users)) {
+          setRegisteredUsers(users);
+        }
+      })
+      .catch(() => { });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'block' | 'city' | 'in_formation'>('all');
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
 
   // Create Unit Modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [formUnitName, setFormUnitName] = useState('');
-  const [formUnitType, setFormUnitType] = useState<'block' | 'city'>('block');
   const [formTehsil, setFormTehsil] = useState('');
+  const [formPresidentUserId, setFormPresidentUserId] = useState('');
   const [formPresidentName, setFormPresidentName] = useState('');
   const [formPresidentPhone, setFormPresidentPhone] = useState('');
-  const [formSecretaryName, setFormSecretaryName] = useState('');
-  const [formSecretaryPhone, setFormSecretaryPhone] = useState('');
-  const [formCoordinatorName, setFormCoordinatorName] = useState('');
-  const [formCoordinatorPhone, setFormCoordinatorPhone] = useState('');
   const [formFormedDate, setFormFormedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [formVolunteers, setFormVolunteers] = useState('20');
-  const [formStatus, setFormStatus] = useState<'active' | 'in_formation'>('active');
+  const [formStatus, setFormStatus] = useState<'active' | 'in_formation' | 'pending'>('pending');
   const [formObjectives, setFormObjectives] = useState('');
+  const [formInitialMembers, setFormInitialMembers] = useState<NewMemberDraft[]>([]);
 
-  // Add Member Modal
+  // Create Modal Multi-Select State
+  const [isCreateMultiSelectOpen, setIsCreateMultiSelectOpen] = useState(false);
+  const [createMultiSearchQuery, setCreateMultiSearchQuery] = useState('');
+  const [createSelectedUserIds, setCreateSelectedUserIds] = useState<string[]>([]);
+  const [createBatchRole, setCreateBatchRole] = useState('कार्यकारिणी सदस्य (Executive Member)');
+
+  // Add Member Modal State
   const [selectedTeamForMember, setSelectedTeamForMember] = useState<DistrictTeamUnit | null>(null);
+  const [memberModalMode, setMemberModalMode] = useState<'multi' | 'manual'>('multi');
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [userSearchQuery, setUserSearchQuery] = useState('')
+
+  // Single manual add state
+  const [newMemberUserId, setNewMemberUserId] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
-  const [newMemberRole, setNewMemberRole] = useState('Executive Member (कार्यकारिणी सदस्य)');
+  const [newMemberRole, setNewMemberRole] = useState('कार्यकारिणी सदस्य (Executive Member)');
+  const [isCustomRole, setIsCustomRole] = useState(false);
+  const [customRoleInput, setCustomRoleInput] = useState('');
   const [newMemberPhone, setNewMemberPhone] = useState('');
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('mfct_district_teams', JSON.stringify(teams));
-    }
-  }, [teams]);
+  const handleAddInitialMemberRow = () => {
+    setFormInitialMembers((prev) => [
+      ...prev,
+      {
+        id: `draft-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        name: '',
+        role: 'कार्यकारिणी सदस्य (Executive Member)',
+        phone: '',
+      },
+    ]);
+  };
 
-  const handleCreateTeam = (e: React.FormEvent) => {
+  const handleUpdateInitialMemberRow = (id: string, field: keyof NewMemberDraft, val: string) => {
+    setFormInitialMembers((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: val } : item))
+    );
+  };
+
+  const handleRemoveInitialMemberRow = (id: string) => {
+    setFormInitialMembers((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleSelectUserForInitialMember = (draftId: string, userId: string) => {
+    const foundUser = registeredUsers.find((u) => u.id === userId);
+    if (!foundUser) return;
+    setFormInitialMembers((prev) =>
+      prev.map((item) =>
+        item.id === draftId
+          ? {
+            ...item,
+            name: foundUser.name || item.name,
+            phone: foundUser.phone || item.phone,
+          }
+          : item
+      )
+    );
+  };
+
+  const handleBatchAddInitialMembers = () => {
+    if (createSelectedUserIds.length === 0) return;
+    const newDrafts: NewMemberDraft[] = createSelectedUserIds.map((uId) => {
+      const u = registeredUsers.find((user) => user.id === uId);
+      return {
+        id: `draft-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        name: u?.name || '',
+        role: createBatchRole,
+        phone: u?.phone || '',
+      };
+    });
+    setFormInitialMembers((prev) => [...prev, ...newDrafts]);
+    setCreateSelectedUserIds([]);
+    setIsCreateMultiSelectOpen(false);
+    setCreateMultiSearchQuery('');
+  };
+
+  const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formUnitName.trim() || !formPresidentName.trim() || !formSecretaryName.trim()) {
+    if (!formUnitName.trim() || !formPresidentName.trim()) {
+      setSaveError(tr(
+        'टीम का नाम और अध्यक्ष का नाम आवश्यक है।',
+        'ٹیم کا نام اور صدر کا نام ضروری ہے۔',
+        'Team Name and President Name are required.'
+      ));
       return;
     }
 
-    const newUnit: DistrictTeamUnit = {
-      id: `team-${Date.now()}`,
+    setSaveError(null);
+    setIsSaving(true);
+
+    const validInitialMembers: TeamMember[] = formInitialMembers
+      .filter((m) => m.name.trim().length > 0)
+      .map((m) => ({
+        id: `mem-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        name: m.name.trim(),
+        role: (m as NewMemberDraft).role || 'कार्यकारिणी सदस्य (Executive Member)',
+        phone: m.phone.trim() || '+91 98000 00000',
+        appointedDate: formFormedDate,
+      }));
+
+    const newUnitData: Omit<DistrictTeamUnit, 'id'> = {
       unitName: formUnitName.trim(),
-      unitType: formUnitType,
-      tehsilOrZone: formTehsil.trim() || (formUnitType === 'block' ? 'Rural Tehsil' : 'Urban Zone'),
-      district: activeUser?.city ? `${activeUser.city} District` : 'Bareilly District',
-      presidentName: formPresidentName.trim(),
-      presidentPhone: formPresidentPhone.trim() || '+91 98000 00000',
-      secretaryName: formSecretaryName.trim(),
-      secretaryPhone: formSecretaryPhone.trim() || '+91 94000 00000',
-      coordinatorName: formCoordinatorName.trim() || undefined,
-      coordinatorPhone: formCoordinatorPhone.trim() || undefined,
+      tehsilOrZone: formTehsil.trim(),
+      district: activeUser?.city ? `${activeUser.city} District` : (activeUser?.district || 'Bareilly District'),
+      HeadName: formPresidentName.trim(),
+      HeadPhone: formPresidentPhone.trim() || '+91 98000 00000',
       formedDate: formFormedDate,
-      activeVolunteersCount: parseInt(formVolunteers, 10) || 15,
-      status: formStatus,
+      activeVolunteersCount: (parseInt(formVolunteers, 10) || 15) + validInitialMembers.length,
+      status: 'pending', // always starts pending until District President approves
       objectives: formObjectives.trim() || 'Organizational expansion, volunteer coordination, and local public welfare initiatives.',
-      members: [],
+      members: validInitialMembers,
     };
 
-    setTeams([newUnit, ...teams]);
-    setIsCreateModalOpen(false);
+    try {
+      const created = await createTeam(newUnitData);
+      setTeams((prev) => [created, ...prev]);
+      setIsCreateModalOpen(false);
 
-    // Reset Form
-    setFormUnitName('');
-    setFormUnitType('block');
-    setFormTehsil('');
-    setFormPresidentName('');
-    setFormPresidentPhone('');
-    setFormSecretaryName('');
-    setFormSecretaryPhone('');
-    setFormCoordinatorName('');
-    setFormCoordinatorPhone('');
-    setFormVolunteers('20');
-    setFormStatus('active');
-    setFormObjectives('');
+      // Reset Form
+      setFormUnitName('');
+      setFormTehsil('');
+      setFormPresidentUserId('');
+      setFormPresidentName('');
+      setFormPresidentPhone('');
+      setFormVolunteers('20');
+      setFormStatus('active');
+      setFormObjectives('');
+      setFormInitialMembers([]);
+      setIsCreateMultiSelectOpen(false);
+      setCreateSelectedUserIds([]);
+    } catch (err: any) {
+      setSaveError(err?.message || tr(
+        'टीम सहेजने में त्रुटि हुई। पुनः प्रयास करें।',
+        'ٹیم محفوظ کرنے میں خرابی۔ دوبارہ کوشش کریں۔',
+        'Failed to save team. Please try again.'
+      ));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleAddMember = (e: React.FormEvent) => {
+  const handleAddSingleMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTeamForMember || !newMemberName.trim()) return;
 
+    setSaveError(null);
+    setIsSaving(true);
+
     const newMem: TeamMember = {
-      id: `mem-${Date.now()}`,
+      // Use the real registered user's ID if selected, otherwise generate one
+      id: newMemberUserId || `mem-${Date.now()}`,
       name: newMemberName.trim(),
-      role: newMemberRole.trim(),
       phone: newMemberPhone.trim() || '+91 98000 00000',
       appointedDate: new Date().toISOString().split('T')[0],
     };
 
-    const updated = teams.map((t) => {
-      if (t.id === selectedTeamForMember.id) {
-        return {
-          ...t,
-          members: [...(t.members || []), newMem],
-          activeVolunteersCount: (t.activeVolunteersCount || 0) + 1,
-        };
-      }
-      return t;
-    });
+    const updatedMembers = [...(selectedTeamForMember.members || []), newMem];
+    const updatedCount = (selectedTeamForMember.activeVolunteersCount || 0) + 1;
 
-    setTeams(updated);
-    setSelectedTeamForMember(null);
-    setNewMemberName('');
-    setNewMemberPhone('');
+    try {
+      const updatedTeam = await updateTeam(selectedTeamForMember.id, {
+        members: updatedMembers,
+        activeVolunteersCount: updatedCount,
+      });
+      setTeams((prev) => prev.map((t) => (t.id === updatedTeam.id ? updatedTeam : t)));
+      setSelectedTeamForMember(null);
+      setNewMemberUserId('');
+      setNewMemberName('');
+      setNewMemberPhone('');
+    } catch (err: any) {
+      setSaveError(err?.message || tr(
+        'सदस्य जोड़ने में त्रुटि हुई।',
+        'رکن شامل کرنے میں خرابی۔',
+        'Failed to add member. Please try again.'
+      ));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const filteredTeams = teams.filter((t) => {
-    if (filterType === 'block' && t.unitType !== 'block') return false;
-    if (filterType === 'city' && t.unitType !== 'city') return false;
-    if (filterType === 'in_formation' && t.status !== 'in_formation') return false;
+  const handleBatchAddMembers = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTeamForMember || selectedUserIds.length === 0) return;
 
+    setSaveError(null);
+    setIsSaving(true);
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const newMembers: TeamMember[] = selectedUserIds.map((uId) => {
+      const u = registeredUsers.find((user) => user.id === uId);
+      return {
+        id: `mem-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        name: u?.name || 'सदस्य',
+        role: 'सदस्य (Member)',
+        phone: u?.phone || '+91 98000 00000',
+        appointedDate: today,
+      };
+    });
+
+    const updatedMembers = [...(selectedTeamForMember.members || []), ...newMembers];
+    const updatedCount = (selectedTeamForMember.activeVolunteersCount || 0) + newMembers.length;
+
+    try {
+      const updatedTeam = await updateTeam(selectedTeamForMember.id, {
+        members: updatedMembers,
+        activeVolunteersCount: updatedCount,
+      });
+      setTeams((prev) => prev.map((t) => (t.id === updatedTeam.id ? updatedTeam : t)));
+      setSelectedTeamForMember(null);
+      setSelectedUserIds([]);
+      setUserSearchQuery('');
+    } catch (err: any) {
+      setSaveError(err?.message || tr(
+        'सदस्यों को जोड़ने में त्रुटि हुई।',
+        'اراکین شامل کرنے میں خرابی۔',
+        'Failed to add members. Please try again.'
+      ));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteMember = async (teamId: string, memberId: string) => {
+    if (!window.confirm(tr('क्या आप इस सदस्य को हटाना चाहते हैं?', 'کیا آپ اس رکن کو ہٹانا چاہتے ہیں؟', 'Are you sure you want to remove this member?'))) {
+      return;
+    }
+
+    const team = teams.find((t) => t.id === teamId);
+    if (!team) return;
+
+    const updatedMembers = (team.members || []).filter((m) => m.id !== memberId);
+    const updatedCount = Math.max(0, (team.activeVolunteersCount || 1) - 1);
+
+    // Optimistic UI update
+    setTeams((prev) =>
+      prev.map((t) =>
+        t.id === teamId
+          ? { ...t, members: updatedMembers, activeVolunteersCount: updatedCount }
+          : t
+      )
+    );
+
+    try {
+      await updateTeam(teamId, {
+        members: updatedMembers,
+        activeVolunteersCount: updatedCount,
+      });
+    } catch (err: any) {
+      // Revert on failure
+      setTeams((prev) => prev.map((t) => (t.id === teamId ? team : t)));
+      alert(tr(
+        'सदस्य हटाने में त्रुटि हुई।',
+        'رکن ہٹانے میں خرابی۔',
+        'Failed to remove member. Please try again.'
+      ));
+    }
+  };
+
+  const handleApproveTeam = async (teamId: string) => {
+    setApprovingTeamId(teamId);
+    // Optimistic update
+    setTeams((prev) =>
+      prev.map((t) => (t.id === teamId ? { ...t, status: 'active' as const } : t))
+    );
+    try {
+      await updateTeam(teamId, { status: 'active' });
+    } catch (err: any) {
+      // Revert on failure
+      setTeams((prev) =>
+        prev.map((t) => (t.id === teamId ? { ...t, status: 'pending' as const } : t))
+      );
+      alert(tr(
+        'अनुमोदन में त्रुटि हुई। पुनः प्रयास करें।',
+        'منظوری میں خرابی۔ دوبارہ کوشش کریں۔',
+        'Failed to approve team. Please try again.'
+      ));
+    } finally {
+      setApprovingTeamId(null);
+    }
+  };
+
+  const cityFilteredTeams = isSuperOrExecutive && cityFilter !== 'all'
+    ? teams.filter((t) => (t.district || '').toLowerCase().includes(cityFilter.toLowerCase()))
+    : teams;
+
+  const filteredTeams = cityFilteredTeams.filter((t) => {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const matchName = t.unitName.toLowerCase().includes(q);
       const matchTehsil = t.tehsilOrZone.toLowerCase().includes(q);
-      const matchPres = t.presidentName.toLowerCase().includes(q);
-      const matchSec = t.secretaryName.toLowerCase().includes(q);
-      const matchPhone = (t.presidentPhone + t.secretaryPhone).includes(q);
-      if (!matchName && !matchTehsil && !matchPres && !matchSec && !matchPhone) return false;
+      const matchPres = t.HeadName.toLowerCase().includes(q);
+      const matchPhone = (t.HeadPhone).includes(q);
+      const matchMembers = t.members?.some((m) => m.name.toLowerCase().includes(q) || (m.role || '').toLowerCase().includes(q));
+      if (!matchName && !matchTehsil && !matchPres && !matchPhone && !matchMembers) return false;
     }
     return true;
   });
 
-  const totalUnits = teams.length;
-  const blockUnitsCount = teams.filter((t) => t.unitType === 'block').length;
-  const cityUnitsCount = teams.filter((t) => t.unitType === 'city').length;
-  const totalOfficersCount = teams.reduce((acc, t) => acc + (t.members?.length || 0) + 2, 0);
 
   return (
     <div className="space-y-6">
-      {/* 1. Header Banner - Official MFCT Green & Gold Standard */}
+      {/* Header */}
       <div
-        className="rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-5"
+        className="rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-6"
         style={{
-          background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0c2016 100%)',
+          background:
+            'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0a1c12 100%)',
           border: '1px solid rgba(200,168,75,0.3)',
           boxShadow: 'var(--shadow-card)',
         }}
       >
+        {/* Decorative Glow */}
         <div
-          className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full blur-3xl pointer-events-none"
-          style={{ background: 'rgba(200,168,75,0.15)' }}
+          className="absolute top-0 right-0 -mr-20 -mt-20 w-72 h-72 rounded-full blur-3xl pointer-events-none"
+          style={{
+            background: 'rgba(200,168,75,0.18)',
+          }}
         />
 
+        {/* Header Content */}
         <div className="flex items-start gap-4 relative z-10">
+          {/* Icon */}
           <div
             className="p-3.5 rounded-2xl shrink-0 mt-0.5"
             style={{
@@ -335,26 +459,30 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
               border: '1px solid rgba(200,168,75,0.35)',
             }}
           >
-            <Network className="w-7 h-7" style={{ color: 'var(--mfct-gold)' }} />
-          </div>
-          <div>
-            <div
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold mb-2"
+            <Network
+              className="w-6 h-6"
               style={{
-                background: 'rgba(200,168,75,0.15)',
                 color: 'var(--mfct-gold)',
-                border: '1px solid rgba(200,168,75,0.3)',
+              }}
+            />
+          </div>
+
+          {/* Title & Description */}
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+              {tr(
+                'ब्लॉक एवं नगर कार्यकारिणी टीम गठन',
+                'بلاک اور شہری تنظیمی ٹیمیں',
+                'Block & City Teams Register'
+              )}
+            </h1>
+
+            <p
+              className="text-xs sm:text-sm mt-1 max-w-4xl"
+              style={{
+                color: 'rgba(200,168,75,0.9)',
               }}
             >
-              <Award className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} />
-              <span>{tr('जिला महासचिव कार्यक्षेत्र', 'ضلعی جنرل سیکرٹری ورک اسپیس', 'District General Secretary Workspace')}</span>
-              <span>•</span>
-              <span>{tr('संगठन विस्तार एवं इकाई गठन', 'تنظیمی توسیع و تشکیل', 'Unit Formation & Roster')}</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-              {tr('ब्लॉक एवं नगर कार्यकारिणी टीम गठन', 'بلاک اور شہری تنظیمی ٹیمیں', 'Block & City Teams Register')}
-            </h1>
-            <p className="text-xs sm:text-sm mt-1 max-w-2xl" style={{ color: 'rgba(200,168,75,0.85)' }}>
               {tr(
                 'जिला महासचिव द्वारा ब्लॉक (Block), तहसील, नगर पालिका एवं वार्ड इकाइयों का विधिवत गठन, अध्यक्ष/सचिव नियुक्ति व स्वयंसेवकों का संधारण।',
                 'ضلعی جنرل سیکرٹری کے زیر اہتمام بلاک، تحصیل، بلدیہ اور وارڈ یونٹوں کی باضابطہ تشکیل اور عہدیداران کی تعیناتی۔',
@@ -364,55 +492,53 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
           </div>
         </div>
 
-        <div className="relative z-10 shrink-0 self-start md:self-auto">
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="mfct-btn-gold py-3 px-5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 cursor-pointer transition-all shadow-md"
-          >
-            <Plus className="w-4 h-4" />
-            <span>{tr('नई ब्लॉक / नगर टीम गठित करें', 'نئی بلاک / شہری ٹیم تشکیل دیں', '+ Form Block / City Team')}</span>
-          </button>
+        {/* Action Button */}
+        <div className="relative z-10 flex items-center gap-3 shrink-0">
+          {isGenSecretary && (
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="cursor-pointer px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-lg hover:brightness-110 active:scale-95"
+              style={{
+                background:
+                  'linear-gradient(135deg, var(--mfct-gold) 0%, #d4af37 100%)',
+                color: 'var(--mfct-dark-green)',
+                boxShadow: '0 4px 15px rgba(200,168,75,0.35)',
+              }}
+            >
+              <Plus className="w-4 h-4" />
+
+              <span>
+                {tr(
+                  'नई ब्लॉक / नगर टीम गठित करें',
+                  'نئی بلاک / شہری ٹیم تشکیل دیں',
+                  '+ Form Block / City Team'
+                )}
+              </span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 2. Key Metrics Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xs">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider">{tr('कुल गठित इकाइयाँ', 'کل تشکیل شدہ یونٹس', 'Total Units')}</span>
-            <Layers className="w-4 h-4 text-emerald-600" />
-          </div>
-          <p className="text-2xl font-black text-slate-900 dark:text-white">{totalUnits}</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">{tr('जिले में अधिकृत इकाइयाँ', 'ضلع میں مجاز یونٹس', 'Authorized Chapters')}</p>
+      {/* Gen Secretary approval-workflow notice */}
+      {isGenSecretary && (
+        <div
+          className="rounded-2xl px-4 py-3 text-xs font-semibold flex items-start gap-2.5"
+          style={{
+            background: 'rgba(217,119,6,0.08)',
+            border: '1px solid rgba(217,119,6,0.3)',
+            color: 'rgb(180,83,9)',
+          }}
+        >
+          <Shield className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'rgb(217,119,6)' }} />
+          <span>
+            {tr(
+              'आप जिला महासचिव हैं — केवल आप ही टीम गठित कर सकते हैं और सदस्य जोड़/हटा सकते हैं। नई टीम "अनुमोदन हेतु लंबित" स्थिति में रहेगी जब तक जिला अध्यक्ष द्वारा अनुमोदित न हो।',
+              'آپ ضلعی جنرل سیکرٹری ہیں — صرف آپ ہی ٹیم بنا سکتے ہیں اور اراکین شامل/ہٹا سکتے ہیں۔ نئی ٹیم ضلعی صدر کی منظوری تک "زیر التواء" رہے گی۔',
+              'You are the District General Secretary — only you can form teams and add/remove members. New teams remain Pending until approved by the District President.'
+            )}
+          </span>
         </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xs">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider">{tr('ब्लॉक टीमें (ग्रामीण)', 'بلاک ٹیمیں (دیہی)', 'Block Units')}</span>
-            <Building2 className="w-4 h-4 text-blue-600" />
-          </div>
-          <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{blockUnitsCount}</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">{tr('तहसील/ग्रामीण पंचायत क्षेत्र', 'دیہی پنچایت زونز', 'Rural Block Units')}</p>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xs">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider">{tr('नगर / शहर टीमें', 'شہری یونٹس', 'City / Nagar Units')}</span>
-            <Building2 className="w-4 h-4 text-amber-600" />
-          </div>
-          <p className="text-2xl font-black text-amber-600 dark:text-amber-400">{cityUnitsCount}</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">{tr('शहरी वार्ड व पालिका मंडल', 'شہری وارڈ اور بلدیہ', 'Urban Ward Chapters')}</p>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xs">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider">{tr('नियुक्त पदाधिकारी', 'مقرر عہدیداران', 'Appointed Leaders')}</span>
-            <Users className="w-4 h-4 text-purple-600" />
-          </div>
-          <p className="text-2xl font-black text-purple-600 dark:text-purple-400">{totalOfficersCount}</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">{tr('अध्यक्ष, सचिव व कार्यकारिणी', 'صدور، سیکرٹریز اور اراکین', 'Presidents, Secs & Execs')}</p>
-        </div>
-      </div>
+      )}
 
       {/* 3. Search & Filter Bar */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-2xl shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -427,32 +553,60 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
           />
         </div>
 
-        <div className="flex items-center gap-1.5 self-stretch sm:self-auto shrink-0 overflow-x-auto">
-          {[
-            { id: 'all', label: tr('सभी टीमें', 'تمام ٹیمیں', 'All Units') },
-            { id: 'block', label: tr('ब्लॉक (ग्रामीण)', 'بلاک', 'Block Units') },
-            { id: 'city', label: tr('नगर / शहर', 'شہری', 'City Units') },
-            { id: 'in_formation', label: tr('गठन प्रक्रिया में', 'زیر تشکیل', 'In Formation') },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setFilterType(item.id as any)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap capitalize transition-all cursor-pointer ${
-                filterType === item.id
-                  ? 'text-white shadow-xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-              }`}
-              style={filterType === item.id ? { background: 'var(--mfct-mid-green)' } : undefined}
+        {/* City Filter — super/executive admin only */}
+        {isSuperOrExecutive && (
+          <div className="flex items-center gap-2 shrink-0">
+            <select
+              value={cityFilter}
+              onChange={(e) => setCityFilter(e.target.value)}
+              className="px-3 py-2 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 cursor-pointer"
             >
-              {item.label}
-            </button>
-          ))}
-        </div>
+              <option value="all">{tr('सभी जिले', 'تمام اضلاع', 'All Districts')}</option>
+              {STANDARD_DISTRICTS.map((d) => (
+                <option key={d.id} value={d.name}>{d.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* 4. Teams List */}
       <div className="grid grid-cols-1 gap-4">
-        {filteredTeams.length === 0 ? (
+        {isLoadingTeams ? (
+          <>
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs animate-pulse"
+              >
+                {/* Badge row */}
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-5 w-28 rounded-full bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-5 w-16 rounded-full bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-5 w-36 rounded-full bg-slate-200 dark:bg-slate-800" />
+                </div>
+                {/* Title */}
+                <div className="h-5 w-2/3 rounded-lg bg-slate-200 dark:bg-slate-800 mb-4" />
+                {/* President card */}
+                <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-3 border border-slate-200 dark:border-slate-800 mb-3">
+                  <div className="h-3 w-24 rounded bg-slate-200 dark:bg-slate-700 mb-2" />
+                  <div className="h-4 w-40 rounded bg-slate-200 dark:bg-slate-700 mb-1.5" />
+                  <div className="h-3 w-28 rounded bg-slate-200 dark:bg-slate-700" />
+                </div>
+                {/* Objectives strip */}
+                <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-2.5 border border-slate-100 dark:border-slate-800 mb-3 space-y-1.5">
+                  <div className="h-3 w-full rounded bg-slate-200 dark:bg-slate-700" />
+                  <div className="h-3 w-4/5 rounded bg-slate-200 dark:bg-slate-700" />
+                </div>
+                {/* Footer row */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="h-3 w-32 rounded bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-3 w-24 rounded bg-slate-200 dark:bg-slate-800" />
+                </div>
+              </div>
+            ))}
+          </>
+        ) : filteredTeams.length === 0 ? (
           <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
             <Network className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
             <p className="text-slate-700 dark:text-slate-300 font-bold">{tr('कोई टीम रिकॉर्ड नहीं मिली', 'کوئی ٹیم ریکارڈ نہیں ملا', 'No team units found')}</p>
@@ -463,7 +617,6 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
         ) : (
           filteredTeams.map((team) => {
             const isExpanded = expandedTeamId === team.id;
-            const isBlock = team.unitType === 'block';
 
             return (
               <div
@@ -475,24 +628,25 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
                   <div>
                     <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                       <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
-                          isBlock
-                            ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800'
-                            : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
-                        }`}
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1 border `}
                       >
-                        {isBlock ? <Layers className="w-3 h-3" /> : <Building2 className="w-3 h-3" />}
-                        {isBlock ? tr('ब्लॉक इकाई (Block Unit)', 'بلاک یونٹ', 'Block Unit') : tr('नगर इकाई (City Chapter)', 'شہری چیپٹر', 'City Chapter')}
+                        <Building2 className="w-3 h-3" />
+                        {tr('ब्लॉक / शहर टीम', 'بلاک / شہری ٹیم', 'Block / City Team')}
                       </span>
 
                       <span
-                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                          team.status === 'active'
-                            ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${team.status === 'active'
+                          ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                          : team.status === 'pending'
+                            ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800'
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
-                        }`}
+                          }`}
                       >
-                        {team.status === 'active' ? tr('सक्रिय इकाई (Active)', 'فعال', 'Active') : tr('गठन प्रक्रियाधीन', 'زیر تشکیل', 'In Formation')}
+                        {team.status === 'active'
+                          ? tr('सक्रिय इकाई (Active)', 'فعال', 'Active')
+                          : team.status === 'pending'
+                            ? tr('अनुमोदन हेतु लंबित', 'منظوری زیر التواء', 'Pending Approval')
+                            : tr('गठन प्रक्रियाधीन', 'زیر تشکیل', 'In Formation')}
                       </span>
 
                       <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
@@ -512,14 +666,38 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
                       <span>{team.activeVolunteersCount} {tr('सक्रिय कार्यकर्ता', 'رضاکار', 'Volunteers')}</span>
                     </span>
 
-                    <button
-                      onClick={() => setSelectedTeamForMember(team)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
-                      title={tr('नया पदाधिकारी नियुक्त करें', 'عہدیدار کا تقرر کریں', 'Appoint Officer')}
-                    >
-                      <UserPlus className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">{tr('+ सदस्य जोड़ें', '+ رکن شامل کریں', '+ Member')}</span>
-                    </button>
+                    {/* District President: Approve button for pending teams */}
+                    {isDistrictPresident && team.status === 'pending' && (
+                      <button
+                        onClick={() => handleApproveTeam(team.id)}
+                        disabled={approvingTeamId === team.id}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+                        title={tr('इस टीम को स्वीकृत करें', 'اس ٹیم کو منظور کریں', 'Approve this team')}
+                      >
+                        {approvingTeamId === team.id ? (
+                          <>
+                            <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            <span>{tr('अनुमोदन...', 'منظوری...', 'Approving...')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>{tr('स्वीकृत करें', 'منظور کریں', 'Approve')}</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {isGenSecretary && (
+                      <button
+                        onClick={() => setSelectedTeamForMember(team)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                        title={tr('नया पदाधिकारी नियुक्त करें', 'عہدیدار کا تقرر کریں', 'Appoint Officer')}
+                      >
+                        <UserPlus className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">{tr('+ सदस्य जोड़ें', '+ رکن شامل کریں', '+ Member')}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -534,60 +712,17 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
                       <Shield className="w-3.5 h-3.5 text-amber-500" />
                     </div>
                     <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
-                      {team.presidentName}
+                      {team.HeadName}
                     </p>
                     <a
-                      href={`tel:${team.presidentPhone}`}
+                      href={`tel:${team.HeadPhone}`}
                       className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline mt-0.5"
                     >
                       <Phone className="w-3 h-3" />
-                      <span>{team.presidentPhone}</span>
+                      <span>{team.HeadPhone}</span>
                     </a>
                   </div>
 
-                  {/* Secretary */}
-                  <div className="bg-slate-50 dark:bg-slate-950/70 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        {tr('इकाई सचिव (Secretary)', 'سیکرٹری', 'Unit Secretary')}
-                      </span>
-                      <Award className="w-3.5 h-3.5 text-blue-500" />
-                    </div>
-                    <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
-                      {team.secretaryName}
-                    </p>
-                    <a
-                      href={`tel:${team.secretaryPhone}`}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline mt-0.5"
-                    >
-                      <Phone className="w-3 h-3" />
-                      <span>{team.secretaryPhone}</span>
-                    </a>
-                  </div>
-
-                  {/* Coordinator */}
-                  <div className="bg-slate-50 dark:bg-slate-950/70 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        {tr('समन्वयक / उपाध्यक्ष', 'کوآرڈینیٹر', 'Coordinator / VP')}
-                      </span>
-                      <Users className="w-3.5 h-3.5 text-purple-500" />
-                    </div>
-                    <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
-                      {team.coordinatorName || tr('नियुक्ति प्रक्रिया में', 'تعیناتی جاری', 'Under Appointment')}
-                    </p>
-                    {team.coordinatorPhone ? (
-                      <a
-                        href={`tel:${team.coordinatorPhone}`}
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline mt-0.5"
-                      >
-                        <Phone className="w-3 h-3" />
-                        <span>{team.coordinatorPhone}</span>
-                      </a>
-                    ) : (
-                      <span className="text-[11px] text-slate-400 block mt-0.5">—</span>
-                    )}
-                  </div>
                 </div>
 
                 {/* Objectives summary */}
@@ -629,13 +764,15 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
                       <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         {tr('इकाई के अन्य नियुक्त पदाधिकारी:', 'دیگر نامزد عہدیداران:', 'Appointed Unit Office Bearers:')}
                       </h4>
-                      <button
-                        onClick={() => setSelectedTeamForMember(team)}
-                        className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>{tr('नया पदाधिकारी जोड़ें', 'نیا عہدیدار شامل کریں', 'Add Officer')}</span>
-                      </button>
+                      {isGenSecretary && (
+                        <button
+                          onClick={() => setSelectedTeamForMember(team)}
+                          className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>{tr('नया पदाधिकारी जोड़ें', 'نیا عہدیدار شامل کریں', 'Add Officer')}</span>
+                        </button>
+                      )}
                     </div>
 
                     {team.members && team.members.length > 0 ? (
@@ -649,13 +786,25 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
                               <p className="font-bold text-slate-800 dark:text-slate-200">{mem.name}</p>
                               <p className="text-[11px] text-slate-500 dark:text-slate-400">{mem.role}</p>
                             </div>
-                            <a
-                              href={`tel:${mem.phone}`}
-                              className="text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1"
-                            >
-                              <Phone className="w-3 h-3" />
-                              <span>{mem.phone}</span>
-                            </a>
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={`tel:${mem.phone}`}
+                                className="text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1 hover:underline"
+                              >
+                                <Phone className="w-3 h-3" />
+                                <span>{mem.phone}</span>
+                              </a>
+                              {isGenSecretary && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteMember(team.id, mem.id)}
+                                  title={tr('पदाधिकारी हटाएं', 'عہدیدار کو ہٹائیں', 'Remove Officer')}
+                                  className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -691,48 +840,16 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
             </p>
 
             <form onSubmit={handleCreateTeam} className="space-y-4 text-xs">
-              {/* Unit Type Selection */}
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  {tr('इकाई का प्रकार (Unit Type) *', 'یونٹ کی قسم *', 'Unit Type *')}
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setFormUnitType('block')}
-                    className={`p-3 rounded-xl border text-center font-bold flex items-center justify-center gap-2 cursor-pointer transition-all ${
-                      formUnitType === 'block'
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300'
-                        : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    <Layers className="w-4 h-4" />
-                    <span>{tr('ब्लॉक इकाई (Block Unit)', 'بلاک یونٹ', 'Block Unit')}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormUnitType('city')}
-                    className={`p-3 rounded-xl border text-center font-bold flex items-center justify-center gap-2 cursor-pointer transition-all ${
-                      formUnitType === 'city'
-                        ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300'
-                        : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    <Building2 className="w-4 h-4" />
-                    <span>{tr('नगर / शहर इकाई (City Chapter)', 'شہری چیپٹر', 'City Chapter')}</span>
-                  </button>
-                </div>
-              </div>
 
-              {/* Unit Name */}
+              {/* Team Name */}
               <div>
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  {tr('इकाई का आधिकारिक नाम *', 'یونٹ کا باضابطہ نام *', 'Unit Name *')}
+                  {tr('टीम का नाम *', 'ٹیم کا نام *', 'Team Name *')}
                 </label>
                 <input
                   required
                   type="text"
-                  placeholder={formUnitType === 'block' ? 'e.g. Baheri Block Executive Committee' : 'e.g. Bareilly City Ward 14 Committee'}
+                  placeholder={tr('उदाहरण: बहेरी ब्लॉक कार्यकारी समिति', 'مثال: بہیری بلاک ایگزیکٹو کمیٹی', 'Example: Baheri Block Executive Committee')}
                   value={formUnitName}
                   onChange={(e) => setFormUnitName(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
@@ -748,7 +865,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
                   <input
                     required
                     type="text"
-                    placeholder="e.g. Nawabganj Tehsil / Old City"
+                    placeholder={tr('उदाहरण: नवाबगंज तहसील / पुराना शहर', 'مثال: نواب گنج تحصیل / پرانا شہر', 'Example: Nawabganj Tehsil / Old City')}
                     value={formTehsil}
                     onChange={(e) => setFormTehsil(e.target.value)}
                     className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
@@ -768,149 +885,374 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
                 </div>
               </div>
 
-              {/* President Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    {tr('इकाई अध्यक्ष नाम *', 'صدر کا نام *', 'President Name *')}
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    placeholder="e.g. Mohammad Rashid Khan"
-                    value={formPresidentName}
-                    onChange={(e) => setFormPresidentName(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                  />
+              {/* Head Details */}
+              <div className="bg-slate-50/80 dark:bg-slate-950/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-amber-500" />
+                    {tr('टीम प्रमुख (Team Head) *', 'ٹیم ہیڈ *', 'Team Head *')}
+                  </span>
+                  {formPresidentUserId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormPresidentUserId('');
+                        setFormPresidentName('');
+                        setFormPresidentPhone('');
+                      }}
+                      className="text-[11px] text-rose-500 hover:underline font-semibold cursor-pointer"
+                    >
+                      {tr('हटाएं', 'صاف کریں', 'Clear')}
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    {tr('अध्यक्ष मोबाइल नंबर', 'صدر فون *', 'President Phone')}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="+91 98371 22410"
-                    value={formPresidentPhone}
-                    onChange={(e) => setFormPresidentPhone(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                  />
+
+                {registeredUsers.length > 0 ? (
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                      {tr('⚡ पंजीकृत सदस्यों में से टीम प्रमुख चुनें (Select Member as Head):', '⚡ رجسٹرڈ رکن میں سے ہیڈ منتخب کریں:', '⚡ Select Member as Head:')}
+                    </label>
+                    <select
+                      required
+                      value={formPresidentUserId}
+                      onChange={(e) => {
+                        const uId = e.target.value;
+                        setFormPresidentUserId(uId);
+                        if (uId) {
+                          const u = registeredUsers.find((user) => user.id === uId);
+                          if (u) {
+                            setFormPresidentName(u.name || '');
+                            setFormPresidentPhone(u.phone || '');
+                          }
+                        } else {
+                          setFormPresidentName('');
+                          setFormPresidentPhone('');
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs outline-none focus:border-emerald-600 dark:focus:border-emerald-500 cursor-pointer font-medium shadow-2xs"
+                    >
+                      <option value="">
+                        {tr('⚡ सदस्य चुनें...', '⚡ رکن منتخب کریں...', '⚡ Select a member...')}
+                      </option>
+                      {registeredUsers.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          👤 {u.name} {u.phone ? `(${u.phone})` : ''} {u.city ? `• ${u.city}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 italic">
+                    {tr('कोई पंजीकृत सदस्य नहीं मिला।', 'کوئی رجسٹرڈ رکن نہیں ملا۔', 'No registered members available.')}
+                  </p>
+                )}
+
+                {/* Head Name and Phone shown ONLY when a user is selected */}
+                {formPresidentUserId && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-0.5 animate-fade-in">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        {tr('प्रमुख का नाम *', 'ہیڈ کا نام *', 'Head Name *')}
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        placeholder="e.g. Mohammad Rashid Khan"
+                        value={formPresidentName}
+                        onChange={(e) => setFormPresidentName(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        {tr('प्रमुख मोबाइल नंबर', 'ہیڈ فون *', 'Head Phone')}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="+91 98000 00000"
+                        value={formPresidentPhone}
+                        onChange={(e) => setFormPresidentPhone(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500 text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+
+
+              {/* Members & Officers Section */}
+              <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/80 dark:bg-slate-950/60 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 text-xs sm:text-sm">
+                      <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span>{tr('टीम सदस्य', 'ٹیم اراکین', 'Team Members')}</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                        {formInitialMembers.length}
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {tr('गठन के समय ही कई सदस्यों को एक साथ चुनें।', 'تشکیل کے وقت ایک ساتھ کئی اراکین منتخب کریں۔', 'Select multiple members at once.')}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto flex-wrap">
+                    {registeredUsers.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCreateMultiSelectOpen(!isCreateMultiSelectOpen)}
+                        className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs ${isCreateMultiSelectOpen
+                          ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                          }`}
+                      >
+                        <CheckSquare className="w-3.5 h-3.5" />
+                        <span>
+                          {isCreateMultiSelectOpen
+                            ? tr('चयन बंद करें', 'بند کریں', 'Close Picker')
+                            : tr('सदस्य जोड़ें', 'اراکین شامل کریں', 'Add Members')}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Multi-Select User Picker Panel (Expanded) */}
+                {isCreateMultiSelectOpen && (
+                  <div className="p-3.5 rounded-2xl border-2 border-emerald-500/50 bg-white dark:bg-slate-900 space-y-3 shadow-md animate-fade-in">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <span className="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                          {tr('पंजीकृत सदस्यों से चुनें', 'رجسٹرڈ اراکین میں سے منتخب کریں', 'Select Registered Users')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const availableUsers = registeredUsers.filter((u) => {
+                              if (!createMultiSearchQuery.trim()) return true;
+                              const q = createMultiSearchQuery.toLowerCase();
+                              return (
+                                (u.name && u.name.toLowerCase().includes(q)) ||
+                                (u.phone && u.phone.includes(q)) ||
+                                (u.city && u.city.toLowerCase().includes(q))
+                              );
+                            });
+                            setFormInitialMembers((prev) => {
+                              const existingIds = new Set(prev.map((m) => m.id));
+                              const toAdd = availableUsers
+                                .filter((u) => !existingIds.has(u.id))
+                                .map((u) => ({
+                                  id: u.id,
+                                  name: u.name || '',
+                                  role: 'सदस्य (Member)',
+                                  phone: u.phone || '',
+                                }));
+                              return [...prev, ...toAdd];
+                            });
+                          }}
+                          className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold cursor-pointer"
+                        >
+                          {tr('सभी चुनें', 'سب منتخب کریں', 'Select All')}
+                        </button>
+                        <span>•</span>
+                        <button
+                          type="button"
+                          onClick={() => setFormInitialMembers([])}
+                          className="text-slate-500 hover:underline font-semibold cursor-pointer"
+                        >
+                          {tr('हटाएं', 'صاف کریں', 'Clear')}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Search inside picker */}
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder={tr('सदस्यों को खोजें...', 'اراکین تلاش کریں...', 'Search members by name, phone or city...')}
+                        value={createMultiSearchQuery}
+                        onChange={(e) => setCreateMultiSearchQuery(e.target.value)}
+                        className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-600"
+                      />
+                    </div>
+
+                    {/* Checkable List */}
+                    <div className="max-h-48 overflow-y-auto space-y-1.5 border border-slate-100 dark:border-slate-800 rounded-xl p-1.5 bg-slate-50/50 dark:bg-slate-950/30">
+                      {registeredUsers
+                        .filter((u) => {
+                          if (!createMultiSearchQuery.trim()) return true;
+                          const q = createMultiSearchQuery.toLowerCase();
+                          return (
+                            (u.name && u.name.toLowerCase().includes(q)) ||
+                            (u.phone && u.phone.includes(q)) ||
+                            (u.city && u.city.toLowerCase().includes(q))
+                          );
+                        })
+                        .map((user) => {
+                          const isSelected = formInitialMembers.some((m) => m.id === user.id || (m.name === user.name && m.phone === user.phone));
+                          return (
+                            <div
+                              key={user.id}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setFormInitialMembers((prev) =>
+                                    prev.filter((m) => m.id !== user.id && !(m.name === user.name && m.phone === user.phone))
+                                  );
+                                } else {
+                                  setFormInitialMembers((prev) => [
+                                    ...prev,
+                                    {
+                                      id: user.id,
+                                      name: user.name || '',
+                                      role: 'सदस्य (Member)',
+                                      phone: user.phone || '',
+                                    },
+                                  ]);
+                                }
+                              }}
+                              className={`p-2 rounded-lg border flex items-center justify-between text-xs cursor-pointer transition-all ${isSelected
+                                ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 shadow-2xs font-semibold'
+                                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                                }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="shrink-0 text-emerald-600 dark:text-emerald-400">
+                                  {isSelected ? (
+                                    <CheckSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                  ) : (
+                                    <Square className="w-4 h-4 text-slate-300 dark:text-slate-600" />
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <span className="text-slate-900 dark:text-white truncate block">
+                                    {user.name}
+                                  </span>
+                                  <span className="text-[10px] text-slate-500 truncate block">
+                                    {user.phone || '+91 98000 00000'} {user.city ? `• ${user.city}` : ''}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+
+                    {/* Completion Action Bar */}
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                        {tr(`${formInitialMembers.length} सदस्य चयनित`, `${formInitialMembers.length} اراکین منتخب`, `${formInitialMembers.length} members selected`)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsCreateMultiSelectOpen(false)}
+                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors flex items-center gap-1.5"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>{tr('पूर्ण करें (Done)', 'مکمل کریں', 'Done')}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* List of Initial Members Added to Draft */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      {tr('जोड़े गए सदस्य:', 'شامل کردہ اراکین:', 'Added Members:')} ({formInitialMembers.length})
+                    </span>
+                    {formInitialMembers.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setFormInitialMembers([])}
+                        className="text-[11px] text-rose-500 hover:underline font-semibold cursor-pointer"
+                      >
+                        {tr('सभी हटाएं', 'تمام حذف کریں', 'Clear All')}
+                      </button>
+                    )}
+                  </div>
+
+                  {formInitialMembers.length === 0 ? (
+                    <div className="p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 text-center bg-white/60 dark:bg-slate-900/40">
+                      <p className="text-slate-500 dark:text-slate-400 text-xs">
+                        {tr('अभी कोई सदस्य नहीं जोड़ा गया है। ऊपर "सदस्य जोड़ें" पर क्लिक करके सदस्य चुनें।', 'ابھی تک کوئی رکن شامل نہیں کیا گیا ہے۔ اوپر بٹن پر کلک کریں۔', 'No members added yet. Click "Add Members" above to select.')}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                      {formInitialMembers.map((draft, idx) => (
+                        <div
+                          key={draft.id}
+                          className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 shadow-2xs text-xs animate-fade-in"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-[10px] font-black shrink-0">
+                              {idx + 1}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-slate-900 dark:text-white truncate">
+                                {draft.name}
+                              </p>
+                              {draft.phone && (
+                                <p className="text-[10px] text-slate-500 truncate">
+                                  {draft.phone}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveInitialMemberRow(draft.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer shrink-0"
+                            title={tr('हटाएं', 'حذف', 'Remove')}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Secretary Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    {tr('इकाई सचिव नाम *', 'سیکرٹری کا نام *', 'Secretary Name *')}
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    placeholder="e.g. Zubair Ahmad Qureshi"
-                    value={formSecretaryName}
-                    onChange={(e) => setFormSecretaryName(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    {tr('सचिव मोबाइल नंबर', 'سیکرٹری فون', 'Secretary Phone')}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="+91 94120 88712"
-                    value={formSecretaryPhone}
-                    onChange={(e) => setFormSecretaryPhone(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                  />
-                </div>
-              </div>
 
-              {/* Coordinator Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    {tr('इकाई समन्वयक / उपाध्यक्ष', 'کوآرڈینیٹر', 'Coordinator / VP')}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Dr. Shakeel Farooqui"
-                    value={formCoordinatorName}
-                    onChange={(e) => setFormCoordinatorName(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    {tr('समन्वयक मोबाइल', 'کوآرڈینیٹر فون', 'Coordinator Phone')}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="+91 99270 44102"
-                    value={formCoordinatorPhone}
-                    onChange={(e) => setFormCoordinatorPhone(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                  />
-                </div>
-              </div>
 
-              {/* Status & Volunteer count */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    {tr('प्रारंभिक स्वयंसेवक संख्या', 'ابتدائی رضاکار', 'Initial Volunteers Count')}
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={formVolunteers}
-                    onChange={(e) => setFormVolunteers(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                  />
+              {/* Error Message */}
+              {saveError && (
+                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 font-semibold flex items-start gap-2">
+                  <X className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{saveError}</span>
                 </div>
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    {tr('इकाई स्थिति (Status)', 'حیثیت', 'Status')}
-                  </label>
-                  <select
-                    value={formStatus}
-                    onChange={(e) => setFormStatus(e.target.value as any)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                  >
-                    <option value="active">{tr('सक्रिय इकाई (Active Unit)', 'فعال یونٹ', 'Active Unit')}</option>
-                    <option value="in_formation">{tr('गठन प्रक्रियाधीन (In Formation)', 'زیر تشکیل', 'In Formation')}</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Objectives */}
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  {tr('मुख्य दायित्व व कार्यक्षेत्र (Jurisdiction & Focus)', 'مقاصد و ذمہ داریاں', 'Jurisdiction & Focus')}
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="e.g. Village outreach, medical camp coordination, member enrollment..."
-                  value={formObjectives}
-                  onChange={(e) => setFormObjectives(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                />
-              </div>
+              )}
 
               {/* Modal Buttons */}
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsCreateModalOpen(false)}
+                  onClick={() => { setIsCreateModalOpen(false); setSaveError(null); }}
                   className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors cursor-pointer"
+                  disabled={isSaving}
                 >
                   {tr('रद्द करें', 'منسوخ', 'Cancel')}
                 </button>
                 <button
                   type="submit"
-                  className="mfct-btn-gold px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-md cursor-pointer"
+                  disabled={isSaving}
+                  className="mfct-btn-gold px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-md cursor-pointer flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {tr('इकाई गठित करें', 'یونٹ تشکیل دیں', 'Form Team Unit')}
+                  {isSaving ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                      <span>{tr('सहेजा जा रहा है...', 'محفوظ ہو رہا ہے...', 'Saving...')}</span>
+                    </>
+                  ) : (
+                    <span>{tr('टीम गठित करें', 'ٹیم تشکیل دیں', 'Create Team')}</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -921,80 +1263,359 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
       {/* 6. Add Member Modal */}
       {selectedTeamForMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full shadow-2xl p-6 relative">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative">
             <button
-              onClick={() => setSelectedTeamForMember(null)}
+              onClick={() => {
+                setSelectedTeamForMember(null);
+                setSelectedUserIds([]);
+                setUserSearchQuery('');
+              }}
               className="absolute right-4 top-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
-              {tr('नया पदाधिकारी नियुक्त करें', 'نیا عہدیدار شامل کریں', 'Appoint Office Bearer')}
-            </h3>
-            <p className="text-xs text-slate-500 mb-4 truncate">
-              {selectedTeamForMember.unitName}
-            </p>
+            <div className="mb-4 pr-8">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <span>{tr('इकाई में सदस्य / पदाधिकारी नियुक्त करें', 'یونٹ میں اراکین / عہدیداران شامل کریں', 'Appoint Members & Officers')}</span>
+              </h3>
+              <p className="text-xs text-slate-500 truncate mt-0.5">
+                {selectedTeamForMember.unitName} • {selectedTeamForMember.tehsilOrZone}
+              </p>
+            </div>
 
-            <form onSubmit={handleAddMember} className="space-y-4 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  {tr('पदाधिकारी का नाम *', 'نام *', 'Member Name *')}
-                </label>
-                <input
-                  required
-                  type="text"
-                  placeholder="e.g. Salman Mansoori"
-                  value={newMemberName}
-                  onChange={(e) => setNewMemberName(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                />
-              </div>
+            {/* Mode Switcher Tabs */}
+            <div className="flex rounded-xl p-1 bg-slate-100 dark:bg-slate-800 mb-4 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setMemberModalMode('multi')}
+                className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${memberModalMode === 'multi'
+                  ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>{tr('एक साथ कई सदस्य चुनें (Multi-Select)', 'کئی اراکین منتخب کریں', 'Multi-Select Users')}</span>
+                {selectedUserIds.length > 0 && (
+                  <span className="w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center font-bold">
+                    {selectedUserIds.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMemberModalMode('manual')}
+                className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${memberModalMode === 'manual'
+                  ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{tr('एक सदस्य मैन्युअल (Single Manual)', 'ایک رکن دستی', 'Single Manual Add')}</span>
+              </button>
+            </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  {tr('पदनाम / दायित्व *', 'عہدہ *', 'Designation / Role *')}
-                </label>
-                <input
-                  required
-                  type="text"
-                  placeholder="e.g. Youth Coordinator / Relief Incharge"
-                  value={newMemberRole}
-                  onChange={(e) => setNewMemberRole(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                />
-              </div>
+            {memberModalMode === 'multi' ? (
+              <form onSubmit={handleBatchAddMembers} className="space-y-4 text-xs">
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder={tr('नाम, फोन नंबर या शहर से खोजें...', 'نام، فون یا شہر سے تلاش کریں...', 'Search by name, phone or city...')}
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 text-xs"
+                  />
+                  {userSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setUserSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  {tr('मोबाइल नंबर *', 'موبائل نمبر *', 'Phone Number *')}
-                </label>
-                <input
-                  required
-                  type="text"
-                  placeholder="+91 98370 11223"
-                  value={newMemberPhone}
-                  onChange={(e) => setNewMemberPhone(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                />
-              </div>
+                {/* Selection Controls */}
+                <div className="flex items-center justify-between text-[11px] px-1">
+                  <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>
+                      {tr(
+                        `${selectedUserIds.length} सदस्य चयनित`,
+                        `${selectedUserIds.length} اراکین منتخب`,
+                        `${selectedUserIds.length} members selected`
+                      )}
+                    </span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const existingNames = new Set((selectedTeamForMember?.members || []).map(m => m.name.toLowerCase()));
+                        const available = registeredUsers
+                          .filter(u => !existingNames.has((u.name || '').toLowerCase()))
+                          .filter(u => {
+                            if (!userSearchQuery.trim()) return true;
+                            const q = userSearchQuery.toLowerCase();
+                            return (
+                              (u.name && u.name.toLowerCase().includes(q)) ||
+                              (u.phone && u.phone.includes(q)) ||
+                              (u.city && u.city.toLowerCase().includes(q))
+                            );
+                          })
+                          .map(u => u.id);
+                        setSelectedUserIds(Array.from(new Set([...selectedUserIds, ...available])));
+                      }}
+                      className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold cursor-pointer"
+                    >
+                      {tr('सभी चुनें', 'سب منتخب کریں', 'Select All')}
+                    </button>
+                    <span>•</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedUserIds([])}
+                      className="text-slate-500 hover:underline font-semibold cursor-pointer"
+                    >
+                      {tr('हटाएं', 'صاف کریں', 'Clear')}
+                    </button>
+                  </div>
+                </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedTeamForMember(null)}
-                  className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors cursor-pointer"
-                >
-                  {tr('रद्द करें', 'منسوخ', 'Cancel')}
-                </button>
-                <button
-                  type="submit"
-                  className="mfct-btn-gold px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-md cursor-pointer"
-                >
-                  {tr('नियुक्ति दर्ज करें', 'تقرر محفوظ کریں', 'Confirm Appointment')}
-                </button>
-              </div>
-            </form>
+                {/* User Cards Checklist */}
+                <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-2 max-h-56 overflow-y-auto space-y-1.5 bg-slate-50/50 dark:bg-slate-950/40">
+                  {registeredUsers
+                    .filter((u) => {
+                      if (!userSearchQuery.trim()) return true;
+                      const q = userSearchQuery.toLowerCase();
+                      return (
+                        (u.name && u.name.toLowerCase().includes(q)) ||
+                        (u.phone && u.phone.includes(q)) ||
+                        (u.city && u.city.toLowerCase().includes(q))
+                      );
+                    })
+                    .map((user) => {
+                      const isAlreadyInTeam = selectedTeamForMember.members?.some(
+                        (m) => (m.name && m.name.toLowerCase() === (user.name || '').toLowerCase()) || (m.phone && m.phone === user.phone)
+                      );
+                      const isSelected = selectedUserIds.includes(user.id);
+
+                      return (
+                        <div
+                          key={user.id}
+                          onClick={() => {
+                            if (isAlreadyInTeam) return;
+                            setSelectedUserIds((prev) =>
+                              prev.includes(user.id)
+                                ? prev.filter((id) => id !== user.id)
+                                : [...prev, user.id]
+                            );
+                          }}
+                          className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-all ${isAlreadyInTeam
+                            ? 'opacity-50 bg-slate-100 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 cursor-not-allowed'
+                            : isSelected
+                              ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 dark:border-emerald-500/80 cursor-pointer shadow-xs'
+                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer'
+                            }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="shrink-0 text-emerald-600 dark:text-emerald-400">
+                              {isSelected ? (
+                                <CheckSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                              ) : (
+                                <Square className="w-4 h-4 text-slate-300 dark:text-slate-600" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-bold text-slate-900 dark:text-white truncate">
+                                {user.name}
+                              </p>
+                              <p className="text-[11px] text-slate-500 truncate">
+                                {user.phone || '+91 98000 00000'} {user.city ? `• ${user.city}` : ''}
+                              </p>
+                            </div>
+                          </div>
+
+                          {isAlreadyInTeam && (
+                            <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                              {tr('पहले से नियुक्त', 'پہلے سے شامل', 'In Unit')}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                  {registeredUsers.length === 0 && (
+                    <p className="text-center text-slate-400 py-6">
+                      {tr('कोई पंजीकृत उपयोगकर्ता नहीं मिला।', 'کوئی صارف نہیں ملا', 'No registered users found.')}
+                    </p>
+                  )}
+                </div>
+
+                {saveError && (
+                  <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 font-semibold flex items-start gap-2">
+                    <X className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{saveError}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedTeamForMember(null);
+                      setSelectedUserIds([]);
+                      setUserSearchQuery('');
+                      setSaveError(null);
+                    }}
+                    className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors cursor-pointer"
+                    disabled={isSaving}
+                  >
+                    {tr('रद्द करें', 'منسوخ', 'Cancel')}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={selectedUserIds.length === 0 || isSaving}
+                    className="mfct-btn-gold px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-md cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSaving ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                        <span>{tr('नियुक्त किया जा रहा है...', 'شامل ہو رہا ہے...', 'Appointing...')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-3.5 h-3.5" />
+                        <span>
+                          {selectedUserIds.length > 0
+                            ? tr(`चयनित ${selectedUserIds.length} सदस्य नियुक्त करें`, `منتخب ${selectedUserIds.length} اراکین شامل کریں`, `Appoint ${selectedUserIds.length} Members`)
+                            : tr('सदस्य चुनें', 'اراکین منتخب کریں', 'Select Members')}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* Single Manual Add Form */
+              <form onSubmit={handleAddSingleMember} className="space-y-4 text-xs">
+
+                {/* User Picker */}
+                {registeredUsers.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block font-bold text-slate-700 dark:text-slate-300">
+                        {tr('पंजीकृत सदस्य चुनें (वैकल्पिक)', 'رجسٹرڈ رکن منتخب کریں (اختیاری)', 'Select Registered User (Optional)')}
+                      </label>
+                      {newMemberUserId && (
+                        <button
+                          type="button"
+                          onClick={() => { setNewMemberUserId(''); setNewMemberName(''); setNewMemberPhone(''); }}
+                          className="text-[11px] text-rose-500 hover:underline font-semibold cursor-pointer"
+                        >
+                          {tr('हटाएं', 'صاف کریں', 'Clear')}
+                        </button>
+                      )}
+                    </div>
+                    <select
+                      value={newMemberUserId}
+                      onChange={(e) => {
+                        const uid = e.target.value;
+                        setNewMemberUserId(uid);
+                        if (uid) {
+                          const u = registeredUsers.find((u) => u.id === uid);
+                          if (u) {
+                            setNewMemberName(u.name || '');
+                            setNewMemberPhone(u.phone || '');
+                          }
+                        } else {
+                          setNewMemberName('');
+                          setNewMemberPhone('');
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs outline-none focus:border-emerald-600 dark:focus:border-emerald-500 cursor-pointer font-medium"
+                    >
+                      <option value="">{tr('⎡ सदस्य चुनें...', '⎡ رکن منتخب کریں...', '⎡ Select a member...')}</option>
+                      {registeredUsers.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          👤 {u.name} {u.phone ? `(‪${u.phone}‬)` : ''} {u.city ? `• ${u.city}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {tr('पदाधिकारी का नाम *', 'نام *', 'Member Name *')}
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="e.g. Salman Mansoori"
+                    value={newMemberName}
+                    onChange={(e) => setNewMemberName(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {tr('मोबाइल नंबर *', 'موبائل نمبر *', 'Phone Number *')}
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="+91 98370 11223"
+                    value={newMemberPhone}
+                    onChange={(e) => setNewMemberPhone(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
+                  />
+                </div>
+
+                {saveError && (
+                  <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 font-semibold flex items-start gap-2">
+                    <X className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{saveError}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedTeamForMember(null);
+                      setSaveError(null);
+                      setNewMemberUserId('');
+                      setNewMemberName('');
+                      setNewMemberPhone('');
+                    }}
+                    className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors cursor-pointer"
+                    disabled={isSaving}
+                  >
+                    {tr('रद्द करें', 'منسوخ', 'Cancel')}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="mfct-btn-gold px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-md cursor-pointer flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isSaving ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                        <span>{tr('नियुक्त किया जा रहा है...', 'شامل ہو رہا ہے...', 'Saving...')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-3.5 h-3.5" />
+                        <span>{tr('नियुक्ति दर्ज करें', 'تقرر محفوظ کریں', 'Confirm Appointment')}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

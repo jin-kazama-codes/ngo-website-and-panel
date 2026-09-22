@@ -27,7 +27,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { data, error } = await supabaseAdmin.from('communities').insert(body).select().single();
+    let { data, error } = await supabaseAdmin.from('communities').insert(body).select().single();
+    if (error && error.message && (error.message.includes('district') || error.code === '42703')) {
+      const { district, ...bodyWithoutDistrict } = body;
+      const retry = await supabaseAdmin.from('communities').insert(bodyWithoutDistrict).select().single();
+      if (retry.error) throw retry.error;
+      data = { ...retry.data, district };
+      error = null;
+    }
     if (error) throw error;
     return NextResponse.json({ success: true, data });
   } catch (err: any) {
@@ -39,7 +46,14 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const { id, ...updates } = body;
-    const { data, error } = await supabaseAdmin.from('communities').update(updates).eq('id', id).select().single();
+    let { data, error } = await supabaseAdmin.from('communities').update(updates).eq('id', id).select().single();
+    if (error && error.message && (error.message.includes('district') || error.code === '42703')) {
+      const { district, ...updatesWithoutDistrict } = updates;
+      const retry = await supabaseAdmin.from('communities').update(updatesWithoutDistrict).eq('id', id).select().single();
+      if (retry.error) throw retry.error;
+      data = { ...retry.data, district };
+      error = null;
+    }
     if (error) throw error;
     return NextResponse.json({ success: true, data });
   } catch (err: any) {

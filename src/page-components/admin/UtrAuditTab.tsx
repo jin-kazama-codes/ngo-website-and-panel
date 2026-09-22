@@ -1,9 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Donation, User, UserRole } from '../../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Donation, User, UserRole, Community, Campaign } from '../../types';
 import { getDonations, updateDonationStatus } from '../../services/donationService';
-import { CheckCircle, XCircle, Search, FileText, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import { getCommunities } from '../../services/communityService';
+import { getCampaigns } from '../../services/campaignService';
+import { STANDARD_DISTRICTS } from '../../data/districtsData';
+import { useAppState } from '../../providers/AppStateProvider';
+import { CheckCircle, XCircle, Search, FileText, Image as ImageIcon, AlertTriangle, IndianRupee, Award, Filter } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
 import { translateCategory } from '../../lib/translateEntity';
@@ -15,10 +19,11 @@ interface UtrAuditTabProps {
 
 const DonationAuditRow: React.FC<{
   donation: Donation;
+  canPerformAction?: boolean;
   onViewDetails: (d: Donation) => void;
   onReject: (id: string) => void;
   onVerify: (id: string) => void;
-}> = ({ donation, onViewDetails, onReject, onVerify }) => {
+}> = ({ donation, canPerformAction, onViewDetails, onReject, onVerify }) => {
   const { language } = useLanguage();
   const tr = (hi: string, ur: string, en: string) => {
     if (language === 'hi') return hi;
@@ -62,27 +67,31 @@ const DonationAuditRow: React.FC<{
             <ImageIcon className="w-4 h-4" />
             <span>{tr('विवरण देखें', 'تفصیلات دیکھیں', 'View Details')}</span>
           </button>
-          <button
-            onClick={() => onReject(donation.id)}
-            className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-xl transition-colors cursor-pointer"
-            title={tr('अस्वीकार करें', 'مسترد کریں', 'Reject Payment')}
-          >
-            <XCircle className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onVerify(donation.id)}
-            className="p-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-xl transition-colors cursor-pointer"
-            title={tr('सत्यापित करें', 'تصدیق کریں', 'Verify Payment')}
-          >
-            <CheckCircle className="w-4 h-4" />
-          </button>
+          {canPerformAction && (
+            <>
+              <button
+                onClick={() => onReject(donation.id)}
+                className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-xl transition-colors cursor-pointer"
+                title={tr('अस्वीकार करें', 'مسترد کریں', 'Reject Payment')}
+              >
+                <XCircle className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onVerify(donation.id)}
+                className="p-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-xl transition-colors cursor-pointer"
+                title={tr('सत्यापित करें', 'تصدیق करें', 'Verify Payment')}
+              >
+                <CheckCircle className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
       </td>
     </tr>
   );
 };
 
-export const UtrAuditTab: React.FC<UtrAuditTabProps> = ({ activeUser, currentRole }) => {
+export const UtrAuditTab: React.FC<UtrAuditTabProps> = ({ activeUser: propActiveUser, currentRole: propCurrentRole }) => {
   const { language } = useLanguage();
   const tr = (hi: string, ur: string, en: string) => {
     if (language === 'hi') return hi;
@@ -90,7 +99,78 @@ export const UtrAuditTab: React.FC<UtrAuditTabProps> = ({ activeUser, currentRol
     return en;
   };
 
+  let contextUser: User | undefined;
+  let contextRole: UserRole | undefined;
+  try {
+    const appState = useAppState();
+    contextUser = appState?.activeUser;
+    contextRole = appState?.currentRole;
+  } catch {
+    // Outside AppStateProvider fallback
+  }
+
+  const activeUser = propActiveUser || contextUser;
+  const currentRole = propCurrentRole || contextRole;
+
+  const rawDistRole = (
+    activeUser?.district_role ||
+    activeUser?.districtRole ||
+    (activeUser?.role as string) ||
+    ''
+  ).toLowerCase().trim().replace(/\s+/g, '_');
+
+  const isSuperOrExecutive =
+    currentRole === 'super_admin' ||
+    currentRole === 'executive_admin' ||
+    activeUser?.role === 'super_admin' ||
+    activeUser?.role === 'executive_admin';
+
+  const isDistrictFinanceCoord =
+    currentRole === 'district_finance_coord' ||
+    rawDistRole === 'district_finance_coord' ||
+    rawDistRole.includes('finance');
+
+  const canPerformUtrAction = isSuperOrExecutive || isDistrictFinanceCoord;
+
+  const districtRoleKeys = [
+    'district_president',
+    'district_coordinator',
+    'district_gen_secretary',
+    'district_secretary',
+    'district_finance_coord',
+  ];
+
+  const isDistrictRole =
+    districtRoleKeys.includes(currentRole as string) ||
+    districtRoleKeys.includes(rawDistRole) ||
+    (typeof currentRole === 'string' && currentRole.startsWith('district_')) ||
+    rawDistRole.startsWith('district_') ||
+    rawDistRole.includes('president') ||
+    rawDistRole.includes('coordinator') ||
+    rawDistRole.includes('secretary') ||
+    rawDistRole.includes('finance');
+
+  const isRestrictedToDistrict = !isSuperOrExecutive && isDistrictRole;
+
+  const districtRoleTitle =
+    currentRole === 'district_president' || rawDistRole.includes('president')
+      ? tr('जिला अध्यक्ष दृश्य', 'ضلعی صدر منظر', 'District President View')
+      : currentRole === 'district_coordinator' || rawDistRole.includes('coordinator')
+        ? tr('जिला संयोजक दृश्य', 'ضلعی کوآرڈینیٹر منظر', 'District Coordinator View')
+        : currentRole === 'district_gen_secretary' || rawDistRole.includes('gen_sec')
+          ? tr('जिला महासचिव दृश्य', 'ضلعی جنرل سیکرٹری منظر', 'District General Secretary View')
+          : currentRole === 'district_secretary' || rawDistRole.includes('secretary')
+            ? tr('जिला सचिव दृश्य', 'ضلعی سیکرٹری منظر', 'District Secretary View')
+            : currentRole === 'district_finance_coord' || rawDistRole.includes('finance')
+              ? tr('जिला वित्त समन्वयक दृश्य', 'ضلعی فنانس کوآرڈینیٹر منظر', 'District Finance Coordinator View')
+              : tr('जिला स्तरीय दृश्य', 'ضلعی سطحی منظر', 'District Level View');
+
+  const userDistrict = (activeUser?.district || activeUser?.city || '').trim();
+
   const [donations, setDonations] = useState<Donation[]>([]);
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [selectedDistrictFilter, setSelectedDistrictFilter] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -105,12 +185,19 @@ export const UtrAuditTab: React.FC<UtrAuditTabProps> = ({ activeUser, currentRol
 
   useEffect(() => {
     fetchPendingDonations();
-  }, []);
+  }, [currentRole, activeUser?.communityName]);
 
   const fetchPendingDonations = async () => {
     setLoading(true);
     try {
-      const allDonations = await getDonations();
+      const [allDonations, comms, camps] = await Promise.all([
+        getDonations(),
+        getCommunities().catch(() => []),
+        getCampaigns().catch(() => []),
+      ]);
+      setCommunities(comms || []);
+      setCampaigns(camps || []);
+
       let pending = allDonations.filter((d) => d.status === 'pending_verification');
 
       if (currentRole === 'community_admin' && activeUser?.communityName) {
@@ -125,16 +212,68 @@ export const UtrAuditTab: React.FC<UtrAuditTabProps> = ({ activeUser, currentRol
     }
   };
 
+  const commMap = useMemo(() => {
+    const map = new Map<string, Community>();
+    communities.forEach((c) => {
+      map.set(c.id, c);
+      map.set(c.name.toLowerCase().trim(), c);
+    });
+    return map;
+  }, [communities]);
+
+  const campMap = useMemo(() => {
+    const map = new Map<string, Campaign>();
+    campaigns.forEach((c) => {
+      map.set(c.id, c);
+    });
+    return map;
+  }, [campaigns]);
+
+  const getDonationDistrict = (d: Donation): string => {
+    if ((d as any).district) return String((d as any).district);
+    if (d.communityName && commMap.has(d.communityName.toLowerCase().trim())) {
+      const comm = commMap.get(d.communityName.toLowerCase().trim())!;
+      return comm.district || comm.city || '';
+    }
+    if (d.campaignId && campMap.has(d.campaignId)) {
+      const camp = campMap.get(d.campaignId)!;
+      return (camp as any).district || camp.city || '';
+    }
+    return '';
+  };
+
+  const districtFilteredDonations = useMemo(() => {
+    let list = donations;
+
+    if (isRestrictedToDistrict && userDistrict) {
+      const target = userDistrict.toLowerCase().trim();
+      list = list.filter((d) => {
+        const dDistrict = getDonationDistrict(d).toLowerCase().trim();
+        return dDistrict === target || (dDistrict && target.includes(dDistrict)) || (target && dDistrict.includes(target));
+      });
+    } else if (selectedDistrictFilter) {
+      const target = selectedDistrictFilter.toLowerCase().trim();
+      list = list.filter((d) => {
+        const dDistrict = getDonationDistrict(d).toLowerCase().trim();
+        return dDistrict === target || (dDistrict && target.includes(dDistrict)) || (target && dDistrict.includes(target));
+      });
+    }
+
+    return list;
+  }, [donations, isRestrictedToDistrict, userDistrict, selectedDistrictFilter, commMap, campMap]);
+
   const handleVerify = (id: string) => {
+    if (!canPerformUtrAction) return;
     setConfirmAction({ id, type: 'verify' });
   };
 
   const handleReject = (id: string) => {
+    if (!canPerformUtrAction) return;
     setConfirmAction({ id, type: 'reject' });
   };
 
   const executeAction = async () => {
-    if (!confirmAction) return;
+    if (!confirmAction || !canPerformUtrAction) return;
     setProcessing(true);
     const { id, type } = confirmAction;
     try {
@@ -156,39 +295,127 @@ export const UtrAuditTab: React.FC<UtrAuditTabProps> = ({ activeUser, currentRol
     }
   };
 
-  const filteredDonations = donations.filter(
-    (d) =>
-      d.donorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      d.utrNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      d.campaignTitle.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDonations = useMemo(() => {
+    return districtFilteredDonations.filter(
+      (d) =>
+        d.donorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        d.utrNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        d.campaignTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (d.communityName && d.communityName.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  }, [districtFilteredDonations, searchQuery]);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white">
-            {tr('यूटीआर भुगतान डेस्क', 'یو ٹی آر ادائیگی ڈیسک', 'UTR Payment Desk')}
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {tr(
-              'मैन्युअल यूपीआई और बैंक ट्रांसफर भुगतानों को सत्यापित और ऑडिट करें।',
-              'دستی یو پی آئی اور بینک ٹرانسفر ادائیگیوں کی تصدیق اور آڈٹ کریں۔',
-              'Verify and audit manual UPI / Bank transfer payments.'
-            )}
-          </p>
+      {/* 1. Header Banner */}
+      <div
+        className="rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-6"
+        style={{
+          background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0a1c12 100%)',
+          border: '1px solid rgba(200,168,75,0.3)',
+          boxShadow: 'var(--shadow-card)',
+        }}
+      >
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-72 h-72 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(200,168,75,0.18)' }} />
+
+        <div className="flex items-start gap-4 relative z-10">
+          <div
+            className="p-3.5 rounded-2xl shrink-0 mt-0.5"
+            style={{
+              background: 'rgba(200,168,75,0.15)',
+              border: '1px solid rgba(200,168,75,0.35)',
+            }}
+          >
+            <IndianRupee className="w-6 h-6" style={{ color: 'var(--mfct-gold)' }} />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+              {tr('यूटीआर भुगतान डेस्क', 'یو ٹی آر ادائیگی ڈیسک', 'UTR Payment Desk')}
+            </h1>
+            <p className="text-xs sm:text-sm mt-1 max-w-4xl" style={{ color: 'rgba(200,168,75,0.9)' }}>
+              {tr(
+                'मैन्युअल यूपीआई और बैंक ट्रांसफर भुगतानों को सत्यापित और ऑडिट करें।',
+                'دستی یو پی آئی اور بینک ٹرانسفر ادائیگیوں کی تصدیق اور آڈٹ کریں۔',
+                'Verify and audit manual UPI / Bank transfer payments.'
+              )}
+            </p>
+          </div>
         </div>
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder={tr('यूटीआर, दानदाता, अभियान खोजें...', 'یو ٹی آر، ڈونر یا مہم تلاش کریں...', 'Search UTR, Donor, Campaign...')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full sm:w-64 pl-9 pr-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-colors shadow-sm"
-          />
+
+        {/* Right Controls: District Filter & Search Bar */}
+        <div className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+          {!isRestrictedToDistrict && (
+            <div className="flex items-center gap-2">
+              <Filter className="w-3.5 h-3.5 text-[var(--mfct-gold)] shrink-0" />
+              <select
+                value={selectedDistrictFilter}
+                onChange={(e) => setSelectedDistrictFilter(e.target.value)}
+                className="bg-black/30 border border-[rgba(200,168,75,0.3)] text-xs text-white rounded-xl px-3 py-2.5 focus:border-[var(--mfct-gold)] outline-none cursor-pointer backdrop-blur-sm shadow-inner"
+              >
+                <option value="" className="text-slate-900 dark:text-white bg-white dark:bg-slate-900">
+                  {tr('सभी जिले (All Districts)', 'تمام اضلاع', 'All Districts')}
+                </option>
+                {STANDARD_DISTRICTS.map((d) => (
+                  <option key={d.id} value={d.id} className="text-slate-900 dark:text-white bg-white dark:bg-slate-900">
+                    {language === 'hi' ? d.nameHi : language === 'ur' ? d.nameUr : d.nameEn}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 text-slate-300 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder={tr('यूटीआर, दानदाता, अभियान खोजें...', 'یو ٹی آر، ڈونر یا مہم تلاش کریں...', 'Search UTR, Donor, Campaign...')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-black/30 border border-[rgba(200,168,75,0.3)] text-xs text-white placeholder:text-slate-300 focus:border-[var(--mfct-gold)] outline-none backdrop-blur-sm transition-all shadow-inner"
+            />
+          </div>
         </div>
       </div>
+
+      {/* District Role Filter Indicator Banner */}
+      {isRestrictedToDistrict && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <Award className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <span>{districtRoleTitle}</span>
+                {userDistrict && (
+                  <span className="px-2 py-0.5 rounded-md bg-amber-200/80 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200 text-[10px] font-bold">
+                    {userDistrict}
+                  </span>
+                )}
+              </p>
+              <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                {tr(
+                  `केवल आपके जिले (${userDistrict || 'निर्दिष्ट जिला'}) के यूटीआर भुगतान दिखाए जा रहे हैं।`,
+                  `صرف آپ کے ضلع (${userDistrict || 'مخصوص ضلع'}) کی یو ٹی آر ادائیگیاں دکھائی جا रही हैं।`,
+                  `Showing only pending UTR payments belonging to your designated district (${userDistrict || 'Assigned District'}).`
+                )}
+                {!canPerformUtrAction && (
+                  <span className="block mt-0.5 font-semibold text-rose-700 dark:text-rose-400">
+                    {tr(
+                      '(केवल दृश्य मोड: यूटीआर सत्यापन कार्रवाई केवल जिला वित्त समन्वयक या केंद्रीय व्यवस्थापक कर सकते हैं)',
+                      '(صرف دیکھنے کا موڈ: یو ٹی آر کی تصدیق صرف ڈسٹرکٹ فنانس کوآرڈینیٹر یا مرکزی ایڈمن کر سکتے ہیں)',
+                      '(View Only: UTR action can only be performed by District Finance Coordinator or Central Admins)'
+                    )}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+          <span className="self-start sm:self-auto px-3 py-1 rounded-full bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300 font-bold text-[11px] shrink-0">
+            {filteredDonations.length} {tr('भुगतान', 'ادائیگیاں', filteredDonations.length === 1 ? 'Payment' : 'Payments')}
+          </span>
+        </div>
+      )}
 
       {loading ? (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm transition-colors animate-pulse">
@@ -242,6 +469,7 @@ export const UtrAuditTab: React.FC<UtrAuditTabProps> = ({ activeUser, currentRol
                   <DonationAuditRow
                     key={d.id}
                     donation={d}
+                    canPerformAction={canPerformUtrAction}
                     onViewDetails={(donation) => setSelectedDonation(donation)}
                     onReject={(id) => handleReject(id)}
                     onVerify={(id) => handleVerify(id)}
@@ -324,19 +552,31 @@ export const UtrAuditTab: React.FC<UtrAuditTabProps> = ({ activeUser, currentRol
               </div>
             </div>
 
-            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex gap-3">
-              <button
-                onClick={() => handleReject(selectedDonation.id)}
-                className="flex-1 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-bold text-xs transition-colors border border-rose-200 dark:border-rose-800 cursor-pointer"
-              >
-                {tr('अस्वीकार करें', 'مسترد کریں', 'Reject')}
-              </button>
-              <button
-                onClick={() => handleVerify(selectedDonation.id)}
-                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shadow-lg shadow-emerald-600/20 dark:shadow-emerald-900/20 cursor-pointer"
-              >
-                {tr('भुगतान सत्यापित करें', 'ادائیگی کی تصدیق کریں', 'Verify Payment')}
-              </button>
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex gap-3 items-center justify-between">
+              {canPerformUtrAction ? (
+                <>
+                  <button
+                    onClick={() => handleReject(selectedDonation.id)}
+                    className="flex-1 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-bold text-xs transition-colors border border-rose-200 dark:border-rose-800 cursor-pointer"
+                  >
+                    {tr('अस्वीकार करें', 'مسترد کریں', 'Reject')}
+                  </button>
+                  <button
+                    onClick={() => handleVerify(selectedDonation.id)}
+                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shadow-lg shadow-emerald-600/20 dark:shadow-emerald-900/20 cursor-pointer"
+                  >
+                    {tr('भुगतान सत्यापित करें', 'ادائیگی کی تصدیق करें', 'Verify Payment')}
+                  </button>
+                </>
+              ) : (
+                <span className="text-xs text-slate-500 dark:text-slate-400 italic px-2">
+                  {tr(
+                    'केवल सुपर एडमिन, कार्यकारी एडमिन और जिला वित्त समन्वयक ही यूटीआर सत्यापन कार्रवाई कर सकते हैं।',
+                    'صرف سپر ایڈمن، ایگزیکٹو ایڈمن اور ڈسٹرکٹ فنانس کوآرڈینیٹر ہی کارروائی کر سکتے ہیں۔',
+                    'Only Super Admin, Executive Admin & District Finance Coordinator can verify/reject payments.'
+                  )}
+                </span>
+              )}
             </div>
           </div>
         </div>

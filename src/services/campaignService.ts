@@ -80,8 +80,59 @@ export function extractImages(row: Record<string, unknown>): { mainImage: string
   return { mainImage, galleryImages };
 }
 
+export function calculateDaysLeft(row: Record<string, unknown>): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // 1. Dynamic calculation from end_date or endDate
+  const endDateVal = (row.end_date || row.endDate) as string | undefined;
+  if (endDateVal) {
+    const end = new Date(endDateVal);
+    if (!isNaN(end.getTime())) {
+      end.setHours(0, 0, 0, 0);
+      const diffMs = end.getTime() - today.getTime();
+      return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    }
+  }
+
+  // 2. Dynamic calculation from created_date / created_at + static days
+  const createdDateVal = (row.created_at || row.created_date || row.createdDate) as string | undefined;
+  const staticDays = Number(row.days_left ?? row.daysLeft);
+  if (createdDateVal && !isNaN(staticDays) && staticDays > 0) {
+    const created = new Date(createdDateVal);
+    if (!isNaN(created.getTime())) {
+      const end = new Date(created);
+      end.setDate(end.getDate() + staticDays);
+      end.setHours(0, 0, 0, 0);
+      const diffMs = end.getTime() - today.getTime();
+      return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    }
+  }
+
+  // 3. Fallback to static number if present and valid
+  if (!isNaN(staticDays) && staticDays >= 0) {
+    return staticDays;
+  }
+
+  return 30;
+}
+
 function mapRow(row: Record<string, unknown>): Campaign {
   const { mainImage, galleryImages } = extractImages(row);
+
+  const rawDocs = ((row.documents ?? row.documents) as any[]) || [];
+  const metaDoc = Array.isArray(rawDocs) ? rawDocs.find((d: any) => d && d.title === '__meta__') : null;
+  const cleanDocs = Array.isArray(rawDocs) ? rawDocs.filter((d: any) => d && d.title !== '__meta__') : [];
+
+  const createdBy = (row.created_by || row.createdBy || metaDoc?.created_by || 'admin') as string;
+  const createdDate = (
+    row.createdDate ||
+    row.created_date ||
+    metaDoc?.created_date ||
+    (row.created_at
+      ? new Date(row.created_at as string).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+      : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }))
+  ) as string;
 
   return {
     id: (row.id as string) || `camp_${Date.now()}`,
@@ -95,7 +146,9 @@ function mapRow(row: Record<string, unknown>): Campaign {
     goalINR: Number(row.goalINR ?? row.goal_inr ?? 100000),
     raisedINR: Number(row.raisedINR ?? row.raised_inr ?? 0),
     donorsCount: Number(row.donorsCount ?? row.donors_count ?? 0),
-    daysLeft: Number(row.daysLeft ?? row.days_left ?? 30),
+    daysLeft: calculateDaysLeft(row),
+    endDate: (row.end_date || row.endDate) as string | undefined,
+    end_date: (row.end_date || row.endDate) as string | undefined,
     isVerified: Boolean(row.isVerified ?? row.is_verified ?? true),
     isZakatEligible: Boolean(row.isZakatEligible ?? row.is_zakat_eligible ?? false),
     isSadqaEligible: Boolean(row.isSadqaEligible || row.is_sadqa_eligible || row.is_sadaqah_eligible),
@@ -104,9 +157,9 @@ function mapRow(row: Record<string, unknown>): Campaign {
     mainImage,
     galleryImages,
     story: (row.story as string) || '',
-    documents: ((row.documents ?? row.documents) as Campaign['documents']) || [],
-    createdDate: (row.created_at || row.createdDate || row.created_date) as string,
-    createdBy: (row.createdBy || row.created_by) as string,
+    documents: cleanDocs,
+    createdDate,
+    createdBy,
     status: row.status === 'approved' ? 'active' : row.status === 'pending' ? 'pending_approval' : (row.status as Campaign['status']) || 'active',
   };
 }

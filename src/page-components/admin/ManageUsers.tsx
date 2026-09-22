@@ -133,7 +133,7 @@ const UserRow: React.FC<{
             title={tr('भूमिका सौंपें', 'عہدہ تفویض کریں', 'Assign Role')}
           >
             <ShieldCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span>{tr('भूमिका', 'عہدہ', 'Role')}</span>
+            <span>{tr('भूमिका सौंपें', 'عہدہ تفویض کریں', 'Assign Role')}</span>
           </button>
           <button
             onClick={() => onDelete(user.id)}
@@ -367,7 +367,6 @@ export const ManageUsers: React.FC = () => {
 
       await updateUser(assignRoleUser.id, {
         district: finalDistrict || undefined,
-        role: assignRole as UserRole,
         districtRole: finalDistrictRole,
         district_role: finalDistrictRole,
       });
@@ -427,7 +426,12 @@ export const ManageUsers: React.FC = () => {
     setLoading(true);
     try {
       const data = await getUsers();
-      setUsers(data);
+      const filteredMembers = data.filter(
+        (member) =>
+          member.role !== 'super_admin' &&
+          member.role !== 'executive_admin'
+      );
+      setUsers(filteredMembers);
       const comms = await getCommunities();
       setCommunities(comms);
     } catch (err) {
@@ -713,7 +717,6 @@ export const ManageUsers: React.FC = () => {
           className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-500 cursor-pointer"
         >
           <option value="all">{tr('सभी भूमिकाएं (All Roles)', 'تمام کردار', 'All Roles')}</option>
-          <option value="district_committee">{tr('★ जिला कार्यकारिणी (District Committee)', '★ ضلعی کمیٹی', '★ District Committee')}</option>
           <option value="district_president">{tr('जिला अध्यक्ष (District President)', 'ضلعی صدر', 'District President')}</option>
           <option value="district_coordinator">{tr('जिला सहयोजक (District Coordinator)', 'ضلعی کوآرڈینیٹر', 'District Coordinator')}</option>
           <option value="district_gen_secretary">{tr('जिला महासचिव (District Gen Sec)', 'ضلعی جنرل سیکرٹری', 'District General Secretary')}</option>
@@ -721,8 +724,6 @@ export const ManageUsers: React.FC = () => {
           <option value="district_finance_coord">{tr('जिला वित्त समन्वयक (District Finance Coord)', 'ضلعی فنانس کوآرڈینیٹر', 'District Finance Coordinator')}</option>
           <option value="member">{tr('सदस्य (Member)', 'ممبر', 'Member')}</option>
           <option value="community_admin">{tr('सामुदायिक एडमिन (Community Admin)', 'کمیونٹی एडمن', 'Community Admin')}</option>
-          <option value="executive_admin">{tr('कार्यकारी एडमिन (Executive Admin)', 'ایگزیکٹو ایڈمن', 'Executive Admin')}</option>
-          <option value="super_admin">{tr('सुपर एडमिन (Super Admin)', 'سپر ایڈمن', 'Super Admin')}</option>
         </select>
 
         {/* Religion Filter */}
@@ -1507,15 +1508,11 @@ export const ManageUsers: React.FC = () => {
                   onChange={(e) => setAssignRole(e.target.value)}
                   className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:border-amber-500 outline-none transition-colors"
                 >
-                  <option value="member">{tr('सदस्य (Member)', 'ممبر', 'Member')}</option>
                   <option value="district_president">{tr('जिला अध्यक्ष (District President)', 'ضلعی صدر', 'District President')}</option>
                   <option value="district_coordinator">{tr('जिला सहयोजक (District Coordinator)', 'ضلعی کوآرڈینیٹر', 'District Coordinator')}</option>
                   <option value="district_gen_secretary">{tr('जिला महासचिव (District Gen Sec)', 'ضلعی جنرل سیکرٹری', 'District General Secretary')}</option>
                   <option value="district_secretary">{tr('जिला सचिव (District Secretary)', 'ضلعی سیکرٹری', 'District Secretary')}</option>
                   <option value="district_finance_coord">{tr('जिला वित्त समन्वयक (District Finance Coord)', 'ضلعی فنانس کوآرڈینیٹر', 'District Finance Coordinator')}</option>
-                  <option value="community_admin">{tr('सामुदायिक एडमिन (Community Admin)', 'کمیونٹی ایڈمن', 'Community Admin')}</option>
-                  <option value="executive_admin">{tr('कार्यकारी एडमिन (Executive Admin)', 'ایگزیکٹو ایڈمن', 'Executive Admin')}</option>
-                  <option value="super_admin">{tr('सुपर एडमिन (Super Admin)', 'سپر ایڈمن', 'Super Admin')}</option>
                 </select>
 
                 {assignRole === 'district_finance_coord' && (

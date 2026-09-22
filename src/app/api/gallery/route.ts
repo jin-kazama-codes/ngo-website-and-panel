@@ -22,7 +22,11 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { data, error } = await supabaseAdmin.from('gallery_photos').insert(body).select().single();
+    const payload = {
+      id: `gallery_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      ...body,
+    };
+    const { data, error } = await supabaseAdmin.from('gallery_photos').insert(payload).select().single();
     if (error) throw error;
     return NextResponse.json({ success: true, data });
   } catch (err: any) {

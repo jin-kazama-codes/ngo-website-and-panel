@@ -557,7 +557,7 @@
 //   );
 // }
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Community } from '../../../types';
 import {
@@ -569,6 +569,7 @@ import {
   EyeOff,
   QrCode,
   CheckCircle2,
+  AlertCircle,
   HandHeart,
   ShieldCheck,
   X,
@@ -653,7 +654,42 @@ export default function SignUpPage() {
       .catch(console.error);
   }, []);
 
-  const activeCommunity = communities.find((c) => c.id === selectedCommunityId) || communities[0];
+  // Filter communities strictly by city typed by user
+  const filteredCommunities = useMemo(() => {
+    const q = city.trim().toLowerCase();
+    if (!q) return communities;
+    return communities.filter((c) => {
+      const cCity = (c.city || '').trim().toLowerCase();
+      const cDist = (c.district || '').trim().toLowerCase();
+      const matchCity = cCity.length > 0 && (cCity.includes(q) || q.includes(cCity));
+      const matchDist = cDist.length > 0 && (cDist.includes(q) || q.includes(cDist));
+      return matchCity || matchDist;
+    });
+  }, [communities, city]);
+
+  const hasCitySpecificCommunities = useMemo(() => {
+    return city.trim().length > 0 && filteredCommunities.length > 0;
+  }, [city, filteredCommunities]);
+
+  // When city changes, auto-select first matching community if current selection is not in filtered list
+  useEffect(() => {
+    if (filteredCommunities.length > 0) {
+      const exists = filteredCommunities.some((c) => c.id === selectedCommunityId);
+      if (!exists) {
+        setSelectedCommunityId(filteredCommunities[0].id);
+      }
+    } else if (communities.length > 0) {
+      const exists = communities.some((c) => c.id === selectedCommunityId);
+      if (!exists) {
+        setSelectedCommunityId(communities[0].id);
+      }
+    }
+  }, [filteredCommunities, communities, selectedCommunityId]);
+
+  const activeCommunity =
+    filteredCommunities.find((c) => c.id === selectedCommunityId) ||
+    communities.find((c) => c.id === selectedCommunityId) ||
+    communities[0];
 
   const handleReligionChange = (newRel: string) => {
     setReligion(newRel as any);
@@ -1218,12 +1254,54 @@ export default function SignUpPage() {
                     onChange={(e) => setSelectedCommunityId(e.target.value)}
                     className="w-full p-3 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-900 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 transition-all"
                   >
-                    {communities.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.city} - {tr('प्रशासक:', 'ایڈمن:', 'Admin:')} {c.adminName})
-                      </option>
-                    ))}
+                    {filteredCommunities.length > 0 ? (
+                      filteredCommunities.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} ({c.city} - {tr('प्रशासक:', 'ایڈمن:', 'Admin:')} {c.adminName})
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="" disabled>
+                          {tr(
+                            `-- "${city.trim()}" में कोई समुदाय नहीं मिला (सभी समुदाय नीचे हैं) --`,
+                            `-- "${city.trim()}" میں کوئی کمیونٹی نہیں ملی (تمام نیچے ہیں) --`,
+                            `-- No community in "${city.trim()}" (Showing all communities) --`
+                          )}
+                        </option>
+                        {communities.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} ({c.city} - {tr('प्रशासक:', 'ایڈمن:', 'Admin:')} {c.adminName})
+                          </option>
+                        ))}
+                      </>
+                    )}
                   </select>
+                  {city.trim() ? (
+                    hasCitySpecificCommunities ? (
+                      <p className="text-[11px] font-semibold text-emerald-700 mt-1 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                        <span>
+                          {tr(
+                            `"${city.trim()}" के लिए ${filteredCommunities.length} स्थानीय समुदाय उपलब्ध`,
+                            `"${city.trim()}" کے لیے ${filteredCommunities.length} مقامی کمیونٹیز دستیاب`,
+                            `${filteredCommunities.length} local communities found for "${city.trim()}"`
+                          )}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="text-[11px] font-medium text-amber-700 mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+                        <span>
+                          {tr(
+                            `"${city.trim()}" के लिए कोई विशिष्ट समुदाय नहीं मिला, सभी समुदाय दिखाए जा रहे हैं`,
+                            `"${city.trim()}" کے لیے کوئی مخصوص کمیونٹی نہیں ملی، تمام کمیونٹیز دکھائی جا رہی ہیں`,
+                            `No specific community found for "${city.trim()}", showing all communities`
+                          )}
+                        </span>
+                      </p>
+                    )
+                  ) : null}
                 </div>
 
                 <div className="space-y-1.5">

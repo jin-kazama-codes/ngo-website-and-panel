@@ -11,6 +11,7 @@ const staticPages = [
   { url: '/gallery', priority: '0.7', changeFrequency: 'weekly' },
   { url: '/testimonials', priority: '0.7', changeFrequency: 'monthly' },
   { url: '/niyamawali', priority: '0.7', changeFrequency: 'monthly' },
+  { url: '/zakat-compliance', priority: '0.8', changeFrequency: 'monthly' },
   { url: '/contact', priority: '0.8', changeFrequency: 'monthly' },
   { url: '/impact-stories', priority: '0.7', changeFrequency: 'weekly' },
   { url: '/emergency', priority: '0.9', changeFrequency: 'daily' },

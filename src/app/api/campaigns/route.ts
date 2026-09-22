@@ -65,18 +65,44 @@ export async function GET(request: Request) {
       return timeB - timeA;
     });
 
-    // Compute dynamic days_left from end_date for each campaign
+    // Compute dynamic days_left and resolve created_by and created_date
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     results = results.map((camp: any) => {
+      let campCreatedBy = camp.created_by || camp.createdBy;
+      let campCreatedDate = camp.created_date || camp.createdDate;
+      if ((!campCreatedBy || !campCreatedDate) && Array.isArray(camp.documents)) {
+        const meta = camp.documents.find((d: any) => d && d.title === '__meta__');
+        if (meta) {
+          if (!campCreatedBy && meta.created_by) campCreatedBy = meta.created_by;
+          if (!campCreatedDate && meta.created_date) campCreatedDate = meta.created_date;
+        }
+      }
+
+      let daysLeftVal = 30;
       if (camp.end_date) {
         const end = new Date(camp.end_date);
         end.setHours(0, 0, 0, 0);
         const diffMs = end.getTime() - today.getTime();
-        const diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-        return { ...camp, days_left: diffDays };
+        daysLeftVal = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      } else if (camp.created_at || campCreatedDate) {
+        const created = new Date(camp.created_at || campCreatedDate);
+        if (!isNaN(created.getTime())) {
+          const staticDays = Number(camp.days_left || 30);
+          const end = new Date(created);
+          end.setDate(end.getDate() + staticDays);
+          end.setHours(0, 0, 0, 0);
+          const diffMs = end.getTime() - today.getTime();
+          daysLeftVal = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        }
       }
-      return camp;
+
+      return {
+        ...camp,
+        created_by: campCreatedBy || 'admin',
+        created_date: campCreatedDate || (camp.created_at ? new Date(camp.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })),
+        days_left: daysLeftVal,
+      };
     });
 
     return NextResponse.json({ success: true, data: results });
@@ -116,7 +142,18 @@ export async function POST(request: Request) {
     const rawImages = [body.mainImage, ...(body.galleryImages || [])].filter(Boolean);
     const mainImageJsonb = formatImagesToJsonb(rawImages.length > 0 ? rawImages : body.main_image);
 
-    const newCampaign = {
+    const createdBy = body.createdBy || body.created_by || 'admin';
+    const createdDate = body.createdDate || body.created_date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    // Store createdBy & createdDate inside documents JSONB as __meta__ so they persist even if table columns don't exist
+    const userDocs = Array.isArray(body.documents) ? body.documents : [];
+    const metaDoc = { title: '__meta__', url: '#', verifiedBy: 'System', created_by: createdBy, created_date: createdDate };
+    const documentsWithMeta = [
+      ...userDocs.filter((d: any) => d && d.title !== '__meta__'),
+      metaDoc,
+    ];
+
+    const newCampaign: any = {
       id: body.id || `camp_${Date.now()}`,
       title: body.title,
       category: body.category,
@@ -141,25 +178,48 @@ export async function POST(request: Request) {
       is_urgent: body.isUrgent !== undefined ? body.isUrgent : false,
       main_image: mainImageJsonb,
       story: body.story,
-      documents: body.documents || [],
-      created_date: body.createdDate || body.created_date || nowIso,
+      documents: documentsWithMeta,
+      created_by: createdBy,
+      created_date: createdDate,
       created_at: nowIso,
       status: body.status || 'active',
     };
 
-    const { data, error } = await supabaseAdmin
+    let { data, error } = await supabaseAdmin
       .from('campaigns')
       .insert(newCampaign)
       .select()
       .single();
 
+    // Fallback if schema does not have created_by or created_date columns
+    if (error && (error.message?.includes('created_by') || error.message?.includes('created_date'))) {
+      const fallbackPayload = { ...newCampaign };
+      if (error.message.includes('created_by')) delete fallbackPayload.created_by;
+      if (error.message.includes('created_date')) delete fallbackPayload.created_date;
+      const retryRes = await supabaseAdmin
+        .from('campaigns')
+        .insert(fallbackPayload)
+        .select()
+        .single();
+      if (!retryRes.error) {
+        data = { ...retryRes.data, created_by: createdBy, created_date: createdDate };
+        error = null;
+      }
+    }
+
     if (error) {
       console.error('Supabase error inserting campaign:', error);
       // Fallback return created object if DB insert failed
-      return NextResponse.json({ success: true, data: newCampaign, warning: error.message });
+      return NextResponse.json({ success: true, data: { ...newCampaign, created_by: createdBy, created_date: createdDate }, warning: error.message });
     }
 
-    return NextResponse.json({ success: true, data });
+    const resData = {
+      ...(data || newCampaign),
+      created_by: data?.created_by || createdBy,
+      created_date: data?.created_date || createdDate,
+    };
+
+    return NextResponse.json({ success: true, data: resData });
   } catch (err: any) {
     console.error('Error in POST /api/campaigns:', err);
     return NextResponse.json(
@@ -179,7 +239,7 @@ export async function PATCH(request: Request) {
     // Fetch existing campaign first to check status transition
     const { data: existingCamp, error: fetchError } = await supabaseAdmin
       .from('campaigns')
-      .select('status, community_id')
+      .select('status, community_id, documents')
       .eq('id', body.id)
       .maybeSingle();
 
@@ -203,7 +263,26 @@ export async function PATCH(request: Request) {
       updatePayload.main_image = formatImagesToJsonb(rawImages.length > 0 ? rawImages : body.main_image);
     }
     if (body.story !== undefined) updatePayload.story = body.story;
-    if (body.documents !== undefined) updatePayload.documents = body.documents;
+    if (body.createdBy !== undefined || body.created_by !== undefined) {
+      updatePayload.created_by = body.createdBy || body.created_by;
+    }
+    if (body.createdDate !== undefined || body.created_date !== undefined) {
+      updatePayload.created_date = body.createdDate || body.created_date;
+    }
+    if (body.documents !== undefined) {
+      const userDocs = Array.isArray(body.documents) ? body.documents : [];
+      const metaDoc = {
+        title: '__meta__',
+        url: '#',
+        verifiedBy: 'System',
+        created_by: body.createdBy || body.created_by || 'admin',
+        created_date: body.createdDate || body.created_date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+      };
+      updatePayload.documents = [
+        ...userDocs.filter((d: any) => d && d.title !== '__meta__'),
+        metaDoc,
+      ];
+    }
     if (body.daysLeft !== undefined || body.days_left !== undefined) {
       const days = body.daysLeft ?? body.days_left;
       updatePayload.days_left = days;
@@ -213,12 +292,28 @@ export async function PATCH(request: Request) {
       updatePayload.end_date = d.toISOString().split('T')[0];
     }
 
-    const { data, error } = await supabaseAdmin
+    let { data, error } = await supabaseAdmin
       .from('campaigns')
       .update(updatePayload)
       .eq('id', body.id)
       .select()
       .maybeSingle();
+
+    if (error && (error.message?.includes('created_by') || error.message?.includes('created_date'))) {
+      const fallbackPayload = { ...updatePayload };
+      if (error.message.includes('created_by')) delete fallbackPayload.created_by;
+      if (error.message.includes('created_date')) delete fallbackPayload.created_date;
+      const retry = await supabaseAdmin
+        .from('campaigns')
+        .update(fallbackPayload)
+        .eq('id', body.id)
+        .select()
+        .maybeSingle();
+      if (!retry.error) {
+        data = retry.data;
+        error = null;
+      }
+    }
 
     if (error || !data) {
       console.warn('Supabase error updating campaign (or not found):', error?.message || 'No row found');

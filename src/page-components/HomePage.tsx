@@ -209,7 +209,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   }, [heroImages.length]);
 
   useEffect(() => {
-    Promise.all([
+    Promise.allSettled([
       getCampaigns({ status: 'active' }),
       getTestimonials(),
       getCommunityStories(),
@@ -218,20 +218,26 @@ export const HomePage: React.FC<HomePageProps> = ({
       getUsers(),
       getAccountDetails(),
     ])
-      .then(([cData, tData, sData, dData, commData, uData, accData]) => {
-        setCampaigns(sortCampaignsByLatest(cData));
-        setTestimonials(tData);
-        setStories(sData);
-        setRecentDonations(dData);
-        setCommunities(commData);
-        setRealTotalMembers(uData.length);
-        if (accData && accData.length > 0) {
-          setAccountDetails(accData[0]);
+      .then(([cRes, tRes, sRes, dRes, commRes, uRes, accRes]) => {
+        if (cRes.status === 'fulfilled') setCampaigns(sortCampaignsByLatest(cRes.value));
+        if (tRes.status === 'fulfilled') setTestimonials(tRes.value);
+        if (sRes.status === 'fulfilled') setStories(sRes.value);
+        if (dRes.status === 'fulfilled') setRecentDonations(dRes.value);
+        if (commRes.status === 'fulfilled') setCommunities(commRes.value);
+        if (uRes.status === 'fulfilled') {
+          console.log('getUsers result:', uRes.value, 'length:', uRes.value.length);
+          setRealTotalMembers(uRes.value.length);
+        } else {
+          console.error('getUsers failed:', uRes.reason);
+        }
+        if (accRes.status === 'fulfilled' && accRes.value && accRes.value.length > 0) {
+          setAccountDetails(accRes.value[0]);
         }
       })
-      .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  console.log("realTotalMembers", realTotalMembers);
 
   const totalMembers = realTotalMembers > 0 ? realTotalMembers : communities.reduce((sum, c) => sum + c.totalMembers, 0);
   const totalRaised = communities.reduce((sum, c) => sum + c.totalRaisedINR, 0);
@@ -436,13 +442,15 @@ export const HomePage: React.FC<HomePageProps> = ({
                   {loading ? (
                     <div className="h-5 sm:h-7 w-12 sm:w-16 rounded animate-pulse mb-0.5 skeleton-mfct" />
                   ) : (
-                    <span className="text-sm sm:text-xl lg:text-2xl font-black block tabular-nums leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
-                      {totalMembers > 0 ? totalMembers.toLocaleString('en-IN') : '0'}+
-                    </span>
+                    <>
+                      <span className="text-sm sm:text-xl lg:text-2xl font-black block tabular-nums leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
+                        {totalMembers > 0 ? totalMembers.toLocaleString('en-IN') : '0'}+
+                      </span>
+                      <span className="text-[9.5px] sm:text-[10.5px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
+                        {t('home.verified_members', 'Verified Members')}
+                      </span>
+                    </>
                   )}
-                  <span className="text-[9.5px] sm:text-[10.5px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
-                    {t('home.verified_members', 'Verified Members')}
-                  </span>
                 </div>
 
                 <div
@@ -452,13 +460,15 @@ export const HomePage: React.FC<HomePageProps> = ({
                   {loading ? (
                     <div className="h-5 sm:h-7 w-16 sm:w-20 rounded animate-pulse mb-0.5" style={{ background: 'rgba(255,255,255,0.1)' }} />
                   ) : (
-                    <span className="text-[10px] xs:text-xs sm:text-base lg:text-xl font-black text-white block tabular-nums leading-tight tracking-tight truncate">
-                      ₹{totalRaised > 0 ? totalRaised.toLocaleString('en-IN') : '0'}+
-                    </span>
+                    <>
+                      <span className="text-[10px] xs:text-xs sm:text-base lg:text-xl font-black text-white block tabular-nums leading-tight tracking-tight truncate">
+                        ₹{totalRaised > 0 ? totalRaised.toLocaleString('en-IN') : '0'}+
+                      </span>
+                      <span className="text-[9.5px] sm:text-[10.5px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-gold)' }}>
+                        {t('home.funds_disbursed', 'Relief Disbursed')}
+                      </span>
+                    </>
                   )}
-                  <span className="text-[9.5px] sm:text-[10.5px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-gold)' }}>
-                    {t('home.funds_disbursed', 'Relief Disbursed')}
-                  </span>
                 </div>
 
                 <div
@@ -468,13 +478,15 @@ export const HomePage: React.FC<HomePageProps> = ({
                   {loading ? (
                     <div className="h-5 sm:h-7 w-10 sm:w-12 rounded animate-pulse mb-0.5 skeleton-mfct" />
                   ) : (
-                    <span className="text-sm sm:text-xl lg:text-2xl font-black block leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
-                      100%
-                    </span>
+                    <>
+                      <span className="text-sm sm:text-xl lg:text-2xl font-black block leading-tight truncate" style={{ color: 'var(--mfct-dark-green)' }}>
+                        100%
+                      </span>
+                      <span className="text-[9.5px] sm:text-[10.5px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
+                        {t('home.audit_receipts', 'Audit Receipts')}
+                      </span>
+                    </>
                   )}
-                  <span className="text-[9.5px] sm:text-[10.5px] font-semibold mt-0.5 block leading-tight truncate" style={{ color: 'var(--mfct-text-muted)' }}>
-                    {t('home.audit_receipts', 'Audit Receipts')}
-                  </span>
                 </div>
               </div>
             </div>

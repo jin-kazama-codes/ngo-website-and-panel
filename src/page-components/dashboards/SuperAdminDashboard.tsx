@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { AuditLog, Community, User, Campaign } from '../../types';
+import { Community, User, Campaign } from '../../types';
 import { Shield, CheckCircle2, TrendingUp, Activity, FileText, MapPin, Filter } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid, Legend } from 'recharts';
-import { getAuditLogs } from '../../services/adminService';
 import { getCommunities } from '../../services/communityService';
 import { getCampaigns } from '../../services/campaignService';
 import { getUsers } from '../../services/userService';
@@ -15,87 +14,10 @@ interface DashboardProps {
   activeUser: User;
 }
 
-const UP_DISTRICTS = [
-  'Bareilly',
-  'Maharajganj',
-  'Lucknow',
-  'Agra',
-  'Aligarh',
-  'Ambedkar Nagar',
-  'Amethi',
-  'Amroha',
-  'Auraiya',
-  'Ayodhya',
-  'Azamgarh',
-  'Baghpat',
-  'Bahraich',
-  'Ballia',
-  'Balrampur',
-  'Banda',
-  'Barabanki',
-  'Basti',
-  'Bijnor',
-  'Budaun',
-  'Bulandshahr',
-  'Chandauli',
-  'Chitrakoot',
-  'Deoria',
-  'Etah',
-  'Etawah',
-  'Farrukhabad',
-  'Fatehpur',
-  'Firozabad',
-  'Gautam Buddha Nagar (Noida)',
-  'Ghaziabad',
-  'Ghazipur',
-  'Gonda',
-  'Gorakhpur',
-  'Hamirpur',
-  'Hapur',
-  'Hardoi',
-  'Hathras',
-  'Jalaun',
-  'Jaunpur',
-  'Jhansi',
-  'Kannauj',
-  'Kanpur Dehat',
-  'Kanpur Nagar',
-  'Kasganj',
-  'Kaushambi',
-  'Kushinagar',
-  'Lakhimpur Kheri',
-  'Lalitpur',
-  'Mainpuri',
-  'Mathura',
-  'Mau',
-  'Meerut',
-  'Mirzapur',
-  'Moradabad',
-  'Muzaffarnagar',
-  'Pilibhit',
-  'Pratapgarh',
-  'Prayagraj',
-  'Raebareli',
-  'Rampur',
-  'Saharanpur',
-  'Sambhal',
-  'Sant Kabir Nagar',
-  'Shahjahanpur',
-  'Shamli',
-  'Shravasti',
-  'Siddharthnagar',
-  'Sitapur',
-  'Sonbhadra',
-  'Sultanpur',
-  'Unnao',
-  'Varanasi'
-];
-
 export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) => {
   const { t, language } = useLanguage();
   const [communities, setCommunities] = useState<Community[]>([]);
   const [campaignsList, setCampaignsList] = useState<Campaign[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -109,10 +31,10 @@ export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) =>
   ];
   const normalizedRole = ((activeUser.role as string) || '').toLowerCase().trim().replace(/\s+/g, '_');
   const userDistrict = (activeUser.district || activeUser.city || '').trim();
-  
-  const isDistrictRoleUser = 
-    distRoleKeys.includes(normalizedRole) || 
-    Boolean(activeUser.districtRole) || 
+
+  const isDistrictRoleUser =
+    distRoleKeys.includes(normalizedRole) ||
+    Boolean(activeUser.districtRole) ||
     Boolean((activeUser as any).district_role);
 
   // If district role user, default and lock to their assigned district; else allow Super Admin to filter
@@ -130,13 +52,11 @@ export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) =>
     Promise.all([
       getCommunities(),
       getCampaigns(),
-      getAuditLogs(),
       getUsers()
     ])
-      .then(([comms, campaigns, logs, userList]) => {
+      .then(([comms, campaigns, userList]) => {
         setCommunities(comms);
         setCampaignsList(campaigns);
-        setAuditLogs(logs);
         setUsers(userList);
       })
       .catch(console.error)
@@ -359,7 +279,7 @@ export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) =>
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Super Admin District Filter Selector */}
-            {!isDistrictRoleUser && (
+            {/* {!isDistrictRoleUser && (
               <div className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-amber-500/30">
                 <Filter className="w-4 h-4 text-amber-400 shrink-0" />
                 <select
@@ -377,7 +297,7 @@ export const SuperAdminDashboard: React.FC<DashboardProps> = ({ activeUser }) =>
                   ))}
                 </select>
               </div>
-            )}
+            )} */}
 
             <span
               className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 whitespace-nowrap"
