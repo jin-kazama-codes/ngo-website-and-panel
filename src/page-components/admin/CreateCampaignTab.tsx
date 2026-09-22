@@ -79,31 +79,13 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
     }).catch(console.error);
   }, []);
 
-  const fallbackCommunity: Community = {
-    id: 'comm_bareilly_rohilkhand',
-    name: 'Rohilkhand Educational & Nikah Trust',
-    city: 'Bareilly',
-    state: 'Uttar Pradesh',
-    adminName: 'Dr. Shakeel Ahmad Usmani',
-    adminRoleTitle: 'Community Admin',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
-    totalMembers: 1820,
-    activeCampaigns: 5,
-    totalRaisedINR: 4120000,
-    healthScore: 97,
-    verifiedStatus: 'Verified',
-    description: 'Serving underprivileged families in Rohilkhand region.',
-    establishedYear: 2019,
-    coverImage: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80',
-  };
-
   // Active user's city scope
   const userCity = (activeUser?.district || '').trim();
 
   // Filter communities: only show community belonging to active user's city
   const displayedCommunities = useMemo(() => {
     if (!userCity) {
-      return communities.length > 0 ? communities : [fallbackCommunity];
+      return communities.length > 0 ? communities : [];
     }
     const target = userCity.toLowerCase().trim();
     const filtered = communities.filter((c) => {
@@ -147,8 +129,8 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
     }
   }, [displayedCommunities, selectedCommunityId, initialCampaign]);
 
-  const activeCommunity = displayedCommunities.find((c) => c.id === selectedCommunityId) || displayedCommunities[0] || fallbackCommunity;
-  const campaignCity = userCity || activeCommunity.city || activeUser?.city || '';
+  const activeCommunity = displayedCommunities.find((c) => c.id === selectedCommunityId) || displayedCommunities[0];
+  const campaignCity = userCity || activeCommunity?.city || activeUser?.city || '';
 
   // Refs for file inputs — avoids label double-trigger issue in some browsers
   const photoInputRef = useRef<HTMLInputElement>(null);

@@ -9,6 +9,7 @@ import { Search, Grid, List, Sparkles, Heart, Award, Flame, Layers } from 'lucid
 import { MembershipBanner } from '../components/MembershipBanner';
 import { useLanguage } from '../context/LanguageContext';
 import { translateCity, translateCategory } from '../lib/translateEntity';
+import { STANDARD_DISTRICTS } from '../data/districtsData';
 
 interface CampaignsPageProps {
   onDonate: (campaign: Campaign) => void;
@@ -65,7 +66,25 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
       (selectedCategory === 'Sadqa' && !!c.isSadqaEligible) ||
       (selectedCategory === 'Fitrah' && !!c.isFitrahEligible) ||
       (selectedCategory === 'Urgent' && !!c.isUrgent);
-    const matchesCity = selectedCity === 'All' || c.city === selectedCity;
+    const matchesCity = (() => {
+      if (selectedCity === 'All' || !selectedCity) return true;
+      const target = selectedCity.toLowerCase().trim();
+      const cCity = (c.city || '').toLowerCase().trim();
+      const cDist = ((c as any).district || '').toLowerCase().trim();
+
+      const districtInfo = STANDARD_DISTRICTS.find(
+        (d) => d.id.toLowerCase() === target || d.nameEn.toLowerCase() === target
+      );
+      if (districtInfo) {
+        const en = districtInfo.nameEn.toLowerCase();
+        const hi = districtInfo.nameHi.toLowerCase();
+        const ur = districtInfo.nameUr.toLowerCase();
+        if (cCity === en || cCity === hi || cCity === ur || cDist === en || cDist === hi || cDist === ur) return true;
+        if (cCity && (cCity.includes(en) || en.includes(cCity))) return true;
+        if (cDist && (cDist.includes(en) || en.includes(cDist))) return true;
+      }
+      return cCity === target || cCity.includes(target) || target.includes(cCity) || cDist === target;
+    })();
     return matchesSearch && matchesCat && matchesCity;
   });
 
@@ -88,21 +107,18 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
     if (node) observer.current.observe(node);
   }, [loading, currentPage, totalPages]);
 
-  const availableCities = Array.from(
-    new Set(['Delhi', 'Lucknow', 'Hyderabad', 'Bareilly', 'Mumbai', ...campaigns.map((c) => c.city).filter(Boolean)])
-  );
+  const standardDistrictIds = new Set(STANDARD_DISTRICTS.map((d) => d.id.toLowerCase()));
+  const additionalCities = campaigns
+    .map((c) => c.city)
+    .filter((city): city is string => !!city && !standardDistrictIds.has(city.toLowerCase()))
+    .filter((value, index, self) => self.indexOf(value) === index);
 
   const filterPills = [
     { id: 'All', label: tr('सभी', 'تمام', 'All'), icon: Layers },
-    { id: 'Zakat', label: tr('ज़कात पात्र', 'زکوٰۃ اہل', 'Zakat Eligible'), icon: Sparkles, color: 'gold' },
-    { id: 'Sadqa', label: tr('सदका पात्र', 'صدقہ اہل', 'Sadqa Eligible'), icon: Heart, color: 'teal' },
-    { id: 'Fitrah', label: tr('फ़ितरा पात्र', 'فطرہ اہل', 'Fitrah Eligible'), icon: Award, color: 'indigo' },
+    { id: 'Zakat', label: tr('ज़कात', 'زکوٰۃ के اہل', 'Zakat Eligible'), icon: Sparkles, color: 'gold' },
+    { id: 'Sadqa', label: tr('सदका', 'صدقہ اہل', 'Sadqa Eligible'), icon: Heart, color: 'teal' },
+    { id: 'Fitrah', label: tr('फ़ितरा', 'فطرہ اہل', 'Fitrah Eligible'), icon: Award, color: 'indigo' },
     { id: 'Urgent', label: tr('अति आवश्यक', 'اہم / ہنگامی', 'Urgent Need'), icon: Flame, color: 'rose' },
-    { id: 'Medical', label: translateCategory('Medical', language) },
-    { id: 'Education', label: translateCategory('Education', language) },
-    { id: 'Marriage', label: translateCategory('Marriage', language) },
-    { id: 'Food', label: translateCategory('Food', language) },
-    { id: 'Janazah', label: translateCategory('Janazah', language) },
   ];
 
   return (
@@ -143,10 +159,6 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
               suppressHydrationWarning
             >
               <option value="All" suppressHydrationWarning>{t('cat.all', 'All Categories')}</option>
-              <option value="Zakat" suppressHydrationWarning>{tr('ज़कात पात्र', 'زکوٰۃ کے اہل', 'Zakat Eligible')}</option>
-              <option value="Sadqa" suppressHydrationWarning>{tr('सदका पात्र', 'صدقہ کے اہل', 'Sadqa Eligible')}</option>
-              <option value="Fitrah" suppressHydrationWarning>{tr('फ़ितरा पात्र', 'فطرہ کے اہل', 'Fitrah Eligible')}</option>
-              <option value="Urgent" suppressHydrationWarning>{tr('अति आवश्यक', 'اہم / ہنگامی', 'Urgent Need')}</option>
               <option value="Medical" suppressHydrationWarning>{translateCategory('Medical', language)}</option>
               <option value="Education" suppressHydrationWarning>{translateCategory('Education', language)}</option>
               <option value="Marriage" suppressHydrationWarning>{translateCategory('Marriage', language)}</option>
@@ -157,12 +169,17 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
             <select
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
-              className="p-2 rounded-xl text-xs font-semibold outline-none"
+              className="p-2 rounded-xl text-xs font-semibold outline-none cursor-pointer"
               style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
               suppressHydrationWarning
             >
               <option value="All" suppressHydrationWarning>{t('campaigns.all_cities', 'All Indian Cities')}</option>
-              {availableCities.map((city) => (
+              {STANDARD_DISTRICTS.map((d) => (
+                <option key={d.id} value={d.id} suppressHydrationWarning>
+                  {language === 'hi' ? d.nameHi : language === 'ur' ? d.nameUr : d.nameEn}
+                </option>
+              ))}
+              {additionalCities.map((city) => (
                 <option key={city} value={city} suppressHydrationWarning>
                   {translateCity(city, language)}
                 </option>
@@ -198,11 +215,10 @@ export const CampaignsPage: React.FC<CampaignsPageProps> = ({ onDonate }) => {
               <button
                 key={pill.id}
                 onClick={() => setSelectedCategory(pill.id)}
-                className={`cursor-pointer px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 whitespace-nowrap transition-all ${
-                  isSelected
-                    ? 'bg-emerald-700 text-white shadow-sm'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300'
-                }`}
+                className={`cursor-pointer px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 whitespace-nowrap transition-all ${isSelected
+                  ? 'bg-emerald-700 text-white shadow-sm'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300'
+                  }`}
               >
                 {Icon && <Icon className="w-3.5 h-3.5" />}
                 <span>{pill.label}</span>

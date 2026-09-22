@@ -266,17 +266,23 @@ export async function updateCampaignRaised(
   id: string,
   addedAmount: number
 ): Promise<void> {
-  await fetch('/api/donations', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      campaignId: id,
-      amountINR: addedAmount,
-      donorName: 'Anonymous Supporter',
-      category: 'General',
-      status: 'verified',
-    }),
-  });
+  try {
+    const res = await fetch(`/api/campaigns?id=${encodeURIComponent(id)}`);
+    if (res.ok) {
+      const json = await res.json();
+      const current = Array.isArray(json.data) ? json.data.find((c: any) => c.id === id) : json.data;
+      if (current) {
+        const currentRaised = Number(current.raised_inr ?? current.raisedINR ?? 0);
+        const currentDonors = Number(current.donors_count ?? current.donorsCount ?? 0);
+        await updateCampaign(id, {
+          raisedINR: currentRaised + addedAmount,
+          donorsCount: currentDonors + 1,
+        } as any);
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to update campaign raised amount:', err);
+  }
 }
 
 export async function updateCampaignStatus(

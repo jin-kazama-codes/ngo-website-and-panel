@@ -5,10 +5,11 @@ import { User, UserRole, Community } from '../../types';
 import { getUsers, createUser, deleteUser, updateUser } from '../../services/userService';
 import { getCommunities } from '../../services/communityService';
 import { hashPassword } from '../../lib/auth';
-import { PlusCircle, Edit2, X, Users, CheckCircle2, Search, Upload, Trash2, Mail, Phone, MapPin, Award, Eye, ShieldCheck, FileText, Building2, Calendar, ExternalLink } from 'lucide-react';
+import { PlusCircle, Edit2, X, Users, CheckCircle2, Search, Upload, Trash2, Mail, Phone, MapPin, Award, Eye, ShieldCheck, FileText, Building2, Calendar, ExternalLink, Lock, Filter } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText, autoTranslateText } from '../../lib/autoTranslate';
 import { translateReligion, translateHelpType, translateDistrictRole } from '../../lib/translateEntity';
+import { STANDARD_DISTRICTS } from '../../data/districtsData';
 
 // Interactive Dynamic User Row with real-time language conversion for Desktop Table
 const UserRow: React.FC<{
@@ -345,7 +346,8 @@ export const ManageUsers: React.FC = () => {
 
   const handleOpenAssignRole = (u: User) => {
     setAssignRoleUser(u);
-    setAssignDistrict(u.district || '');
+    const resolvedDistrict = (u.district || u.city || '').trim();
+    setAssignDistrict(resolvedDistrict);
     const distRoleKeys = ['district_president', 'district_coordinator', 'district_gen_secretary', 'district_secretary', 'district_finance_coord'];
     const currentDistRole = u.districtRole || u.district_role || '';
     if (currentDistRole && distRoleKeys.includes(currentDistRole)) {
@@ -363,7 +365,7 @@ export const ManageUsers: React.FC = () => {
       const distRoleKeys = ['district_president', 'district_coordinator', 'district_gen_secretary', 'district_secretary', 'district_finance_coord'];
       const isDistrictRole = distRoleKeys.includes(assignRole);
       const finalDistrictRole = isDistrictRole ? assignRole : undefined;
-      const finalDistrict = assignDistrict.trim();
+      const finalDistrict = (assignRoleUser.district || assignRoleUser.city || assignDistrict).trim();
 
       await updateUser(assignRoleUser.id, {
         district: finalDistrict || undefined,
@@ -573,6 +575,7 @@ export const ManageUsers: React.FC = () => {
           membershipId: `MEM-${Date.now().toString().slice(-4)}`,
           city: formData.city || '',
           state: formData.state || '',
+          status: 'approved',
           isVerified: true,
           joinDate: new Date().toISOString(),
           passwordHash: formData.plainPassword ? await hashPassword(formData.plainPassword) : undefined,
@@ -644,8 +647,19 @@ export const ManageUsers: React.FC = () => {
 
     // District filter
     if (selectedDistrictFilter) {
-      const uDist = (u.district || u.city || '').toLowerCase();
-      if (!uDist.includes(selectedDistrictFilter.toLowerCase())) return false;
+      const target = selectedDistrictFilter.toLowerCase().trim();
+      const uDist = (u.district || '').toLowerCase().trim();
+      const uCity = (u.city || '').toLowerCase().trim();
+      const uComm = (u.communityName || '').toLowerCase().trim();
+
+      const matchesDistrict =
+        uDist === target ||
+        (uDist && (target.includes(uDist) || uDist.includes(target))) ||
+        uCity === target ||
+        (uCity && (target.includes(uCity) || uCity.includes(target))) ||
+        (uComm && (target.includes(uComm) || uComm.includes(target)));
+
+      if (!matchesDistrict) return false;
     }
 
     // Religion filter
@@ -726,6 +740,22 @@ export const ManageUsers: React.FC = () => {
           <option value="community_admin">{tr('सामुदायिक एडमिन (Community Admin)', 'کمیونٹی एडمن', 'Community Admin')}</option>
         </select>
 
+        {/* District Filter (like KYC & UTR tabs) */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <select
+            value={selectedDistrictFilter}
+            onChange={(e) => setSelectedDistrictFilter(e.target.value)}
+            className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-500 cursor-pointer"
+          >
+            <option value="">{tr('सभी जिले (All Districts)', 'تمام اضلاع', 'All Districts')}</option>
+            {STANDARD_DISTRICTS.map((d) => (
+              <option key={d.id} value={d.id}>
+                {language === 'hi' ? d.nameHi : language === 'ur' ? d.nameUr : d.nameEn}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Religion Filter */}
         <select
           value={selectedReligionFilter}
@@ -765,10 +795,11 @@ export const ManageUsers: React.FC = () => {
           />
         </div>
 
-        {(selectedRoleFilter !== 'all' || selectedReligionFilter !== 'all' || selectedNisabFilter !== 'all' || searchQuery.trim()) && (
+        {(selectedRoleFilter !== 'all' || selectedDistrictFilter !== '' || selectedReligionFilter !== 'all' || selectedNisabFilter !== 'all' || searchQuery.trim()) && (
           <button
             onClick={() => {
               setSelectedRoleFilter('all');
+              setSelectedDistrictFilter('');
               setSelectedReligionFilter('all');
               setSelectedNisabFilter('all');
               setSearchQuery('');
@@ -1482,19 +1513,25 @@ export const ManageUsers: React.FC = () => {
 
             {/* Form - Only 2 Fields */}
             <form id="assign-role-form" onSubmit={handleSaveAssignRole} className="p-5 space-y-4">
-              {/* Field 1: District */}
+              {/* Field 1: District (Locked to user's assigned district or default city) */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>1. {tr('जिला (District)', 'ضلع', 'District')}</span>
-                </label>
-                <input
-                  type="text"
-                  value={assignDistrict}
-                  onChange={(e) => setAssignDistrict(e.target.value)}
-                  placeholder={tr('उदा. बरेली / लखनऊ', 'مثلاً بریلی / لکھنؤ', 'e.g. Bareilly / Lucknow')}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:border-amber-500 outline-none transition-colors"
-                />
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>1. {tr('जिला (District)', 'ضلع', 'District')}</span>
+                  </label>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={assignDistrict}
+                    readOnly
+                    disabled
+                    placeholder={tr('कोई ज़िला / शहर उपलब्ध नहीं', 'کوئی ضلع / شہر دستیاب نہیں', 'No district / city available')}
+                    className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-200 cursor-not-allowed outline-none font-medium select-none"
+                  />
+                  <Lock className="w-3.5 h-3.5 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
               </div>
 
               {/* Field 2: Role */}

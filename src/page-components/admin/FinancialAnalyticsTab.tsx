@@ -34,6 +34,7 @@ const FinancialDonationRow: React.FC<{ donation: Donation }> = ({ donation }) =>
           cls: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50',
         };
       case 'pending_verification':
+      case 'pending':
         return {
           label: tr('सत्यापन लंबित', 'زیر التواء تصدیق', 'Pending Verification'),
           cls: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50',

@@ -47,7 +47,10 @@ export interface User {
   communityId: string;
   communityName: string;
   membershipId: string;
-  isVerified: boolean;
+  status: 'pending' | 'approved' | 'reject' | 'rejected';
+  rejectionReason?: string;
+  rejection_reason?: string;
+  isVerified?: boolean;
   isPremium?: boolean;
   joinDate: string;
   passwordHash?: string;
@@ -131,7 +134,9 @@ export interface Donation {
   isOutsideCommunity: boolean;
   paymentMethod: 'UPI' | 'Bank Transfer' | 'QR Code' | 'Card';
   paymentScreenshotUrl?: string;
-  status: 'verified' | 'pending_verification' | 'rejected';
+  status: 'verified' | 'pending_verification' | 'pending' | 'rejected';
+  rejectionReason?: string;
+  rejection_reason?: string;
   date: string;
   receiptNumber: string;
 }
