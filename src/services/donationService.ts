@@ -1,6 +1,26 @@
-import { Donation, DonationCategory, UserRole } from '../types';
+import { Donation, DonationCategory, UserRole, WakalahInformation } from '../types';
+
+function parseWakalahInfo(val: unknown): WakalahInformation[] | undefined {
+  if (!val) return undefined;
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && typeof parsed === 'object') return [parsed as WakalahInformation];
+    } catch {
+      return undefined;
+    }
+  }
+  if (typeof val === 'object') return [val as WakalahInformation];
+  return undefined;
+}
 
 function mapRow(row: Record<string, unknown>): Donation {
+  const wakalahArray = parseWakalahInfo(
+    row.wakalahInformation ?? row.wakalah_information
+  );
+
   return {
     id: (row.id as string) || `don_${Date.now()}`,
     transactionId: (row.transactionId || row.transaction_id) as string,
@@ -18,10 +38,10 @@ function mapRow(row: Record<string, unknown>): Donation {
     paymentMethod: ((row.paymentMethod || row.payment_method) as Donation['paymentMethod']) || 'UPI',
     paymentScreenshotUrl: (row.paymentScreenshotUrl || row.payment_screenshot_url) as string | undefined,
     status: ((row.status as Donation['status']) || 'verified'),
-    rejectionReason: (row.rejectionReason || row.rejection_reason) as string | undefined,
     rejection_reason: (row.rejection_reason || row.rejectionReason) as string | undefined,
     date: (row.date as string) || '',
     receiptNumber: (row.receiptNumber || row.receipt_number) as string,
+    wakalahInformation: wakalahArray,
   };
 }
 

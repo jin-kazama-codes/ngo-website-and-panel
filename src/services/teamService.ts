@@ -40,7 +40,11 @@ function mapDbRowToTeam(row: any): DistrictTeamUnit {
     HeadName: row.head_name || row.HeadName || row.headName || '',
     HeadPhone: row.head_phone || row.HeadPhone || row.headPhone || '',
     formedDate: row.formed_date || row.formedDate || '',
-    activeVolunteersCount: Number(row.active_volunteers_count || row.activeVolunteersCount) || 15,
+    activeVolunteersCount: row.active_volunteers_count !== undefined && row.active_volunteers_count !== null
+      ? Number(row.active_volunteers_count)
+      : (row.activeVolunteersCount !== undefined && row.activeVolunteersCount !== null
+        ? Number(row.activeVolunteersCount)
+        : members.length),
     status: (row.status || 'pending') as 'active' | 'in_formation' | 'pending',
     objectives: row.objectives || '',
     members,
@@ -129,7 +133,7 @@ export async function addTeamMember(team: DistrictTeamUnit, member: Omit<TeamMem
   };
 
   const updatedMembers = [...(team.members || []), newMember];
-  const updatedVolunteers = (team.activeVolunteersCount || 0) + 1;
+  const updatedVolunteers = updatedMembers.length;
 
   return updateTeam(team.id, {
     members: updatedMembers,

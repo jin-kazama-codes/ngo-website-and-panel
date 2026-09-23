@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
     const { data, error } = await query;
     if (error) throw error;
-    
+
     let results = data ?? [];
 
     // Query users for donor avatars if missing
@@ -87,20 +87,56 @@ export async function POST(request: Request) {
       community_name: body.communityName || body.community_name,
       amount_inr: body.amountINR || body.amount_inr,
       category: body.category,
-      is_outside_community: body.isOutsideCommunity !== undefined ? body.isOutsideCommunity : false,
+      is_outside_community: body.isOutsideCommunity !== undefined ? Boolean(body.isOutsideCommunity) : false,
       payment_method: body.paymentMethod || body.payment_method,
       payment_screenshot_url: body.paymentScreenshotUrl || body.payment_screenshot_url || null,
       status: body.status || 'verified',
       date: body.date || new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
       created_at: nowIso,
       receipt_number: body.receiptNumber || body.receipt_number || `RCP-${Date.now().toString().slice(-6)}`,
+      wakalahInformation: body.wakalahInformation || (
+        body.zakatGuardianName ? [{
+          donorName: body.donorName || 'Anonymous',
+          guardianName: body.zakatGuardianName,
+          address: body.zakatAddress,
+          mobile: body.zakatMobile,
+          amountINR: body.amountINR,
+          amountInWords: body.zakatAmountWords,
+          isAccepted: Boolean(body.isWakalahAccepted),
+        }] : null
+      ),
     };
 
-    const { data, error } = await supabaseAdmin.from('donations').insert(newDonation).select().single();
+    let { data, error } = await supabaseAdmin.from('donations').insert(newDonation).select().single();
     if (error) {
       console.error('Supabase error inserting donation:', error);
-      // Return created payload if DB insertion returned warning
-      return NextResponse.json({ success: true, data: newDonation, warning: error.message });
+      // If error is about is_outside_community column missing, retry without it
+      if (error.message?.includes('is_outside_community')) {
+        delete (newDonation as any).is_outside_community;
+        const retryRes = await supabaseAdmin.from('donations').insert(newDonation).select().single();
+        if (!retryRes.error) {
+          data = retryRes.data;
+          error = null;
+        }
+      }
+      // If error is related to json vs text format for wakalahInformation, retry with JSON string
+      if (newDonation.wakalahInformation && typeof newDonation.wakalahInformation !== 'string') {
+        try {
+          const retryDonation = {
+            ...newDonation,
+            wakalahInformation: JSON.stringify(newDonation.wakalahInformation)
+          };
+          const retryRes = await supabaseAdmin.from('donations').insert(retryDonation).select().single();
+          if (!retryRes.error) {
+            data = retryRes.data;
+            error = null;
+          }
+        } catch { }
+      }
+      if (error) {
+        // Return created payload if DB insertion returned warning
+        return NextResponse.json({ success: true, data: newDonation, warning: error.message });
+      }
     }
 
     // Update campaign raised amount & donors count if campaign_id present
@@ -163,7 +199,7 @@ export async function PATCH(request: Request) {
   try {
     const body = await request.json();
     const { id } = body;
-    
+
     if (!id) {
       return NextResponse.json({ success: false, error: 'Missing donation id' }, { status: 400 });
     }

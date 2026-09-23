@@ -43,8 +43,12 @@ import {
   Calendar,
   Network,
   MapPin,
-
+  KeyRound,
+  User as UserIcon,
 } from 'lucide-react';
+
+import { KycUpdateModal } from '../../components/KycUpdateModal';
+import { ChangePasswordModal } from '../../components/ChangePasswordModal';
 
 import { MemberDashboard } from '../dashboards/MemberDashboard';
 import { CommunityAdminDashboard } from '../dashboards/CommunityAdminDashboard';
@@ -120,6 +124,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const searchRef = useRef<HTMLDivElement>(null);
   const [aidRequested, setAidRequested] = useState<boolean>(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState<boolean>(false);
+  const [kycUpdateOpen, setKycUpdateOpen] = useState<boolean>(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState<boolean>(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('adminTheme');
@@ -198,6 +204,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const { t, isHindi, language } = useLanguage();
 
+  const displayName = (activeUser.name || 'User').replace(/\s*\([^)]*\)/g, '').trim() || 'User';
+  const userStatus = activeUser.status || (activeUser.isVerified ? 'approved' : 'pending');
+  const isApproved = userStatus === 'approved';
+
   // ─── Resolve District Role vs Primary System Role ───────────────────────
   // Note: For district posts, user.role remains 'member', while the specific
   // district assignment is stored in activeUser.district_role (or districtRole).
@@ -255,7 +265,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // Role metadata for badge styling
   const roleBadges: Record<UserRole, { label: string; color: string; icon: React.ReactNode }> = {
     member: { label: t('admin.memberDonor', 'Member'), color: 'bg-emerald-100 text-emerald-800 border-emerald-300', icon: <Heart className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> },
-    premium_donor: { label: t('admin.premiumDonor', 'Premium Donor'), color: 'bg-amber-100 text-amber-800 border-amber-300', icon: <Award className="w-3.5 h-3.5 text-amber-600" /> },
     community_admin: { label: t('admin.commAdmin', 'Community Admin'), color: 'bg-blue-100 text-blue-800 border-blue-300', icon: <Users className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> },
     executive_admin: { label: t('admin.execAdmin', 'Executive Officer'), color: 'bg-purple-100 text-purple-800 border-purple-300', icon: <UserCheck className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> },
     super_admin: { label: t('admin.superAdmin', 'Super Admin'), color: 'bg-slate-800 text-white border-slate-700', icon: <Shield className="w-3.5 h-3.5" style={{ color: 'var(--mfct-gold)' }} /> },
@@ -349,8 +358,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       case 'district_president':
         roleMenus = [
           { id: 'district_committee', label: t('admin.tabDistrictCommittee', 'District Committee'), icon: Award },
-          { id: 'kyc_queue', label: t('admin.tabKycQueue', 'KYC Approvals'), icon: UserCheck },
-          { id: 'utr_audit', label: t('admin.tabUtrAudit', 'UTR Payment Desk'), icon: ShieldCheck },
           { id: 'communities_manage', label: t('admin.tabCommunitiesManage', 'Manage Communities'), icon: Building2 },
           { id: 'campaigns', label: t('admin.tabCampaigns', 'Manage Campaigns'), icon: PlusCircle },
           { id: 'teams_manage', label: t('admin.tabTeams', 'Block & City Teams'), icon: Network },
@@ -830,34 +837,101 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       className="fixed inset-0 z-40"
                       onClick={() => setProfileMenuOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
-                      <div className="p-3 border-b border-slate-800 bg-slate-950/50">
-                        <p className="text-sm font-bold text-white truncate">{activeUser.name || "No name"}</p>
-                        <p className="text-xs text-slate-400 truncate">{activeUser.email || 'No email provided'}</p>
-                      </div>
-                      <div className="p-2">
-                        <div className="px-2 py-1.5 mb-2 rounded-lg bg-slate-800/50 flex items-center gap-2 border border-slate-800">
-                          {roleBadge.icon}
-                          <div className="min-w-0">
-                            <span className="text-xs font-bold text-slate-300 block truncate">{roleBadge.label}</span>
-                            {(activeUser.district || activeUser.city) && effectiveDistrictRole && (
-                              <span className="text-[10px] text-amber-400 block truncate">
-                                📍 {activeUser.district || activeUser.city}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                    <div
+                      className="absolute right-0 top-full mt-2 w-72 rounded-2xl shadow-2xl z-50 overflow-hidden animate-fade-in"
+                      style={{
+                        background: 'var(--mfct-dark-green)',
+                        border: '1px solid rgba(200,168,75,0.35)',
+                        boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
+                      }}
+                    >
+                      {/* Header Info with Role below email & smaller */}
+                      <div className="p-3.5" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)', background: 'rgba(0,0,0,0.25)' }}>
+                        <p className="text-sm font-bold text-white truncate">{displayName}</p>
+                        <p className="text-xs truncate font-medium mt-0.5" style={{ color: 'var(--mfct-gold)' }}>
+                          {activeUser.email || activeUser.phone || 'member@sevasangam.org'}
+                        </p>
 
+                        <div
+                          className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium"
+                          style={{
+                            background: 'rgba(255,255,255,0.08)',
+                            border: '1px solid rgba(200,168,75,0.25)',
+                            color: '#ffffff',
+                          }}
+                        >
+                          {roleBadge.icon}
+                          <span className="font-semibold">{roleBadge.label}</span>
+                          {(activeUser.district || activeUser.city) && effectiveDistrictRole && (
+                            <span className="text-emerald-300 text-[10px] font-semibold">
+                              ({activeUser.district || activeUser.city})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Body Options */}
+                      <div className="p-2.5 space-y-1">
+                        {/* ID Card Link */}
+                        {onOpenMembershipCard && (
+                          <button
+                            onClick={() => {
+                              setProfileMenuOpen(false);
+                              onOpenMembershipCard();
+                            }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
+                          >
+                            <Shield className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                            <span>{t('nav.myCard', 'View ID Card')}</span>
+                          </button>
+                        )}
+
+                        {/* Edit Profile / KYC Link */}
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            setKycUpdateOpen(true);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
+                        >
+                          {isApproved ? (
+                            <>
+                              <UserIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                              <span>{t('nav.editProfile', 'Edit Profile')}</span>
+                            </>
+                          ) : (
+                            <>
+                              <ShieldCheck className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                              <span>{t('nav.kycUpdate', 'Update KYC Details')}</span>
+                            </>
+                          )}
+                        </button>
+
+                        {/* Change Password Link */}
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            setChangePasswordOpen(true);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
+                        >
+                          <KeyRound className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                          <span>{t('nav.changePassword', 'Change Password')}</span>
+                        </button>
+
+                        <div className="my-1 border-t" style={{ borderColor: 'rgba(200,168,75,0.15)' }} />
+
+                        {/* Logout Button */}
                         {onLogout && (
                           <button
                             onClick={() => {
                               setProfileMenuOpen(false);
                               onLogout();
                             }}
-                            className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-rose-400 hover:bg-rose-950/50 hover:text-rose-300 transition-colors text-xs font-bold text-left"
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-400 hover:bg-rose-950/50 hover:text-rose-300 transition-colors text-xs font-bold text-left cursor-pointer"
                           >
-                            <LogOut className="w-3.5 h-3.5" />
-                            <span>Logout</span>
+                            <LogOut className="w-4 h-4" />
+                            <span>{t('nav.logout', 'Logout')}</span>
                           </button>
                         )}
                       </div>
@@ -1005,6 +1079,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </div>
         </div>
       </div>
+      {/* KYC / Edit Profile Modal */}
+      {kycUpdateOpen && (
+        <KycUpdateModal
+          isOpen={kycUpdateOpen}
+          onClose={() => setKycUpdateOpen(false)}
+          user={activeUser}
+          onUpdated={(updated) => {
+            if (typeof window !== 'undefined') {
+              try {
+                const stored = localStorage.getItem('mfct_active_user');
+                if (stored) {
+                  const parsed = JSON.parse(stored);
+                  localStorage.setItem('mfct_active_user', JSON.stringify({ ...parsed, ...updated }));
+                }
+              } catch { }
+              window.location.reload();
+            }
+          }}
+        />
+      )}
+
+      {/* Change Password Modal */}
+      {changePasswordOpen && (
+        <ChangePasswordModal
+          isOpen={changePasswordOpen}
+          onClose={() => setChangePasswordOpen(false)}
+          user={activeUser}
+        />
+      )}
     </div>
   );
 };

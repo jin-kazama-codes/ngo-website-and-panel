@@ -77,7 +77,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
   const isGenSecretary = currentRole === 'district_gen_secretary';
   const isDistrictPresident = currentRole === 'district_president';
 
-  const userCity = (activeUser?.district || activeUser?.city || '').trim();
+  const userCity = (activeUser?.district || '').trim();
 
   const [teams, setTeams] = useState<DistrictTeamUnit[]>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(true);
@@ -101,10 +101,20 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
         if (isMounted) setIsLoadingTeams(false);
       });
 
-    getUsers()
+    getUsers(userCity)
       .then((users) => {
         if (isMounted && Array.isArray(users)) {
-          setRegisteredUsers(users);
+          const districtRoles = [
+            'district_president',
+            'district_coordinator',
+            'district_gen_secretary',
+            'district_secretary',
+            'district_finance_coord'
+          ];
+          const filteredUsers = users.filter(
+            (user) => !districtRoles.includes(user.districtRole || '')
+          );
+          setRegisteredUsers(filteredUsers);
         }
       })
       .catch(() => { });
@@ -112,7 +122,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [userCity]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
@@ -125,7 +135,6 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
   const [formPresidentName, setFormPresidentName] = useState('');
   const [formPresidentPhone, setFormPresidentPhone] = useState('');
   const [formFormedDate, setFormFormedDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [formVolunteers, setFormVolunteers] = useState('20');
   const [formStatus, setFormStatus] = useState<'active' | 'in_formation' | 'pending'>('pending');
   const [formObjectives, setFormObjectives] = useState('');
   const [formInitialMembers, setFormInitialMembers] = useState<NewMemberDraft[]>([]);
@@ -236,7 +245,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
       HeadName: formPresidentName.trim(),
       HeadPhone: formPresidentPhone.trim() || '+91 98000 00000',
       formedDate: formFormedDate,
-      activeVolunteersCount: (parseInt(formVolunteers, 10) || 15) + validInitialMembers.length,
+      activeVolunteersCount: validInitialMembers.length,
       status: 'pending', // always starts pending until District President approves
       objectives: formObjectives.trim() || 'Organizational expansion, volunteer coordination, and local public welfare initiatives.',
       members: validInitialMembers,
@@ -253,7 +262,6 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
       setFormPresidentUserId('');
       setFormPresidentName('');
       setFormPresidentPhone('');
-      setFormVolunteers('20');
       setFormStatus('active');
       setFormObjectives('');
       setFormInitialMembers([]);
@@ -286,7 +294,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
     };
 
     const updatedMembers = [...(selectedTeamForMember.members || []), newMem];
-    const updatedCount = (selectedTeamForMember.activeVolunteersCount || 0) + 1;
+    const updatedCount = updatedMembers.length;
 
     try {
       const updatedTeam = await updateTeam(selectedTeamForMember.id, {
@@ -330,7 +338,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
     });
 
     const updatedMembers = [...(selectedTeamForMember.members || []), ...newMembers];
-    const updatedCount = (selectedTeamForMember.activeVolunteersCount || 0) + newMembers.length;
+    const updatedCount = updatedMembers.length;
 
     try {
       const updatedTeam = await updateTeam(selectedTeamForMember.id, {
@@ -353,7 +361,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
   };
 
   const handleDeleteMember = async (teamId: string, memberId: string) => {
-    if (!window.confirm(tr('क्या आप इस सदस्य को हटाना चाहते हैं?', 'کیا آپ اس رکن کو ہٹانا چاہتے ہیں؟', 'Are you sure you want to remove this member?'))) {
+    if (!window.confirm(tr('क्या आप इस सदस्य को हटाना चाहते हैं?', 'کیا آپ اس رکن کو ہٹانا चाहते हैं؟', 'Are you sure you want to remove this member?'))) {
       return;
     }
 
@@ -361,7 +369,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
     if (!team) return;
 
     const updatedMembers = (team.members || []).filter((m) => m.id !== memberId);
-    const updatedCount = Math.max(0, (team.activeVolunteersCount || 1) - 1);
+    const updatedCount = updatedMembers.length;
 
     // Optimistic UI update
     setTeams((prev) =>
@@ -511,7 +519,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
                 {tr(
                   'नई ब्लॉक / नगर टीम गठित करें',
                   'نئی بلاک / شہری ٹیم تشکیل دیں',
-                  '+ Form Block / City Team'
+                  ' New Block / City Team'
                 )}
               </span>
             </button>
@@ -762,7 +770,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
                   <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 animate-fade-in">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {tr('इकाई के अन्य नियुक्त पदाधिकारी:', 'دیگر نامزد عہدیداران:', 'Appointed Unit Office Bearers:')}
+                        {tr('नियुक्त टीम सदस्य:', 'مقرر کردہ ٹیم کے اراکین:', 'Appointed Team Members:')}
                       </h4>
                       {isGenSecretary && (
                         <button
@@ -770,7 +778,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
                           className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
                         >
                           <Plus className="w-3 h-3" />
-                          <span>{tr('नया पदाधिकारी जोड़ें', 'نیا عہدیدار شامل کریں', 'Add Officer')}</span>
+                          <span>{tr('नया सदस्य जोड़ें', 'نیا رکن شامل کریں', 'Add Members')}</span>
                         </button>
                       )}
                     </div>
@@ -798,7 +806,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteMember(team.id, mem.id)}
-                                  title={tr('पदाधिकारी हटाएं', 'عہدیدار کو ہٹائیں', 'Remove Officer')}
+                                  title={tr('सदस्य हटाएं', 'رکن کو ہٹائیں', 'Remove Member')}
                                   className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -810,7 +818,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
                       </div>
                     ) : (
                       <p className="text-xs text-slate-400 italic py-2">
-                        {tr('अभी अन्य सदस्य नहीं जोड़े गए हैं। "नया पदाधिकारी जोड़ें" पर क्लिक करें।', 'ابھی مزید اراکین شامل نہیں کیے گئے۔', 'No additional members added yet. Click "Add Officer" to appoint members.')}
+                        {tr('अभी अन्य सदस्य नहीं जोड़े गए हैं। "नया सदस्य जोड़ें" पर क्लिक करें।', 'ابھی مزید اراکین شامل نہیں کیے گئے۔', 'No additional members added yet. Click "Add Member" to appoint members.')}
                       </p>
                     )}
                   </div>
