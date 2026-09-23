@@ -24,7 +24,7 @@ export const USER_EXECUTIVE_ADMIN: User = createEmptyUser('executive_admin', 'ex
 export const USER_COMMUNITY_ADMIN: User = createEmptyUser('community_admin', 'comm');
 export const USER_MEMBER: User = createEmptyUser('member', 'mem');
 export const CURRENT_USER_MEMBER: User = USER_MEMBER;
-export const CURRENT_USER_PREMIUM: User = createEmptyUser('premium_donor', 'prem');
+export const CURRENT_USER_PREMIUM: User = createEmptyUser('member', 'prem');
 
 // All dynamic lists default to empty arrays; components query Supabase DB tables directly
 export const MOCK_COMMUNITIES: Community[] = [];

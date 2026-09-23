@@ -44,7 +44,7 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ currentRole, onRoleC
       desc: 'Verified ₹50 member eligible for aid & tax receipts',
     },
     {
-      id: 'premium_donor',
+      id: 'member',
       label: 'Premium Donor',
       email: 'ayesha.fatima@example.com',
       icon: <Award className="w-3.5 h-3.5 text-amber-400" />,

@@ -122,7 +122,9 @@ export async function POST(request: Request) {
       head_name: headName,
       head_phone: headPhone,
       formed_date: formedDate || '',
-      active_volunteers_count: Number(activeVolunteersCount) || 15,
+      active_volunteers_count: activeVolunteersCount !== undefined && activeVolunteersCount !== null
+        ? Number(activeVolunteersCount)
+        : (Array.isArray(members) ? members.length : 0),
       status: status || 'pending',
       objectives: objectives || '',
       members: Array.isArray(members)

@@ -3,7 +3,6 @@ export type UserRole =
   | 'community_admin'
   | 'executive_admin'
   | 'member'
-  | 'premium_donor'
   | 'district_president'
   | 'district_coordinator'
   | 'district_gen_secretary'
@@ -48,10 +47,9 @@ export interface User {
   communityName: string;
   membershipId: string;
   status: 'pending' | 'approved' | 'reject' | 'rejected';
-  rejectionReason?: string;
   rejection_reason?: string;
+  rejectionReason?: string;
   isVerified?: boolean;
-  isPremium?: boolean;
   joinDate: string;
   passwordHash?: string;
   aadhaarFrontUrl?: string;
@@ -131,7 +129,7 @@ export interface Donation {
   communityName: string;
   amountINR: number;
   category: DonationCategory;
-  isOutsideCommunity: boolean;
+  isOutsideCommunity?: boolean;
   paymentMethod: 'UPI' | 'Bank Transfer' | 'QR Code' | 'Card';
   paymentScreenshotUrl?: string;
   status: 'verified' | 'pending_verification' | 'pending' | 'rejected';
@@ -139,6 +137,22 @@ export interface Donation {
   rejection_reason?: string;
   date: string;
   receiptNumber: string;
+  wakalahInformation?: WakalahInformation[];
+}
+
+export interface WakalahInformation {
+  donorName: string;
+  guardianName: string;
+  address: string;
+  mobile: string;
+  amountINR: number;
+  amountInWords: string;
+  isAccepted: boolean;
+  undertakingTitle?: string;
+  declarationText?: string;
+  authorizationText?: string;
+  trustName?: string;
+  date?: string;
 }
 
 export interface PendingVerificationItem {
@@ -154,6 +168,7 @@ export interface PendingVerificationItem {
   utr?: string;
   paymentMethod?: string;
   paymentScreenshotUrl?: string;
+  wakalahInformation?: WakalahInformation[];
 }
 
 export interface AuditLog {

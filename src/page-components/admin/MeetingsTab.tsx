@@ -23,7 +23,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 
-import { Meeting, DEFAULT_MEETINGS, getMeetings, createMeeting, approveMeeting } from '../../services/meetingService';
+import { Meeting, getMeetings, createMeeting, approveMeeting } from '../../services/meetingService';
 import { Announcement, createAnnouncement, getAllAnnouncements, getAnnouncementsBycity } from '../../services/announcementService';
 import { STANDARD_DISTRICTS } from '../../data/districtsData';
 import { MeetingCardSkeleton } from '../../components/Skeletons';
@@ -211,11 +211,6 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
     ? announcements.filter((a) => a.city?.toLowerCase().includes(cityFilter.toLowerCase()))
     : announcements;
 
-  const upcomingCount = meetings.filter((m) => m.status === 'upcoming').length;
-  const completedCount = meetings.filter((m) => m.status === 'completed').length;
-  const pendingCount = meetings.filter((m) => m.status === 'pending').length;
-  const totalResolutions = meetings.reduce((sum, m) => sum + (m.resolutions?.length || 0), 0);
-
   const handleCreateMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.date) return;
@@ -234,14 +229,9 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
         agenda: formData.agenda,
         date: formData.date,
         time: resolvedTime,
-        venue: formData.venue || 'District Chapter Secretariat, Bareilly',
-        chairperson: activeUser?.name || 'District Secretary',
-        recordedBy: activeUser?.name || 'District Secretary',
-        attendeesCount: 0,
+        venue: formData.venue,
         status: 'pending' as any,
-        district: activeUser?.district || (activeUser?.city ? `${activeUser.city} District Chapter` : 'Bareilly District Chapter'),
-        minutes: '',
-        resolutions: [],
+        district: activeUser?.district,
       };
 
       const savedMeeting = await createMeeting(meetingPayload);
@@ -337,9 +327,9 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
           <div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
               {tr(
-                'जिला बैठकें एवं कार्यवृत्त',
-                'ضلعی اجلاس اور کارروائی',
-                'District Meetings & Minutes Register'
+                'जिला बैठकें एवं घोषणाएं',
+                'ضلعی اجلاس اور اعلانات',
+                'District Meetings & Announcements'
               )}
             </h1>
 
@@ -392,7 +382,7 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
                 {tr(
                   'नई बैठक दर्ज करें',
                   'نیا اجلاس درج کریں',
-                  'Schedule / Record Meeting'
+                  'Schedule New Meeting'
                 )}
               </span>
             </button>
@@ -527,14 +517,6 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
                       {m.title}
                     </h3>
                   </div>
-
-                  <div className="flex items-center gap-2 self-start lg:self-auto">
-                    <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/80 flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>{m.attendeesCount} {tr('उपस्थित', 'حاضرین', 'Attendees')}</span>
-                    </span>
-                    <ChevronRight className="w-5 h-5 text-slate-400" />
-                  </div>
                 </div>
 
                 {/* Agenda & Logistics */}
@@ -576,22 +558,6 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
                         : <CheckCircle2 className="w-3.5 h-3.5" />}
                       {tr('बैठक अनुमोदित करें', 'اجلاس منظور کریں', 'Approve Meeting')}
                     </button>
-                  </div>
-                )}
-
-                {m.resolutions && m.resolutions.length > 0 && (
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400">
-                      {tr('पारित निर्णय:', 'منظور شدہ فیصلے:', 'Key Decisions:')}
-                    </span>
-                    {m.resolutions.slice(0, 2).map((res, i) => (
-                      <span key={i} className="text-[11px] bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-md border border-purple-200 dark:border-purple-800 truncate max-w-xs">
-                        ✓ {res}
-                      </span>
-                    ))}
-                    {m.resolutions.length > 2 && (
-                      <span className="text-[10px] text-slate-400 font-bold">+{m.resolutions.length - 2} more</span>
-                    )}
                   </div>
                 )}
               </div>
@@ -681,14 +647,6 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
                 <span className="text-slate-400 block font-bold uppercase text-[10px]">{tr('बैठक स्थल', 'مقام', 'Venue')}</span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedMeeting.venue}</span>
               </div>
-              <div>
-                <span className="text-slate-400 block font-bold uppercase text-[10px]">{tr('अध्यक्षता', 'صدارت', 'Chairperson')}</span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedMeeting.chairperson}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 block font-bold uppercase text-[10px]">{tr('कार्यवाही लेखक', 'کارروائی کنندہ', 'Recorded By')}</span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedMeeting.recordedBy}</span>
-              </div>
             </div>
 
             <div className="space-y-4 text-xs sm:text-sm">
@@ -699,28 +657,15 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
                 </p>
               </div>
 
-              {selectedMeeting.minutes && (
+              {/* {selectedMeeting.minutes && (
                 <div>
                   <h4 className="font-bold text-slate-900 dark:text-white mb-1">{tr('कार्यवाही विवरण (Minutes of Meeting):', 'کارروائی تفصیل:', 'Minutes of the Meeting:')}</h4>
                   <p className="text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                     {selectedMeeting.minutes}
                   </p>
                 </div>
-              )}
+              )} */}
 
-              {selectedMeeting.resolutions && selectedMeeting.resolutions.length > 0 && (
-                <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white mb-2">{tr('पारित प्रस्ताव व निर्णय (Resolutions):', 'منظور شدہ فیصلے:', 'Official Resolutions & Action Items:')}</h4>
-                  <ul className="space-y-2">
-                    {selectedMeeting.resolutions.map((res, i) => (
-                      <li key={i} className="flex items-start gap-2 bg-purple-50/60 dark:bg-purple-950/30 p-2.5 rounded-xl border border-purple-200/60 dark:border-purple-800/40 text-xs text-purple-900 dark:text-purple-200">
-                        <CheckCircle2 className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
-                        <span>{res}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
