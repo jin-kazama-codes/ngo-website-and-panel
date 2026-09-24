@@ -65,6 +65,12 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
     userDistRole === 'district_secretary' ||
     (userDistRole.includes('secretary') && !userDistRole.includes('gen'));
 
+  // District President can approve meetings
+  const isDistrictPresident =
+    currentRole === 'district_president' ||
+    rawDistRole === 'district_president' ||
+    userDistRole.includes('president');
+
   const userCity = (activeUser?.district || activeUser?.city || '').trim();
 
   const [meetings, setMeetings] = useState<Meeting[]>([])
@@ -541,8 +547,8 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
                   </p>
                 </div>
 
-                {/* Approve Button (super/executive admin only, pending meetings) */}
-                {isSuperOrExecutive && m.status === 'pending' && (
+                {/* Approve Button (super/executive admin + district president, pending meetings) */}
+                {(isSuperOrExecutive || isDistrictPresident) && m.status === 'pending' && (
                   <div className="mt-3 flex justify-end">
                     <button
                       onClick={() => handleApproveMeeting(m.id)}

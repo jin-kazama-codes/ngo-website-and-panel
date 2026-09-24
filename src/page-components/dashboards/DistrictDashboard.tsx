@@ -867,19 +867,18 @@ export const DistrictDashboard: React.FC<DistrictDashboardProps> = ({
 
                     {/* 4. Donations & Relief Aid */}
                     <div
-                        onClick={() => onNavigateTab && onNavigateTab('campaigns')}
-                        className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs hover:shadow-md transition-all ${onNavigateTab ? 'cursor-pointer hover:border-rose-500/50 group' : ''}`}
+                        className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs hover:shadow-md transition-all`}
                     >
                         <div className="flex items-center justify-between text-slate-400 mb-2">
                             <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                {tr('à¤•à¥à¤² à¤¦à¤¾à¤¨ à¤à¤µà¤‚ à¤°à¤¾à¤¹à¤¤ à¤•à¥‹à¤·', 'Ú©Ù„ Ø§Ù…Ø¯Ø§Ø¯ à¤”à¤° Ø¹Ø·ÛŒØ§Øª', 'Total Donations & Aid')}
+                                {tr('à¤•à¥ à¤² à¤¦à¤¾à¤¨ à¤ à¤µà¤‚ à¤°à¤¾à¤¹à¤¤ à¤•à¥‹à¤·', 'Ú©Ù„ Ø§Ù…Ø¯Ø§Ø¯ à¤”à¤° Ø¹Ø·ÛŒØ§Øª', 'Total Donations & Aid')}
                             </span>
                             <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600">
                                 <IndianRupee className="w-5 h-5" />
                             </div>
                         </div>
                         <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                            â‚¹{districtDonationsRaised.toLocaleString('en-IN')}
+                            {districtDonationsRaised.toLocaleString('en-IN')}
                         </p>
                         <div className="flex items-center justify-between text-xs mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
                             <span className="font-bold text-emerald-600 dark:text-emerald-400">

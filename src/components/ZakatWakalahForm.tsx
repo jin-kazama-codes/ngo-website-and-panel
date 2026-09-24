@@ -95,36 +95,8 @@ export const ZakatWakalahForm: React.FC<ZakatWakalahFormProps> = ({
           </p>
         </div>
 
-        {/* Target Campaign Selection */}
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--mfct-dark-green)' }}>
-            {tr(
-              'लक्षित शरीअत-सत्यापित ज़कात अभियान',
-              'ہدف شریعت مصدقہ زکوٰۃ مہم',
-              'Target Shariah-Verified Zakat Campaign'
-            )}
-          </label>
-          <select
-            value={selectedCampaignId}
-            onChange={(e) => setSelectedCampaignId(e.target.value)}
-            className="w-full p-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all outline-none"
-            style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
-          >
-            {campaigns.map((c) => (
-              <option key={c.id} value={c.id}>
-                {translatedTitles[c.id] || translateCampaignTitle(c.title, language)}
-                {c.city ? ` — (${tr('शहर', 'شہر', 'City')}: ${c.city})` : ''}
-                {c.isZakatEligible ? ` (${tr('ज़कात पात्र ✓', 'زکوٰۃ اہل ✓', 'Zakat Eligible ✓')})` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-
         {/* Undertaking Form Fields */}
         <div className="space-y-4">
-          <p className="text-sm font-bold text-slate-900 italic">
-            {tr('मैं,', 'میں،', 'I,')}
-          </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
             {/* नाम / Name */}
@@ -145,14 +117,14 @@ export const ZakatWakalahForm: React.FC<ZakatWakalahFormProps> = ({
             {/* पिता/पति का नाम */}
             <div className="p-3 bg-white rounded-xl border border-slate-200 focus-within:border-[var(--mfct-gold)] transition-colors">
               <label className="font-bold text-slate-700 block mb-1">
-                {tr("पिता/पति का नाम:", "والد / شوہر کا نام:", "Father's / Husband's Name:")} <span className="text-red-500">*</span>
+                {tr("पिता का नाम:", "والد کا نام:", "Father's Name:")} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 required
                 value={guardianName}
                 onChange={(e) => setGuardianName(e.target.value)}
-                placeholder={tr('पिता या पति का नाम दर्ज करें', 'والد یا شوہر کا نام درج کریں', "Enter Father's or Husband's Name")}
+                placeholder={tr('पिता का नाम दर्ज करें', 'والد کا نام درج کریں', "Enter Father's Name")}
                 className="w-full font-medium text-slate-900 outline-none text-xs sm:text-sm bg-transparent"
               />
             </div>
@@ -304,23 +276,6 @@ export const ZakatWakalahForm: React.FC<ZakatWakalahFormProps> = ({
           </label>
         </div>
       </div>
-
-      {/* Proceed Step 1 Button */}
-      <button
-        type="button"
-        onClick={onProceed}
-        disabled={!isAgreed}
-        className="mfct-btn-gold cursor-pointer w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 disabled:opacity-50 shadow-md"
-      >
-        <span>
-          {tr(
-            `वचनबद्धता स्वीकार करें एवं भुगतान करें (₹${amount.toLocaleString('en-IN')})`,
-            `وکالت اقرار نامہ قبول کریں اور ادائیگی کریں (₹${amount.toLocaleString('en-IN')})`,
-            `Accept Undertaking & Proceed (₹${amount.toLocaleString('en-IN')})`
-          )}
-        </span>
-        <ArrowRight className="w-5 h-5" />
-      </button>
     </div>
   );
 };

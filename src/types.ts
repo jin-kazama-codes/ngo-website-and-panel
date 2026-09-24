@@ -137,6 +137,7 @@ export interface Donation {
   rejection_reason?: string;
   date: string;
   receiptNumber: string;
+  district?: string;
   wakalahInformation?: WakalahInformation[];
 }
 

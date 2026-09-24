@@ -326,19 +326,54 @@ export const Communities: React.FC<CommunitiesProps> = ({ activeUser: propActive
   // - Super Admin & Executive Admin: all users are visible
   // - District President: only users from their specific district appear as candidates
   const candidateUsers = useMemo(() => {
+    const districtRoles = [
+      'district_president',
+      'district_coordinator',
+      'district_gen_secretary',
+      'district_secretary',
+      'district_finance_coord',
+      'community_admin'
+    ];
+
+    // District President / user with district context
+    if (isDistrictPresident || userDistrict) {
+      const target = (userDistrict || '').toLowerCase().trim();
+
+      return availableUsers.filter((u) => {
+        // Remove users who already have a district-level role
+        if (districtRoles.includes(u.districtRole || '')) {
+          return false;
+        }
+
+        // If district is available, only show users from that district
+        if (target) {
+          const uDist = (u.district || '').toLowerCase().trim();
+          const uCity = (u.city || '').toLowerCase().trim();
+
+          return (
+            uDist === target ||
+            uCity === target ||
+            (formData.adminId && u.id === formData.adminId)
+          );
+        }
+
+        return true;
+      });
+    }
+
+    // Super Admin / Executive
     if (isSuperOrExecutive) {
       return availableUsers;
     }
-    if (isDistrictPresident && userDistrict) {
-      const target = userDistrict.toLowerCase().trim();
-      return availableUsers.filter((u) => {
-        const uDist = (u.district || '').toLowerCase().trim();
-        const uCity = (u.city || '').toLowerCase().trim();
-        return uDist === target || uCity === target || (formData.adminId && u.id === formData.adminId);
-      });
-    }
+
     return availableUsers;
-  }, [availableUsers, isSuperOrExecutive, isDistrictPresident, userDistrict, formData.adminId]);
+  }, [
+    availableUsers,
+    isSuperOrExecutive,
+    isDistrictPresident,
+    userDistrict,
+    formData.adminId,
+  ]);
 
   const handleOpenAdd = () => {
     setEditingId(null);
@@ -487,7 +522,9 @@ export const Communities: React.FC<CommunitiesProps> = ({ activeUser: propActive
 
       if (formData.adminId) {
         await updateUser(formData.adminId, {
-          role: 'community_admin',
+          districtRole: 'community_admin',
+          district_role: 'community_admin',
+          district: finalFormData.city,
           communityId: savedCommunity.id,
           communityName: savedCommunity.name,
         });
@@ -912,7 +949,7 @@ export const Communities: React.FC<CommunitiesProps> = ({ activeUser: propActive
                         <option value="">{tr('-- पंजीकृत उपयोगकर्ता चुनें --', '-- رجسٹرڈ صارف منتخب کریں --', '-- Select a registered user --')}</option>
                         {candidateUsers.map((u) => (
                           <option key={u.id} value={u.id}>
-                            {u.name} ({isSuperOrExecutive ? `${u.district_role} - ${u.district}` : `${u.district_role}`})
+                            {u.name} ({isSuperOrExecutive && `${u.district_role} - ${u.district}`})
                           </option>
                         ))}
                       </select>

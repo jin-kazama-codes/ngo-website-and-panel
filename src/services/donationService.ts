@@ -41,6 +41,7 @@ function mapRow(row: Record<string, unknown>): Donation {
     rejection_reason: (row.rejection_reason || row.rejectionReason) as string | undefined,
     date: (row.date as string) || '',
     receiptNumber: (row.receiptNumber || row.receipt_number) as string,
+    district: (row.district) as string | undefined,
     wakalahInformation: wakalahArray,
   };
 }
