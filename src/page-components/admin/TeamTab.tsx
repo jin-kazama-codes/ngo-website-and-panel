@@ -109,7 +109,8 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
             'district_coordinator',
             'district_gen_secretary',
             'district_secretary',
-            'district_finance_coord'
+            'district_finance_coord',
+            'community_admin'
           ];
           const filteredUsers = users.filter(
             (user) => !districtRoles.includes(user.districtRole || '')

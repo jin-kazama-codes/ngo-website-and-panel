@@ -94,6 +94,7 @@ export async function POST(request: Request) {
       date: body.date || new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
       created_at: nowIso,
       receipt_number: body.receiptNumber || body.receipt_number || `RCP-${Date.now().toString().slice(-6)}`,
+      district: body.district || null,
       wakalahInformation: body.wakalahInformation || (
         body.zakatGuardianName ? [{
           donorName: body.donorName || 'Anonymous',
