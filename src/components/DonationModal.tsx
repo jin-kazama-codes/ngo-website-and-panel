@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Campaign, DonationCategory, Donation, User, AccountDetails, WakalahInformation } from '../types';
@@ -254,11 +254,9 @@ export const DonationModal: React.FC<DonationModalProps> = ({
     isMatchUserCity(activeCampaign)
   );
 
-  // When a user selects a campaign from the 'All Campaigns' list—specifically one that does not appear in the local city list—the 'Help from Community' option will not be displayed.
-  // Also, for general donation (!campaign), display only if local city campaigns exist to toggle from.
-  const showOutsideCommunityToggle = !isPreselectedCampaign
-    ? localCityCampaigns.length > 0
-    : isCampaignInUserCity;
+  // Always show the toggle whenever campaigns are loaded —
+  // works for both general "Donate Now" and campaign-specific entry.
+  const showOutsideCommunityToggle = filteredCampaigns.length > 0;
 
   const handleToggleOutsideCommunity = (enabled: boolean) => {
     setIsOutsideCommunity(enabled);
@@ -595,238 +593,207 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             {!campaignsLoading && (
               <>
 
-            {/* Help Outside Community Toggle - hidden when selecting campaign from All Campaigns outside community */}
-            {showOutsideCommunityToggle && (
-              <div
-                className="flex items-center justify-between p-3.5 rounded-2xl transition-all"
-                style={{
-                  background: isOutsideCommunity ? 'rgba(10,46,29,0.06)' : 'var(--mfct-warm-bg)',
-                  border: isOutsideCommunity ? '1.5px solid var(--mfct-gold)' : '1px solid var(--mfct-border)'
-                }}
-              >
-                <div className="flex items-center gap-3">
+                {/* Help Outside Community Toggle - hidden when selecting campaign from All Campaigns outside community */}
+                {showOutsideCommunityToggle && (
                   <div
-                    className="p-2 rounded-xl shrink-0"
+                    className="flex items-center justify-between p-3.5 rounded-2xl transition-all"
                     style={{
-                      background: isOutsideCommunity ? 'var(--mfct-dark-green)' : 'rgba(200,168,75,0.15)',
-                      color: isOutsideCommunity ? '#fff' : 'var(--mfct-dark-green)'
+                      background: isOutsideCommunity ? 'rgba(10,46,29,0.06)' : 'var(--mfct-warm-bg)',
+                      border: isOutsideCommunity ? '1.5px solid var(--mfct-gold)' : '1px solid var(--mfct-border)'
                     }}
                   >
-                    <Building2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-xs font-bold" style={{ color: 'var(--mfct-dark-green)' }}>
-                        {tr('समुदाय से बाहर सहायता करें', 'کمیونٹی سے باہر امداد', 'Help Outside Community')}
-                      </h4>
-                      {isOutsideCommunity && (
-                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                          {tr('स्वतः चयनित ✓', 'خودکار منتخب ✓', 'Auto-Selected ✓')}
-                        </span>
-                      )}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="p-2 rounded-xl shrink-0"
+                        style={{
+                          background: isOutsideCommunity ? 'var(--mfct-dark-green)' : 'rgba(200,168,75,0.15)',
+                          color: isOutsideCommunity ? '#fff' : 'var(--mfct-dark-green)'
+                        }}
+                      >
+                        <Building2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-bold" style={{ color: 'var(--mfct-dark-green)' }}>
+                            {tr('समुदाय से बाहर सहायता करें', 'کمیونٹی سے باہر امداد', 'Help Outside Community')}
+                          </h4>
+                          {isOutsideCommunity && (
+                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                              {tr('स्वतः चयनित ✓', 'خودکار منتخب ✓', 'Auto-Selected ✓')}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] mt-0.5" style={{ color: 'var(--mfct-text-muted)' }}>
+                          {isOutsideCommunity
+                            ? tr(
+                              'बाहरी समुदाय सहायता सक्षम: अभियान ट्रस्ट द्वारा स्वतः चयनित है।',
+                              'بیرونی کمیونٹی امداد فعال: مہم ٹرسٹ کے ذریعے خود بخود منتخب ہے۔',
+                              'Outside assistance enabled: Campaign is automatically selected by Trust.'
+                            )
+                            : tr(
+                              'अन्यथा अभियान मैन्युअली अपने शहर/समुदाय से चुनें।',
+                              'بصورت دیگر अपने شہر/کمیونٹی کی مہم دستی طور پر منتخب کریں۔',
+                              'Otherwise select campaign manually from your city/community.'
+                            )}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[11px] mt-0.5" style={{ color: 'var(--mfct-text-muted)' }}>
-                      {isOutsideCommunity
-                        ? tr(
-                          'बाहरी समुदाय सहायता सक्षम: अभियान ट्रस्ट द्वारा स्वतः चयनित है।',
-                          'بیرونی کمیونٹی امداد فعال: مہم ٹرسٹ کے ذریعے خود بخود منتخب ہے۔',
-                          'Outside assistance enabled: Campaign is automatically selected by Trust.'
-                        )
-                        : tr(
-                          'अन्यथा अभियान मैन्युअली अपने शहर/समुदाय से चुनें।',
-                          'بصورت دیگر अपने شہر/کمیونٹی کی مہم دستی طور پر منتخب کریں۔',
-                          'Otherwise select campaign manually from your city/community.'
-                        )}
-                    </p>
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                      <input
+                        type="checkbox"
+                        checked={isOutsideCommunity}
+                        onChange={(e) => handleToggleOutsideCommunity(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div
+                        className="w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
+                        style={{ background: isOutsideCommunity ? 'var(--mfct-dark-green)' : '#cbd5e1' }}
+                      ></div>
+                    </label>
+                  </div>
+                )}
+
+                {/* Target Campaign Selection / Auto-Selected Display */}
+                {isOutsideCommunity ? (
+                  <></>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--mfct-dark-green)' }}>
+                      {tr('2. लक्षित अभियान चुनें', '2. ہدف مہم منتخب کریں', '2. Select Target Campaign')}
+                    </label>
+                    <select
+                      value={selectedCampaignId}
+                      onChange={(e) => handleSelectCampaign(e.target.value)}
+                      className="w-full p-3 rounded-xl text-sm font-medium transition-all outline-none"
+                      style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
+                    >
+                      {manualCampaigns.map((c) => {
+                        const cCity = c.city ? c.city.trim() : (c.communityName ? c.communityName.trim() : '');
+                        return (
+                          <option key={c.id} value={c.id}>
+                            {translatedTitles[c.id] || translateCampaignTitle(c.title, language)}
+                            {cCity ? ` — (${tr('शहर', 'شہر', 'City')}: ${cCity})` : ''}
+                            {c.isZakatEligible ? ` (${tr('ज़कात पात्र ✓', 'زکوٰۃ اہل ✓', 'Zakat Eligible ✓')})` : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                )}
+
+                {/* Category Selector */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--mfct-dark-green)' }}>
+                    {tr('1. दान का प्रकार चुनें', '1. عطیہ کی قسم منتخب کریں', '1. Select Donation Type')}
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {(
+                      [
+                        'General',
+                        'Sadaqah',
+                        'Zakat',
+                        'Fitra',
+                      ] as DonationCategory[]
+                    ).map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCategory(cat);
+                          if (cat === 'Zakat' && activeCampaign && !activeCampaign.isZakatEligible) {
+                            const zakatCamp = campaigns.find((c) => c.isZakatEligible);
+                            if (zakatCamp) setSelectedCampaignId(zakatCamp.id);
+                          }
+                        }}
+                        className="cursor-pointer py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all text-left flex items-center justify-between"
+                        style={selectedCategory === cat ? {
+                          background: 'var(--mfct-dark-green)',
+                          color: '#fff',
+                          borderColor: 'var(--mfct-gold)',
+                          boxShadow: 'var(--shadow-card)'
+                        } : {
+                          background: 'var(--mfct-warm-bg)',
+                          color: 'var(--mfct-text-dark)',
+                          borderColor: 'var(--mfct-border)'
+                        }}
+                      >
+                        <span>{getCategoryLabel(cat)}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
-                  <input
-                    type="checkbox"
-                    checked={isOutsideCommunity}
-                    onChange={(e) => handleToggleOutsideCommunity(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div
-                    className="w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
-                    style={{ background: isOutsideCommunity ? 'var(--mfct-dark-green)' : '#cbd5e1' }}
-                  ></div>
-                </label>
-              </div>
-            )}
 
-            {/* Target Campaign Selection / Auto-Selected Display */}
-            {isOutsideCommunity ? (
-              <div className="p-4 rounded-2xl border" style={{ background: 'rgba(10,46,29,0.04)', borderColor: 'var(--mfct-gold)' }}>
-                <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="font-bold text-emerald-800 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    {tr('लक्षित अभियान (स्वतः चयनित):', 'ہدف مہم (خودکار منتخب):', 'Target Campaign (Auto-Selected):')}
-                  </span>
-                  {activeCampaign?.city && (
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-white border border-slate-200" style={{ color: 'var(--mfct-dark-green)' }}>
-                      {tr('शहर', 'شہر', 'City')}: {activeCampaign.city}
-                    </span>
-                  )}
-                </div>
-                <span className="text-sm font-extrabold block truncate" style={{ color: 'var(--mfct-dark-green)' }}>
-                  {dynamicActiveTitle || translateCampaignTitle(activeCampaign?.title, language)}
-                </span>
-                {activeCampaign?.communityName && (
-                  <span className="text-xs text-slate-500 block mt-0.5">
-                    {tr('समुदाय:', 'کمیونٹی:', 'Community:')} {activeCampaign.communityName}
-                  </span>
-                )}
-              </div>
-            ) : (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-dark-green)' }}>
-                    {tr('2. लक्षित अभियान चुनें', '2. ہدف مہم منتخب کریں', '2. Select Target Campaign')}
+                {/* Amount Selection */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--mfct-dark-green)' }}>
+                    {tr('3. \u0930\u093E\u0936\u093F \u091a\u0941\u0928\u0947\u0902 (INR \u20B9)', '3. \u0631\u0642\u0645 \u0645\u0646\u062A\u062E\u0628 \u06A9\u0631\u06CC\u06BA (INR \u20B9)', '3. Choose Amount (INR \u20B9)')}
                   </label>
-                  {userCity && isCampaignInUserCity ? (
-                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                      {tr('आपका शहर:', 'آپ کا شہر:', 'Your City:')} {userCity}
-                    </span>
-                  ) : activeCampaign?.city ? (
-                    <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                      {tr('शहर:', 'شہر:', 'City:')} {activeCampaign.city.trim()}
-                    </span>
-                  ) : null}
+                  <div className="grid grid-cols-4 gap-2 mb-3">
+                    {[500, 1000, 2500, 5000].map((val) => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => handleAmountClick(val)}
+                        className="cursor-pointer py-3 rounded-xl font-bold text-sm border transition-all"
+                        style={amount === val && !customAmount ? {
+                          background: 'var(--mfct-dark-green)', color: '#fff', borderColor: 'var(--mfct-gold)'
+                        } : {
+                          background: 'var(--mfct-warm-bg)', color: 'var(--mfct-dark-green)', borderColor: 'var(--mfct-border)'
+                        }}
+                      >
+                        {'\u20B9'}{val.toLocaleString('en-IN')}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-3 font-bold" style={{ color: 'var(--mfct-gold)' }}>{'\u20B9'}</span>
+                    <input
+                      type="number"
+                      placeholder={tr('\u0907\u091a\u094D\u091B\u093E\u0928\u0941\u0938\u093E\u0930 \u0930\u093E\u0936\u093F \u0926\u0930\u094D\u091C \u0915\u0930\u0947\u0902...', '\u0627\u067E\u0646\u06CC \u0645\u0631\u0636\u06CC \u06A9\u06CC \u0631\u0642\u0645 \u062F\u0631\u062C \u06A9\u0631\u06CC\u06BA...', 'Enter custom amount...')}
+                      value={customAmount}
+                      onChange={handleCustomAmountChange}
+                      className="w-full pl-8 pr-4 py-2.5 rounded-xl text-sm font-semibold outline-none"
+                      style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
+                    />
+                  </div>
                 </div>
-                <select
-                  value={selectedCampaignId}
-                  onChange={(e) => handleSelectCampaign(e.target.value)}
-                  className="w-full p-3 rounded-xl text-sm font-medium transition-all outline-none"
-                  style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
+                {selectedCategory === 'Zakat' && (
+                  <ZakatWakalahForm
+                    donorName={donorName}
+                    setDonorName={setDonorName}
+                    guardianName={zakatGuardianName}
+                    setGuardianName={setZakatGuardianName}
+                    address={zakatAddress}
+                    setAddress={setZakatAddress}
+                    mobile={zakatMobile}
+                    setMobile={setZakatMobile}
+                    amount={amount}
+                    customAmount={customAmount}
+                    onAmountClick={handleAmountClick}
+                    onCustomAmountChange={handleCustomAmountChange}
+                    amountInWords={zakatAmountWords}
+                    setAmountInWords={setZakatAmountWords}
+                    isAgreed={zakatAgreed}
+                    setIsAgreed={setZakatAgreed}
+                    campaigns={manualCampaigns}
+                    selectedCampaignId={selectedCampaignId}
+                    setSelectedCampaignId={handleSelectCampaign}
+                    translatedTitles={translatedTitles}
+                    onProceed={handleProceedToPayment}
+                  />
+                )}
+
+                {/* Proceed Step 1 Button */}
+                <button
+                  type="button"
+                  onClick={handleProceedToPayment}
+                  className="mfct-btn-gold cursor-pointer w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2"
                 >
-                  {manualCampaigns.map((c) => {
-                    const cCity = c.city ? c.city.trim() : (c.communityName ? c.communityName.trim() : '');
-                    return (
-                      <option key={c.id} value={c.id}>
-                        {translatedTitles[c.id] || translateCampaignTitle(c.title, language)}
-                        {cCity ? ` — (${tr('शहर', 'شہر', 'City')}: ${cCity})` : ''}
-                        {c.isZakatEligible ? ` (${tr('ज़कात पात्र ✓', 'زکوٰۃ اہل ✓', 'Zakat Eligible ✓')})` : ''}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
+                  <span>{tr('\u092D\u0941\u0917\u0924\u093E\u0928 \u0939\u0947\u0924\u0941 \u0906\u0917\u0947 \u092C\u0922\u093C\u0947\u0902', '\u0627\u062F\u0627\u0626\u06CC\u06AF\u06CC \u06A9\u06D2 \u0644\u0626\u06D2 \u0622\u06AF\u06D2 \u0628\u0691\u06BE\u06CC\u06BA', 'Proceed to Payment')} ({'\u20B9'}{amount.toLocaleString('en-IN')})</span>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              </>
             )}
-
-            {/* Category Selector */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--mfct-dark-green)' }}>
-                {tr('1. दान का प्रकार चुनें', '1. عطیہ کی قسم منتخب کریں', '1. Select Donation Type')}
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {(
-                  [
-                    'General',
-                    'Sadaqah',
-                    'Zakat',
-                    'Fitra',
-                  ] as DonationCategory[]
-                ).map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => {
-                      setSelectedCategory(cat);
-                      if (cat === 'Zakat' && activeCampaign && !activeCampaign.isZakatEligible) {
-                        const zakatCamp = campaigns.find((c) => c.isZakatEligible);
-                        if (zakatCamp) setSelectedCampaignId(zakatCamp.id);
-                      }
-                    }}
-                    className="cursor-pointer py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all text-left flex items-center justify-between"
-                    style={selectedCategory === cat ? {
-                      background: 'var(--mfct-dark-green)',
-                      color: '#fff',
-                      borderColor: 'var(--mfct-gold)',
-                      boxShadow: 'var(--shadow-card)'
-                    } : {
-                      background: 'var(--mfct-warm-bg)',
-                      color: 'var(--mfct-text-dark)',
-                      borderColor: 'var(--mfct-border)'
-                    }}
-                  >
-                    <span>{getCategoryLabel(cat)}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Amount Selection */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--mfct-dark-green)' }}>
-                {tr('3. \u0930\u093E\u0936\u093F \u091a\u0941\u0928\u0947\u0902 (INR \u20B9)', '3. \u0631\u0642\u0645 \u0645\u0646\u062A\u062E\u0628 \u06A9\u0631\u06CC\u06BA (INR \u20B9)', '3. Choose Amount (INR \u20B9)')}
-              </label>
-              <div className="grid grid-cols-4 gap-2 mb-3">
-                {[500, 1000, 2500, 5000].map((val) => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => handleAmountClick(val)}
-                    className="cursor-pointer py-3 rounded-xl font-bold text-sm border transition-all"
-                    style={amount === val && !customAmount ? {
-                      background: 'var(--mfct-dark-green)', color: '#fff', borderColor: 'var(--mfct-gold)'
-                    } : {
-                      background: 'var(--mfct-warm-bg)', color: 'var(--mfct-dark-green)', borderColor: 'var(--mfct-border)'
-                    }}
-                  >
-                    {'\u20B9'}{val.toLocaleString('en-IN')}
-                  </button>
-                ))}
-              </div>
-              <div className="relative">
-                <span className="absolute left-3.5 top-3 font-bold" style={{ color: 'var(--mfct-gold)' }}>{'\u20B9'}</span>
-                <input
-                  type="number"
-                  placeholder={tr('\u0907\u091a\u094D\u091B\u093E\u0928\u0941\u0938\u093E\u0930 \u0930\u093E\u0936\u093F \u0926\u0930\u094D\u091C \u0915\u0930\u0947\u0902...', '\u0627\u067E\u0646\u06CC \u0645\u0631\u0636\u06CC \u06A9\u06CC \u0631\u0642\u0645 \u062F\u0631\u062C \u06A9\u0631\u06CC\u06BA...', 'Enter custom amount...')}
-                  value={customAmount}
-                  onChange={handleCustomAmountChange}
-                  className="w-full pl-8 pr-4 py-2.5 rounded-xl text-sm font-semibold outline-none"
-                  style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
-                />
-              </div>
-            </div>
-            {selectedCategory === 'Zakat' && (
-              <ZakatWakalahForm
-                donorName={donorName}
-                setDonorName={setDonorName}
-                guardianName={zakatGuardianName}
-                setGuardianName={setZakatGuardianName}
-                address={zakatAddress}
-                setAddress={setZakatAddress}
-                mobile={zakatMobile}
-                setMobile={setZakatMobile}
-                amount={amount}
-                customAmount={customAmount}
-                onAmountClick={handleAmountClick}
-                onCustomAmountChange={handleCustomAmountChange}
-                amountInWords={zakatAmountWords}
-                setAmountInWords={setZakatAmountWords}
-                isAgreed={zakatAgreed}
-                setIsAgreed={setZakatAgreed}
-                campaigns={manualCampaigns}
-                selectedCampaignId={selectedCampaignId}
-                setSelectedCampaignId={handleSelectCampaign}
-                translatedTitles={translatedTitles}
-                onProceed={handleProceedToPayment}
-              />
-            )}
-
-            {/* Proceed Step 1 Button */}
-            <button
-              type="button"
-              onClick={handleProceedToPayment}
-              className="mfct-btn-gold cursor-pointer w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2"
-            >
-              <span>{tr('\u092D\u0941\u0917\u0924\u093E\u0928 \u0939\u0947\u0924\u0941 \u0906\u0917\u0947 \u092C\u0922\u093C\u0947\u0902', '\u0627\u062F\u0627\u0626\u06CC\u06AF\u06CC \u06A9\u06D2 \u0644\u0626\u06D2 \u0622\u06AF\u06D2 \u0628\u0691\u06BE\u06CC\u06BA', 'Proceed to Payment')} ({'\u20B9'}{amount.toLocaleString('en-IN')})</span>
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          </>
-          )}
 
           </div>
         )}
