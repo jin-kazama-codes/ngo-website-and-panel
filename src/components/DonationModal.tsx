@@ -417,6 +417,11 @@ export const DonationModal: React.FC<DonationModalProps> = ({
       }
 
       const finalUtr = utrNumber.trim();
+      const isOutside = isOutsideCommunity || Boolean(
+        userCity &&
+        activeCampaign &&
+        !isMatchUserCity(activeCampaign)
+      );
       const donationData: Omit<Donation, 'id'> = {
         transactionId: `TXN${Math.floor(100000000 + Math.random() * 900000000)}`,
         utrNumber: finalUtr,
@@ -424,16 +429,13 @@ export const DonationModal: React.FC<DonationModalProps> = ({
         donorId: currentUser?.id || 'anonymous',
         donorRole: currentUser?.role || 'member',
         donorAvatar: currentUser?.avatar || undefined,
-        campaignId: activeCampaign.id,
-        campaignTitle: activeCampaign.title,
-        communityName: activeCampaign.communityName,
+        // When outside community: do NOT link to any specific campaign
+        campaignId: isOutside ? 'general' : activeCampaign.id,
+        campaignTitle: isOutside ? `${selectedCategory} General Fund (MFCT)` : activeCampaign.title,
+        communityName: isOutside ? 'Mohammad Faeem Charitable Trust (MFCT)' : activeCampaign.communityName,
         amountINR: amount,
         category: selectedCategory,
-        isOutsideCommunity: isOutsideCommunity || Boolean(
-          userCity &&
-          activeCampaign &&
-          !isMatchUserCity(activeCampaign)
-        ),
+        isOutsideCommunity: isOutside,
         paymentMethod,
         paymentScreenshotUrl: screenshotUrl,
         status: 'pending_verification',
@@ -457,6 +459,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
           }
         ] : undefined,
       };
+
 
       const savedDonation = await createDonation(donationData);
 

@@ -66,8 +66,10 @@ export default function SignInPage() {
         setTimeout(() => {
           if (user.role === 'super_admin' || user.role === 'executive_admin' || user.role === 'community_admin') {
             router.push('/admin');
-          } else {
+          } else if (user.status === 'approved' || (user.isVerified && user.status !== 'reject' && user.status !== 'rejected')) {
             router.push('/');
+          } else {
+            router.push('/under-review');
           }
         }, 1200);
       } else {

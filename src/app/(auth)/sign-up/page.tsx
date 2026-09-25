@@ -1745,11 +1745,11 @@ export default function SignUpPage() {
 
               <div className="pt-4 space-y-3">
                 <button
-                  onClick={() => router.push('/')}
+                  onClick={() => router.push('/under-review')}
                   className="cursor-pointer w-full py-4 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 shadow-lg shadow-emerald-950/20 text-[#f0c868]"
                   style={{ background: 'linear-gradient(135deg, #1a3c2c 0%, #0f3322 100%)' }}
                 >
-                  <span>{tr('होम डैशबोर्ड पर जाएं', 'ہوم ڈیش بورڈ پر جائیں', 'Go to Home Dashboard')}</span>
+                  <span>{tr('खाता समीक्षा स्थिति देखें', 'اکاؤنٹ اسٹیٹس دیکھیں', 'View Account Review Status')}</span>
                   <ArrowRight className="w-4 h-4 opacity-90" />
                 </button>
                 <Link href="/sign-in" className="block text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors">
