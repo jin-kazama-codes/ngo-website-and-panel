@@ -30,10 +30,12 @@ import {
   Image as ImageIcon,
   AlertCircle,
   Filter,
-  XCircle
+  XCircle,
+  Trash2,
+  UserX,
 } from 'lucide-react';
 import { DarkListSkeleton } from '../../components/Skeletons';
-import { getUsers, updateUser } from '../../services/userService';
+import { getUsers, updateUser, deleteUser } from '../../services/userService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAppState } from '../../providers/AppStateProvider';
 import { STANDARD_DISTRICTS } from '../../data/districtsData';
@@ -143,6 +145,12 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
   const [rejectionReasonInput, setRejectionReasonInput] = useState('');
   const [rejectionReasonError, setRejectionReasonError] = useState('');
 
+  // Account Termination Modal state
+  const [terminateModalUser, setTerminateModalUser] = useState<User | null>(null);
+  const [terminationReasonInput, setTerminationReasonInput] = useState('');
+  const [terminationReasonError, setTerminationReasonError] = useState('');
+  const [terminating, setTerminating] = useState(false);
+
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
@@ -179,7 +187,25 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
     try {
       setProcessingId(id);
       setProcessingAction('approve');
+      const targetUser = users.find((u) => u.id === id) || (selectedUser?.id === id ? selectedUser : null);
       await updateUser(id, { status: 'approved', rejectionReason: '' });
+
+      // Send approval notification email if email is present
+      if (targetUser?.email) {
+        try {
+          fetch('/api/auth/send-kyc-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: targetUser.email,
+              name: targetUser.name,
+              status: 'approved',
+            }),
+          }).catch((e) => console.warn('Failed to send KYC approval email:', e));
+        } catch (emailErr) {
+          console.warn('KYC approval email call error:', emailErr);
+        }
+      }
 
       // Update local state
       setUsers((prev) =>
@@ -217,11 +243,30 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
       return;
     }
 
-    const id = rejectModalUser.id;
+    const targetUser = rejectModalUser;
+    const id = targetUser.id;
     try {
       setProcessingId(id);
       setProcessingAction('reject');
       await updateUser(id, { status: 'reject', rejectionReason: trimmedReason });
+
+      // Send rejection notification email if email is present
+      if (targetUser?.email) {
+        try {
+          fetch('/api/auth/send-kyc-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: targetUser.email,
+              name: targetUser.name,
+              status: 'rejected',
+              reason: trimmedReason,
+            }),
+          }).catch((e) => console.warn('Failed to send KYC rejection email:', e));
+        } catch (emailErr) {
+          console.warn('KYC rejection email call error:', emailErr);
+        }
+      }
 
       // Update local state
       setUsers((prev) =>
@@ -240,6 +285,67 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
     } finally {
       setProcessingId(null);
       setProcessingAction(null);
+    }
+  };
+
+  const openTerminateModal = (u: User) => {
+    setTerminateModalUser(u);
+    setTerminationReasonInput('');
+    setTerminationReasonError('');
+  };
+
+  const handleConfirmTerminate = async () => {
+    if (!terminateModalUser || !canPerformKycAction) return;
+    const reason = terminationReasonInput.trim();
+    if (!reason) {
+      setTerminationReasonError(
+        tr(
+          'कृपया खाता समाप्त करने का कारण अवश्य दर्ज करें।',
+          'براہ کرم اکاؤنٹ ختم کرنے کی وجہ درج کریں۔',
+          'Termination reason is mandatory. Please provide a reason.'
+        )
+      );
+      return;
+    }
+
+    const targetUser = terminateModalUser;
+    setTerminating(true);
+    try {
+      // 1. Send notification email if email exists
+      if (targetUser.email) {
+        try {
+          await fetch('/api/auth/send-termination-notice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: targetUser.email,
+              name: targetUser.name,
+              reason,
+            }),
+          });
+        } catch (emailErr) {
+          console.warn('Failed to send termination email notice:', emailErr);
+        }
+      }
+
+      // 2. Delete user from database
+      await deleteUser(targetUser.id);
+
+      // 3. Remove user from local state
+      setUsers((prev) => prev.filter((u) => u.id !== targetUser.id));
+
+      if (selectedUser?.id === targetUser.id) {
+        setSelectedUser(null);
+      }
+
+      setTerminateModalUser(null);
+      setTerminationReasonInput('');
+      setTerminationReasonError('');
+    } catch (err: any) {
+      console.error('Terminate user error:', err);
+      setTerminationReasonError(err?.message || 'Failed to terminate user.');
+    } finally {
+      setTerminating(false);
     }
   };
 
@@ -712,17 +818,28 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                         {/* Reject / Revoke Button (Must provide reason) */}
                         <button
                           onClick={() => openRejectModal(u)}
-                          disabled={processingId === u.id}
+                          disabled={processingId === u.id || terminating}
                           className="cursor-pointer px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 font-bold text-xs flex items-center gap-1 transition-colors border border-rose-200 dark:border-rose-800/60 disabled:opacity-50"
                         >
                           <X className="w-3.5 h-3.5" />
                           <span>
                             {isApproved
-                              ? tr('सत्यापन हटाएं', 'منسوخ करें', 'Revoke / Reject')
+                              ? tr('सत्यापन हटाएं', 'منسوخ کریں', 'Revoke / Reject')
                               : isRejected
                                 ? tr('कारण संपादित करें', 'وجہ تبدیل کریں', 'Edit Reason')
-                                : tr('अस्वीकार करें', 'مسترد करें', 'Reject')}
+                                : tr('अस्वीकार करें', 'مسترد کریں', 'Reject')}
                           </span>
+                        </button>
+
+                        {/* Terminate Button */}
+                        <button
+                          onClick={() => openTerminateModal(u)}
+                          disabled={processingId === u.id || terminating}
+                          className="cursor-pointer px-3 py-2 rounded-xl bg-slate-100 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-950/40 text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 font-bold text-xs flex items-center gap-1 transition-colors border border-slate-200 dark:border-slate-700 hover:border-rose-300 disabled:opacity-50"
+                          title={tr('खाता समाप्त करें (हटाएं)', 'اکاؤنٹ ختم کریں', 'Terminate & Delete')}
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                          <span>{tr('समाप्त करें', 'ختم کریں', 'Terminate')}</span>
                         </button>
                       </>
                     )}
@@ -1052,12 +1169,25 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
 
             {/* Modal Footer Actions */}
             <div className="p-4 sm:p-6 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0 bg-slate-50 dark:bg-slate-900">
-              <button
-                onClick={() => setSelectedUser(null)}
-                className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors border border-slate-200 dark:border-slate-700 cursor-pointer"
-              >
-                {tr('बंद करें', 'بند کریں', 'Close')}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedUser(null)}
+                  className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors border border-slate-200 dark:border-slate-700 cursor-pointer"
+                >
+                  {tr('बंद करें', 'بند کریں', 'Close')}
+                </button>
+
+                {canPerformKycAction && (
+                  <button
+                    onClick={() => openTerminateModal(selectedUser)}
+                    disabled={terminating}
+                    className="cursor-pointer px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 transition-all flex items-center gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{tr('खाता समाप्त करें (पुनः पंजीकरण हेतु)', 'اکاؤنٹ ختم کریں', 'Terminate Account')}</span>
+                  </button>
+                )}
+              </div>
 
               <div className="flex items-center gap-2.5">
                 {canPerformKycAction ? (
@@ -1257,6 +1387,141 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                   <XCircle className="w-3.5 h-3.5" />
                 )}
                 <span>{tr('अस्वीकार की पुष्टि करें', 'مسترد کرنے کی تصدیق کریں', 'Confirm Rejection')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Account Termination Confirmation Modal */}
+      {terminateModalUser && (
+        <div className="fixed inset-0 bg-slate-900/70 dark:bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-rose-300 dark:border-rose-900 flex flex-col">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-rose-100 dark:border-rose-950/60 bg-rose-50/60 dark:bg-rose-950/30 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-300 flex items-center justify-center font-bold">
+                  <UserX className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm sm:text-base text-rose-900 dark:text-rose-200">
+                    {tr('सदस्य खाता समाप्त करें', 'اکاؤنٹ ختم کریں', 'Terminate Member Account')}
+                  </h3>
+                  <p className="text-xs text-rose-700/80 dark:text-rose-400">
+                    {terminateModalUser.name} ({terminateModalUser.phone || terminateModalUser.email || terminateModalUser.id.slice(0, 8)})
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (!terminating) {
+                    setTerminateModalUser(null);
+                    setTerminationReasonError('');
+                  }
+                }}
+                disabled={terminating}
+                className="p-1.5 rounded-full hover:bg-rose-200/50 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 cursor-pointer disabled:opacity-50"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-4">
+              <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+                <p className="font-bold flex items-center gap-1.5 mb-1 text-amber-800 dark:text-amber-300">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+                  <span>{tr('स्थायी खाता निष्कासन सूचना', 'مستقل خاتمے کی اطلاع', 'Permanent Account Deletion Notice')}</span>
+                </p>
+                {tr(
+                  'इस सदस्य को समाप्त करने पर उनका रिकॉर्ड डेटाबेस से पूरी तरह हटा दिया जाएगा। इससे उनका मोबाइल नंबर व ईमेल मुक्त हो जाएगा ताकि वे सही विवरण के साथ पुनः पंजीकरण कर सकें। सदस्य को कारण सहित ईमेल भेजा जाएगा।',
+                  'اس رکن کو ختم کرنے پر ان کا ریکارڈ ڈیٹا بیس سے ہٹا دیا جائے گا تاکہ وہ درست معلومات کے ساتھ دوبارہ رجسٹر کر سکیں۔',
+                  'Terminating this member will permanently delete their account from the database. Their phone and email will be freed so they can submit a fresh registration with correct details. A notice email will be sent explaining the reason.'
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  {tr('समाप्त करने का अनिवार्य कारण *', 'ختم کرنے کی لازمی وجہ *', 'Mandatory Termination Reason *')}
+                </label>
+
+                {/* Quick Suggestion Chips */}
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  {[
+                    'अमान्य / अस्पष्ट आधार पहचान दस्तावेज',
+                    'फर्जी या डुप्लीकेट खाता पंजीकरण',
+                    'गलत या अस्वीकार्य सदस्यता विवरण',
+                    'सदस्य के अनुरोध पर नया पंजीकरण हेतु',
+                  ].map((sug) => (
+                    <button
+                      key={sug}
+                      type="button"
+                      onClick={() => {
+                        setTerminationReasonInput(sug);
+                        setTerminationReasonError('');
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-950/40 text-slate-700 hover:text-rose-700 dark:text-slate-300 dark:hover:text-rose-300 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                    >
+                      {sug}
+                    </button>
+                  ))}
+                </div>
+
+                <textarea
+                  rows={3}
+                  value={terminationReasonInput}
+                  onChange={(e) => {
+                    setTerminationReasonInput(e.target.value);
+                    if (e.target.value.trim()) setTerminationReasonError('');
+                  }}
+                  placeholder={tr(
+                    'कृपया विस्तार से बताएं कि इस सदस्य का खाता क्यों समाप्त किया जा रहा है...',
+                    'براہ کرم وجہ تفصیل سے لکھیں...',
+                    'Please describe why this member account is being terminated...'
+                  )}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 placeholder-slate-400 resize-none font-medium"
+                />
+                {terminationReasonError && (
+                  <p className="text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1">
+                    <XCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{terminationReasonError}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!terminating) {
+                    setTerminateModalUser(null);
+                    setTerminationReasonError('');
+                  }
+                }}
+                disabled={terminating}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {tr('रद्द करें', 'منسوخ کریں', 'Cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmTerminate}
+                disabled={terminating}
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-900/30 transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+              >
+                {terminating ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>{tr('समाप्त कर रहे हैं...', 'ختم کر رہے ہیں...', 'Terminating...')}</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{tr('खाता समाप्त एवं हटाएं', 'اکاؤنٹ ختم اور حذف کریں', 'Terminate & Delete Account')}</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

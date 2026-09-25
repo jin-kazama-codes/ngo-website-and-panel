@@ -421,13 +421,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                                   <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                                   <span>{t('nav.kycPending', 'Status: Pending')}</span>
                                 </span>
-                                <button
-                                  type="button"
-                                  onClick={() => { setProfileMenuOpen(false); setKycUpdateOpen(true); }}
+                                <Link
+                                  href="/under-review"
+                                  onClick={() => setProfileMenuOpen(false)}
                                   className="text-[11px] underline text-amber-200 hover:text-white font-semibold cursor-pointer"
                                 >
-                                  {t('nav.editDetails', 'Edit Details')}
-                                </button>
+                                  {t('nav.viewStatus', 'Status Page →')}
+                                </Link>
                               </div>
                               <p className="text-[10px] text-amber-200/80 mt-1">
                                 {t('nav.kycPendingDesc', 'Application is under review by administrator.')}
@@ -445,10 +445,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                                 </span>
                               </div>
 
-                              <button
-                                type="button"
-                                onClick={() => { setProfileMenuOpen(false); setKycUpdateOpen(true); }}
-                                className="w-full p-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-200 text-xs text-left transition-colors cursor-pointer group"
+                              <Link
+                                href="/under-review"
+                                onClick={() => setProfileMenuOpen(false)}
+                                className="w-full p-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-200 text-xs text-left transition-colors cursor-pointer group block"
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="flex items-center gap-1.5 font-bold text-rose-300">
@@ -465,7 +465,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                                     {currentUser.rejectionReason || currentUser.rejection_reason}
                                   </p>
                                 )}
-                              </button>
+                              </Link>
                             </div>
                           )}
 
@@ -668,24 +668,26 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               {/* Mobile KYC Status Indicators */}
               {isPending && (
-                <button
-                  type="button"
-                  onClick={() => { setKycUpdateOpen(true); setMobileMenuOpen(false); }}
-                  className="w-full py-2.5 px-3 rounded-lg text-xs font-bold flex items-center justify-between bg-amber-500/15 border border-amber-500/35 text-amber-200 cursor-pointer"
+                <Link
+                  href="/under-review"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full py-2.5 px-3 rounded-lg text-xs font-bold flex items-center justify-between bg-amber-500/15 border border-amber-500/35 text-amber-200 cursor-pointer block"
                 >
-                  <span className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>{t('nav.kycPending', 'KYC Status: Pending')}</span>
-                  </span>
-                  <span className="text-[11px] underline text-amber-200">{t('nav.editDetails', 'Edit Details')}</span>
-                </button>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>{t('nav.kycPending', 'KYC Status: Pending')}</span>
+                    </span>
+                    <span className="text-[11px] underline text-amber-200">{t('nav.viewStatus', 'View Status →')}</span>
+                  </div>
+                </Link>
               )}
 
               {isRejected && (
-                <button
-                  type="button"
-                  onClick={() => { setKycUpdateOpen(true); setMobileMenuOpen(false); }}
-                  className="w-full p-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-200 text-xs text-left cursor-pointer"
+                <Link
+                  href="/under-review"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full p-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-200 text-xs text-left cursor-pointer block"
                 >
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-1.5 font-bold text-rose-300">
@@ -702,7 +704,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       {currentUser.rejectionReason || currentUser.rejection_reason}
                     </p>
                   )}
-                </button>
+                </Link>
               )}
 
               <button
