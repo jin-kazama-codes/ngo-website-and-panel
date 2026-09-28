@@ -227,7 +227,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div style={{ background: '#ffffff', borderBottom: '3px solid var(--mfct-gold)' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-6 sm:py-3.5 min-h-[115px] sm:min-h-[85px]">
 
-            {/* Brand Logo + Name */}
+            {/* Brand Logo */}
             <Link
               href="/"
               onClick={() => onPageChange('home')}
@@ -795,7 +795,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   const parsed = JSON.parse(stored);
                   localStorage.setItem('mfct_active_user', JSON.stringify({ ...parsed, ...updated }));
                 }
-              } catch {}
+              } catch { }
               window.location.reload();
             }
           }}
