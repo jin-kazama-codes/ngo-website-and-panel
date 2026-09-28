@@ -171,6 +171,8 @@
   "nav.adminPortal": "Admin Portal",
   "nav.join": "Become a Volunteer",
   "nav.myCard": "My ID Card",
+  "nav.editProfile": "Edit Profile",
+  "nav.changePassword": "Change Password",
   "nav.logout": "Logout",
   "nav.login": "Login",
   "hero.badge": "100% Verified Direct Donation Network in India",

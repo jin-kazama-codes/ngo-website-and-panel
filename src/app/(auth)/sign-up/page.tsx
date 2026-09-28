@@ -633,6 +633,13 @@ export default function SignUpPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const formTopRef = useRef<HTMLDivElement>(null);
+  const redirectTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
@@ -710,6 +717,30 @@ export default function SignUpPage() {
 
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim()) {
+      const err = tr(
+        'ईमेल फ़ील्ड आवश्यक है। कृपया अपना ईमेल पता दर्ज करें।',
+        'ای میل کا خانہ ضروری ہے۔ براہ کرم اپنا ای میل درج کریں۔',
+        'Email field is required. Please enter your email address.'
+      );
+      setFormError(err);
+      showToast(err, 'error');
+      formTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      const err = tr(
+        'कृपया एक वैध ईमेल पता दर्ज करें।',
+        'براہ کرم درست ای میل درج کریں۔',
+        'Please enter a valid email address.'
+      );
+      setFormError(err);
+      showToast(err, 'error');
+      formTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
     const missing = [];
     if (!fullName.trim()) missing.push(tr('पूरा नाम', 'مکمل نام', 'Full Name'));
     if (!phone.trim()) missing.push(tr('मोबाइल नंबर', 'موبائل نمبر', 'Mobile Number'));
@@ -845,7 +876,7 @@ export default function SignUpPage() {
       const newMember: User = {
         id: `usr_new_${Date.now()}`,
         name: fullName,
-        email,
+        email: email.trim().toLowerCase(),
         phone,
         city,
         state,
@@ -873,25 +904,27 @@ export default function SignUpPage() {
         help_details: religion === 'Muslim' && isMalikENisab === false && helpType === 'Other' ? helpDetails || undefined : undefined,
       };
 
-      await createUser(newMember);
+      const created = await createUser(newMember);
+      const finalUser = created || newMember;
 
       // Persist session
       const loginInfo = {
-        role: newMember.role,
-        id: newMember.id,
-        email: newMember.email || '',
-        name: newMember.name,
-        avatar: newMember.avatar || '',
-        community_id: newMember.communityId || '',
+        role: finalUser.role,
+        id: finalUser.id,
+        email: finalUser.email || '',
+        name: finalUser.name,
+        avatar: finalUser.avatar || '',
+        community_id: finalUser.communityId || '',
       };
       localStorage.setItem('mfct_is_logged_in', 'true');
-      localStorage.setItem('mfct_user_role', newMember.role);
-      localStorage.setItem('role', newMember.role);
-      localStorage.setItem('id', newMember.id || '');
-      localStorage.setItem('email', newMember.email || '');
-      localStorage.setItem('name', newMember.name || '');
-      localStorage.setItem('avatar', newMember.avatar || '');
-      localStorage.setItem('community_id', newMember.communityId || '');
+      localStorage.setItem('mfct_user_role', finalUser.role);
+      localStorage.setItem('role', finalUser.role);
+      localStorage.setItem('id', finalUser.id || '');
+      localStorage.setItem('status', finalUser.status || 'pending');
+      localStorage.setItem('email', finalUser.email || '');
+      localStorage.setItem('name', finalUser.name || '');
+      localStorage.setItem('avatar', finalUser.avatar || '');
+      localStorage.setItem('community_id', finalUser.communityId || '');
       localStorage.setItem('login_info', JSON.stringify(loginInfo));
       localStorage.setItem('mfct_user_info', JSON.stringify(loginInfo));
 
@@ -899,12 +932,29 @@ export default function SignUpPage() {
       try {
         confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
       } catch { }
-    } catch (err) {
+
+      // Auto redirect to 'Under Review' page
+      redirectTimerRef.current = setTimeout(() => {
+        router.replace('/under-review');
+      }, 1200);
+    } catch (err: any) {
       console.error('Registration error:', err);
-      showToast(
-        tr('पंजीकरण विफल रहा। कृपया पुनः प्रयास करें।', 'رجسٹریشن ناکام رہی۔ دوبارہ کوشش کریں۔', 'Registration failed. Please try again.'),
-        'error'
-      );
+      if (err?.code === '23505' && (err?.message?.includes('users_email_key') || err?.details?.includes('email'))) {
+        showToast(
+          tr('यह ईमेल पता पहले से पंजीकृत है। कृपया दूसरा ईमेल दर्ज करें।', 'یہ ای میل ایڈریس پہلے سے رجسٹرڈ ہے۔ براہ کرم دوسرا ای میل درج کریں۔', 'This email is already registered. Please use another email.'),
+          'error'
+        );
+      } else if (err?.code === '23505' && (err?.message?.includes('phone') || err?.details?.includes('phone'))) {
+        showToast(
+          tr('यह फोन नंबर पहले से पंजीकृत है।', 'یہ فون نمبر پہلے سے رجسٹرڈ ہے۔', 'This phone number is already registered.'),
+          'error'
+        );
+      } else {
+        showToast(
+          tr('पंजीकरण विफल रहा। कृपया पुनः प्रयास करें।', 'رجسٹریشن ناکام رہی۔ دوبارہ کوشش کریں۔', 'Registration failed. Please try again.'),
+          'error'
+        );
+      }
     } finally {
       setSubmitting(false);
     }
@@ -1148,7 +1198,7 @@ export default function SignUpPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    {tr('ईमेल पता (वैकल्पिक)', 'ای میل (اختیاری)', 'Email Address (Optional)')}
+                    {tr('ईमेल पता *', 'ای میل ایڈریس *', 'Email Address *')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -1156,6 +1206,7 @@ export default function SignUpPage() {
                     </div>
                     <input
                       type="email"
+                      required
                       placeholder="tariq@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -1744,11 +1795,25 @@ export default function SignUpPage() {
               </div>
 
               <div className="pt-4 space-y-3">
+                <div className="flex items-center justify-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 py-2.5 px-4 rounded-xl">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping" />
+                  <span>
+                    {tr(
+                      'समीक्षा स्थिति पृष्ठ पर स्वतः भेजा जा रहा है…',
+                      'آپ کو خود بخود جائزہ صفحہ پر منتقل کیا جا رہا ہے…',
+                      'Automatically redirecting to Under Review page…'
+                    )}
+                  </span>
+                </div>
                 <button
-                  onClick={() => router.push('/under-review')}
+                  onClick={() => {
+                    if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+                    router.replace('/under-review');
+                  }}
                   className="cursor-pointer w-full py-4 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 shadow-lg shadow-emerald-950/20 text-[#f0c868]"
                   style={{ background: 'linear-gradient(135deg, #1a3c2c 0%, #0f3322 100%)' }}
                 >
+                  <div className="w-4 h-4 border-2 border-amber-300/30 border-t-amber-300 rounded-full animate-spin" />
                   <span>{tr('खाता समीक्षा स्थिति देखें', 'اکاؤنٹ اسٹیٹس دیکھیں', 'View Account Review Status')}</span>
                   <ArrowRight className="w-4 h-4 opacity-90" />
                 </button>

@@ -46,8 +46,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const displayName = (currentUser.name || 'User').replace(/\s*\([^)]*\)/g, '').trim() || 'User';
   const userStatus = currentUser.status || (currentUser.isVerified ? 'approved' : 'pending');
-  const isPending = userStatus === 'pending';
-  const isRejected = userStatus === 'reject' || userStatus === 'rejected';
   const isApproved = userStatus === 'approved';
   const distRoleKeys = [
     'district_president',
@@ -316,30 +314,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Login / User Info & Dropdown */}
               {onLogout ? (
                 <div className="flex items-center gap-2 relative">
-                  {/* Navbar indicator when Rejected */}
-                  {isRejected && (
-                    <button
-                      onClick={() => setKycUpdateOpen(true)}
-                      className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all animate-pulse"
-                      title="KYC Rejected - Click to Update Details"
-                    >
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      <span>{t('nav.kycRejectedUpdate', 'KYC Rejected - Update Now')}</span>
-                    </button>
-                  )}
-
-                  {/* Navbar indicator when Pending */}
-                  {isPending && (
-                    <button
-                      onClick={() => setKycUpdateOpen(true)}
-                      className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-semibold cursor-pointer transition-all"
-                      title="KYC Under Review - Click to View / Edit Details"
-                    >
-                      <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span>{t('nav.kycPendingBadge', 'KYC Pending')}</span>
-                    </button>
-                  )}
-
                   <button
                     onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                     className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md hover:brightness-105"
@@ -413,62 +387,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                             </Link>
                           ) : null}
 
-                          {/* When status is Pending */}
-                          {isPending && (
-                            <div className="w-full p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/35 text-amber-200 text-xs">
-                              <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-1.5 font-bold text-amber-300">
-                                  <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                                  <span>{t('nav.kycPending', 'Status: Pending')}</span>
-                                </span>
-                                <Link
-                                  href="/under-review"
-                                  onClick={() => setProfileMenuOpen(false)}
-                                  className="text-[11px] underline text-amber-200 hover:text-white font-semibold cursor-pointer"
-                                >
-                                  {t('nav.viewStatus', 'Status Page →')}
-                                </Link>
-                              </div>
-                              <p className="text-[10px] text-amber-200/80 mt-1">
-                                {t('nav.kycPendingDesc', 'Application is under review by administrator.')}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* When status is Rejected: display below Pending status */}
-                          {isRejected && (
-                            <div className="space-y-1">
-                              <div className="w-full px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300/60 text-[10px] flex items-center justify-between line-through">
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3 text-amber-400/60" />
-                                  <span>Status: Pending</span>
-                                </span>
-                              </div>
-
-                              <Link
-                                href="/under-review"
-                                onClick={() => setProfileMenuOpen(false)}
-                                className="w-full p-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-200 text-xs text-left transition-colors cursor-pointer group block"
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span className="flex items-center gap-1.5 font-bold text-rose-300">
-                                    <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                                    <span>{t('nav.kycRejected', 'Status: Rejected')}</span>
-                                  </span>
-                                  <span className="text-[10px] px-2 py-0.5 rounded bg-rose-600 text-white font-bold group-hover:bg-rose-500 transition-colors">
-                                    {t('nav.updateNow', 'Update Now →')}
-                                  </span>
-                                </div>
-                                {(currentUser.rejectionReason || currentUser.rejection_reason) && (
-                                  <p className="text-[11px] text-rose-100 font-medium mt-1 truncate pl-5">
-                                    <span className="text-rose-400 font-semibold">{t('nav.reason', 'Reason')}: </span>
-                                    {currentUser.rejectionReason || currentUser.rejection_reason}
-                                  </p>
-                                )}
-                              </Link>
-                            </div>
-                          )}
-
                           {/* ID Card Link */}
                           <button
                             onClick={() => { setProfileMenuOpen(false); onOpenMembershipCard(); }}
@@ -479,22 +397,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                           </button>
 
                           {/* Edit / Update KYC Link */}
-                          <button
-                            onClick={() => { setProfileMenuOpen(false); setKycUpdateOpen(true); }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
-                          >
-                            {isApproved ? (
-                              <>
-                                <UserIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                                <span>{t('nav.editProfile', 'Edit Profile')}</span>
-                              </>
-                            ) : (
-                              <>
-                                <ShieldCheck className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                                <span>{t('nav.kycUpdate', 'Update KYC Details')}</span>
-                              </>
-                            )}
-                          </button>
+                          {isApproved && (
+                            <button
+                              onClick={() => { setProfileMenuOpen(false); setKycUpdateOpen(true); }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
+                            >
+                              <UserIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                              <span>{t('nav.editProfile', 'Edit Profile')}</span>
+                            </button>
+                          )}
 
                           {/* Change Password Link */}
                           <button
@@ -666,46 +577,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </Link>
               )}
 
-              {/* Mobile KYC Status Indicators */}
-              {isPending && (
-                <Link
-                  href="/under-review"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-2.5 px-3 rounded-lg text-xs font-bold flex items-center justify-between bg-amber-500/15 border border-amber-500/35 text-amber-200 cursor-pointer block"
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <span className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-                      <span>{t('nav.kycPending', 'KYC Status: Pending')}</span>
-                    </span>
-                    <span className="text-[11px] underline text-amber-200">{t('nav.viewStatus', 'View Status →')}</span>
-                  </div>
-                </Link>
-              )}
-
-              {isRejected && (
-                <Link
-                  href="/under-review"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full p-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-200 text-xs text-left cursor-pointer block"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 font-bold text-rose-300">
-                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                      <span>{t('nav.kycRejected', 'KYC Status: Rejected')}</span>
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-rose-600 text-white font-bold">
-                      {t('nav.updateNow', 'Update Now →')}
-                    </span>
-                  </div>
-                  {(currentUser.rejectionReason || currentUser.rejection_reason) && (
-                    <p className="text-[11px] text-rose-100 font-medium mt-1 truncate pl-5">
-                      <span className="text-rose-400 font-semibold">{t('nav.reason', 'Reason')}: </span>
-                      {currentUser.rejectionReason || currentUser.rejection_reason}
-                    </p>
-                  )}
-                </Link>
-              )}
 
               <button
                 onClick={() => { onOpenMembershipCard(); setMobileMenuOpen(false); }}
@@ -716,23 +587,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               {/* Edit / Update KYC in mobile menu */}
-              <button
-                onClick={() => { setKycUpdateOpen(true); setMobileMenuOpen(false); }}
-                className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.12)' }}
-              >
-                {isApproved ? (
-                  <>
-                    <UserIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                    <span>{t('nav.editProfile', 'Edit Profile')}</span>
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                    <span>{t('nav.kycUpdate', 'Update KYC Details')}</span>
-                  </>
-                )}
-              </button>
+              {isApproved && (
+                <button
+                  onClick={() => { setKycUpdateOpen(true); setMobileMenuOpen(false); }}
+                  className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                  style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.12)' }}
+                >
+                  <UserIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                  <span>{t('nav.editProfile', 'Edit Profile')}</span>
+                </button>
+              )}
 
               {/* Change Password in mobile menu */}
               <button
