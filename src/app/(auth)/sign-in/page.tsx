@@ -55,6 +55,7 @@ export default function SignInPage() {
         localStorage.setItem('mfct_user_role', user.role);
         localStorage.setItem('role', user.role);
         localStorage.setItem('id', user.id || '');
+        localStorage.setItem('status', user.status || 'pending');
         localStorage.setItem('email', user.email || '');
         localStorage.setItem('name', user.name || '');
         localStorage.setItem('avatar', user.avatar || '');
@@ -64,12 +65,15 @@ export default function SignInPage() {
 
         setLoggedIn(true);
         setTimeout(() => {
-          if (user.role === 'super_admin' || user.role === 'executive_admin' || user.role === 'community_admin') {
-            router.push('/admin');
-          } else if (user.status === 'approved' || (user.isVerified && user.status !== 'reject' && user.status !== 'rejected')) {
-            router.push('/');
-          } else {
+          const userStatus = (user.status || '').toLowerCase();
+          const isUserApproved = userStatus === 'approved' || (user.isVerified && userStatus !== 'reject' && userStatus !== 'rejected' && userStatus !== 'pending');
+
+          if (!isUserApproved || userStatus === 'pending' || userStatus === 'reject' || userStatus === 'rejected') {
             router.push('/under-review');
+          } else if (user.role === 'super_admin' || user.role === 'executive_admin' || user.role === 'community_admin') {
+            router.push('/admin');
+          } else {
+            router.push('/');
           }
         }, 1200);
       } else {
