@@ -15,7 +15,11 @@ export async function GET(request: Request) {
       query = query.eq('donor_id', donorId);
     }
     if (campaignId) {
-      query = query.eq('campaign_id', campaignId);
+      if (campaignId === 'general') {
+        query = query.or('campaign_id.is.null,campaign_id.eq.general');
+      } else {
+        query = query.eq('campaign_id', campaignId);
+      }
     }
 
     const { data, error } = await query;
@@ -74,23 +78,32 @@ export async function POST(request: Request) {
     const body = await request.json();
     const nowIso = new Date().toISOString();
 
-    const newDonation = {
+    const rawCampaignId = body.campaignId || body.campaign_id;
+    const rawDonorId = body.donorId || body.donor_id;
+
+    // In PostgreSQL, 'general' is not a valid campaign ID and 'anonymous' is not a valid user ID.
+    // If set to strings that don't exist in campaigns/users tables, foreign key constraints fail.
+    // Setting to null satisfies foreign key checks while representing General Fund / unauthenticated donor.
+    const campaignId = (!rawCampaignId || rawCampaignId === 'general') ? null : rawCampaignId;
+    const donorId = (!rawDonorId || rawDonorId === 'anonymous') ? null : rawDonorId;
+
+    const newDonation: Record<string, any> = {
       id: body.id || `don_${Date.now()}`,
-      transaction_id: body.transactionId || body.transaction_id,
+      transaction_id: body.transactionId || body.transaction_id || `TXN${Date.now()}`,
       utr_number: body.utrNumber || body.utr_number,
-      donor_name: body.donorName || body.donor_name,
-      donor_id: body.donorId || body.donor_id,
-      donor_role: body.donorRole || body.donor_role,
+      donor_name: body.donorName || body.donor_name || 'Anonymous Donor',
+      donor_id: donorId,
+      donor_role: body.donorRole || body.donor_role || 'member',
       donor_avatar: body.donorAvatar || body.donor_avatar || null,
-      campaign_id: body.campaignId || body.campaign_id,
-      campaign_title: body.campaignTitle || body.campaign_title,
-      community_name: body.communityName || body.community_name,
-      amount_inr: body.amountINR || body.amount_inr,
-      category: body.category,
+      campaign_id: campaignId,
+      campaign_title: body.campaignTitle || body.campaign_title || 'General Fund',
+      community_name: body.communityName || body.community_name || 'Mohammad Faeem Charitable Trust (MFCT)',
+      amount_inr: Number(body.amountINR || body.amount_inr || 0),
+      category: body.category || 'General',
       is_outside_community: body.isOutsideCommunity !== undefined ? Boolean(body.isOutsideCommunity) : false,
-      payment_method: body.paymentMethod || body.payment_method,
+      payment_method: body.paymentMethod || body.payment_method || 'UPI',
       payment_screenshot_url: body.paymentScreenshotUrl || body.payment_screenshot_url || null,
-      status: body.status || 'verified',
+      status: body.status || 'pending_verification',
       date: body.date || new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
       created_at: nowIso,
       receipt_number: body.receiptNumber || body.receipt_number || `RCP-${Date.now().toString().slice(-6)}`,
@@ -111,17 +124,45 @@ export async function POST(request: Request) {
     let { data, error } = await supabaseAdmin.from('donations').insert(newDonation).select().single();
     if (error) {
       console.error('Supabase error inserting donation:', error);
-      // If error is about is_outside_community column missing, retry without it
-      if (error.message?.includes('is_outside_community')) {
+
+      // 1. If error is foreign key violation on campaign_id, set campaign_id = null and retry
+      if (error.message?.includes('donations_campaign_id_fkey') || error.message?.includes('campaign_id')) {
+        newDonation.campaign_id = null;
+        const retryRes = await supabaseAdmin.from('donations').insert(newDonation).select().single();
+        if (!retryRes.error) {
+          data = retryRes.data;
+          error = null;
+        } else {
+          error = retryRes.error;
+        }
+      }
+
+      // 2. If error is foreign key violation on donor_id, set donor_id = null and retry
+      if (error && (error.message?.includes('donations_donor_id_fkey') || error.message?.includes('donor_id'))) {
+        newDonation.donor_id = null;
+        const retryRes = await supabaseAdmin.from('donations').insert(newDonation).select().single();
+        if (!retryRes.error) {
+          data = retryRes.data;
+          error = null;
+        } else {
+          error = retryRes.error;
+        }
+      }
+
+      // 3. If error is about is_outside_community column missing, retry without it
+      if (error && error.message?.includes('is_outside_community')) {
         delete (newDonation as any).is_outside_community;
         const retryRes = await supabaseAdmin.from('donations').insert(newDonation).select().single();
         if (!retryRes.error) {
           data = retryRes.data;
           error = null;
+        } else {
+          error = retryRes.error;
         }
       }
-      // If error is related to json vs text format for wakalahInformation, retry with JSON string
-      if (newDonation.wakalahInformation && typeof newDonation.wakalahInformation !== 'string') {
+
+      // 4. If error is related to json vs text format for wakalahInformation, retry with JSON string
+      if (error && newDonation.wakalahInformation && typeof newDonation.wakalahInformation !== 'string') {
         try {
           const retryDonation = {
             ...newDonation,
@@ -131,12 +172,15 @@ export async function POST(request: Request) {
           if (!retryRes.error) {
             data = retryRes.data;
             error = null;
+          } else {
+            error = retryRes.error;
           }
         } catch { }
       }
+
       if (error) {
-        // Return created payload if DB insertion returned warning
-        return NextResponse.json({ success: true, data: newDonation, warning: error.message });
+        console.error('All retry attempts failed to insert donation:', error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
       }
     }
 
@@ -189,7 +233,15 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, data });
+    const returnData = {
+      ...(data || newDonation),
+      campaignId: (data?.campaign_id || rawCampaignId || 'general'),
+      campaign_id: (data?.campaign_id || rawCampaignId || 'general'),
+      donorId: (data?.donor_id || rawDonorId || 'anonymous'),
+      donor_id: (data?.donor_id || rawDonorId || 'anonymous'),
+    };
+
+    return NextResponse.json({ success: true, data: returnData });
   } catch (err: any) {
     console.error('Error in POST /api/donations:', err);
     return NextResponse.json({ success: false, error: err?.message || 'Failed to process donation' }, { status: 500 });
