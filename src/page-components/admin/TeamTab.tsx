@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
-import { getUsers } from '../../services/userService';
+import { getUsers, updateUser } from '../../services/userService';
 import {
   getTeams,
   createTeam,
@@ -229,6 +229,9 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
     setSaveError(null);
     setIsSaving(true);
 
+    // Determine the district value to assign to users
+    const activeDistrict = activeUser?.city || activeUser?.district || '';
+
     const validInitialMembers: TeamMember[] = formInitialMembers
       .filter((m) => m.name.trim().length > 0)
       .map((m) => ({
@@ -256,6 +259,25 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
       const created = await createTeam(newUnitData);
       setTeams((prev) => [created, ...prev]);
       setIsCreateModalOpen(false);
+
+      // Update team head's district and district role
+      if (formPresidentUserId) {
+        updateUser(formPresidentUserId, {
+          district: activeDistrict,
+          districtRole: 'team_head',
+        }).catch(() => {});
+      }
+
+      // Update each member's district and district role
+      const memberUserIds = formInitialMembers
+        .map((m) => m.id)
+        .filter((id) => id && !id.startsWith('draft-') && id !== formPresidentUserId);
+      memberUserIds.forEach((uid) => {
+        updateUser(uid, {
+          district: activeDistrict,
+          districtRole: 'team_member',
+        }).catch(() => {});
+      });
 
       // Reset Form
       setFormUnitName('');
@@ -286,6 +308,8 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
     setSaveError(null);
     setIsSaving(true);
 
+    const activeDistrict = activeUser?.city || activeUser?.district || '';
+
     const newMem: TeamMember = {
       // Use the real registered user's ID if selected, otherwise generate one
       id: newMemberUserId || `mem-${Date.now()}`,
@@ -303,6 +327,15 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
         activeVolunteersCount: updatedCount,
       });
       setTeams((prev) => prev.map((t) => (t.id === updatedTeam.id ? updatedTeam : t)));
+
+      // Update the user's district and district role if a registered user was selected
+      if (newMemberUserId) {
+        updateUser(newMemberUserId, {
+          district: activeDistrict,
+          districtRole: 'team_member',
+        }).catch(() => {});
+      }
+
       setSelectedTeamForMember(null);
       setNewMemberUserId('');
       setNewMemberName('');
@@ -325,6 +358,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
     setSaveError(null);
     setIsSaving(true);
 
+    const activeDistrict = activeUser?.city || activeUser?.district || '';
     const today = new Date().toISOString().split('T')[0];
 
     const newMembers: TeamMember[] = selectedUserIds.map((uId) => {
@@ -347,6 +381,15 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
         activeVolunteersCount: updatedCount,
       });
       setTeams((prev) => prev.map((t) => (t.id === updatedTeam.id ? updatedTeam : t)));
+
+      // Update each added member's district and district role
+      selectedUserIds.forEach((uid) => {
+        updateUser(uid, {
+          district: activeDistrict,
+          districtRole: 'team_member',
+        }).catch(() => {});
+      });
+
       setSelectedTeamForMember(null);
       setSelectedUserIds([]);
       setUserSearchQuery('');
@@ -398,6 +441,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
   };
 
   const handleApproveTeam = async (teamId: string) => {
+    if (!isDistrictPresident && !isSuperOrExecutive) return;
     setApprovingTeamId(teamId);
     // Optimistic update
     setTeams((prev) =>
@@ -518,9 +562,9 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
 
               <span>
                 {tr(
-                  'नई ब्लॉक / नगर टीम गठित करें',
-                  'نئی بلاک / شہری ٹیم تشکیل دیں',
-                  ' New Block / City Team'
+                  'नई टीम गठित करें',
+                  'نئی ٹیم تشکیل دیں',
+                  ' Add Team'
                 )}
               </span>
             </button>
@@ -541,9 +585,9 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
           <Shield className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'rgb(217,119,6)' }} />
           <span>
             {tr(
-              'आप जिला महासचिव हैं — केवल आप ही टीम गठित कर सकते हैं और सदस्य जोड़/हटा सकते हैं। नई टीम "अनुमोदन हेतु लंबित" स्थिति में रहेगी जब तक जिला अध्यक्ष द्वारा अनुमोदित न हो।',
-              'آپ ضلعی جنرل سیکرٹری ہیں — صرف آپ ہی ٹیم بنا سکتے ہیں اور اراکین شامل/ہٹا سکتے ہیں۔ نئی ٹیم ضلعی صدر کی منظوری تک "زیر التواء" رہے گی۔',
-              'You are the District General Secretary — only you can form teams and add/remove members. New teams remain Pending until approved by the District President.'
+              'आप जिला महासचिव हैं — केवल आप ही टीम गठित कर सकते हैं और सदस्य जोड़/हटा सकते हैं। नई टीम "अनुमोदन हेतु लंबित" स्थिति में रहेगी जब तक जिला अध्यक्ष या सुपर एडमिन द्वारा अनुमोदित न हो।',
+              'آپ ضلعی جنرل سیکرٹری ہیں — صرف آپ ہی ٹیم بنا سکتے ہیں اور اراکین شامل/ہٹا سکتے ہیں۔ نئی ٹیم ضلعی صدر یا سپر ایڈمن کی منظوری تک "زیر التواء" رہے گی۔',
+              'You are the District General Secretary — only you can form teams and add/remove members. New teams remain Pending until approved by the District President or Super Admin.'
             )}
           </span>
         </div>
@@ -675,8 +719,8 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
                       <span>{team.activeVolunteersCount} {tr('सक्रिय कार्यकर्ता', 'رضاکار', 'Volunteers')}</span>
                     </span>
 
-                    {/* District President: Approve button for pending teams */}
-                    {isDistrictPresident && team.status === 'pending' && (
+                    {/* District President & Super / Executive Admin: Approve button for pending teams */}
+                    {(isDistrictPresident || isSuperOrExecutive) && team.status === 'pending' && (
                       <button
                         onClick={() => handleApproveTeam(team.id)}
                         disabled={approvingTeamId === team.id}

@@ -433,6 +433,7 @@ export function AppStateProvider({
             onOpenMembershipCard={handleOpenMembershipCard}
             onNavigateToAdmin={handleNavigateToAdmin}
             onOpenZakatCalc={handleOpenZakatCalc}
+            isInitialized={isInitialized}
           />
           <main className="flex-1">{children}</main>
           <Footer

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../../types';
@@ -120,6 +120,7 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
   };
 
   const handleApproveMeeting = async (meetingId: string) => {
+    if (!isSuperOrExecutive && !isDistrictPresident) return;
     setApprovingId(meetingId);
     try {
       const updated = await approveMeeting(meetingId);
@@ -236,13 +237,17 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
         date: formData.date,
         time: resolvedTime,
         venue: formData.venue,
-        status: 'pending' as any,
+        status: (isSuperOrExecutive ? 'upcoming' : 'pending') as any,
         district: activeUser?.district,
       };
 
       const savedMeeting = await createMeeting(meetingPayload);
       setMeetings((prev) => [savedMeeting, ...prev.filter((m) => m.id !== savedMeeting.id)]);
-      showToast(tr('बैठक विवरण Supabase में सुरक्षित हो गया!', 'اجلاس کی کارروائی ڈیٹا بیس میں محفوظ ہوگئی!', 'Meeting successfully saved to Supabase DB!'), 'success');
+      if (isSuperOrExecutive) {
+        showToast(tr('बैठक सुरक्षित एवं प्रकाशित हो गई!', 'اجلاس کا ریکارڈ محفوظ ہوگیا!', 'Meeting scheduled and published successfully!'), 'success');
+      } else {
+        showToast(tr('बैठक विवरण दर्ज (जिला अध्यक्ष / एडमिन के अनुमोदन हेतु लंबित)!', 'اجلاس کا ریکارڈ درج (منظوری زیر التواء)!', 'Meeting record submitted (Pending approval by President / Admin)!'), 'success');
+      }
 
       setIsCreateOpen(false);
       setFormData({

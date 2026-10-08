@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { User, UserRole, Community } from '../../types';
+import { User, UserRole, Community, MemberNominee, MemberBankDetails } from '../../types';
 import { getUsers, createUser, deleteUser, updateUser } from '../../services/userService';
+import { getMemberNominees, getMemberBankDetails } from '../../services/memberService';
 import { getCommunities } from '../../services/communityService';
 import { hashPassword } from '../../lib/auth';
-import { PlusCircle, Edit2, X, Users, CheckCircle2, Search, Upload, Trash2, Mail, Phone, MapPin, Award, Eye, ShieldCheck, FileText, Building2, Calendar, ExternalLink, Lock, Filter } from 'lucide-react';
+import { PlusCircle, Edit2, X, Users, CheckCircle2, Search, Upload, Trash2, Mail, Phone, MapPin, Award, Eye, ShieldCheck, FileText, Building2, Calendar, ExternalLink, Lock, Filter, HeartHandshake, Building, CreditCard } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText, autoTranslateText } from '../../lib/autoTranslate';
 import { translateReligion, translateHelpType, translateDistrictRole } from '../../lib/translateEntity';
@@ -339,6 +340,30 @@ export const ManageUsers: React.FC = () => {
   };
 
   const [viewUser, setViewUser] = useState<User | null>(null);
+  const [viewNominees, setViewNominees] = useState<MemberNominee[]>([]);
+  const [viewBankDetails, setViewBankDetails] = useState<MemberBankDetails[]>([]);
+  const [loadingUserExtra, setLoadingUserExtra] = useState(false);
+
+  useEffect(() => {
+    if (viewUser?.id) {
+      setLoadingUserExtra(true);
+      Promise.all([
+        getMemberNominees(viewUser.id),
+        getMemberBankDetails(viewUser.id),
+      ])
+        .then(([noms, banks]) => {
+          setViewNominees(noms);
+          setViewBankDetails(banks);
+        })
+        .finally(() => {
+          setLoadingUserExtra(false);
+        });
+    } else {
+      setViewNominees([]);
+      setViewBankDetails([]);
+    }
+  }, [viewUser?.id]);
+
   const [assignRoleUser, setAssignRoleUser] = useState<User | null>(null);
   const [assignDistrict, setAssignDistrict] = useState('');
   const [assignRole, setAssignRole] = useState<string>('member');
@@ -1454,6 +1479,62 @@ export const ManageUsers: React.FC = () => {
                     </p>
                   </div>
                 )}
+
+                {/* Member Nominee Section */}
+                <div className="col-span-2 p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40">
+                  <span className="text-[10px] font-extrabold text-emerald-800 dark:text-emerald-300 uppercase flex items-center gap-1.5 mb-2">
+                    <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
+                    {tr('नॉमिनी विवरण (Nominee Details)', 'نامزد کی تفصیلات', 'Nominee Details')}
+                  </span>
+                  {loadingUserExtra ? (
+                    <p className="text-slate-400 italic">Loading nominee...</p>
+                  ) : viewNominees.length > 0 ? (
+                    <div className="space-y-2">
+                      {viewNominees.map((nom) => (
+                        <div key={nom.id} className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-emerald-100 dark:border-emerald-900 flex items-center justify-between">
+                          <div>
+                            <p className="font-bold text-slate-900 dark:text-white">{nom.nominee_name} ({nom.relation})</p>
+                            <p className="text-[11px] text-slate-500 font-mono">Ph: {nom.phone} • Share: {nom.share_percentage || 100}%</p>
+                          </div>
+                          {nom.aadhaar_number && (
+                            <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                              •••• {nom.aadhaar_number.slice(-4)}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-slate-400 italic">{tr('कोई नॉमिनी दर्ज नहीं है', 'کوئی نامزد درج نہیں ہے', 'No nominee registered yet')}</p>
+                  )}
+                </div>
+
+                {/* Member Bank Details Section */}
+                <div className="col-span-2 p-3.5 rounded-2xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-200/60 dark:border-teal-800/40">
+                  <span className="text-[10px] font-extrabold text-teal-800 dark:text-teal-300 uppercase flex items-center gap-1.5 mb-2">
+                    <Building className="w-3.5 h-3.5 text-teal-600" />
+                    {tr('सदस्य बैंक खाता (Member Bank Details)', 'بینک تفصیلات', 'Member Bank Account Details')}
+                  </span>
+                  {loadingUserExtra ? (
+                    <p className="text-slate-400 italic">Loading bank details...</p>
+                  ) : viewBankDetails.length > 0 ? (
+                    <div className="space-y-2">
+                      {viewBankDetails.map((b) => (
+                        <div key={b.id} className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-teal-100 dark:border-teal-900 flex items-center justify-between">
+                          <div>
+                            <p className="font-bold text-slate-900 dark:text-white uppercase">{b.bank_name}</p>
+                            <p className="text-[11px] text-slate-500 font-mono">A/C: •••• {b.account_number.slice(-4)} • IFSC: {b.ifsc_code}</p>
+                          </div>
+                          <span className="font-bold text-[10px] px-2 py-0.5 rounded bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300">
+                            {b.account_holder_name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-slate-400 italic">{tr('कोई बैंक खाता दर्ज नहीं है', 'کوئی بینک درج نہیں ہے', 'No bank details saved yet')}</p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1656,4 +1737,4 @@ export const ManageUsers: React.FC = () => {
       )}
     </div>
   );
-};
+}

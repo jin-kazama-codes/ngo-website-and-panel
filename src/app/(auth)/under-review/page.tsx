@@ -206,13 +206,6 @@ export default function UnderReviewPage() {
 
         <div className="flex items-center gap-3">
           <LanguageSelector compact mode="admin" />
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 transition-all cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{tr('साइन आउट', 'سائن آؤٹ', 'Sign Out')}</span>
-          </button>
         </div>
       </header>
 

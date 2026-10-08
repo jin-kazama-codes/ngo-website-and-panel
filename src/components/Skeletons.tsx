@@ -243,3 +243,70 @@ export const DistrictCommitteeBoardSkeleton = () => (
   </div>
 );
 
+// --- MEMBER NOMINEE CARD SKELETON ---
+export const NomineeCardSkeleton = () => (
+  <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden p-6 animate-pulse space-y-5">
+    <div className="flex items-start justify-between">
+      <div className="flex items-center gap-3.5">
+        <div className="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 shrink-0" />
+        <div className="space-y-2">
+          <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-36" />
+          <div className="h-3.5 bg-slate-100 dark:bg-slate-800/60 rounded w-24" />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-slate-800" />
+        <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-slate-800" />
+      </div>
+    </div>
+    <div className="grid grid-cols-2 gap-3">
+      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/50 space-y-2">
+        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20" />
+        <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-28 font-mono" />
+      </div>
+      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/50 space-y-2">
+        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-16" />
+        <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24" />
+      </div>
+    </div>
+    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/50 space-y-2">
+      <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-14" />
+      <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-4/5" />
+    </div>
+    <div className="h-10 rounded-2xl bg-slate-100 dark:bg-slate-800/60" />
+  </div>
+);
+
+// --- MEMBER BANK CARD SKELETON ---
+export const MemberBankCardSkeleton = () => (
+  <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden p-6 animate-pulse space-y-5">
+    <div className="flex items-start justify-between">
+      <div className="flex items-center gap-3.5">
+        <div className="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 shrink-0" />
+        <div className="space-y-2">
+          <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-40" />
+          <div className="h-3.5 bg-slate-100 dark:bg-slate-800/60 rounded w-28" />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-slate-800" />
+        <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-slate-800" />
+      </div>
+    </div>
+    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/50 space-y-2">
+      <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-24" />
+      <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-48 font-mono" />
+    </div>
+    <div className="grid grid-cols-2 gap-3">
+      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/50 space-y-2">
+        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-16" />
+        <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-28 font-mono" />
+      </div>
+      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/50 space-y-2">
+        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-16" />
+        <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20" />
+      </div>
+    </div>
+    <div className="h-10 rounded-2xl bg-slate-100 dark:bg-slate-800/60" />
+  </div>
+);

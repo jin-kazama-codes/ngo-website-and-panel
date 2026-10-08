@@ -233,7 +233,8 @@ export type DistrictRoleKey =
   | 'district_coordinator'
   | 'district_gen_secretary'
   | 'district_secretary'
-  | 'district_finance_coord';
+  | 'district_finance_coord'
+  | 'community_admin';
 
 export interface DistrictPostDefinition {
   slotNumber: string; // '01', '02', etc.
@@ -255,4 +256,38 @@ export interface DistrictCommitteeRecord {
   secretary?: User;
   financeCoord?: User;
 }
+
+export interface MemberNominee {
+  id: string;
+  user_id: string;
+  nominee_name: string;
+  relation: string;
+  phone: string;
+  email?: string;
+  date_of_birth?: string;
+  age?: number;
+  aadhaar_number?: string;
+  id_proof_url?: string;
+  address?: string;
+  share_percentage?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MemberBankDetails {
+  id: string;
+  user_id: string;
+  account_holder_name: string;
+  bank_name: string;
+  account_number: string;
+  ifsc_code: string;
+  branch_name?: string;
+  account_type?: 'Savings' | 'Current';
+  upi_id?: string;
+  passbook_or_cheque_url?: string;
+  is_primary?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 

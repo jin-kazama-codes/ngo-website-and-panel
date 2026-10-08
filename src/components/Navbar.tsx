@@ -23,6 +23,7 @@ interface NavbarProps {
   onOpenMembershipCard: () => void;
   onNavigateToAdmin: () => void;
   onOpenZakatCalc?: () => void;
+  isInitialized?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -36,6 +37,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenMembershipCard,
   onNavigateToAdmin,
   onOpenZakatCalc,
+  isInitialized = true,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -289,30 +291,29 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {language === 'hi' ? 'दान करें' : language === 'ur' ? 'عطیہ کریں' : 'DONATE NOW'}
                   </div>
                   <div className="text-[10px]" style={{ color: '#888' }}>
-                    {language === 'hi' ? 'आर्थिक सहयोग करें' : language === 'ur' ? 'مالی تعاون کریں' : 'Support us financially'}
+                    {language === 'hi' ? 'आर्थिक सहयोग करें' : language === 'ur' ? 'مالی تعاون करें' : 'Support us financially'}
                   </div>
                 </div>
               </button>
 
-              {/* Become a Member */}
-              <Link
-                href="/sign-up"
-                className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md"
-                style={{ border: '2px solid var(--mfct-gold)', background: '#fff8e7', minHeight: '48px', textDecoration: 'none' }}
-              >
-                <UserPlus className="w-5 h-5 shrink-0" style={{ color: 'var(--mfct-gold-dark)' }} />
-                <div className="text-left">
-                  <div className="font-black text-xs tracking-wider" style={{ color: 'var(--mfct-dark-green)', textTransform: isHindi ? 'none' : 'uppercase' }}>
-                    {language === 'hi' ? 'सदस्य बनें' : language === 'ur' ? 'ممبر بنیں' : 'BECOME A MEMBER'}
-                  </div>
-                  <div className="text-[10px]" style={{ color: '#888' }}>
-                    {language === 'hi' ? 'ट्रस्ट से जुड़ें' : language === 'ur' ? 'ٹرسٹ سے جڑیں' : 'Join the trust'}
+              {/* Desktop Auth Section: Skeleton loading while checking auth, User dropdown if logged in, Register/Login if guest */}
+              {!isInitialized ? (
+                <div
+                  className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl animate-pulse"
+                  style={{
+                    background: 'rgba(26,60,44,0.15)',
+                    border: '1.5px solid rgba(200,168,75,0.3)',
+                    minHeight: '48px',
+                    minWidth: '150px',
+                  }}
+                >
+                  <div className="w-7 h-7 rounded-full bg-slate-300 shrink-0" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-3 bg-slate-300 rounded w-20" />
+                    <div className="h-2 bg-slate-200 rounded w-14" />
                   </div>
                 </div>
-              </Link>
-
-              {/* Login / User Info & Dropdown */}
-              {onLogout ? (
+              ) : onLogout ? (
                 <div className="flex items-center gap-2 relative">
                   <button
                     onClick={() => setProfileMenuOpen(!profileMenuOpen)}
@@ -432,24 +433,43 @@ export const Navbar: React.FC<NavbarProps> = ({
                   )}
                 </div>
               ) : (
-                <Link
-                  href="/sign-in"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md hover:brightness-110"
-                  style={{
-                    background: 'var(--mfct-dark-green)',
-                    borderColor: 'var(--mfct-dark-green)',
-                    color: '#ffffff',
-                    minHeight: '48px',
-                    textDecoration: 'none',
-                  }}
-                  title="Login / साइन इन"
-                >
-                  <UserIcon className="w-5 h-5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
-                  <div className="font-black text-xs tracking-wider flex items-center gap-1.5" style={{ color: '#ffffff' }}>
-                    <span>{t('nav.login', 'Login')}</span>
-                    {/* <ChevronDown className="w-3.5 h-3.5 opacity-80" /> */}
-                  </div>
-                </Link>
+                <>
+                  {/* Become a Member */}
+                  <Link
+                    href="/sign-up"
+                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md"
+                    style={{ border: '2px solid var(--mfct-gold)', background: '#fff8e7', minHeight: '48px', textDecoration: 'none' }}
+                  >
+                    <UserPlus className="w-5 h-5 shrink-0" style={{ color: 'var(--mfct-gold-dark)' }} />
+                    <div className="text-left">
+                      <div className="font-black text-xs tracking-wider" style={{ color: 'var(--mfct-dark-green)', textTransform: isHindi ? 'none' : 'uppercase' }}>
+                        {language === 'hi' ? 'सदस्य बनें' : language === 'ur' ? 'ممبر بنیں' : 'BECOME A MEMBER'}
+                      </div>
+                      <div className="text-[10px]" style={{ color: '#888' }}>
+                        {language === 'hi' ? 'ट्रस्ट से जुड़ें' : language === 'ur' ? 'ٹرسٹ سے جڑیں' : 'Join the trust'}
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Login */}
+                  <Link
+                    href="/sign-in"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md hover:brightness-110"
+                    style={{
+                      background: 'var(--mfct-dark-green)',
+                      borderColor: 'var(--mfct-dark-green)',
+                      color: '#ffffff',
+                      minHeight: '48px',
+                      textDecoration: 'none',
+                    }}
+                    title="Login / साइन इन"
+                  >
+                    <UserIcon className="w-5 h-5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                    <div className="font-black text-xs tracking-wider flex items-center gap-1.5" style={{ color: '#ffffff' }}>
+                      <span>{t('nav.login', 'Login')}</span>
+                    </div>
+                  </Link>
+                </>
               )}
             </div>
 
@@ -534,7 +554,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             <div className="pt-3 flex flex-col gap-2" style={{ borderTop: '1px solid rgba(200,168,75,0.15)' }}>
-              {onLogout && (
+              {!isInitialized ? (
+                <div className="p-3 rounded-xl mb-1 flex items-center gap-3 animate-pulse" style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(200,168,75,0.25)' }}>
+                  <div className="w-9 h-9 rounded-full bg-white/20 shrink-0" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="h-3.5 bg-white/25 rounded w-28" />
+                    <div className="h-2.5 bg-white/15 rounded w-20" />
+                  </div>
+                </div>
+              ) : onLogout ? (
                 <div className="p-3 rounded-xl mb-1 flex items-center gap-3" style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(200,168,75,0.25)' }}>
                   <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: 'rgba(200,168,75,0.2)', border: '1.5px solid var(--mfct-gold)' }}>
                     {currentUser.avatar && currentUser.avatar !== 'https://via.placeholder.com/150' ? (
@@ -556,7 +584,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
                   </div>
                 </div>
-              )}
+              ) : null}
+
               {onOpenZakatCalc && (
                 <button
                   onClick={() => { onOpenZakatCalc(); setMobileMenuOpen(false); }}
@@ -566,7 +595,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <Calculator className="w-4 h-4" /> {t('nav.zakatCalc', 'Zakat Calculator (2.5%)')}
                 </button>
               )}
-              {isApproved && (
+
+              {onLogout && isApproved && (
                 <Link
                   href="/admin"
                   onClick={() => { onNavigateToAdmin(); setMobileMenuOpen(false); }}
@@ -577,52 +607,61 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </Link>
               )}
 
+              {onLogout && (
+                <>
+                  <button
+                    onClick={() => { onOpenMembershipCard(); setMobileMenuOpen(false); }}
+                    className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                    style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.80)', border: '1px solid rgba(255,255,255,0.10)' }}
+                  >
+                    <Shield className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('nav.myCard', 'View ID Card')} ({displayName})
+                  </button>
 
-              <button
-                onClick={() => { onOpenMembershipCard(); setMobileMenuOpen(false); }}
-                className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.80)', border: '1px solid rgba(255,255,255,0.10)' }}
-              >
-                <Shield className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('nav.myCard', 'View ID Card')} ({displayName})
-              </button>
+                  {/* Edit / Update KYC in mobile menu */}
+                  {isApproved && (
+                    <button
+                      onClick={() => { setKycUpdateOpen(true); setMobileMenuOpen(false); }}
+                      className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                      style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.12)' }}
+                    >
+                      <UserIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                      <span>{t('nav.editProfile', 'Edit Profile')}</span>
+                    </button>
+                  )}
 
-              {/* Edit / Update KYC in mobile menu */}
-              {isApproved && (
-                <button
-                  onClick={() => { setKycUpdateOpen(true); setMobileMenuOpen(false); }}
-                  className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-                  style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.12)' }}
-                >
-                  <UserIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                  <span>{t('nav.editProfile', 'Edit Profile')}</span>
-                </button>
+                  {/* Change Password in mobile menu */}
+                  <button
+                    onClick={() => { setChangePasswordOpen(true); setMobileMenuOpen(false); }}
+                    className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                    style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.12)' }}
+                  >
+                    <KeyRound className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                    <span>{t('nav.changePassword', 'Change Password')}</span>
+                  </button>
+                </>
               )}
 
-              {/* Change Password in mobile menu */}
-              <button
-                onClick={() => { setChangePasswordOpen(true); setMobileMenuOpen(false); }}
-                className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.12)' }}
-              >
-                <KeyRound className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                <span>{t('nav.changePassword', 'Change Password')}</span>
-              </button>
+              {isInitialized && !onLogout && (
+                <Link
+                  href="/sign-up"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mfct-btn-outline w-full py-2.5 rounded-lg text-xs flex items-center justify-center gap-2 cursor-pointer"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <UserPlus className="w-4 h-4" /> {t('nav.join', 'Become a Member')}
+                </Link>
+              )}
 
-              <Link
-                href="/sign-up"
-                onClick={() => setMobileMenuOpen(false)}
-                className="mfct-btn-outline w-full py-2.5 rounded-lg text-xs flex items-center justify-center gap-2 cursor-pointer"
-                style={{ textDecoration: 'none' }}
-              >
-                <UserPlus className="w-4 h-4" /> {t('nav.join', 'Become a Member')}
-              </Link>
               <button
                 onClick={() => { onOpenDonate(); setMobileMenuOpen(false); }}
                 className="mfct-btn-gold w-full py-2.5 rounded-lg text-xs flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Heart className="w-4 h-4 fill-current" /> {t('nav.donate', 'Donate Now')}
               </button>
-              {onLogout ? (
+
+              {!isInitialized ? (
+                <div className="w-full py-2.5 rounded-lg h-9 bg-white/10 animate-pulse" />
+              ) : onLogout ? (
                 <button
                   onClick={() => { onLogout(); setMobileMenuOpen(false); }}
                   className="w-full py-2.5 rounded-lg text-rose-400 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"

@@ -234,8 +234,9 @@ export default function SignInPage() {
                   <input
                     id="sign-in-phone"
                     type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
                     required
-                    autoComplete="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder={tr('अपना मोबाइल नंबर दर्ज करें', 'اپنا موبائل نمبر درج کریں', 'Enter your registered phone number')}

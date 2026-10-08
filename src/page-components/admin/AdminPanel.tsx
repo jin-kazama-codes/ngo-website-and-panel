@@ -24,6 +24,7 @@ import {
   Heart,
   UserCheck,
   Building2,
+  Building,
   AlertTriangle,
   TrendingUp,
   FileText,
@@ -69,6 +70,8 @@ import { UtrAuditTab } from './UtrAuditTab';
 import { FinancialAnalyticsTab } from './FinancialAnalyticsTab';
 import { ContactMessagesTab } from './ContactMessagesTab';
 import { AccountDetailsTab } from './AccountDetailsTab';
+import { NomineeDetailsTab } from './NomineeDetailsTab';
+import { MemberBankDetailsTab } from './MemberBankDetailsTab';
 import { MeetingsTab } from './MeetingsTab';
 import { TeamTab } from './TeamTab';
 import { DistrictCommitteeTab } from './DistrictCommitteeTab';
@@ -218,6 +221,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     'district_gen_secretary',
     'district_secretary',
     'district_finance_coord',
+    'community_admin'
+
   ];
 
   // Extract district role from activeUser.district_role (or districtRole / role fallback)
@@ -238,6 +243,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   } else if (rawDistrictRole === 'district_finance_coord' || rawDistrictRole.includes('finance')) {
     effectiveDistrictRole = 'district_finance_coord';
   }
+  if (rawDistrictRole === 'community_admin') {
+    effectiveDistrictRole = 'community_admin';
+  }
 
   // Also support explicit preview / currentRole if passed
   const rawCurrentRole = ((currentRole as string) || '').toLowerCase().trim().replace(/\s+/g, '_');
@@ -251,8 +259,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     normalizedRole = 'super_admin';
   } else if (activeUser.role === 'executive_admin') {
     normalizedRole = 'executive_admin';
-  } else if (activeUser.role === 'community_admin') {
-    normalizedRole = 'community_admin';
   } else if (effectiveDistrictRole) {
     // User is a designated district team officer via district_role
     normalizedRole = effectiveDistrictRole;
@@ -300,7 +306,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     normalizedRole === 'executive_admin';
 
   const isCommunityGroup = normalizedRole === 'community_admin';
-  const isFinanceGroup = normalizedRole === 'district_finance_coord';
   const isDistrictRole =
     normalizedRole === 'district_president' ||
     normalizedRole === 'district_coordinator' ||
@@ -313,6 +318,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     let commonMenus: { id: string; label: string; icon: any }[] = [
       { id: 'overview', label: t('admin.tabOverview', 'Dashboard Overview'), icon: LayoutDashboard },
     ];
+
+    if (!isSuperOrExecGroup) {
+      commonMenus.push({
+        id: 'my_donations',
+        label: t('admin.tabDonations', 'My Donations Receipts'),
+        icon: CreditCard,
+      });
+      commonMenus.push({
+        id: 'nominee_details',
+        label: t('admin.tabNominee', 'Nominee Details'),
+        icon: UserCheck,
+      });
+      commonMenus.push({
+        id: 'member_bank_details',
+        label: t('admin.tabMemberBank', 'Bank Account Details'),
+        icon: Building,
+      });
+    }
 
     let roleMenus: { id: string; label: string; icon: any; badge?: string }[] = [];
 
@@ -363,7 +386,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           { id: 'teams_manage', label: t('admin.tabTeams', 'Block & City Teams'), icon: Network },
           { id: 'meetings_manage', label: t('admin.tabMeetings', 'Meetings & Minutes'), icon: Calendar },
           { id: 'community_members', label: t('admin.tabMembers', 'District Members'), icon: Users },
-
+          { id: 'testimonials_manage', label: t('admin.tabTestimonialsManage', 'Impact Stories'), icon: MessageSquareQuote },
+          { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
         ];
         break;
 
@@ -373,6 +397,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           { id: 'district_committee', label: t('admin.tabDistrictCommittee', 'District Committee'), icon: Award },
           { id: 'kyc_queue', label: t('admin.tabKycQueue', 'KYC Approvals'), icon: UserCheck },
           { id: 'community_members', label: t('admin.tabMembers', 'District Members'), icon: Users },
+          { id: 'testimonials_manage', label: t('admin.tabTestimonialsManage', 'Impact Stories'), icon: MessageSquareQuote },
+          { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
         ];
         break;
 
@@ -382,6 +408,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           { id: 'district_committee', label: t('admin.tabDistrictCommittee', 'District Committee'), icon: Award },
           { id: 'teams_manage', label: t('admin.tabTeams', 'Block & City Teams'), icon: Network },
           { id: 'community_members', label: t('admin.tabMembers', 'District Members'), icon: Users },
+          { id: 'testimonials_manage', label: t('admin.tabTestimonialsManage', 'Impact Stories'), icon: MessageSquareQuote },
+          { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
         ];
         break;
 
@@ -391,6 +419,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           { id: 'district_committee', label: t('admin.tabDistrictCommittee', 'District Committee'), icon: Award },
           { id: 'meetings_manage', label: t('admin.tabMeetings', 'Meetings & Minutes'), icon: Calendar },
           { id: 'community_members', label: t('admin.tabMembers', 'District Members'), icon: Users },
+          { id: 'testimonials_manage', label: t('admin.tabTestimonialsManage', 'Impact Stories'), icon: MessageSquareQuote },
+          { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
         ];
         break;
 
@@ -401,6 +431,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           { id: 'financial_analytics', label: t('admin.tabFinancialAnalytics', 'Financial Analytics'), icon: TrendingUp },
           { id: 'utr_audit', label: t('admin.tabUtrAudit', 'UTR Payment Desk'), icon: ShieldCheck },
           { id: 'community_members', label: t('admin.tabMembers', 'District Members'), icon: Users },
+          { id: 'testimonials_manage', label: t('admin.tabTestimonialsManage', 'Impact Stories'), icon: MessageSquareQuote },
+          { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
         ];
         break;
 
@@ -408,11 +440,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       case 'community_admin':
         roleMenus = [
           { id: 'community_hub', label: t('admin.tabCommunityHub', 'My Community'), icon: Building2 },
-          { id: 'community_members', label: t('admin.tabMembers', 'Community Members'), icon: Users },
           { id: 'campaigns', label: t('admin.tabCampaigns', 'Manage Campaigns'), icon: PlusCircle },
-          { id: 'kyc_queue', label: t('admin.tabKycQueue', 'KYC Approvals'), icon: UserCheck },
-          { id: 'utr_audit', label: t('admin.tabUtrAudit', 'UTR Payment Desk'), icon: ShieldCheck },
-          { id: 'financial_analytics', label: t('admin.tabFinancialAnalytics', 'Financial Analytics'), icon: TrendingUp },
+          { id: 'community_members', label: t('admin.tabMembers', 'Community Members'), icon: Users },
           { id: 'testimonials_manage', label: t('admin.tabTestimonialsManage', 'Impact Stories'), icon: MessageSquareQuote },
           { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
         ];
@@ -421,7 +450,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       // 09. MEMBER / DONOR
       default:
         roleMenus = [
-          { id: 'my_donations', label: t('admin.tabDonations', 'My Donations Receipts'), icon: CreditCard },
           { id: 'community_hub', label: t('admin.tabCommunityHub', 'My Community'), icon: Building2 },
           { id: 'community_members', label: t('admin.tabMembers', 'Community Members'), icon: Users },
         ];
@@ -546,37 +574,41 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
                   return (
-                    <button
-                      key={item.id}
-                      onClick={() => selectTab(item.id)}
-                      title={item.label}
-                      className={`w-full flex items-center ${desktopSidebarExpanded ? 'gap-3 px-3 py-2' : 'justify-center p-2.5'
-                        } rounded-xl text-xs font-bold transition-all cursor-pointer`}
-                      style={isActive ? {
-                        background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)', borderLeft: '3px solid var(--mfct-gold-dark)'
-                      } : {
-                        color: 'rgba(255,255,255,0.75)'
-                      }}
-                    >
-                      <Icon className="w-4 h-4 shrink-0" />
-                      {desktopSidebarExpanded && <span>{item.label}</span>}
-                    </button>
+                    <React.Fragment key={item.id}>
+                      <button
+                        onClick={() => selectTab(item.id)}
+                        title={item.label}
+                        className={`w-full flex items-center ${desktopSidebarExpanded ? 'gap-3 px-3 py-2' : 'justify-center p-2.5'
+                          } rounded-xl text-xs font-bold transition-all cursor-pointer`}
+                        style={isActive ? {
+                          background: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)', borderLeft: '3px solid var(--mfct-gold-dark)'
+                        } : {
+                          color: 'rgba(255,255,255,0.75)'
+                        }}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" />
+                        {desktopSidebarExpanded && <span>{item.label}</span>}
+                      </button>
+
+                      {/* Digital ID Card placed below Overview and above My Donations Receipts */}
+                      {item.id === 'overview' && (
+                        <button
+                          onClick={() => {
+                            onOpenMembershipCard();
+                            setMobileNavOpen(false);
+                          }}
+                          title={t('nav.myCard', 'Digital ID Card')}
+                          className={`w-full flex items-center ${desktopSidebarExpanded ? 'gap-3 px-3 py-2' : 'justify-center p-2.5'
+                            } rounded-xl text-xs font-bold cursor-pointer transition-all hover:bg-white/5`}
+                          style={{ color: 'rgba(255,255,255,0.70)' }}
+                        >
+                          <QrCode className="w-4 h-4 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                          {desktopSidebarExpanded && <span>{t('nav.myCard', 'Digital ID Card')}</span>}
+                        </button>
+                      )}
+                    </React.Fragment>
                   );
                 })}
-
-                <button
-                  onClick={() => {
-                    onOpenMembershipCard();
-                    setMobileNavOpen(false);
-                  }}
-                  title={t('nav.myCard', 'Digital ID Card')}
-                  className={`w-full flex items-center ${desktopSidebarExpanded ? 'gap-3 px-3 py-2' : 'justify-center p-2.5'
-                    } rounded-xl text-xs font-bold cursor-pointer transition-all`}
-                  style={{ color: 'rgba(255,255,255,0.70)' }}
-                >
-                  <QrCode className="w-4 h-4 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
-                  {desktopSidebarExpanded && <span>{t('nav.myCard', 'Digital ID Card')}</span>}
-                </button>
               </div>
             </div>
 
@@ -919,6 +951,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           <span>{t('nav.changePassword', 'Change Password')}</span>
                         </button>
 
+                        {/* Nominee Details Link */}
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            selectTab('nominee_details');
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
+                        >
+                          <UserCheck className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                          <span>{t('admin.tabNominee', 'Nominee Details')}</span>
+                        </button>
+
+                        {/* Member Bank Details Link */}
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            selectTab('member_bank_details');
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
+                        >
+                          <Building className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                          <span>{t('admin.tabMemberBank', 'Bank Account Details')}</span>
+                        </button>
+
                         <div className="my-1 border-t" style={{ borderColor: 'rgba(200,168,75,0.15)' }} />
 
                         {/* Logout Button */}
@@ -959,11 +1015,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 {isCommunityGroup && (
                   <CommunityAdminDashboard
                     activeUser={activeUser}
-                    onOpenCreateCampaign={() => {
-                      setEditingCampaign(undefined);
-                      setActiveTab('create_campaign');
-                    }}
-                    campaignsList={campaignsList.filter(c => c.communityId === activeUser.communityId)}
+                    onNavigateTab={(tab) => setActiveTab(tab)}
                   />
                 )}
 
@@ -1038,16 +1090,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <Communities activeUser={activeUser} currentRole={normalizedRole} />
             )}
             {activeTab === 'users_manage' && <ManageUsers />}
-            {activeTab === 'gallery_manage' && <ManageGallery activeUser={activeUser} />}
-            {activeTab === 'testimonials_manage' && <ManageTestimonials activeUser={activeUser} />}
-            {(activeTab === 'campaign_approvals' || activeTab === 'kyc_queue') && (
+            {activeTab === 'gallery_manage' && <ManageGallery activeUser={activeUser} currentRole={normalizedRole} />}
+            {activeTab === 'testimonials_manage' && <ManageTestimonials activeUser={activeUser} currentRole={normalizedRole} />}
+            {activeTab === 'kyc_queue' && (
               <ExecutiveDashboard activeUser={activeUser} currentRole={normalizedRole} />
             )}
 
             {activeTab === 'financial_analytics' && (
               <FinancialAnalyticsTab activeUser={activeUser} currentRole={normalizedRole} />
             )}
-
             {activeTab === 'utr_audit' && (
               <UtrAuditTab
                 activeUser={activeUser}
@@ -1062,6 +1113,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             )}
             {activeTab === 'account_details' && isSuperOrExecGroup && (
               <AccountDetailsTab />
+            )}
+            {activeTab === 'nominee_details' && (
+              <NomineeDetailsTab activeUser={activeUser} />
+            )}
+            {activeTab === 'member_bank_details' && (
+              <MemberBankDetailsTab activeUser={activeUser} />
             )}
             {activeTab === 'meetings_manage' && (
               <MeetingsTab activeUser={activeUser} currentRole={normalizedRole} />
