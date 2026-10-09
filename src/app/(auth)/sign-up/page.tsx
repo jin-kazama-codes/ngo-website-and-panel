@@ -559,7 +559,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Community } from '../../../types';
+import { User, Community, AccountDetails } from '../../../types';
 import {
   Upload,
   ArrowRight,
@@ -585,6 +585,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCommunities } from '../../../services/communityService';
+import { getAccountDetails } from '../../../services/adminService';
 import { createUser } from '../../../services/userService';
 import { uploadImage } from '../../../lib/storage';
 import { hashPassword } from '../../../lib/auth';
@@ -633,6 +634,13 @@ export default function SignUpPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const formTopRef = useRef<HTMLDivElement>(null);
+  const redirectTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
@@ -645,6 +653,9 @@ export default function SignUpPage() {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
+  const [accountDetails, setAccountDetails] = useState<AccountDetails | null>(null);
+  const [accountLoading, setAccountLoading] = useState(true);
+
   useEffect(() => {
     getCommunities()
       .then((data) => {
@@ -652,6 +663,17 @@ export default function SignUpPage() {
         if (data.length > 0) setSelectedCommunityId(data[0].id);
       })
       .catch(console.error);
+
+    getAccountDetails()
+      .then((data) => {
+        if (data && data.length > 0) {
+          setAccountDetails(data[0]);
+        }
+      })
+      .catch(console.error)
+      .finally(() => {
+        setAccountLoading(false);
+      });
   }, []);
 
   // Filter communities strictly by city typed by user
@@ -710,6 +732,30 @@ export default function SignUpPage() {
 
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim()) {
+      const err = tr(
+        'ईमेल फ़ील्ड आवश्यक है। कृपया अपना ईमेल पता दर्ज करें।',
+        'ای میل کا خانہ ضروری ہے۔ براہ کرم اپنا ای میل درج کریں۔',
+        'Email field is required. Please enter your email address.'
+      );
+      setFormError(err);
+      showToast(err, 'error');
+      formTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      const err = tr(
+        'कृपया एक वैध ईमेल पता दर्ज करें।',
+        'براہ کرم درست ای میل درج کریں۔',
+        'Please enter a valid email address.'
+      );
+      setFormError(err);
+      showToast(err, 'error');
+      formTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
     const missing = [];
     if (!fullName.trim()) missing.push(tr('पूरा नाम', 'مکمل نام', 'Full Name'));
     if (!phone.trim()) missing.push(tr('मोबाइल नंबर', 'موبائل نمبر', 'Mobile Number'));
@@ -845,7 +891,7 @@ export default function SignUpPage() {
       const newMember: User = {
         id: `usr_new_${Date.now()}`,
         name: fullName,
-        email,
+        email: email.trim().toLowerCase(),
         phone,
         city,
         state,
@@ -873,25 +919,27 @@ export default function SignUpPage() {
         help_details: religion === 'Muslim' && isMalikENisab === false && helpType === 'Other' ? helpDetails || undefined : undefined,
       };
 
-      await createUser(newMember);
+      const created = await createUser(newMember);
+      const finalUser = created || newMember;
 
       // Persist session
       const loginInfo = {
-        role: newMember.role,
-        id: newMember.id,
-        email: newMember.email || '',
-        name: newMember.name,
-        avatar: newMember.avatar || '',
-        community_id: newMember.communityId || '',
+        role: finalUser.role,
+        id: finalUser.id,
+        email: finalUser.email || '',
+        name: finalUser.name,
+        avatar: finalUser.avatar || '',
+        community_id: finalUser.communityId || '',
       };
       localStorage.setItem('mfct_is_logged_in', 'true');
-      localStorage.setItem('mfct_user_role', newMember.role);
-      localStorage.setItem('role', newMember.role);
-      localStorage.setItem('id', newMember.id || '');
-      localStorage.setItem('email', newMember.email || '');
-      localStorage.setItem('name', newMember.name || '');
-      localStorage.setItem('avatar', newMember.avatar || '');
-      localStorage.setItem('community_id', newMember.communityId || '');
+      localStorage.setItem('mfct_user_role', finalUser.role);
+      localStorage.setItem('role', finalUser.role);
+      localStorage.setItem('id', finalUser.id || '');
+      localStorage.setItem('status', finalUser.status || 'pending');
+      localStorage.setItem('email', finalUser.email || '');
+      localStorage.setItem('name', finalUser.name || '');
+      localStorage.setItem('avatar', finalUser.avatar || '');
+      localStorage.setItem('community_id', finalUser.communityId || '');
       localStorage.setItem('login_info', JSON.stringify(loginInfo));
       localStorage.setItem('mfct_user_info', JSON.stringify(loginInfo));
 
@@ -899,12 +947,29 @@ export default function SignUpPage() {
       try {
         confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
       } catch { }
-    } catch (err) {
+
+      // Auto redirect to 'Under Review' page
+      redirectTimerRef.current = setTimeout(() => {
+        router.replace('/under-review');
+      }, 1200);
+    } catch (err: any) {
       console.error('Registration error:', err);
-      showToast(
-        tr('पंजीकरण विफल रहा। कृपया पुनः प्रयास करें।', 'رجسٹریشن ناکام رہی۔ دوبارہ کوشش کریں۔', 'Registration failed. Please try again.'),
-        'error'
-      );
+      if (err?.code === '23505' && (err?.message?.includes('users_email_key') || err?.details?.includes('email'))) {
+        showToast(
+          tr('यह ईमेल पता पहले से पंजीकृत है। कृपया दूसरा ईमेल दर्ज करें।', 'یہ ای میل ایڈریس پہلے سے رجسٹرڈ ہے۔ براہ کرم دوسرا ای میل درج کریں۔', 'This email is already registered. Please use another email.'),
+          'error'
+        );
+      } else if (err?.code === '23505' && (err?.message?.includes('phone') || err?.details?.includes('phone'))) {
+        showToast(
+          tr('यह फोन नंबर पहले से पंजीकृत है।', 'یہ فون نمبر پہلے سے رجسٹرڈ ہے۔', 'This phone number is already registered.'),
+          'error'
+        );
+      } else {
+        showToast(
+          tr('पंजीकरण विफल रहा। कृपया पुनः प्रयास करें।', 'رجسٹریشن ناکام رہی۔ دوبارہ کوشش کریں۔', 'Registration failed. Please try again.'),
+          'error'
+        );
+      }
     } finally {
       setSubmitting(false);
     }
@@ -1148,7 +1213,7 @@ export default function SignUpPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    {tr('ईमेल पता (वैकल्पिक)', 'ای میل (اختیاری)', 'Email Address (Optional)')}
+                    {tr('ईमेल पता *', 'ای میل ایڈریس *', 'Email Address *')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -1156,6 +1221,7 @@ export default function SignUpPage() {
                     </div>
                     <input
                       type="email"
+                      required
                       placeholder="tariq@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -1565,28 +1631,68 @@ export default function SignUpPage() {
                 ))}
               </div>
 
-              {paymentMethod === 'UPI' ? (
+              {accountLoading ? (
+                <div
+                  className="p-6 rounded-3xl text-center space-y-4 text-white shadow-xl animate-pulse"
+                  style={{ background: 'linear-gradient(135deg, #0f3322 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
+                >
+                  {paymentMethod === 'UPI' ? (
+                    <div className="space-y-4 flex flex-col items-center">
+                      <div className="w-36 h-36 rounded-2xl bg-white/10" />
+                      <div className="h-3 w-36 rounded bg-white/10" />
+                      <div className="h-10 w-48 rounded-xl bg-white/15" />
+                      <div className="h-2.5 w-60 rounded bg-white/10" />
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5 text-left w-full">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="flex justify-between items-center pb-2.5 border-b border-white/10">
+                          <div className="h-3 w-28 rounded bg-white/10" />
+                          <div className="h-4 w-40 rounded bg-white/15" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : paymentMethod === 'UPI' ? (
                 <div
                   className="p-6 rounded-3xl text-center space-y-4 text-white shadow-xl"
                   style={{ background: 'linear-gradient(135deg, #0f3322 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
                 >
                   <div className="bg-white p-3.5 rounded-2xl inline-block shadow-lg">
-                    <QrCode className="w-36 h-36 mx-auto text-slate-900" />
+                    {accountDetails?.qr_code_url ? (
+                      <img
+                        src={accountDetails.qr_code_url}
+                        alt="UPI QR Code"
+                        className="w-36 h-36 object-contain mx-auto"
+                      />
+                    ) : (
+                      <QrCode className="w-36 h-36 mx-auto text-slate-900" />
+                    )}
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-wider text-amber-300 font-bold">
                       {tr('प्रत्यक्ष एस्क्रो के लिए UPI ID', 'براہ راست ادائیگی کے لیے UPI ID', 'UPI ID for Direct Escrow')}
                     </p>
-                    <div className="inline-flex items-center gap-2 mt-1 px-4 py-1.5 rounded-xl bg-white/10 border border-white/20">
-                      <span className="font-mono font-bold text-lg select-all text-amber-300">mfct@okicici</span>
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard('mfct@okicici', 'upi')}
-                        className="p-1 hover:bg-white/20 rounded-md transition-colors"
-                      >
-                        {copiedKey === 'upi' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-amber-200" />}
-                      </button>
-                    </div>
+                    {accountDetails?.upi_id ? (
+                      <div className="inline-flex items-center gap-2 mt-1 px-4 py-1.5 rounded-xl bg-white/10 border border-white/20">
+                        <span className="font-mono font-bold text-lg select-all text-amber-300">
+                          {accountDetails.upi_id}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(accountDetails.upi_id, 'upi')}
+                          className="p-1 hover:bg-white/20 rounded-md transition-colors cursor-pointer"
+                          title="Copy UPI ID"
+                        >
+                          {copiedKey === 'upi' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-amber-200" />}
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-xs font-semibold text-slate-300 mt-1">
+                        {tr('UPI आईडी अभी उपलब्ध नहीं है', 'UPI ID فی الحال دستیاب نہیں ہے', 'UPI ID not configured')}
+                      </p>
+                    )}
                     <p className="text-[11px] text-slate-300 mt-2">
                       {tr('Google Pay, PhonePe, Paytm या BHIM UPI द्वारा स्कैन करें', 'Google Pay, PhonePe, Paytm کے ذریعے اسکین کریں', 'Scan using Google Pay, PhonePe, Paytm, or BHIM UPI')}
                     </p>
@@ -1597,26 +1703,37 @@ export default function SignUpPage() {
                   className="p-5 rounded-3xl space-y-3 text-xs text-white shadow-xl"
                   style={{ background: 'linear-gradient(135deg, #0f3322 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
                 >
-                  {[
-                    { label: tr('खाता नाम:', 'کھاتہ نام:', 'Account Name:'), val: 'Mohammad Faeem Charitable Trust', copyKey: 'name' },
-                    { label: tr('बैंक का नाम:', 'بینک نام:', 'Bank Name:'), val: 'ICICI Bank Ltd', copyKey: 'bank' },
-                    { label: tr('खाता संख्या:', 'اکاؤنٹ نمبر:', 'Account Number:'), val: '000405018892', copyKey: 'acc' },
-                    { label: 'IFSC Code:', val: 'ICIC0000004', copyKey: 'ifsc' },
-                  ].map(({ label, val, copyKey }) => (
-                    <div key={copyKey} className="flex justify-between items-center pb-2.5 border-b border-amber-900/40 last:border-0 last:pb-0">
-                      <span className="text-slate-400 font-medium">{label}</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono font-bold text-amber-300">{val}</span>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(val, copyKey)}
-                          className="p-1 hover:bg-white/10 rounded"
-                        >
-                          {copiedKey === copyKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-200" />}
-                        </button>
-                      </div>
+                  {accountDetails ? (
+                    [
+                      accountDetails.account_holder_name ? { label: tr('खाताधारक का नाम:', 'کھاتہ دار کا نام:', 'Account Holder:'), val: accountDetails.account_holder_name, copyKey: 'name' } : null,
+                      accountDetails.bank_name ? { label: tr('बैंक का नाम:', 'بینک کا نام:', 'Bank Name:'), val: accountDetails.bank_name, copyKey: 'bank' } : null,
+                      accountDetails.branch_name ? { label: tr('शाखा का नाम:', 'برانچ کا نام:', 'Branch Name:'), val: accountDetails.branch_name, copyKey: 'branch' } : null,
+                      accountDetails.account_number ? { label: tr('खाता संख्या:', 'اکاؤنٹ نمبر:', 'Account Number:'), val: accountDetails.account_number, copyKey: 'acc' } : null,
+                      accountDetails.ifsc_code ? { label: tr('IFSC कोड:', 'آئی ایف ایس سی کوڈ:', 'IFSC Code:'), val: accountDetails.ifsc_code, copyKey: 'ifsc' } : null,
+                    ].filter(Boolean).map((item) => {
+                      const { label, val, copyKey } = item!;
+                      return (
+                        <div key={copyKey} className="flex justify-between items-center pb-2.5 border-b border-amber-900/40 last:border-0 last:pb-0">
+                          <span className="text-slate-400 font-medium">{label}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-bold text-amber-300 select-all">{val}</span>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(val, copyKey)}
+                              className="p-1 hover:bg-white/10 rounded transition-colors cursor-pointer"
+                              title={`Copy ${label}`}
+                            >
+                              {copiedKey === copyKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-200" />}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="p-4 text-center text-slate-300">
+                      {tr('बैंक विवरण अभी उपलब्ध नहीं है।', 'بینک کی تفصیلات دستیاب نہیں ہیں۔', 'Bank details not configured.')}
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
 
@@ -1744,11 +1861,25 @@ export default function SignUpPage() {
               </div>
 
               <div className="pt-4 space-y-3">
+                <div className="flex items-center justify-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 py-2.5 px-4 rounded-xl">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping" />
+                  <span>
+                    {tr(
+                      'समीक्षा स्थिति पृष्ठ पर स्वतः भेजा जा रहा है…',
+                      'آپ کو خود بخود جائزہ صفحہ پر منتقل کیا جا رہا ہے…',
+                      'Automatically redirecting to Under Review page…'
+                    )}
+                  </span>
+                </div>
                 <button
-                  onClick={() => router.push('/under-review')}
+                  onClick={() => {
+                    if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+                    router.replace('/under-review');
+                  }}
                   className="cursor-pointer w-full py-4 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 shadow-lg shadow-emerald-950/20 text-[#f0c868]"
                   style={{ background: 'linear-gradient(135deg, #1a3c2c 0%, #0f3322 100%)' }}
                 >
+                  <div className="w-4 h-4 border-2 border-amber-300/30 border-t-amber-300 rounded-full animate-spin" />
                   <span>{tr('खाता समीक्षा स्थिति देखें', 'اکاؤنٹ اسٹیٹس دیکھیں', 'View Account Review Status')}</span>
                   <ArrowRight className="w-4 h-4 opacity-90" />
                 </button>

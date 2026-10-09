@@ -26,6 +26,7 @@
 import { Language } from '../context/LanguageContext';
 import { Campaign, Community, Testimonial, CommunityStory } from '../types';
 import { GalleryPhoto } from '../services/galleryService';
+import { lookupDictionary, devanagariToEnglish } from './autoTranslate';
 
 // ─── STATIC ENUM MAPS (dropdown-selected values only) ────────────────────────
 
@@ -270,21 +271,42 @@ export function translateUserRole(
 export function translateCity(city: string, lang: Language): string {
   if (!city) return '';
   if (detectScript(city) === lang) return city;
-  return getCachedTranslation(city, lang) || city;
+  const dict = lookupDictionary(city, lang);
+  if (dict) return dict;
+  const cached = getCachedTranslation(city, lang);
+  if (cached) return cached;
+  if (lang === 'en' && detectScript(city) === 'hi') {
+    return devanagariToEnglish(city);
+  }
+  return city;
 }
 
 /** State / province name — arbitrary user input, routed through dictionary & API cache. */
 export function translateState(state: string, lang: Language): string {
   if (!state) return '';
   if (detectScript(state) === lang) return state;
-  return getCachedTranslation(state, lang) || state;
+  const dict = lookupDictionary(state, lang);
+  if (dict) return dict;
+  const cached = getCachedTranslation(state, lang);
+  if (cached) return cached;
+  if (lang === 'en' && detectScript(state) === 'hi') {
+    return devanagariToEnglish(state);
+  }
+  return state;
 }
 
 /** Community name — arbitrary user input, routed through API cache. */
 export function translateCommunityName(name: string, lang: Language): string {
   if (!name) return '';
   if (detectScript(name) === lang) return name;
-  return getCachedTranslation(name, lang) || name;
+  const dict = lookupDictionary(name, lang);
+  if (dict) return dict;
+  const cached = getCachedTranslation(name, lang);
+  if (cached) return cached;
+  if (lang === 'en' && detectScript(name) === 'hi') {
+    return devanagariToEnglish(name);
+  }
+  return name;
 }
 
 /** Community description — arbitrary user input, routed through API cache. */
@@ -298,7 +320,14 @@ export function translateCommunityDesc(desc: string, lang: Language): string {
 export function translateAdminName(name: string, lang: Language): string {
   if (!name) return '';
   if (detectScript(name) === lang) return name;
-  return getCachedTranslation(name, lang) || name;
+  const dict = lookupDictionary(name, lang);
+  if (dict) return dict;
+  const cached = getCachedTranslation(name, lang);
+  if (cached) return cached;
+  if (lang === 'en' && detectScript(name) === 'hi') {
+    return devanagariToEnglish(name);
+  }
+  return name;
 }
 
 /** Campaign title — arbitrary user input, routed through API cache. */

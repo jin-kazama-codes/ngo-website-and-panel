@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const PRIMARY_SCHEMA = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || 'dev';
 const CANDIDATE_TABLES = ['district_teams', 'teams', 'team_units', 'district_team_units'];
-const SCHEMAS = PRIMARY_SCHEMA === 'public' ? ['public'] : [PRIMARY_SCHEMA, 'public'];
+const SCHEMAS = PRIMARY_SCHEMA === 'dev' ? ['dev', 'public'] : ['public', 'dev'];
 
 function getSupabaseClient(schema: string) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tyiecstaywsocmqsabhg.supabase.co';

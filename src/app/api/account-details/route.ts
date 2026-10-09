@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { bank_name, account_number, ifsc_code, upi_id, qr_code_url } = body;
+    const { bank_name, account_number, ifsc_code, upi_id, qr_code_url, account_holder_name, branch_name } = body;
 
     if (!bank_name || !account_number || !ifsc_code || !upi_id) {
       return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
@@ -33,7 +33,9 @@ export async function POST(request: Request) {
         account_number,
         ifsc_code,
         upi_id,
-        qr_code_url
+        qr_code_url,
+        account_holder_name: account_holder_name || null,
+        branch_name: branch_name || null,
       })
       .select()
       .single();

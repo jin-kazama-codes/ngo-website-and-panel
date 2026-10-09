@@ -25,10 +25,22 @@ function AdminContent() {
 
   // ✅ useEffect MUST be above all early returns (Rules of Hooks)
   useEffect(() => {
-    if (isInitialized && !isAuthenticated) {
+    if (!isInitialized) return;
+    if (!isAuthenticated) {
       router.push('/sign-in');
+      return;
     }
-  }, [isInitialized, isAuthenticated, router]);
+
+    const savedStatus = typeof window !== 'undefined' ? localStorage.getItem('status') : null;
+    const effectiveStatus = (activeUser?.status || savedStatus || '').toLowerCase();
+    const isApproved =
+      effectiveStatus === 'approved' ||
+      (activeUser?.isVerified && effectiveStatus !== 'reject' && effectiveStatus !== 'rejected' && effectiveStatus !== 'pending');
+
+    if (effectiveStatus === 'pending' || effectiveStatus === 'reject' || effectiveStatus === 'rejected' || !isApproved) {
+      router.replace('/under-review');
+    }
+  }, [isInitialized, isAuthenticated, activeUser, router]);
 
   if (!isInitialized) {
     return (

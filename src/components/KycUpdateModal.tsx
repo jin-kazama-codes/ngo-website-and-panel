@@ -262,6 +262,25 @@ export const KycUpdateModal: React.FC<KycUpdateModalProps> = ({
 
       const updated = await updateUser(user.id, payload);
 
+      if (typeof window !== 'undefined') {
+        try {
+          const currentStored = localStorage.getItem('mfct_active_user');
+          if (currentStored) {
+            const parsed = JSON.parse(currentStored);
+            localStorage.setItem('mfct_active_user', JSON.stringify({ ...parsed, ...updated }));
+          }
+          const loginInfo = localStorage.getItem('login_info');
+          if (loginInfo) {
+            const parsed = JSON.parse(loginInfo);
+            localStorage.setItem('login_info', JSON.stringify({ ...parsed, ...updated }));
+          }
+          if (updated.name) localStorage.setItem('name', updated.name);
+          if (updated.avatar) localStorage.setItem('avatar', updated.avatar);
+          if (updated.phone) localStorage.setItem('phone', updated.phone);
+          if (updated.city) localStorage.setItem('city', updated.city);
+        } catch {}
+      }
+
       setSuccessMsg(
         isApproved
           ? tr('प्रोफ़ाइल सफलतापूर्वक अपडेट कर दी गई है!', 'پروفائل اپ ڈیٹ ہو گئی۔', 'Profile updated successfully!')

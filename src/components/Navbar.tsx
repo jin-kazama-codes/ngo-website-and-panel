@@ -23,6 +23,7 @@ interface NavbarProps {
   onOpenMembershipCard: () => void;
   onNavigateToAdmin: () => void;
   onOpenZakatCalc?: () => void;
+  isInitialized?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -36,6 +37,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenMembershipCard,
   onNavigateToAdmin,
   onOpenZakatCalc,
+  isInitialized = true,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -46,8 +48,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const displayName = (currentUser.name || 'User').replace(/\s*\([^)]*\)/g, '').trim() || 'User';
   const userStatus = currentUser.status || (currentUser.isVerified ? 'approved' : 'pending');
-  const isPending = userStatus === 'pending';
-  const isRejected = userStatus === 'reject' || userStatus === 'rejected';
   const isApproved = userStatus === 'approved';
   const distRoleKeys = [
     'district_president',
@@ -227,7 +227,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div style={{ background: '#ffffff', borderBottom: '3px solid var(--mfct-gold)' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-6 sm:py-3.5 min-h-[115px] sm:min-h-[85px]">
 
-            {/* Brand Logo + Name */}
+            {/* Brand Logo */}
             <Link
               href="/"
               onClick={() => onPageChange('home')}
@@ -291,55 +291,30 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {language === 'hi' ? 'दान करें' : language === 'ur' ? 'عطیہ کریں' : 'DONATE NOW'}
                   </div>
                   <div className="text-[10px]" style={{ color: '#888' }}>
-                    {language === 'hi' ? 'आर्थिक सहयोग करें' : language === 'ur' ? 'مالی تعاون کریں' : 'Support us financially'}
+                    {language === 'hi' ? 'आर्थिक सहयोग करें' : language === 'ur' ? 'مالی تعاون करें' : 'Support us financially'}
                   </div>
                 </div>
               </button>
 
-              {/* Become a Member */}
-              <Link
-                href="/sign-up"
-                className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md"
-                style={{ border: '2px solid var(--mfct-gold)', background: '#fff8e7', minHeight: '48px', textDecoration: 'none' }}
-              >
-                <UserPlus className="w-5 h-5 shrink-0" style={{ color: 'var(--mfct-gold-dark)' }} />
-                <div className="text-left">
-                  <div className="font-black text-xs tracking-wider" style={{ color: 'var(--mfct-dark-green)', textTransform: isHindi ? 'none' : 'uppercase' }}>
-                    {language === 'hi' ? 'सदस्य बनें' : language === 'ur' ? 'ممبر بنیں' : 'BECOME A MEMBER'}
-                  </div>
-                  <div className="text-[10px]" style={{ color: '#888' }}>
-                    {language === 'hi' ? 'ट्रस्ट से जुड़ें' : language === 'ur' ? 'ٹرسٹ سے جڑیں' : 'Join the trust'}
+              {/* Desktop Auth Section: Skeleton loading while checking auth, User dropdown if logged in, Register/Login if guest */}
+              {!isInitialized ? (
+                <div
+                  className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl animate-pulse"
+                  style={{
+                    background: 'rgba(26,60,44,0.15)',
+                    border: '1.5px solid rgba(200,168,75,0.3)',
+                    minHeight: '48px',
+                    minWidth: '150px',
+                  }}
+                >
+                  <div className="w-7 h-7 rounded-full bg-slate-300 shrink-0" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-3 bg-slate-300 rounded w-20" />
+                    <div className="h-2 bg-slate-200 rounded w-14" />
                   </div>
                 </div>
-              </Link>
-
-              {/* Login / User Info & Dropdown */}
-              {onLogout ? (
+              ) : onLogout ? (
                 <div className="flex items-center gap-2 relative">
-                  {/* Navbar indicator when Rejected */}
-                  {isRejected && (
-                    <button
-                      onClick={() => setKycUpdateOpen(true)}
-                      className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all animate-pulse"
-                      title="KYC Rejected - Click to Update Details"
-                    >
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      <span>{t('nav.kycRejectedUpdate', 'KYC Rejected - Update Now')}</span>
-                    </button>
-                  )}
-
-                  {/* Navbar indicator when Pending */}
-                  {isPending && (
-                    <button
-                      onClick={() => setKycUpdateOpen(true)}
-                      className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-semibold cursor-pointer transition-all"
-                      title="KYC Under Review - Click to View / Edit Details"
-                    >
-                      <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span>{t('nav.kycPendingBadge', 'KYC Pending')}</span>
-                    </button>
-                  )}
-
                   <button
                     onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                     className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md hover:brightness-105"
@@ -413,62 +388,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                             </Link>
                           ) : null}
 
-                          {/* When status is Pending */}
-                          {isPending && (
-                            <div className="w-full p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/35 text-amber-200 text-xs">
-                              <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-1.5 font-bold text-amber-300">
-                                  <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                                  <span>{t('nav.kycPending', 'Status: Pending')}</span>
-                                </span>
-                                <Link
-                                  href="/under-review"
-                                  onClick={() => setProfileMenuOpen(false)}
-                                  className="text-[11px] underline text-amber-200 hover:text-white font-semibold cursor-pointer"
-                                >
-                                  {t('nav.viewStatus', 'Status Page →')}
-                                </Link>
-                              </div>
-                              <p className="text-[10px] text-amber-200/80 mt-1">
-                                {t('nav.kycPendingDesc', 'Application is under review by administrator.')}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* When status is Rejected: display below Pending status */}
-                          {isRejected && (
-                            <div className="space-y-1">
-                              <div className="w-full px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300/60 text-[10px] flex items-center justify-between line-through">
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3 text-amber-400/60" />
-                                  <span>Status: Pending</span>
-                                </span>
-                              </div>
-
-                              <Link
-                                href="/under-review"
-                                onClick={() => setProfileMenuOpen(false)}
-                                className="w-full p-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-200 text-xs text-left transition-colors cursor-pointer group block"
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span className="flex items-center gap-1.5 font-bold text-rose-300">
-                                    <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                                    <span>{t('nav.kycRejected', 'Status: Rejected')}</span>
-                                  </span>
-                                  <span className="text-[10px] px-2 py-0.5 rounded bg-rose-600 text-white font-bold group-hover:bg-rose-500 transition-colors">
-                                    {t('nav.updateNow', 'Update Now →')}
-                                  </span>
-                                </div>
-                                {(currentUser.rejectionReason || currentUser.rejection_reason) && (
-                                  <p className="text-[11px] text-rose-100 font-medium mt-1 truncate pl-5">
-                                    <span className="text-rose-400 font-semibold">{t('nav.reason', 'Reason')}: </span>
-                                    {currentUser.rejectionReason || currentUser.rejection_reason}
-                                  </p>
-                                )}
-                              </Link>
-                            </div>
-                          )}
-
                           {/* ID Card Link */}
                           <button
                             onClick={() => { setProfileMenuOpen(false); onOpenMembershipCard(); }}
@@ -479,22 +398,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                           </button>
 
                           {/* Edit / Update KYC Link */}
-                          <button
-                            onClick={() => { setProfileMenuOpen(false); setKycUpdateOpen(true); }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
-                          >
-                            {isApproved ? (
-                              <>
-                                <UserIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                                <span>{t('nav.editProfile', 'Edit Profile')}</span>
-                              </>
-                            ) : (
-                              <>
-                                <ShieldCheck className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                                <span>{t('nav.kycUpdate', 'Update KYC Details')}</span>
-                              </>
-                            )}
-                          </button>
+                          {isApproved && (
+                            <button
+                              onClick={() => { setProfileMenuOpen(false); setKycUpdateOpen(true); }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
+                            >
+                              <UserIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                              <span>{t('nav.editProfile', 'Edit Profile')}</span>
+                            </button>
+                          )}
 
                           {/* Change Password Link */}
                           <button
@@ -521,24 +433,43 @@ export const Navbar: React.FC<NavbarProps> = ({
                   )}
                 </div>
               ) : (
-                <Link
-                  href="/sign-in"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md hover:brightness-110"
-                  style={{
-                    background: 'var(--mfct-dark-green)',
-                    borderColor: 'var(--mfct-dark-green)',
-                    color: '#ffffff',
-                    minHeight: '48px',
-                    textDecoration: 'none',
-                  }}
-                  title="Login / साइन इन"
-                >
-                  <UserIcon className="w-5 h-5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
-                  <div className="font-black text-xs tracking-wider flex items-center gap-1.5" style={{ color: '#ffffff' }}>
-                    <span>{t('nav.login', 'Login')}</span>
-                    {/* <ChevronDown className="w-3.5 h-3.5 opacity-80" /> */}
-                  </div>
-                </Link>
+                <>
+                  {/* Become a Member */}
+                  <Link
+                    href="/sign-up"
+                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md"
+                    style={{ border: '2px solid var(--mfct-gold)', background: '#fff8e7', minHeight: '48px', textDecoration: 'none' }}
+                  >
+                    <UserPlus className="w-5 h-5 shrink-0" style={{ color: 'var(--mfct-gold-dark)' }} />
+                    <div className="text-left">
+                      <div className="font-black text-xs tracking-wider" style={{ color: 'var(--mfct-dark-green)', textTransform: isHindi ? 'none' : 'uppercase' }}>
+                        {language === 'hi' ? 'सदस्य बनें' : language === 'ur' ? 'ممبر بنیں' : 'BECOME A MEMBER'}
+                      </div>
+                      <div className="text-[10px]" style={{ color: '#888' }}>
+                        {language === 'hi' ? 'ट्रस्ट से जुड़ें' : language === 'ur' ? 'ٹرسٹ سے جڑیں' : 'Join the trust'}
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Login */}
+                  <Link
+                    href="/sign-in"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md hover:brightness-110"
+                    style={{
+                      background: 'var(--mfct-dark-green)',
+                      borderColor: 'var(--mfct-dark-green)',
+                      color: '#ffffff',
+                      minHeight: '48px',
+                      textDecoration: 'none',
+                    }}
+                    title="Login / साइन इन"
+                  >
+                    <UserIcon className="w-5 h-5 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                    <div className="font-black text-xs tracking-wider flex items-center gap-1.5" style={{ color: '#ffffff' }}>
+                      <span>{t('nav.login', 'Login')}</span>
+                    </div>
+                  </Link>
+                </>
               )}
             </div>
 
@@ -623,7 +554,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             <div className="pt-3 flex flex-col gap-2" style={{ borderTop: '1px solid rgba(200,168,75,0.15)' }}>
-              {onLogout && (
+              {!isInitialized ? (
+                <div className="p-3 rounded-xl mb-1 flex items-center gap-3 animate-pulse" style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(200,168,75,0.25)' }}>
+                  <div className="w-9 h-9 rounded-full bg-white/20 shrink-0" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="h-3.5 bg-white/25 rounded w-28" />
+                    <div className="h-2.5 bg-white/15 rounded w-20" />
+                  </div>
+                </div>
+              ) : onLogout ? (
                 <div className="p-3 rounded-xl mb-1 flex items-center gap-3" style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(200,168,75,0.25)' }}>
                   <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: 'rgba(200,168,75,0.2)', border: '1.5px solid var(--mfct-gold)' }}>
                     {currentUser.avatar && currentUser.avatar !== 'https://via.placeholder.com/150' ? (
@@ -645,7 +584,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
                   </div>
                 </div>
-              )}
+              ) : null}
+
               {onOpenZakatCalc && (
                 <button
                   onClick={() => { onOpenZakatCalc(); setMobileMenuOpen(false); }}
@@ -655,7 +595,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <Calculator className="w-4 h-4" /> {t('nav.zakatCalc', 'Zakat Calculator (2.5%)')}
                 </button>
               )}
-              {isApproved && (
+
+              {onLogout && isApproved && (
                 <Link
                   href="/admin"
                   onClick={() => { onNavigateToAdmin(); setMobileMenuOpen(false); }}
@@ -666,99 +607,61 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </Link>
               )}
 
-              {/* Mobile KYC Status Indicators */}
-              {isPending && (
-                <Link
-                  href="/under-review"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-2.5 px-3 rounded-lg text-xs font-bold flex items-center justify-between bg-amber-500/15 border border-amber-500/35 text-amber-200 cursor-pointer block"
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <span className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-                      <span>{t('nav.kycPending', 'KYC Status: Pending')}</span>
-                    </span>
-                    <span className="text-[11px] underline text-amber-200">{t('nav.viewStatus', 'View Status →')}</span>
-                  </div>
-                </Link>
-              )}
+              {onLogout && (
+                <>
+                  <button
+                    onClick={() => { onOpenMembershipCard(); setMobileMenuOpen(false); }}
+                    className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                    style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.80)', border: '1px solid rgba(255,255,255,0.10)' }}
+                  >
+                    <Shield className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('nav.myCard', 'View ID Card')} ({displayName})
+                  </button>
 
-              {isRejected && (
-                <Link
-                  href="/under-review"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full p-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-200 text-xs text-left cursor-pointer block"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 font-bold text-rose-300">
-                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                      <span>{t('nav.kycRejected', 'KYC Status: Rejected')}</span>
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-rose-600 text-white font-bold">
-                      {t('nav.updateNow', 'Update Now →')}
-                    </span>
-                  </div>
-                  {(currentUser.rejectionReason || currentUser.rejection_reason) && (
-                    <p className="text-[11px] text-rose-100 font-medium mt-1 truncate pl-5">
-                      <span className="text-rose-400 font-semibold">{t('nav.reason', 'Reason')}: </span>
-                      {currentUser.rejectionReason || currentUser.rejection_reason}
-                    </p>
+                  {/* Edit / Update KYC in mobile menu */}
+                  {isApproved && (
+                    <button
+                      onClick={() => { setKycUpdateOpen(true); setMobileMenuOpen(false); }}
+                      className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                      style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.12)' }}
+                    >
+                      <UserIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                      <span>{t('nav.editProfile', 'Edit Profile')}</span>
+                    </button>
                   )}
+
+                  {/* Change Password in mobile menu */}
+                  <button
+                    onClick={() => { setChangePasswordOpen(true); setMobileMenuOpen(false); }}
+                    className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                    style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.12)' }}
+                  >
+                    <KeyRound className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                    <span>{t('nav.changePassword', 'Change Password')}</span>
+                  </button>
+                </>
+              )}
+
+              {isInitialized && !onLogout && (
+                <Link
+                  href="/sign-up"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mfct-btn-outline w-full py-2.5 rounded-lg text-xs flex items-center justify-center gap-2 cursor-pointer"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <UserPlus className="w-4 h-4" /> {t('nav.join', 'Become a Member')}
                 </Link>
               )}
 
-              <button
-                onClick={() => { onOpenMembershipCard(); setMobileMenuOpen(false); }}
-                className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.80)', border: '1px solid rgba(255,255,255,0.10)' }}
-              >
-                <Shield className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('nav.myCard', 'View ID Card')} ({displayName})
-              </button>
-
-              {/* Edit / Update KYC in mobile menu */}
-              <button
-                onClick={() => { setKycUpdateOpen(true); setMobileMenuOpen(false); }}
-                className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.12)' }}
-              >
-                {isApproved ? (
-                  <>
-                    <UserIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                    <span>{t('nav.editProfile', 'Edit Profile')}</span>
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                    <span>{t('nav.kycUpdate', 'Update KYC Details')}</span>
-                  </>
-                )}
-              </button>
-
-              {/* Change Password in mobile menu */}
-              <button
-                onClick={() => { setChangePasswordOpen(true); setMobileMenuOpen(false); }}
-                className="w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.12)' }}
-              >
-                <KeyRound className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                <span>{t('nav.changePassword', 'Change Password')}</span>
-              </button>
-
-              <Link
-                href="/sign-up"
-                onClick={() => setMobileMenuOpen(false)}
-                className="mfct-btn-outline w-full py-2.5 rounded-lg text-xs flex items-center justify-center gap-2 cursor-pointer"
-                style={{ textDecoration: 'none' }}
-              >
-                <UserPlus className="w-4 h-4" /> {t('nav.join', 'Become a Member')}
-              </Link>
               <button
                 onClick={() => { onOpenDonate(); setMobileMenuOpen(false); }}
                 className="mfct-btn-gold w-full py-2.5 rounded-lg text-xs flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Heart className="w-4 h-4 fill-current" /> {t('nav.donate', 'Donate Now')}
               </button>
-              {onLogout ? (
+
+              {!isInitialized ? (
+                <div className="w-full py-2.5 rounded-lg h-9 bg-white/10 animate-pulse" />
+              ) : onLogout ? (
                 <button
                   onClick={() => { onLogout(); setMobileMenuOpen(false); }}
                   className="w-full py-2.5 rounded-lg text-rose-400 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
@@ -795,7 +698,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   const parsed = JSON.parse(stored);
                   localStorage.setItem('mfct_active_user', JSON.stringify({ ...parsed, ...updated }));
                 }
-              } catch {}
+              } catch { }
               window.location.reload();
             }
           }}

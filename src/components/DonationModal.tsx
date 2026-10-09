@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Campaign, DonationCategory, Donation, User, AccountDetails, WakalahInformation } from '../types';
+import { Campaign, DonationCategory, Donation, User, AccountDetails, WakalahInformation, UserRole } from '../types';
 import { X, QrCode, Upload, ArrowRight, ShieldCheck, Sparkles, Building2, CheckCircle2, FileCheck, FileText } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCampaigns } from '../services/campaignService';
@@ -427,7 +427,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
         utrNumber: finalUtr,
         donorName: donorName.trim(),
         donorId: currentUser?.id || 'anonymous',
-        donorRole: currentUser?.role || 'member',
+        donorRole: ((currentUser?.districtRole?.trim() || currentUser?.district_role?.trim() || currentUser?.role || 'member') as UserRole),
         donorAvatar: currentUser?.avatar || undefined,
         // When outside community: do NOT link to any specific campaign
         campaignId: isOutside ? 'general' : activeCampaign.id,
@@ -881,10 +881,22 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               </div>
             ) : (
               <div className="p-5 text-white rounded-3xl space-y-3 text-xs font-mono" style={{ background: 'var(--mfct-dark-green)', border: '1px solid rgba(200,168,75,0.3)' }}>
+                {accountDetails?.account_holder_name && (
+                  <div className="flex justify-between border-b border-white/10 pb-2">
+                    <span style={{ color: 'rgba(200,168,75,0.8)' }}>{tr('खाताधारक का नाम:', 'کھاتہ دار کا نام:', 'Account Holder Name:')}</span>
+                    <span className="text-white font-medium">{accountDetails.account_holder_name}</span>
+                  </div>
+                )}
                 <div className="flex justify-between border-b border-white/10 pb-2">
                   <span style={{ color: 'rgba(200,168,75,0.8)' }}>{tr('बैंक का नाम:', 'بینک کا نام:', 'Bank Name:')}</span>
                   <span className="text-white">{accountDetails?.bank_name || 'ICICI Bank Ltd'}</span>
                 </div>
+                {accountDetails?.branch_name && (
+                  <div className="flex justify-between border-b border-white/10 pb-2">
+                    <span style={{ color: 'rgba(200,168,75,0.8)' }}>{tr('शाखा का नाम:', 'برانچ کا نام:', 'Branch Name:')}</span>
+                    <span className="text-white font-medium">{accountDetails.branch_name}</span>
+                  </div>
+                )}
                 <div className="flex justify-between border-b border-white/10 pb-2">
                   <span style={{ color: 'rgba(200,168,75,0.8)' }}>{tr('खाता संख्या:', 'اکاؤنٹ نمبر:', 'Account Number:')}</span>
                   <span className="font-bold select-all" style={{ color: 'var(--mfct-gold)' }}>{accountDetails?.account_number || '000405018892'}</span>
