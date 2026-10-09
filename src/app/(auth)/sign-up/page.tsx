@@ -559,7 +559,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Community } from '../../../types';
+import { User, Community, AccountDetails } from '../../../types';
 import {
   Upload,
   ArrowRight,
@@ -585,6 +585,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCommunities } from '../../../services/communityService';
+import { getAccountDetails } from '../../../services/adminService';
 import { createUser } from '../../../services/userService';
 import { uploadImage } from '../../../lib/storage';
 import { hashPassword } from '../../../lib/auth';
@@ -652,6 +653,9 @@ export default function SignUpPage() {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
+  const [accountDetails, setAccountDetails] = useState<AccountDetails | null>(null);
+  const [accountLoading, setAccountLoading] = useState(true);
+
   useEffect(() => {
     getCommunities()
       .then((data) => {
@@ -659,6 +663,17 @@ export default function SignUpPage() {
         if (data.length > 0) setSelectedCommunityId(data[0].id);
       })
       .catch(console.error);
+
+    getAccountDetails()
+      .then((data) => {
+        if (data && data.length > 0) {
+          setAccountDetails(data[0]);
+        }
+      })
+      .catch(console.error)
+      .finally(() => {
+        setAccountLoading(false);
+      });
   }, []);
 
   // Filter communities strictly by city typed by user
@@ -1616,28 +1631,68 @@ export default function SignUpPage() {
                 ))}
               </div>
 
-              {paymentMethod === 'UPI' ? (
+              {accountLoading ? (
+                <div
+                  className="p-6 rounded-3xl text-center space-y-4 text-white shadow-xl animate-pulse"
+                  style={{ background: 'linear-gradient(135deg, #0f3322 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
+                >
+                  {paymentMethod === 'UPI' ? (
+                    <div className="space-y-4 flex flex-col items-center">
+                      <div className="w-36 h-36 rounded-2xl bg-white/10" />
+                      <div className="h-3 w-36 rounded bg-white/10" />
+                      <div className="h-10 w-48 rounded-xl bg-white/15" />
+                      <div className="h-2.5 w-60 rounded bg-white/10" />
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5 text-left w-full">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="flex justify-between items-center pb-2.5 border-b border-white/10">
+                          <div className="h-3 w-28 rounded bg-white/10" />
+                          <div className="h-4 w-40 rounded bg-white/15" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : paymentMethod === 'UPI' ? (
                 <div
                   className="p-6 rounded-3xl text-center space-y-4 text-white shadow-xl"
                   style={{ background: 'linear-gradient(135deg, #0f3322 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
                 >
                   <div className="bg-white p-3.5 rounded-2xl inline-block shadow-lg">
-                    <QrCode className="w-36 h-36 mx-auto text-slate-900" />
+                    {accountDetails?.qr_code_url ? (
+                      <img
+                        src={accountDetails.qr_code_url}
+                        alt="UPI QR Code"
+                        className="w-36 h-36 object-contain mx-auto"
+                      />
+                    ) : (
+                      <QrCode className="w-36 h-36 mx-auto text-slate-900" />
+                    )}
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-wider text-amber-300 font-bold">
                       {tr('प्रत्यक्ष एस्क्रो के लिए UPI ID', 'براہ راست ادائیگی کے لیے UPI ID', 'UPI ID for Direct Escrow')}
                     </p>
-                    <div className="inline-flex items-center gap-2 mt-1 px-4 py-1.5 rounded-xl bg-white/10 border border-white/20">
-                      <span className="font-mono font-bold text-lg select-all text-amber-300">mfct@okicici</span>
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard('mfct@okicici', 'upi')}
-                        className="p-1 hover:bg-white/20 rounded-md transition-colors"
-                      >
-                        {copiedKey === 'upi' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-amber-200" />}
-                      </button>
-                    </div>
+                    {accountDetails?.upi_id ? (
+                      <div className="inline-flex items-center gap-2 mt-1 px-4 py-1.5 rounded-xl bg-white/10 border border-white/20">
+                        <span className="font-mono font-bold text-lg select-all text-amber-300">
+                          {accountDetails.upi_id}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(accountDetails.upi_id, 'upi')}
+                          className="p-1 hover:bg-white/20 rounded-md transition-colors cursor-pointer"
+                          title="Copy UPI ID"
+                        >
+                          {copiedKey === 'upi' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-amber-200" />}
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-xs font-semibold text-slate-300 mt-1">
+                        {tr('UPI आईडी अभी उपलब्ध नहीं है', 'UPI ID فی الحال دستیاب نہیں ہے', 'UPI ID not configured')}
+                      </p>
+                    )}
                     <p className="text-[11px] text-slate-300 mt-2">
                       {tr('Google Pay, PhonePe, Paytm या BHIM UPI द्वारा स्कैन करें', 'Google Pay, PhonePe, Paytm کے ذریعے اسکین کریں', 'Scan using Google Pay, PhonePe, Paytm, or BHIM UPI')}
                     </p>
@@ -1648,26 +1703,37 @@ export default function SignUpPage() {
                   className="p-5 rounded-3xl space-y-3 text-xs text-white shadow-xl"
                   style={{ background: 'linear-gradient(135deg, #0f3322 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
                 >
-                  {[
-                    { label: tr('खाता नाम:', 'کھاتہ نام:', 'Account Name:'), val: 'Mohammad Faeem Charitable Trust', copyKey: 'name' },
-                    { label: tr('बैंक का नाम:', 'بینک نام:', 'Bank Name:'), val: 'ICICI Bank Ltd', copyKey: 'bank' },
-                    { label: tr('खाता संख्या:', 'اکاؤنٹ نمبر:', 'Account Number:'), val: '000405018892', copyKey: 'acc' },
-                    { label: 'IFSC Code:', val: 'ICIC0000004', copyKey: 'ifsc' },
-                  ].map(({ label, val, copyKey }) => (
-                    <div key={copyKey} className="flex justify-between items-center pb-2.5 border-b border-amber-900/40 last:border-0 last:pb-0">
-                      <span className="text-slate-400 font-medium">{label}</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono font-bold text-amber-300">{val}</span>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(val, copyKey)}
-                          className="p-1 hover:bg-white/10 rounded"
-                        >
-                          {copiedKey === copyKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-200" />}
-                        </button>
-                      </div>
+                  {accountDetails ? (
+                    [
+                      accountDetails.account_holder_name ? { label: tr('खाताधारक का नाम:', 'کھاتہ دار کا نام:', 'Account Holder:'), val: accountDetails.account_holder_name, copyKey: 'name' } : null,
+                      accountDetails.bank_name ? { label: tr('बैंक का नाम:', 'بینک کا نام:', 'Bank Name:'), val: accountDetails.bank_name, copyKey: 'bank' } : null,
+                      accountDetails.branch_name ? { label: tr('शाखा का नाम:', 'برانچ کا نام:', 'Branch Name:'), val: accountDetails.branch_name, copyKey: 'branch' } : null,
+                      accountDetails.account_number ? { label: tr('खाता संख्या:', 'اکاؤنٹ نمبر:', 'Account Number:'), val: accountDetails.account_number, copyKey: 'acc' } : null,
+                      accountDetails.ifsc_code ? { label: tr('IFSC कोड:', 'آئی ایف ایس سی کوڈ:', 'IFSC Code:'), val: accountDetails.ifsc_code, copyKey: 'ifsc' } : null,
+                    ].filter(Boolean).map((item) => {
+                      const { label, val, copyKey } = item!;
+                      return (
+                        <div key={copyKey} className="flex justify-between items-center pb-2.5 border-b border-amber-900/40 last:border-0 last:pb-0">
+                          <span className="text-slate-400 font-medium">{label}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-bold text-amber-300 select-all">{val}</span>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(val, copyKey)}
+                              className="p-1 hover:bg-white/10 rounded transition-colors cursor-pointer"
+                              title={`Copy ${label}`}
+                            >
+                              {copiedKey === copyKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-200" />}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="p-4 text-center text-slate-300">
+                      {tr('बैंक विवरण अभी उपलब्ध नहीं है।', 'بینک کی تفصیلات دستیاب نہیں ہیں۔', 'Bank details not configured.')}
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
 
