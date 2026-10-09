@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Campaign, DonationCategory, Donation, User, AccountDetails } from '../types';
-import { X, QrCode, Upload, ArrowRight, ShieldCheck, Sparkles, Building2, CheckCircle2 } from 'lucide-react';
+import { X, QrCode, Upload, ArrowRight, ShieldCheck, Building2, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCampaigns } from '../services/campaignService';
 import { createDonation } from '../services/donationService';
@@ -10,7 +10,7 @@ import { updateCampaignRaised } from '../services/campaignService';
 import { uploadImage } from '../lib/storage';
 import { getAccountDetails } from '../services/adminService';
 import { useLanguage } from '../context/LanguageContext';
-import { translateCampaignTitle, translateCategory } from '../lib/translateEntity';
+import { translateCampaignTitle } from '../lib/translateEntity';
 import { autoTranslateText, useDynamicTranslatedText } from '../lib/autoTranslate';
 
 interface DonationModalProps {
