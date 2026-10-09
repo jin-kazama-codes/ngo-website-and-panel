@@ -633,7 +633,7 @@ export const Communities: React.FC<CommunitiesProps> = ({ activeUser: propActive
             }}
           >
             <PlusCircle className="w-4 h-4" />
-            <span>{tr('+ नया समुदाय जोड़ें', '+ نئی کمیونٹی شامل کریں', '+ Add Community')}</span>
+            <span>{tr('नया समुदाय जोड़ें', 'نئی کمیونٹی شامل کریں', 'Add Community')}</span>
           </button>
         </div>
       </div>

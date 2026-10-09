@@ -108,6 +108,9 @@ export function AppStateProvider({
             if (realUser) {
               setActiveUser(realUser);
               setCurrentRole(realUser.role);
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('status', realUser.status || 'pending');
+              }
             } else if (savedRole) {
               restoreMockUser(savedRole);
             }
@@ -126,6 +129,27 @@ export function AppStateProvider({
       }
     }
   }, []);
+
+  // Guard: If authenticated and status is pending, prevent access to common website and redirect to /under-review
+  useEffect(() => {
+    if (!isInitialized || !isAuthenticated) return;
+    if (typeof window === 'undefined') return;
+
+    const path = window.location.pathname;
+    if (path.startsWith('/under-review') || path.startsWith('/sign-in') || path.startsWith('/sign-up')) {
+      return;
+    }
+
+    const savedStatus = localStorage.getItem('status');
+    const effectiveStatus = (activeUser?.status || savedStatus || '').toLowerCase();
+    const isApproved =
+      effectiveStatus === 'approved' ||
+      (activeUser?.isVerified && effectiveStatus !== 'reject' && effectiveStatus !== 'rejected' && effectiveStatus !== 'pending');
+
+    if (effectiveStatus === 'pending' || effectiveStatus === 'reject' || effectiveStatus === 'rejected' || !isApproved) {
+      router.replace('/under-review');
+    }
+  }, [isInitialized, isAuthenticated, activeUser, router]);
 
   // ─── Modal State ──────────────────────────────────────────────────────────
   const [showDonateModal, setShowDonateModal] = useState(false);
@@ -409,6 +433,7 @@ export function AppStateProvider({
             onOpenMembershipCard={handleOpenMembershipCard}
             onNavigateToAdmin={handleNavigateToAdmin}
             onOpenZakatCalc={handleOpenZakatCalc}
+            isInitialized={isInitialized}
           />
           <main className="flex-1">{children}</main>
           <Footer

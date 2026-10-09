@@ -106,7 +106,11 @@ export default function UnderReviewPage() {
       // If approved, redirect to home or admin
       const isApproved =
         freshUser.status === 'approved' ||
-        (freshUser.isVerified && freshUser.status !== 'reject' && freshUser.status !== 'rejected');
+        (freshUser.isVerified && freshUser.status !== 'reject' && freshUser.status !== 'rejected' && freshUser.status !== 'pending');
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('status', freshUser.status || 'pending');
+      }
 
       if (isApproved) {
         setTimeout(() => {
@@ -186,7 +190,7 @@ export default function UnderReviewPage() {
     <div className="min-h-screen flex flex-col bg-[#f8f6f1]" dir={dir}>
       {/* ─── Top Header Navigation ─── */}
       <header className="sticky top-0 z-30 bg-[#0f3322] border-b border-[#f0c868]/20 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-md">
-        <Link href="/" className="flex items-center gap-3">
+        <div className="flex items-center gap-3 select-none">
           <div className="w-9 h-9 rounded-xl bg-[#f0c868]/15 border border-[#f0c868]/40 flex items-center justify-center">
             <ShieldCheck className="w-5 h-5 text-[#f0c868]" />
           </div>
@@ -198,17 +202,10 @@ export default function UnderReviewPage() {
               {tr('सदस्यता सत्यापन डेस्क', 'ممبرشپ تصدیقی ڈیسک', 'Membership Verification Desk')}
             </p>
           </div>
-        </Link>
+        </div>
 
         <div className="flex items-center gap-3">
           <LanguageSelector compact mode="admin" />
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 transition-all cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{tr('साइन आउट', 'سائن آؤٹ', 'Sign Out')}</span>
-          </button>
         </div>
       </header>
 

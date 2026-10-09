@@ -141,6 +141,39 @@ const HomeTestimonialCard: React.FC<{ rawTestimonial: Testimonial; language: any
   );
 };
 
+const RecentDonationSkeleton: React.FC = () => (
+  <div className="flex items-center justify-between gap-4 py-2.5 last:border-0 text-xs border-b border-slate-100 animate-pulse">
+    <div className="flex items-center gap-3 flex-1">
+      <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
+      <div className="space-y-1.5 flex-1">
+        <div className="h-3.5 bg-slate-200 rounded w-1/3" />
+        <div className="h-2.5 bg-slate-100 rounded w-1/4" />
+      </div>
+    </div>
+    <div className="space-y-1.5 flex flex-col items-end shrink-0">
+      <div className="h-4 bg-slate-200 rounded w-20" />
+      <div className="h-2.5 bg-slate-100 rounded w-14" />
+    </div>
+  </div>
+);
+
+const HomeTestimonialSkeleton: React.FC = () => (
+  <div className="p-5 rounded-xl space-y-3 flex flex-col justify-between animate-pulse" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(200,168,75,0.2)' }}>
+    <div className="space-y-2">
+      <div className="h-3 bg-white/20 rounded w-full" />
+      <div className="h-3 bg-white/20 rounded w-5/6" />
+      <div className="h-3 bg-white/20 rounded w-3/4" />
+    </div>
+    <div className="flex items-center gap-3 pt-3" style={{ borderTop: '1px solid rgba(200,168,75,0.15)' }}>
+      <div className="w-9 h-9 rounded-full bg-white/20 shrink-0" />
+      <div className="space-y-1.5 flex-1">
+        <div className="h-3 bg-white/25 rounded w-28" />
+        <div className="h-2 bg-white/15 rounded w-20" />
+      </div>
+    </div>
+  </div>
+);
+
 interface HomePageProps {
   onDonate: (campaign?: Campaign) => void;
   onOpenRegister: () => void;
@@ -156,7 +189,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 }) => {
   const router = useRouter();
   const { t, language } = useLanguage();
-  const { isAuthenticated, activeUser } = useAppState();
+  const { isAuthenticated, activeUser, isInitialized } = useAppState();
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -1140,7 +1173,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* YOUR COMMUNITY CAMPAIGNS */}
-      {isAuthenticated && activeUser && !loading && myCommunityCampaigns.length > 0 && (
+      {isAuthenticated && activeUser && (loading || myCommunityCampaigns.length > 0) && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
@@ -1153,13 +1186,17 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {myCommunityCampaigns.slice(0, 3).map((camp) => (
-              <CampaignCard
-                key={camp.id}
-                campaign={camp}
-                onDonate={onDonate}
-              />
-            ))}
+            {loading ? (
+              [1, 2, 3].map((i) => <CampaignSkeleton key={i} />)
+            ) : (
+              myCommunityCampaigns.slice(0, 3).map((camp) => (
+                <CampaignCard
+                  key={camp.id}
+                  campaign={camp}
+                  onDonate={onDonate}
+                />
+              ))
+            )}
           </div>
         </section>
       )}
@@ -1500,10 +1537,13 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
 
           <div className="space-y-3">
-            {recentDonations.map((don) => (
-              <RecentDonationRow key={don.id} don={don} language={language} t={t} />
-            ))}
-            {recentDonations.length === 0 && !loading && (
+            {loading ? (
+              [1, 2, 3].map((i) => <RecentDonationSkeleton key={i} />)
+            ) : recentDonations.length > 0 ? (
+              recentDonations.map((don) => (
+                <RecentDonationRow key={don.id} don={don} language={language} t={t} />
+              ))
+            ) : (
               <p className="text-xs text-slate-400 text-center py-4">{t('home.no_donations', 'No donation records yet')}</p>
             )}
           </div>
@@ -1519,9 +1559,13 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.slice(0, 9).map((rawTestimonial) => (
-            <HomeTestimonialCard key={rawTestimonial.id} rawTestimonial={rawTestimonial} language={language} />
-          ))}
+          {loading ? (
+            [1, 2, 3].map((i) => <HomeTestimonialSkeleton key={i} />)
+          ) : (
+            testimonials.slice(0, 9).map((rawTestimonial) => (
+              <HomeTestimonialCard key={rawTestimonial.id} rawTestimonial={rawTestimonial} language={language} />
+            ))
+          )}
         </div>
 
         {testimonials.length > 0 && (

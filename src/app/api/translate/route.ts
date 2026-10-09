@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { STANDARD_DISTRICTS } from '../../../data/districtsData';
 
 // Server-side in-memory cache to prevent repeat API calls & minimize latency
 const serverCache = new Map<string, string>();
@@ -26,6 +27,17 @@ const COMMON_DICTIONARY: Record<string, { hi: string; ur: string; en?: string }>
   'mohd arshad': { hi: 'मोहम्मद अरशद', ur: 'محمد ارشد', en: 'Mohd Arshad' },
   'tariq khan': { hi: 'तारिक खान', ur: 'طارق خان', en: 'Tariq Khan' },
   'salman khan': { hi: 'सलमान खान', ur: 'سلمان خان', en: 'Salman Khan' },
+  'rehan ali': { hi: 'रेहान अली', ur: 'ریحان علی', en: 'Rehan Ali' },
+  'sohail ahmad': { hi: 'सोहेल अहमद', ur: 'سہیل احمد', en: 'Sohail Ahmad' },
+  'imran khan': { hi: 'इमरान खान', ur: 'عمران خان', en: 'Imran Khan' },
+  'adnan siddiqui': { hi: 'अदनान सिद्दीकी', ur: 'عدنان صدیقی', en: 'Adnan Siddiqui' },
+  'danish': { hi: 'दानिश', ur: 'دانش', en: 'Danish' },
+  'waseem': { hi: 'वसीम', ur: 'وسیم', en: 'Waseem' },
+  'nadeem': { hi: 'नदीम', ur: 'ندیم', en: 'Nadeem' },
+  'arif': { hi: 'आरिफ', ur: 'عارف', en: 'Arif' },
+  'parvez': { hi: 'परवेज', ur: 'پرویز', en: 'Parvez' },
+  'shahnawaz': { hi: 'शाहनवाज', ur: 'شاہ نواز', en: 'Shahnawaz' },
+  'rizwan': { hi: 'रिजवान', ur: 'رضوان', en: 'Rizwan' },
 
   // States & UTs
   'uttar pradesh': { hi: 'उत्तर प्रदेश', ur: 'اتر پردیش', en: 'Uttar Pradesh' },
@@ -48,7 +60,7 @@ const COMMON_DICTIONARY: Record<string, { hi: string; ur: string; en?: string }>
   'lucknow': { hi: 'लखनऊ', ur: 'لکھنؤ', en: 'Lucknow' },
   'moradabad': { hi: 'मुरादाबाद', ur: 'مرادآباد', en: 'Moradabad' },
   'rampur': { hi: 'रामपुर', ur: 'رام پور', en: 'Rampur' },
-  'pilibhit': { hi: 'पीलीभीत', ur: 'پیلی بھیت', en: 'Pilibhit' },
+  'pilibhit': { hi: 'पीलीभीत', ur: 'پیلی भीत', en: 'Pilibhit' },
   'shahjahanpur': { hi: 'शाहजहांपुर', ur: 'شاہجہاں پور', en: 'Shahjahanpur' },
   'budaun': { hi: 'बदायूँ', ur: 'بدایوں', en: 'Budaun' },
   'bijnor': { hi: 'बिजनौर', ur: 'بجنور', en: 'Bijnor' },
@@ -60,24 +72,258 @@ const COMMON_DICTIONARY: Record<string, { hi: string; ur: string; en?: string }>
   'kanpur': { hi: 'कानपुर', ur: 'کانپور', en: 'Kanpur' },
   'gorakhpur': { hi: 'गोरखपुर', ur: 'گورکھپور', en: 'Gorakhpur' },
   'maharajganj': { hi: 'महराजगंज', ur: 'مہراج گنج', en: 'Maharajganj' },
+
+  // Communities
+  'rohilkhand educational & nikah trust': { hi: 'रुहेलखंड एजुकेशनल एवं निकाह ट्रस्ट', ur: 'روہیل کھنڈ ایجوکیشنل اینڈ نکاح ٹرسٹ', en: 'Rohilkhand Educational & Nikah Trust' },
+  'bareilly central care society (headquarters)': { hi: 'बरेली सेंट्रल केयर सोसाइटी (मुख्यालय)', ur: 'بریلی سنٹرل کیئر سوسائٹی (ہیڈ کوارٹر)', en: 'Bareilly Central Care Society (Headquarters)' },
+  'bareilly central care society': { hi: 'बरेली सेंट्रल केयर सोसाइटी', ur: 'بریلی سنٹرل کیئر سوسائٹی', en: 'Bareilly Central Care Society' },
+  'maharajganj welfare foundation': { hi: 'महराजगंज वेलफेयर फाउंडेशन', ur: 'مہراج گنج ویلفیئر فاؤنڈیشن', en: 'Maharajganj Welfare Foundation' },
 };
 
+const COMMON_HINDI_NAME_MAP: Record<string, string> = {
+  'मोहम्मद': 'Mohammad',
+  'मो०': 'Mohd.',
+  'मोह': 'Mohd',
+  'अहमद': 'Ahmad',
+  'खान': 'Khan',
+  'अली': 'Ali',
+  'सिद्दीकी': 'Siddiqui',
+  'उस्मानी': 'Usmani',
+  'जावेद': 'Javed',
+  'तारिक': 'Tariq',
+  'सलमान': 'Salman',
+  'इमरान': 'Imran',
+  'रिजवान': 'Rizwan',
+  'शाहनवाज': 'Shahnawaz',
+  'फरहान': 'Farhan',
+  'अदनान': 'Adnan',
+  'सोहेल': 'Sohail',
+  'रेहान': 'Rehan',
+  'कफील': 'Kafeel',
+  'परवेज': 'Parvez',
+  'आरिफ': 'Arif',
+  'आसिफ': 'Asif',
+  'काशिफ': 'Kashif',
+  'दानिश': 'Danish',
+  'वसीम': 'Waseem',
+  'नदीम': 'Nadeem',
+  'नईम': 'Nayeem',
+  'गुलाम': 'Gulam',
+  'रज़ा': 'Raza',
+  'रजा': 'Raza',
+  'अब्दुल': 'Abdul',
+  'रहमान': 'Rahman',
+  'शकील': 'Shakeel',
+  'जाहिद': 'Zahid',
+  'अरशद': 'Arshad',
+  'फैसल': 'Faisal',
+  'फैजान': 'Faizan',
+  'शर्मा': 'Sharma',
+  'वर्मा': 'Verma',
+  'गुप्ता': 'Gupta',
+  'मिश्रा': 'Mishra',
+  'पांडे': 'Pandey',
+  'यादव': 'Yadav',
+  'कुमार': 'Kumar',
+  'सिंह': 'Singh',
+  'राहुल': 'Rahul',
+  'रोहित': 'Rohit',
+  'अमित': 'Amit',
+  'सुमित': 'Sumit',
+  'दीपक': 'Deepak',
+  'सुरेश': 'Suresh',
+  'रमेश': 'Ramesh',
+  'सुनील': 'Sunil',
+  'अनिल': 'Anil',
+  'संजय': 'Sanjay',
+  'अजय': 'Ajay',
+  'विजय': 'Vijay',
+  'विकास': 'Vikas',
+  'संदीप': 'Sandeep',
+  'प्रदीप': 'Pradeep',
+  'बदायूं': 'Budaun',
+  'बदायूँ': 'Budaun',
+  'रुहेलखंड': 'Rohilkhand',
+  'रोहिलखंड': 'Rohilkhand',
+};
+
+const INDEPENDENT_VOWELS: Record<string, string> = {
+  'अ': 'A', 'आ': 'Aa', 'इ': 'I', 'ई': 'Ee', 'उ': 'U', 'ऊ': 'Oo', 'ऋ': 'Ri',
+  'ए': 'E', 'ऐ': 'Ai', 'ओ': 'O', 'औ': 'Au', 'अं': 'An', 'अः': 'Ah',
+};
+
+const MATRAS: Record<string, string> = {
+  'ा': 'a', 'ि': 'i', 'ी': 'ee', 'ु': 'u', 'ू': 'oo', 'ृ': 'ri',
+  'े': 'e', 'ै': 'ai', 'ो': 'o', 'ौ': 'au', 'ं': 'n', 'ँ': 'n', 'ः': 'h',
+};
+
+const CONSONANTS: Record<string, string> = {
+  'क': 'k', 'ख': 'kh', 'ग': 'g', 'घ': 'gh', 'ङ': 'ng',
+  'च': 'ch', 'छ': 'chh', 'ज': 'j', 'झ': 'jh', 'ञ': 'ny',
+  'ट': 't', 'ठ': 'th', 'ड': 'd', 'ढ': 'dh', 'ण': 'n',
+  'त': 't', 'थ': 'th', 'द': 'd', 'ध': 'dh', 'न': 'n',
+  'प': 'p', 'फ': 'ph', 'ब': 'b', 'भ': 'bh', 'म': 'm',
+  'य': 'y', 'र': 'r', 'ल': 'l', 'व': 'v',
+  'श': 'sh', 'ष': 'sh', 'स': 's', 'ह': 'h',
+  'क़': 'q', 'ख़': 'kh', 'ग़': 'gh', 'ज़': 'z', 'ड़': 'r', 'ढ़': 'rh', 'फ़': 'f',
+};
+
+function devanagariToEnglish(text: string): string {
+  if (!text) return '';
+
+  const normalized = text
+    .replace(/\bडॉ\.\s*/g, 'Dr. ')
+    .replace(/\bइंजी\.\s*/g, 'Er. ')
+    .replace(/\bमोह\.\s*/g, 'Mohd. ');
+
+  const words = normalized.split(/\s+/);
+  const translatedWords = words.map((word) => {
+    if (!/[\u0900-\u097F]/.test(word)) {
+      return word;
+    }
+
+    const trimmedWord = word.trim();
+    if (COMMON_HINDI_NAME_MAP[trimmedWord]) {
+      return COMMON_HINDI_NAME_MAP[trimmedWord];
+    }
+
+    let res = '';
+    const chars = Array.from(word);
+    const len = chars.length;
+
+    for (let i = 0; i < len; i++) {
+      const ch = chars[i];
+      const nextCh = i + 1 < len ? chars[i + 1] : '';
+      const nextNextCh = i + 2 < len ? chars[i + 2] : '';
+
+      let combined = ch;
+      if (nextCh === '\u093C') {
+        combined = ch + nextCh;
+        i++;
+      }
+
+      if (combined === 'ज' && nextCh === '्' && nextNextCh === 'ञ') {
+        res += 'gy';
+        i += 2;
+        continue;
+      }
+      if (combined === 'क' && nextCh === '्' && nextNextCh === 'ष') {
+        res += 'ksh';
+        i += 2;
+        continue;
+      }
+      if (combined === 'त' && nextCh === '्' && nextNextCh === 'र') {
+        res += 'tr';
+        i += 2;
+        continue;
+      }
+      if (combined === 'श' && nextCh === '्' && nextNextCh === 'र') {
+        res += 'shr';
+        i += 2;
+        continue;
+      }
+
+      if (MATRAS[combined]) {
+        res += MATRAS[combined];
+        continue;
+      }
+
+      if (INDEPENDENT_VOWELS[combined]) {
+        res += INDEPENDENT_VOWELS[combined];
+        continue;
+      }
+
+      if (combined === '्') {
+        continue;
+      }
+
+      if (CONSONANTS[combined]) {
+        const romanConsonant = CONSONANTS[combined];
+        res += romanConsonant;
+
+        const isNextHalant = nextCh === '्' || (nextCh === '\u093C' && nextNextCh === '्');
+        const isNextMatra = MATRAS[nextCh] !== undefined;
+        const isLastChar = i === len - 1 || (i === len - 2 && nextCh === '\u093C');
+
+        if (!isNextHalant && !isNextMatra && !isLastChar) {
+          res += 'a';
+        }
+        continue;
+      }
+
+      res += combined;
+    }
+
+    if (res.length > 0) {
+      return res.charAt(0).toUpperCase() + res.slice(1);
+    }
+    return res;
+  });
+
+  return translatedWords.join(' ');
+}
+
 function lookupDictionary(text: string, targetLang: string): string | null {
-  const trimmed = text.trim().toLowerCase();
-  const entry = COMMON_DICTIONARY[trimmed];
+  const trimmed = text.trim();
+  const lower = trimmed.toLowerCase();
+
+  // 1. Direct entry in COMMON_DICTIONARY
+  const entry = COMMON_DICTIONARY[lower];
   if (entry) {
     if (targetLang === 'en') return entry.en || text;
     if (targetLang === 'hi') return entry.hi;
     if (targetLang === 'ur') return entry.ur;
   }
 
-  // Reverse lookup if text is in Hindi or Urdu
+  // 2. Reverse lookup in COMMON_DICTIONARY
   for (const [enKey, val] of Object.entries(COMMON_DICTIONARY)) {
-    if (val.hi.toLowerCase() === trimmed || val.ur.toLowerCase() === trimmed) {
-      if (targetLang === 'en') return val.en || enKey.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    if (
+      val.hi.toLowerCase() === lower ||
+      val.ur.toLowerCase() === lower ||
+      (val.en && val.en.toLowerCase() === lower) ||
+      enKey.toLowerCase() === lower
+    ) {
+      if (targetLang === 'en') return val.en || enKey.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
       if (targetLang === 'hi') return val.hi;
       if (targetLang === 'ur') return val.ur;
     }
+  }
+
+  // 3. Search in STANDARD_DISTRICTS
+  for (const d of STANDARD_DISTRICTS) {
+    if (
+      d.nameEn.toLowerCase() === lower ||
+      d.nameHi.toLowerCase() === lower ||
+      d.nameUr.toLowerCase() === lower ||
+      d.id.toLowerCase() === lower
+    ) {
+      if (targetLang === 'en') return d.nameEn;
+      if (targetLang === 'hi') return d.nameHi;
+      if (targetLang === 'ur') return d.nameUr;
+    }
+    if (
+      d.stateEn.toLowerCase() === lower ||
+      d.stateHi.toLowerCase() === lower ||
+      d.stateUr.toLowerCase() === lower
+    ) {
+      if (targetLang === 'en') return d.stateEn;
+      if (targetLang === 'hi') return d.stateHi;
+      if (targetLang === 'ur') return d.stateUr;
+    }
+  }
+
+  // 4. Common Hindi names / places map
+  if (targetLang === 'en' && COMMON_HINDI_NAME_MAP[trimmed]) {
+    return COMMON_HINDI_NAME_MAP[trimmed];
+  }
+
+  // 5. Comma-separated parts
+  if (trimmed.includes(',')) {
+    const parts = trimmed.split(',').map((p) => p.trim());
+    const translatedParts = parts.map(
+      (part) => lookupDictionary(part, targetLang) || (targetLang === 'en' && detectScript(part) === 'hi' ? devanagariToEnglish(part) : part)
+    );
+    return translatedParts.join(', ');
   }
 
   return null;
@@ -169,7 +415,7 @@ CRITICAL GUIDELINES:
 }
 
 /**
- * 2. MyMemory Translation API (reliable for Hindi & Urdu names and places)
+ * 2. MyMemory Translation API
  */
 async function translateWithMyMemory(text: string, targetLang: string, sourceLang: string): Promise<string | null> {
   try {
@@ -192,7 +438,7 @@ async function translateWithMyMemory(text: string, targetLang: string, sourceLan
 }
 
 /**
- * 3. Google Translate with explicit source language (sl=en / sl=hi / sl=ur)
+ * 3. Google Translate with explicit source language
  */
 async function translateWithGoogle(text: string, targetLang: string, sourceLang: string): Promise<string | null> {
   try {
@@ -221,7 +467,7 @@ async function translateWithGoogle(text: string, targetLang: string, sourceLang:
 }
 
 /**
- * 4. Google Input Tools Transliteration (phonetic names transliteration into Hindi / Urdu)
+ * 4. Google Input Tools Transliteration
  */
 async function transliterateWithInputTools(text: string, targetLang: string): Promise<string | null> {
   if (targetLang !== 'hi' && targetLang !== 'ur') return null;
@@ -267,7 +513,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, translatedText: trimmed });
     }
 
-    // 0. Check built-in high-accuracy dictionary (Instant 0ms)
+    // 0. Check built-in high-accuracy dictionary & STANDARD_DISTRICTS (Instant 0ms)
     const dictMatch = lookupDictionary(trimmed, targetLang);
     if (dictMatch) {
       return NextResponse.json({
@@ -303,9 +549,17 @@ export async function POST(request: Request) {
       translated = await translateWithGoogle(trimmed, targetLang, sourceLang);
     }
 
-    // 4. Engine: Google Input Tools Transliteration (for proper names/places)
+    // 4. Engine: Google Input Tools Transliteration (for proper names/places into Hindi/Urdu)
     if (!translated && sourceLang === 'en' && (targetLang === 'hi' || targetLang === 'ur')) {
       translated = await transliterateWithInputTools(trimmed, targetLang);
+    }
+
+    // 5. Guaranteed Engine: Hindi to English Devanagari Phonetic Transliteration
+    if (!translated && sourceLang === 'hi' && targetLang === 'en') {
+      const transliterated = devanagariToEnglish(trimmed);
+      if (transliterated && isValidScriptTranslation(transliterated, 'en', trimmed)) {
+        translated = transliterated;
+      }
     }
 
     // Validation: Only cache and mark as translated if target script is actually present
@@ -318,7 +572,16 @@ export async function POST(request: Request) {
       });
     }
 
-    // Fallback: Return original text but do NOT cache it as a valid translation
+    // Fallback: Return transliteration for Hindi -> English rather than raw Hindi
+    if (targetLang === 'en' && sourceLang === 'hi') {
+      const fallbackTranslit = devanagariToEnglish(trimmed);
+      return NextResponse.json({
+        success: true,
+        translatedText: fallbackTranslit,
+        engine: 'transliteration-fallback',
+      });
+    }
+
     return NextResponse.json({
       success: true,
       translatedText: trimmed,

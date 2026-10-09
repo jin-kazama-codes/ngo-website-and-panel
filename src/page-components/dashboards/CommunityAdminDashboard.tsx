@@ -1,95 +1,230 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Campaign, Community, User } from '../../types';
-import { Users, Plus, Megaphone, CheckCircle2, Heart, ShieldCheck as ShieldCheckIcon, IndianRupee, Activity, UserCheck, PlusCircle, Banknote } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { broadcastAnnouncement, getPendingVerifications, approveVerification, rejectVerification } from '../../services/adminService';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Community, User } from '../../types';
+import { useLanguage, Language } from '../../context/LanguageContext';
+import { useDynamicTranslatedText } from '../../lib/autoTranslate';
 import { getCommunities } from '../../services/communityService';
-import { getUnverifiedUsers } from '../../services/userService';
-import { getDonations } from '../../services/donationService';
+import { Meeting, getMeetings } from '../../services/meetingService';
+import { Announcement, getAllAnnouncements } from '../../services/announcementService';
+import {
+  ShieldCheck as ShieldCheckIcon,
+  IndianRupee,
+  Activity,
+  Heart,
+  Users,
+  Megaphone,
+  Calendar,
+  MapPin,
+  ChevronRight,
+} from 'lucide-react';
 
 interface CommunityAdminDashboardProps {
   activeUser: User;
-  onOpenCreateCampaign: () => void;
-  campaignsList: Campaign[];
+  onNavigateTab?: (tab: string) => void;
 }
 
-const pieData = [
-  { name: 'Medical', value: 45, color: '#059669' },
-  { name: 'Education', value: 25, color: '#2563eb' },
-  { name: 'Food', value: 18, color: '#d97706' },
-  { name: 'Marriage', value: 12, color: '#9333ea' },
-];
+// Subcomponent for Meeting Card with dynamic translation
+const MeetingCard: React.FC<{
+  meeting: Meeting;
+  defaultDistrict: string;
+  language: Language;
+  tr: (hi: string, ur: string, en: string) => string;
+  onNavigateTab?: (tab: string) => void;
+}> = ({ meeting, defaultDistrict, language, tr, onNavigateTab }) => {
+  const rawVenue = meeting.venue || defaultDistrict;
+  const translatedVenue = useDynamicTranslatedText(rawVenue, language);
+  const displayVenue = translatedVenue || rawVenue;
+
+  return (
+    <div
+      onClick={() => onNavigateTab && onNavigateTab('meetings_manage')}
+      className={`p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 hover:border-blue-400/50 transition-all ${onNavigateTab ? 'cursor-pointer' : ''
+        }`}
+    >
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug">
+          {meeting.title}
+        </h4>
+        <span
+          className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${meeting.status === 'upcoming'
+            ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+            : meeting.status === 'completed'
+              ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+              : 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+            }`}
+        >
+          {meeting.status === 'upcoming'
+            ? tr('आगामी बैठकें', 'آئندہ', 'Upcoming')
+            : meeting.status === 'completed'
+              ? tr('सम्पन्न बैठकें', 'مکمل شدہ', 'Completed')
+              : tr('प्रतीक्षारत', 'زیر التواء', 'Pending')}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-400 my-2">
+        <div className="flex items-center gap-1.5">
+          <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+          <span className="truncate">
+            {meeting.date} {meeting.time ? `• ${meeting.time}` : ''}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+          <span className="truncate">{displayVenue}</span>
+        </div>
+      </div>
+
+      {meeting.agenda && (
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 bg-white dark:bg-slate-900/60 p-2 rounded-xl border border-slate-100 dark:border-slate-800">
+          <strong className="text-slate-700 dark:text-slate-300">{tr('एजेंडा:', 'ایجنڈا:', 'Agenda:')}</strong>{' '}
+          {meeting.agenda}
+        </p>
+      )}
+    </div>
+  );
+};
+
+// Subcomponent for Announcement Card with dynamic translation
+const AnnouncementCard: React.FC<{
+  announcement: Announcement;
+  language: string;
+  tr: (hi: string, ur: string, en: string) => string;
+}> = ({ announcement, language, tr }) => {
+  const rawSender = announcement.sentBy || '';
+  const translatedSender = useDynamicTranslatedText(rawSender, language);
+  const senderName = translatedSender || rawSender;
+
+  const rawCity = announcement.city || '';
+  const translatedCity = useDynamicTranslatedText(rawCity, language);
+  const cityName = translatedCity || rawCity;
+
+  return (
+    <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 hover:border-amber-400/50 transition-all space-y-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-bold text-slate-900 dark:text-white">
+            {senderName}
+          </span>
+          {cityName && (
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-0.5">
+              <MapPin className="w-2.5 h-2.5" /> {cityName}
+            </span>
+          )}
+        </div>
+        <span className="text-[10px] text-slate-400 font-medium">
+          {announcement.sentAt
+            ? new Date(announcement.sentAt).toLocaleDateString(
+              language === 'hi' ? 'hi-IN' : language === 'ur' ? 'ur-PK' : 'en-IN',
+              {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+              }
+            )
+            : ''}
+        </span>
+      </div>
+
+      <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+        {announcement.message}
+      </p>
+    </div>
+  );
+};
 
 export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = ({
   activeUser,
-  onOpenCreateCampaign,
-  campaignsList,
+  onNavigateTab,
 }) => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
   const [community, setCommunity] = useState<Community | null>(null);
-  const [announcementText, setAnnouncementText] = useState('');
-  const [announcementSent, setAnnouncementSent] = useState(false);
-  const [broadcasting, setBroadcasting] = useState(false);
-  const [pendingKycCount, setPendingKycCount] = useState(0);
-  const [pendingUtrCount, setPendingUtrCount] = useState(0);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Resolve target district for this community
+  const targetDistrict =
+    community?.district ||
+    activeUser.district ||
+    community?.city ||
+    activeUser.city ||
+    'Sitapur';
+
+  const cleanDist = (targetDistrict || '').replace(/district/gi, '').trim();
+
+  // Translated names for UI
+  const rawCommunityName = community?.name || activeUser.communityName || 'Community Admin Hub';
+  const displayCommunityName = useDynamicTranslatedText(rawCommunityName, language) || rawCommunityName;
+
+  const rawAdminName = community?.adminName || activeUser.name || 'Admin';
+  const displayAdminName = useDynamicTranslatedText(rawAdminName, language) || rawAdminName;
+
+  const displayDistrict = useDynamicTranslatedText(targetDistrict, language) || targetDistrict;
+  const rawCity = community?.city || activeUser.city || 'Chapter';
+  const displayCity = useDynamicTranslatedText(rawCity, language) || rawCity;
+
   useEffect(() => {
+    let isMounted = true;
     setLoading(true);
+
     Promise.all([
       getCommunities()
         .then((comms) => {
+          if (!isMounted) return;
           if (comms.length > 0) {
-            const userCommunity = comms.find(c => c.id === activeUser.communityId);
-            setCommunity(userCommunity || null);
+            const userCommunity = comms.find(
+              (c) => c.id === activeUser.communityId || (activeUser.communityName && c.name === activeUser.communityName)
+            );
+            setCommunity(userCommunity || comms[0] || null);
           }
         })
         .catch(console.error),
-      getUnverifiedUsers()
-        .then((users) => {
-          const communityUsers = users.filter(u => u.communityId === activeUser.communityId || u.communityName === activeUser.communityName);
-          setPendingKycCount(communityUsers.length);
+
+      getMeetings(cleanDist || targetDistrict)
+        .then((mData) => {
+          if (!isMounted) return;
+          if (Array.isArray(mData)) setMeetings(mData);
         })
         .catch(console.error),
-      getDonations()
-        .then((donations) => {
-          const communityDonations = donations.filter(d =>
-            (d.status === 'pending_verification' || d.status === 'pending') &&
-            (d.communityName === activeUser.communityName)
-          );
-          setPendingUtrCount(communityDonations.length);
+
+      getAllAnnouncements()
+        .then((aData) => {
+          if (!isMounted) return;
+          if (Array.isArray(aData)) setAnnouncements(aData);
         })
-        .catch(console.error)
-    ]).finally(() => setLoading(false));
-  }, [activeUser.communityId, activeUser.communityName]);
+        .catch(console.error),
+    ]).finally(() => {
+      if (isMounted) setLoading(false);
+    });
 
-  const pendingCampaignsCount = campaignsList.filter(c => c.status === 'pending' || c.status === 'pending_approval').length;
+    return () => {
+      isMounted = false;
+    };
+  }, [activeUser.communityId, activeUser.communityName, targetDistrict, cleanDist]);
 
-
-
-  const handleBroadcast = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!announcementText || !community) return;
-    setBroadcasting(true);
-    try {
-      await broadcastAnnouncement({
-        communityId: community.id,
-        communityName: community.name,
-        sentBy: community.adminName,
-        message: announcementText,
-      });
-      setAnnouncementSent(true);
-      setTimeout(() => {
-        setAnnouncementSent(false);
-        setAnnouncementText('');
-      }, 3000);
-    } catch (err) {
-      console.error('Broadcast failed:', err);
-    } finally {
-      setBroadcasting(false);
-    }
-  };
+  // Filter announcements for target district
+  const districtAnnouncements = useMemo(() => {
+    return announcements.filter((a) => {
+      if (!a) return false;
+      const aCity = (a.city || '').toLowerCase().replace(/district/gi, '').trim();
+      if (!aCity || aCity === 'all' || aCity === 'all districts') return true;
+      if (!cleanDist) return true;
+      const dLower = cleanDist.toLowerCase();
+      return (
+        aCity === dLower ||
+        aCity.includes(dLower) ||
+        dLower.includes(aCity)
+      );
+    });
+  }, [announcements, cleanDist]);
 
   if (loading) {
     return (
@@ -104,16 +239,9 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
           ))}
         </div>
 
-        {/* Pending Actions Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-28 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800" />
-          ))}
-        </div>
-
-        {/* Charts & Actions Skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 h-80 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800" />
+        {/* Meetings & Announcements Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-80 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800" />
           <div className="h-80 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800" />
         </div>
       </div>
@@ -122,7 +250,7 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Top Banner */}
+      {/* 1. Top Banner */}
       <div
         className="rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden"
         style={{
@@ -131,7 +259,10 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
           boxShadow: 'var(--shadow-card)',
         }}
       >
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(200,168,75,0.15)' }} />
+        <div
+          className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full blur-3xl pointer-events-none"
+          style={{ background: 'rgba(200,168,75,0.15)' }}
+        />
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div>
@@ -143,47 +274,50 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
                 border: '1px solid rgba(200,168,75,0.3)',
               }}
             >
-              <ShieldCheckIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> Community Admin
+              <ShieldCheckIcon className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+              <span>{tr('समुदाय व्यवस्थापक', 'کمیونٹی ایڈمن', 'Community Admin')}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-              {community?.name || 'Community Admin Hub'}
+              {displayCommunityName}
             </h1>
             <p className="text-xs mt-1" style={{ color: 'rgba(200,168,75,0.85)' }}>
-              Admin: <strong className="text-white">{community?.adminName || 'Admin'}</strong> • {community?.city || 'City'} Chapter
+              {tr('व्यवस्थापक:', 'ایڈمن:', 'Admin:')}{' '}
+              <strong className="text-white">{displayAdminName}</strong> • {displayCity}{' '}
+              {tr('शाखा', 'شاخ', 'Chapter')} •{' '}
+              <span className="font-semibold text-white/90">
+                {displayDistrict} {tr('जिला', 'ضلع', 'District')}
+              </span>
             </p>
-          </div>
-
-          <div className="flex items-center shrink-0 mt-2 sm:mt-0">
-            <button
-              onClick={onOpenCreateCampaign}
-              className="mfct-btn-gold px-5 py-3 rounded-xl font-bold text-sm flex items-center gap-2 cursor-pointer transition-all"
-            >
-              <PlusCircle className="w-5 h-5" />
-              Create Campaign
-            </button>
           </div>
         </div>
       </div>
-      {/* Metrics Row */}
+
+      {/* 2. Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Members */}
-        <div className="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all flex items-center justify-between group overflow-hidden">
+        <div className="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs transition-all flex items-center justify-between group overflow-hidden">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Members</p>
-            <h3 className="text-2xl font-black mt-1 mb-1 text-slate-900 dark:text-white">{community?.totalMembers || 0}</h3>
-            <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Active Registered</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tr('कुल सदस्य', 'کل اراکین', 'Total Members')}
+            </p>
+            <h3 className="text-2xl font-black mt-1 mb-1 text-slate-900 dark:text-white">
+              {community?.totalMembers || 0}
+            </h3>
           </div>
           <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 text-amber-600 dark:text-amber-400">
             <Users className="w-6 h-6" />
           </div>
         </div>
 
-        {/* Active Campaigns */}
-        <div className="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all flex items-center justify-between group overflow-hidden">
+        {/* Active Causes */}
+        <div className="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs transition-all flex items-center justify-between group overflow-hidden">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active Causes</p>
-            <h3 className="text-2xl font-black mt-1 mb-1 text-slate-900 dark:text-white">{community?.activeCampaigns || 0}</h3>
-            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">Live Campaign Causes</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tr('सक्रिय अभियान', 'فعال مہمات', 'Active Causes')}
+            </p>
+            <h3 className="text-2xl font-black mt-1 mb-1 text-slate-900 dark:text-white">
+              {community?.activeCampaigns || 0}
+            </h3>
           </div>
           <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 text-amber-600 dark:text-amber-400">
             <Heart className="w-6 h-6" />
@@ -191,11 +325,14 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
         </div>
 
         {/* Total Funds Raised */}
-        <div className="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all flex items-center justify-between group overflow-hidden">
+        <div className="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs transition-all flex items-center justify-between group overflow-hidden">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Funds Raised</p>
-            <h3 className="text-2xl font-black mt-1 mb-1 text-emerald-600 dark:text-emerald-400">₹{(community?.totalRaisedINR || 0).toLocaleString('en-IN')}</h3>
-            <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Escrow Audited</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tr('कुल संकलित निधि', 'کل جمع شدہ فنڈز', 'Total Funds Raised')}
+            </p>
+            <h3 className="text-2xl font-black mt-1 mb-1 text-emerald-600 dark:text-emerald-400">
+              ₹{(community?.totalRaisedINR || 0).toLocaleString('en-IN')}
+            </h3>
           </div>
           <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
             <IndianRupee className="w-6 h-6" />
@@ -203,11 +340,14 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
         </div>
 
         {/* Health Score */}
-        <div className="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all flex items-center justify-between group overflow-hidden">
+        <div className="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs transition-all flex items-center justify-between group overflow-hidden">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Community Health</p>
-            <h3 className="text-2xl font-black mt-1 mb-1 text-slate-900 dark:text-white">{community?.healthScore || 100}%</h3>
-            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">Grade A Transparency</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tr('समुदाय सक्रियता', 'کمیونٹی سرگرمی', 'Community Health')}
+            </p>
+            <h3 className="text-2xl font-black mt-1 mb-1 text-slate-900 dark:text-white">
+              {community?.healthScore || 100}%
+            </h3>
           </div>
           <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 text-amber-600 dark:text-amber-400">
             <Activity className="w-6 h-6" />
@@ -215,85 +355,144 @@ export const CommunityAdminDashboard: React.FC<CommunityAdminDashboardProps> = (
         </div>
       </div>
 
-      {/* Pending Actions Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-sm">
+      {/* 3. Unified District Meetings & Announcements Section (Like DistrictDashboard) */}
+      <div className="space-y-4 pt-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
           <div>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pending KYC Approvals</p>
-            <h4 className="text-2xl font-black text-slate-900 dark:text-white mt-1">{pendingKycCount}</h4>
-            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-1">Requires admin review</p>
-          </div>
-          <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
-            <UserCheck className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+            <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              <span>
+                {tr(
+                  'जिला बैठकें एवं आधिकारिक घोषणाएँ',
+                  'ضلعی اجلاسات اور اعلانات',
+                  'District Meetings & Announcements'
+                )}
+              </span>
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {tr(
+                `${displayDistrict} जिले की आधिकारिक बैठकों और घोषणाओं का वास्तविक समय विवरण`,
+                `${displayDistrict} ضلع کے اجلاسات اور اعلانات کی تفصیلات`,
+                `Official scheduled meetings and announcements for ${displayDistrict}`
+              )}
+            </p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-sm">
-          <div>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pending Campaigns</p>
-            <h4 className="text-2xl font-black text-slate-900 dark:text-white mt-1">{pendingCampaignsCount}</h4>
-            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-1">Awaiting approval</p>
-          </div>
-          <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
-            <PlusCircle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-sm">
-          <div>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pending UTR Verification</p>
-            <h4 className="text-2xl font-black text-slate-900 dark:text-white mt-1">{pendingUtrCount}</h4>
-            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-1">Manual bank transfers</p>
-          </div>
-          <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
-            <Banknote className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Broadcast Announcement */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <Megaphone className="w-5 h-5" />
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* Left Column: District Meetings Information */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4">
             <div>
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white">Broadcast Announcement</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Send an alert to all members of your community</p>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      {tr('बैठक विवरण (Meeting Information)', 'اجلاس کی معلومات', 'Meeting Information')}
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      {tr(
+                        `${displayDistrict} जिले की आगामी एवं हालिया बैठकें`,
+                        `${displayDistrict} ضلع کے آئندہ اور حالیہ اجلاس`,
+                        `Scheduled & recent meetings in ${displayDistrict}`
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                  {meetings.length} {tr('बैठकें', 'اجلاس', 'Meetings')}
+                </span>
+              </div>
+
+              {meetings.length === 0 ? (
+                <div className="mt-4 p-8 text-center bg-slate-50 dark:bg-slate-950/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                  <Calendar className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    {tr('वर्तमान में कोई बैठक निर्धारित नहीं है', 'فی الحال کوئی اجلاس طے نہیں ہے', 'No meetings scheduled yet')}
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    {tr(
+                      `${displayDistrict} जिले में नई बैठक निर्धारित होने पर यहाँ प्रदर्शित होगी।`,
+                      `نئے اجلاس کی اطلاع یہاں دکھائی جائے گی۔`,
+                      `New meetings for ${displayDistrict} will appear here.`
+                    )}
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {meetings.slice(0, 4).map((m) => (
+                    <MeetingCard
+                      key={m.id}
+                      meeting={m}
+                      defaultDistrict={displayDistrict}
+                      language={language}
+                      tr={tr}
+                      onNavigateTab={onNavigateTab}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {announcementSent ? (
-            <div className="p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-2xl text-center space-y-1">
-              <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400 mx-auto" />
-              <p className="font-bold text-xs text-emerald-800 dark:text-emerald-400">Broadcast Dispatched!</p>
-              <p className="text-[10px] text-emerald-600 dark:text-emerald-500/80">Sent via WhatsApp &amp; SMS gateway.</p>
+          {/* Right Column: District Announcements & Broadcasts */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
+                    <Megaphone className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      {tr('आधिकारिक घोषणाएँ (Announcements)', 'سرکاری اعلانات', 'Official Announcements')}
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      {tr(
+                        `${displayDistrict} नेतृत्व द्वारा जारी महत्वपूर्ण सूचनाएँ`,
+                        `${displayDistrict} قیادت کی طرف سے جاری کردہ اعلانات`,
+                        `Notices and broadcasts for ${displayDistrict}`
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
+                  {districtAnnouncements.length} {tr('सक्रिय घोषणाएँ', 'اعلانات', 'Notices')}
+                </span>
+              </div>
+
+              {districtAnnouncements.length === 0 ? (
+                <div className="mt-4 p-8 text-center bg-slate-50 dark:bg-slate-950/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                  <Megaphone className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    {tr('वर्तमान में कोई घोषणा उपलब्ध नहीं है', 'فی الحال کوئی اعلان नहीं है', 'No announcements published')}
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    {tr(
+                      `${displayDistrict} जिले हेतु नई घोषणाएँ यहाँ प्रदर्शित होंगी।`,
+                      `نئے اعلانات یہاں دکھائی دیں گے۔`,
+                      `Notices broadcast for ${displayDistrict} will appear here.`
+                    )}
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {districtAnnouncements.slice(0, 4).map((a) => (
+                    <AnnouncementCard
+                      key={a.id}
+                      announcement={a}
+                      language={language}
+                      tr={tr}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          ) : (
-            <form onSubmit={handleBroadcast} className="space-y-3">
-              <textarea
-                rows={3}
-                required
-                placeholder="Type urgent community broadcast message..."
-                value={announcementText}
-                onChange={(e) => setAnnouncementText(e.target.value)}
-                className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-300 outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400 dark:placeholder:text-slate-600"
-              />
-              <button
-                type="submit"
-                disabled={broadcasting}
-                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer"
-              >
-                {broadcasting ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : 'Dispatch Broadcast Alert'}
-              </button>
-            </form>
-          )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
-

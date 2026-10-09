@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { AccountDetails } from '../../types';
 import { getAccountDetails, createAccountDetails, updateAccountDetails, deleteAccountDetails } from '../../services/adminService';
 import { uploadImage } from '../../lib/storage';
-import { Save, Plus, Trash2, Edit2, Loader2, Building, Hash, Code, Smartphone, QrCode, UploadCloud, X } from 'lucide-react';
+import { Save, Plus, Trash2, Edit2, Loader2, Building, Hash, Code, Smartphone, QrCode, UploadCloud, X, User, MapPin } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
 import { AccountCardSkeleton } from '../../components/Skeletons';
@@ -61,11 +61,31 @@ const AccountDetailsCard: React.FC<{
       </div>
 
       <div className="p-6 flex-1 flex flex-col sm:flex-row gap-6 relative z-10">
-        <div className="flex-1 space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="flex-1 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {detail.account_holder_name && (
+              <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {tr('खाताधारक का नाम', 'کھاتہ دار کا نام', 'Account Holder Name')}
+                </p>
+                <p className="text-base font-bold text-slate-900 dark:text-white">
+                  {detail.account_holder_name}
+                </p>
+              </div>
+            )}
+            {detail.branch_name && (
+              <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {tr('शाखा का नाम', 'برانچ کا نام', 'Branch Name')}
+                </p>
+                <p className="text-base font-bold text-slate-900 dark:text-white">
+                  {detail.branch_name}
+                </p>
+              </div>
+            )}
             <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1.5">
-                <Hash className="w-3 h-3" /> {tr('खाता संख्या', 'اکاؤنٹ نمبر', 'Account Number')}
+                <Hash className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {tr('खाता संख्या', 'اکاؤنٹ نمبر', 'Account Number')}
               </p>
               <p className="text-lg font-black text-slate-900 dark:text-white font-mono tracking-wider">
                 {detail.account_number}
@@ -73,7 +93,7 @@ const AccountDetailsCard: React.FC<{
             </div>
             <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1.5">
-                <Code className="w-3 h-3" /> {tr('आईएफएससी कोड', 'IFSC کوڈ', 'IFSC Code')}
+                <Code className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {tr('आईएफएससी कोड', 'IFSC کوڈ', 'IFSC Code')}
               </p>
               <p className="text-lg font-black text-slate-900 dark:text-white font-mono tracking-wider">
                 {detail.ifsc_code}
@@ -83,7 +103,7 @@ const AccountDetailsCard: React.FC<{
 
           <div className="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
             <p className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1.5 flex items-center gap-1.5">
-              <Smartphone className="w-3 h-3" /> {tr('यूपीआई आईडी', 'UPI شناخت', 'UPI ID')}
+              <Smartphone className="w-3.5 h-3.5" /> {tr('यूपीआई आईडी', 'UPI شناخت', 'UPI ID')}
             </p>
             <p className="text-base font-bold text-slate-900 dark:text-white font-mono tracking-wide">
               {detail.upi_id}
@@ -123,6 +143,8 @@ export const AccountDetailsTab: React.FC = () => {
 
   // Form State
   const [bankName, setBankName] = useState('');
+  const [accountHolderName, setAccountHolderName] = useState('');
+  const [branchName, setBranchName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [ifscCode, setIfscCode] = useState('');
   const [upiId, setUpiId] = useState('');
@@ -151,6 +173,8 @@ export const AccountDetailsTab: React.FC = () => {
   const handleEdit = (details: AccountDetails) => {
     setCurrentEditId(details.id);
     setBankName(details.bank_name);
+    setAccountHolderName(details.account_holder_name || '');
+    setBranchName(details.branch_name || '');
     setAccountNumber(details.account_number);
     setIfscCode(details.ifsc_code);
     setUpiId(details.upi_id);
@@ -164,6 +188,8 @@ export const AccountDetailsTab: React.FC = () => {
     setIsEditing(false);
     setCurrentEditId(null);
     setBankName('');
+    setAccountHolderName('');
+    setBranchName('');
     setAccountNumber('');
     setIfscCode('');
     setUpiId('');
@@ -216,6 +242,8 @@ export const AccountDetailsTab: React.FC = () => {
         await updateAccountDetails({
           id: currentEditId,
           bank_name: bankName,
+          account_holder_name: accountHolderName.trim() || undefined,
+          branch_name: branchName.trim() || undefined,
           account_number: accountNumber,
           ifsc_code: ifscCode,
           upi_id: upiId,
@@ -231,6 +259,8 @@ export const AccountDetailsTab: React.FC = () => {
       } else {
         await createAccountDetails({
           bank_name: bankName,
+          account_holder_name: accountHolderName.trim() || undefined,
+          branch_name: branchName.trim() || undefined,
           account_number: accountNumber,
           ifsc_code: ifscCode,
           upi_id: upiId,
@@ -329,6 +359,24 @@ export const AccountDetailsTab: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {tr('खाताधारक का नाम', 'کھاتہ دار کا نام', 'Account Holder Name')}
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={accountHolderName}
+                    onChange={(e) => setAccountHolderName(e.target.value)}
+                    className="w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all dark:text-white"
+                    placeholder={tr('उदा. मोहम्मद फहीम चैरिटेबल ट्रस्ट', 'مثال: محمد فہیم چیریٹیبل ٹرسٹ', 'e.g. Mohammad Faeem Charitable Trust')}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                   {tr('बैंक का नाम *', 'بینک کا نام *', 'Bank Name *')}
                 </label>
                 <div className="relative">
@@ -342,6 +390,24 @@ export const AccountDetailsTab: React.FC = () => {
                     onChange={(e) => setBankName(e.target.value)}
                     className="w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all dark:text-white"
                     placeholder={tr('उदा. स्टेट बैंक ऑफ इंडिया', 'مثلاً اسٹیٹ بینک آف انڈیا', 'e.g. State Bank of India')}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {tr('शाखा का नाम', 'برانچ کا نام', 'Branch Name')}
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <MapPin className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={branchName}
+                    onChange={(e) => setBranchName(e.target.value)}
+                    className="w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all dark:text-white"
+                    placeholder={tr('उदा. मुख्य शाखा, सीतामढ़ी', 'مثال: مین برانچ، سیتامڑھی', 'e.g. Main Branch, Sitamarhi')}
                   />
                 </div>
               </div>

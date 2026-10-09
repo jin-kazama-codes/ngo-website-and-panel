@@ -182,7 +182,7 @@ export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaa
   const payload: Record<string, unknown> = {
     id: user.id,
     name: user.name,
-    email: (user.email ?? '').trim().toLowerCase(),
+    email: user.email?.trim() ? user.email.trim().toLowerCase() : null,
     phone: user.phone,
     role: user.role,
     avatar: user.avatar,
@@ -316,7 +316,7 @@ export async function updateUser(id: string, patch: Partial<User>): Promise<User
   if (patch.communityId !== undefined) update.community_id = patch.communityId;
   if (patch.communityName !== undefined) update.community_name = patch.communityName;
   if (patch.name !== undefined) update.name = patch.name;
-  if (patch.email !== undefined) update.email = patch.email;
+  if (patch.email !== undefined) update.email = patch.email?.trim() ? patch.email.trim().toLowerCase() : null;
   if (patch.phone !== undefined) update.phone = patch.phone;
   if (patch.city !== undefined) update.city = patch.city;
   if (patch.state !== undefined) update.state = patch.state;

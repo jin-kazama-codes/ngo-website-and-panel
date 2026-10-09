@@ -126,6 +126,26 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
     activeUser?.role === 'super_admin' ||
     activeUser?.role === 'executive_admin';
 
+  const isAdmin = isSuperOrExecutive;
+
+  const isPresident =
+    currentRole === 'district_president' ||
+    activeUser?.role === 'district_president' ||
+    rawDistRole === 'district_president';
+
+
+
+  const isCommunityAdmin =
+    currentRole === 'community_admin' ||
+    activeUser?.role === 'community_admin' ||
+    rawDistRole === 'community_admin' ||
+    (activeUser as any)?.district_role === 'community_admin' ||
+    (activeUser as any)?.districtRole === 'community_admin';
+
+  const canManageCampaigns = isAdmin || isCommunityAdmin;
+
+  const cantApproveOrReject = isAdmin || isPresident;
+
   const districtRoleKeys = [
     'district_president',
     'district_coordinator',
@@ -193,11 +213,22 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
     return c.city || '';
   };
 
-  // 1. District filtering
+  // 1. District and Community filtering
   const districtFilteredCampaigns = useMemo(() => {
     let list = campaignsList;
 
-    if (isRestrictedToDistrict && userDistrict) {
+    if (isCommunityAdmin && (activeUser?.communityName || activeUser?.communityId)) {
+      list = list.filter((c) => {
+        if (activeUser?.communityId && c.communityId === activeUser.communityId) return true;
+        if (
+          activeUser?.communityName &&
+          c.communityName?.toLowerCase().trim() === activeUser.communityName.toLowerCase().trim()
+        ) {
+          return true;
+        }
+        return false;
+      });
+    } else if (isRestrictedToDistrict && userDistrict) {
       const target = userDistrict.toLowerCase().trim();
       list = list.filter((c) => {
         const campDistrict = getCampaignDistrict(c).toLowerCase().trim();
@@ -211,7 +242,7 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
           (target && campCity.includes(target))
         );
       });
-    } else if (selectedDistrictFilter) {
+    } else if (isAdmin && selectedDistrictFilter) {
       const target = selectedDistrictFilter.toLowerCase().trim();
       list = list.filter((c) => {
         const campDistrict = getCampaignDistrict(c).toLowerCase().trim();
@@ -228,7 +259,7 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
     }
 
     return list;
-  }, [campaignsList, isRestrictedToDistrict, userDistrict, selectedDistrictFilter, commById, commByName]);
+  }, [campaignsList, isCommunityAdmin, isRestrictedToDistrict, userDistrict, isAdmin, selectedDistrictFilter, commById, commByName, activeUser]);
 
   useEffect(() => {
     if (selectedCampaignForDonors?.id) {
@@ -287,8 +318,6 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
       setProcessingId(null);
     }
   };
-
-  const isAdmin = currentRole === 'super_admin' || currentRole === 'executive_admin';
 
   // Filter counts based on active district scope
   const counts = {
@@ -410,29 +439,31 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="relative z-10 flex items-center gap-3 shrink-0">
-          <button
-            onClick={() => onOpenCreateCampaign()}
-            className="cursor-pointer px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-lg hover:brightness-110 active:scale-95"
-            style={{
-              background:
-                'linear-gradient(135deg, var(--mfct-gold) 0%, #d4af37 100%)',
-              color: 'var(--mfct-dark-green)',
-              boxShadow: '0 4px 15px rgba(200,168,75,0.35)',
-            }}
-          >
-            <PlusCircle className="w-4 h-4" />
+        {/* Action Button: Only visible to Admin and Community Admin */}
+        {canManageCampaigns && (
+          <div className="relative z-10 flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => onOpenCreateCampaign()}
+              className="cursor-pointer px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-lg hover:brightness-110 active:scale-95"
+              style={{
+                background:
+                  'linear-gradient(135deg, var(--mfct-gold) 0%, #d4af37 100%)',
+                color: 'var(--mfct-dark-green)',
+                boxShadow: '0 4px 15px rgba(200,168,75,0.35)',
+              }}
+            >
+              <PlusCircle className="w-4 h-4" />
 
-            <span>
-              {tr(
-                '+ नया अभियान बनाएं',
-                '+ نئی مہم شامل کریں',
-                '+ Create New Campaign'
-              )}
-            </span>
-          </button>
-        </div>
+              <span>
+                {tr(
+                  ' नया अभियान बनाएं',
+                  ' نئی مہم شامل کریں',
+                  ' Create New Campaign'
+                )}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-5 shadow-sm">
         {/* District Role Filter Indicator Banner */}
@@ -569,8 +600,8 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
             )}
           </div>
 
-          {/* District Filter Dropdown for Super Admins / Executive Admins */}
-          {!isRestrictedToDistrict && (
+          {/* District / City Filter Dropdown (Super Admin & Executive Admin ONLY) */}
+          {isAdmin && (
             <div className="flex items-center gap-2 shrink-0 self-start md:self-auto">
               <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <select
@@ -615,13 +646,15 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
                   <span>{tr('सभी अभियान देखें', 'تمام مہمات دیکھیں', 'View All Campaigns')}</span>
                 </button>
               )}
-              <button
-                onClick={() => onOpenCreateCampaign()}
-                className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors"
-              >
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>{tr('+ नया अभियान बनाएं', '+ नई مہم بنائیں', '+ Create New Campaign')}</span>
-              </button>
+              {canManageCampaigns && (
+                <button
+                  onClick={() => onOpenCreateCampaign()}
+                  className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>{tr('नया अभियान बनाएं', 'نئی مہم بنائیں', 'Create New Campaign')}</span>
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -701,7 +734,7 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
                     </div>
                   </div>
                   <div className="pt-3 mt-auto border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-end gap-2">
-                    {isAdmin && (c.status === 'pending_approval' || c.status === 'pending') && (
+                    {cantApproveOrReject && (c.status === 'pending_approval' || c.status === 'pending') && (
                       <>
                         <button
                           onClick={() => handleAction(c.id, true)}
@@ -735,21 +768,26 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
                       <Eye className="w-3.5 h-3.5" />
                       <span>{tr('विवरण देखें', 'تفصیلات دیکھیں', 'View Details')}</span>
                     </button>
-                    <button
-                      onClick={() => onOpenCreateCampaign(c)}
-                      className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg flex items-center gap-1 transition-colors"
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                      <span>{tr('संपादित करें', 'ترمیم', 'Edit')}</span>
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirmId(c.id)}
-                      disabled={processingId === c.id}
-                      className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>{tr('हटाएं', 'حذف کریں', 'Delete')}</span>
-                    </button>
+                    {/* Actions: Edit & Delete only visible to Admin and Community Admin */}
+                    {canManageCampaigns && (
+                      <>
+                        <button
+                          onClick={() => onOpenCreateCampaign(c)}
+                          className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg flex items-center gap-1 transition-colors"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                          <span>{tr('संपादित करें', 'ترمیم', 'Edit')}</span>
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(c.id)}
+                          disabled={processingId === c.id}
+                          className="cursor-pointer px-3 py-1.5 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>{tr('हटाएं', 'حذف کریں', 'Delete')}</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
