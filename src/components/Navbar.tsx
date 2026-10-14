@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { User, UserRole } from '../types';
-import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, ChevronDown, Award, LayoutDashboard, Calculator, LogIn, LogOut, User as UserIcon, Clock, AlertCircle, ShieldCheck, KeyRound } from 'lucide-react';
+import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, ChevronDown, Award, LayoutDashboard, Calculator, LogIn, LogOut, User as UserIcon, Clock, AlertCircle, ShieldCheck, KeyRound, Copy, Check } from 'lucide-react';
 import { FaFacebookF, FaInstagram, FaWhatsapp } from 'react-icons/fa6';
 import { useLanguage } from '../context/LanguageContext';
 import { LanguageSelector } from './LanguageSelector';
@@ -44,6 +44,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [kycUpdateOpen, setKycUpdateOpen] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [membershipIdCopyStatus, setMembershipIdCopyStatus] = useState<'copied' | 'error' | null>(null);
   const { t, isHindi, language } = useLanguage();
 
   const displayName = (currentUser.name || 'User').replace(/\s*\([^)]*\)/g, '').trim() || 'User';
@@ -107,6 +108,20 @@ export const Navbar: React.FC<NavbarProps> = ({
   const displayRoleWithDistrict = hasDistrictRole && userDistrict
     ? `${roleLabel} (${userDistrict})`
     : roleLabel;
+
+  const handleCopyMembershipId = async () => {
+    if (!currentUser.membershipId) return;
+
+    try {
+      await navigator.clipboard.writeText(currentUser.membershipId);
+      setMembershipIdCopyStatus('copied');
+    } catch (error) {
+      console.error('Failed to copy membership ID:', error);
+      setMembershipIdCopyStatus('error');
+    }
+
+    window.setTimeout(() => setMembershipIdCopyStatus(null), 2000);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -364,6 +379,34 @@ export const Navbar: React.FC<NavbarProps> = ({
                         <div className="p-3.5" style={{ borderBottom: '1px solid rgba(200,168,75,0.2)', background: 'rgba(0,0,0,0.25)' }}>
                           <p className="text-sm font-bold text-white truncate">{displayName}</p>
                           <p className="text-xs truncate font-medium mt-0.5" style={{ color: 'var(--mfct-gold)' }}>{currentUser.email || currentUser.phone || 'member@sevasangam.org'}</p>
+                          {currentUser.membershipId && (
+                            <div className="mt-1 flex items-center justify-between gap-2">
+                              <span className="text-[11px] font-mono font-semibold text-emerald-100 truncate">
+                                {currentUser.membershipId}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={handleCopyMembershipId}
+                                aria-label={t('admin.copyMembershipId', 'Copy membership ID')}
+                                title={
+                                  membershipIdCopyStatus === 'copied'
+                                    ? t('common.copied', 'Copied')
+                                    : membershipIdCopyStatus === 'error'
+                                      ? t('common.copyFailed', 'Copy failed')
+                                      : t('admin.copyMembershipId', 'Copy membership ID')
+                                }
+                                className="shrink-0 p-1 rounded-md hover:bg-white/10 text-emerald-100 transition-colors cursor-pointer"
+                              >
+                                {membershipIdCopyStatus === 'copied' ? (
+                                  <Check className="w-3.5 h-3.5" />
+                                ) : membershipIdCopyStatus === 'error' ? (
+                                  <AlertCircle className="w-3.5 h-3.5 text-rose-300" />
+                                ) : (
+                                  <Copy className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            </div>
+                          )}
 
                           <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(200,168,75,0.25)', color: '#ffffff' }}>
                             {roleIcon}
@@ -384,7 +427,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
                             >
                               <LayoutDashboard className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                              <span>{t('nav.adminPortal', 'Admin Portal')}</span>
+                              <span>{t('nav.adminPortal')}</span>
                             </Link>
                           ) : null}
 
@@ -699,8 +742,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   localStorage.setItem('mfct_active_user', JSON.stringify({ ...parsed, ...updated }));
                 }
               } catch { }
-              window.location.reload();
             }
+            window.location.reload();
           }}
         />
       )}

@@ -76,6 +76,26 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const donorName = String(body.donorName || body.donor_name || '').trim();
+    const utrNumber = String(body.utrNumber || body.utr_number || '').trim();
+    const paymentScreenshotUrl = String(
+      body.paymentScreenshotUrl || body.payment_screenshot_url || ''
+    ).trim();
+    const amountINR = Number(body.amountINR ?? body.amount_inr);
+
+    if (!donorName || !Number.isFinite(amountINR) || amountINR <= 0) {
+      return NextResponse.json(
+        { success: false, error: 'A donor name and a valid donation amount are required.' },
+        { status: 400 }
+      );
+    }
+    if (!/^\d{12}$/.test(utrNumber) || !/^https:\/\/\S+$/.test(paymentScreenshotUrl)) {
+      return NextResponse.json(
+        { success: false, error: 'A valid 12-digit UTR and payment screenshot are required.' },
+        { status: 400 }
+      );
+    }
+
     const nowIso = new Date().toISOString();
 
     const rawCampaignId = body.campaignId || body.campaign_id;
@@ -90,20 +110,20 @@ export async function POST(request: Request) {
     const newDonation: Record<string, any> = {
       id: body.id || `don_${Date.now()}`,
       transaction_id: body.transactionId || body.transaction_id || `TXN${Date.now()}`,
-      utr_number: body.utrNumber || body.utr_number,
-      donor_name: body.donorName || body.donor_name || 'Anonymous Donor',
+      utr_number: utrNumber,
+      donor_name: donorName,
       donor_id: donorId,
       donor_role: body.donorRole || body.donor_role || 'member',
       donor_avatar: body.donorAvatar || body.donor_avatar || null,
       campaign_id: campaignId,
       campaign_title: body.campaignTitle || body.campaign_title || 'General Fund',
       community_name: body.communityName || body.community_name || 'Mohammad Faeem Charitable Trust (MFCT)',
-      amount_inr: Number(body.amountINR || body.amount_inr || 0),
+      amount_inr: amountINR,
       category: body.category || 'General',
       is_outside_community: body.isOutsideCommunity !== undefined ? Boolean(body.isOutsideCommunity) : false,
       payment_method: body.paymentMethod || body.payment_method || 'UPI',
-      payment_screenshot_url: body.paymentScreenshotUrl || body.payment_screenshot_url || null,
-      status: body.status || 'pending_verification',
+      payment_screenshot_url: paymentScreenshotUrl,
+      status: 'pending_verification',
       date: body.date || new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
       created_at: nowIso,
       receipt_number: body.receiptNumber || body.receipt_number || `RCP-${Date.now().toString().slice(-6)}`,
@@ -184,55 +204,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Update campaign raised amount & donors count if campaign_id present
-    if (newDonation.campaign_id) {
-      try {
-        const { data: campaign } = await supabaseAdmin
-          .from('campaigns')
-          .select('raised_inr, donors_count, community_id')
-          .eq('id', newDonation.campaign_id)
-          .single();
-
-        if (campaign) {
-          await supabaseAdmin
-            .from('campaigns')
-            .update({
-              raised_inr: (campaign.raised_inr || 0) + newDonation.amount_inr,
-              donors_count: (campaign.donors_count || 0) + 1,
-            })
-            .eq('id', newDonation.campaign_id);
-
-          if (campaign.community_id) {
-            const { data: community } = await supabaseAdmin
-              .from('communities')
-              .select('total_raised_inr, campaign_details')
-              .eq('id', campaign.community_id)
-              .single();
-
-            if (community) {
-              const currentTotal = community.total_raised_inr || 0;
-              const currentDetails = community.campaign_details || [];
-              const newDetail = {
-                campaign_id: newDonation.campaign_id,
-                donor_id: newDonation.donor_id,
-                campaign_amount: newDonation.amount_inr,
-              };
-
-              await supabaseAdmin
-                .from('communities')
-                .update({
-                  total_raised_inr: currentTotal + newDonation.amount_inr,
-                  campaign_details: [...currentDetails, newDetail],
-                })
-                .eq('id', campaign.community_id);
-            }
-          }
-        }
-      } catch (cErr) {
-        console.error('Error updating campaign and community stats:', cErr);
-      }
-    }
-
     const returnData = {
       ...(data || newDonation),
       campaignId: (data?.campaign_id || rawCampaignId || 'general'),
@@ -275,6 +246,34 @@ export async function PATCH(request: Request) {
       updatePayload.amount_inr = body.amountINR ?? body.amount_inr;
     }
 
+    let newlyVerifiedDonation: {
+      campaign_id: string | null;
+      donor_id: string | null;
+      amount_inr: number;
+    } | null = null;
+    if (body.status === 'verified') {
+      const { data: previousDonation, error: previousDonationError } = await supabaseAdmin
+        .from('donations')
+        .select('status, campaign_id, donor_id, amount_inr')
+        .eq('id', id)
+        .single();
+
+      if (previousDonationError) {
+        return NextResponse.json(
+          { success: false, error: previousDonationError.message },
+          { status: 500 }
+        );
+      }
+
+      if (previousDonation.status !== 'verified' && previousDonation.campaign_id) {
+        newlyVerifiedDonation = {
+          campaign_id: previousDonation.campaign_id,
+          donor_id: previousDonation.donor_id,
+          amount_inr: Number(previousDonation.amount_inr || 0),
+        };
+      }
+    }
+
     let { data, error } = await supabaseAdmin
       .from('donations')
       .update(updatePayload)
@@ -301,6 +300,54 @@ export async function PATCH(request: Request) {
     if (error) {
       console.error('Supabase error updating donation:', error);
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    if (newlyVerifiedDonation && newlyVerifiedDonation.amount_inr > 0) {
+      try {
+        const { data: campaign } = await supabaseAdmin
+          .from('campaigns')
+          .select('raised_inr, donors_count, community_id')
+          .eq('id', newlyVerifiedDonation.campaign_id)
+          .single();
+
+        if (campaign) {
+          await supabaseAdmin
+            .from('campaigns')
+            .update({
+              raised_inr: (campaign.raised_inr || 0) + newlyVerifiedDonation.amount_inr,
+              donors_count: (campaign.donors_count || 0) + 1,
+            })
+            .eq('id', newlyVerifiedDonation.campaign_id);
+
+          if (campaign.community_id) {
+            const { data: community } = await supabaseAdmin
+              .from('communities')
+              .select('total_raised_inr, campaign_details')
+              .eq('id', campaign.community_id)
+              .single();
+
+            if (community) {
+              await supabaseAdmin
+                .from('communities')
+                .update({
+                  total_raised_inr:
+                    (community.total_raised_inr || 0) + newlyVerifiedDonation.amount_inr,
+                  campaign_details: [
+                    ...(community.campaign_details || []),
+                    {
+                      campaign_id: newlyVerifiedDonation.campaign_id,
+                      donor_id: newlyVerifiedDonation.donor_id,
+                      campaign_amount: newlyVerifiedDonation.amount_inr,
+                    },
+                  ],
+                })
+                .eq('id', campaign.community_id);
+            }
+          }
+        }
+      } catch (cErr) {
+        console.error('Error updating verified donation campaign stats:', cErr);
+      }
     }
 
     return NextResponse.json({ success: true, data });

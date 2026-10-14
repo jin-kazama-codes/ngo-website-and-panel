@@ -142,8 +142,9 @@ export const AccountDetailsTab: React.FC = () => {
   const [currentEditId, setCurrentEditId] = useState<string | null>(null);
 
   // Form State
-  const [bankName, setBankName] = useState('');
   const [accountHolderName, setAccountHolderName] = useState('');
+  const [bankName, setBankName] = useState('');
+
   const [branchName, setBranchName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [ifscCode, setIfscCode] = useState('');
@@ -172,8 +173,9 @@ export const AccountDetailsTab: React.FC = () => {
 
   const handleEdit = (details: AccountDetails) => {
     setCurrentEditId(details.id);
-    setBankName(details.bank_name);
     setAccountHolderName(details.account_holder_name || '');
+    setBankName(details.bank_name);
+
     setBranchName(details.branch_name || '');
     setAccountNumber(details.account_number);
     setIfscCode(details.ifsc_code);
@@ -187,8 +189,9 @@ export const AccountDetailsTab: React.FC = () => {
   const handleCancel = () => {
     setIsEditing(false);
     setCurrentEditId(null);
-    setBankName('');
     setAccountHolderName('');
+    setBankName('');
+
     setBranchName('');
     setAccountNumber('');
     setIfscCode('');
@@ -241,8 +244,9 @@ export const AccountDetailsTab: React.FC = () => {
       if (currentEditId) {
         await updateAccountDetails({
           id: currentEditId,
-          bank_name: bankName,
           account_holder_name: accountHolderName.trim() || undefined,
+          bank_name: bankName,
+
           branch_name: branchName.trim() || undefined,
           account_number: accountNumber,
           ifsc_code: ifscCode,
@@ -258,8 +262,9 @@ export const AccountDetailsTab: React.FC = () => {
         );
       } else {
         await createAccountDetails({
-          bank_name: bankName,
           account_holder_name: accountHolderName.trim() || undefined,
+          bank_name: bankName,
+
           branch_name: branchName.trim() || undefined,
           account_number: accountNumber,
           ifsc_code: ifscCode,
@@ -359,7 +364,7 @@ export const AccountDetailsTab: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  {tr('खाताधारक का नाम', 'کھاتہ دار کا نام', 'Account Holder Name')}
+                  {tr('खाताधारक का नाम', 'کھاتہ دار کا नाम', 'Account Holder Name')}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -374,7 +379,6 @@ export const AccountDetailsTab: React.FC = () => {
                   />
                 </div>
               </div>
-
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                   {tr('बैंक का नाम *', 'بینک کا نام *', 'Bank Name *')}

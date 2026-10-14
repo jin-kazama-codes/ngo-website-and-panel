@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Donation } from '../../types';
 import { getDonations } from '../../services/donationService';
 import { ShieldCheck, Heart, Download, Building2, CheckCircle2, QrCode, FileText } from 'lucide-react';
+import { downloadRegistrationPaymentSlip } from '../../lib/registrationPaymentSlip';
 
 interface MemberDashboardProps {
   user: User;
@@ -113,6 +114,39 @@ export const MemberDashboard: React.FC<MemberDashboardProps> = ({
           </span>
         </div>
       </div>
+
+      {user.status === 'approved' && user.paymentUtr && (
+        <section className="rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm dark:border-emerald-900 dark:bg-slate-900">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                Registration Payment Slip
+              </h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                Your ₹100 membership registration payment has been recorded.
+              </p>
+              <p className="mt-1 font-mono text-xs text-slate-500 dark:text-slate-400">
+                UTR: {user.paymentUtr}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  downloadRegistrationPaymentSlip(user);
+                } catch (error) {
+                  console.error('Failed to create registration payment slip:', error);
+                  window.alert(error instanceof Error ? error.message : 'Could not create the payment slip.');
+                }
+              }}
+              className="mfct-btn-gold inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold"
+            >
+              <Download className="h-4 w-4" />
+              Download Payment Slip
+            </button>
+          </div>
+        </section>
+      )}
     </div>
   );
 };

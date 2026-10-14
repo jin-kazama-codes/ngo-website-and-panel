@@ -10,12 +10,14 @@ function HomeContent() {
     handleOpenDonate,
     handleOpenRegister,
     handleOpenZakatCalc,
+    isAuthenticated,
   } = useAppState();
 
   return (
     <HomePage
       onDonate={(c) => handleOpenDonate(c)}
       onOpenRegister={handleOpenRegister}
+      showRegistrationCta={!isAuthenticated}
       onNavigatePage={(page: string) => {
         const routes: Record<string, string> = {
           home: '/',
