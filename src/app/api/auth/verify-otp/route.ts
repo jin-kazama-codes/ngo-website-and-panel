@@ -1,19 +1,19 @@
 import { NextResponse } from 'next/server';
-import { verifyOtp } from '@/lib/otpStore';
+import { verifyPasswordResetOtp } from '@/lib/passwordResetOtp';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, otp } = body;
+    const { email, otp, membershipId } = body;
 
-    if (!email || !otp) {
+    if (!email || typeof email !== 'string' || !otp || !membershipId || typeof membershipId !== 'string') {
       return NextResponse.json(
-        { success: false, error: 'Email and verification code are required.' },
+        { success: false, error: 'Email, membership ID, and verification code are required.' },
         { status: 400 }
       );
     }
 
-    const result = verifyOtp(email, otp);
+    const result = await verifyPasswordResetOtp(email, membershipId, otp);
 
     if (!result.valid) {
       return NextResponse.json(

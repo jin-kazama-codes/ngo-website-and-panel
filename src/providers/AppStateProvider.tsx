@@ -229,14 +229,12 @@ export function AppStateProvider({
     setSelectedDonateCampaign(campaign);
     setPresetDonateAmount(amount);
     setPresetDonateCategory(category);
-    if (!isAuthenticated) {
-      router.push('/sign-up');
-    } else {
-      setShowDonateModal(true);
-    }
+    setShowDonateModal(true);
   };
 
   const handleDonationSuccess = (newDonation: Donation) => {
+    if (newDonation.status !== 'verified') return;
+
     setCampaignsList((prev) =>
       prev.map((c) => {
         if (c.id === newDonation.campaignId) {
@@ -356,7 +354,8 @@ export function AppStateProvider({
           campaign={selectedDonateCampaign}
           initialAmount={presetDonateAmount}
           initialCategory={presetDonateCategory}
-          currentUser={activeUser}
+          currentUser={isAuthenticated && activeUser && activeUser.name !== 'No User' ? activeUser : undefined}
+          isAuthenticated={isAuthenticated}
           onClose={() => {
             setShowDonateModal(false);
             setSelectedDonateCampaign(undefined);
@@ -440,6 +439,7 @@ export function AppStateProvider({
             onPageChange={handlePageChange}
             onOpenDonate={() => handleOpenDonate()}
             onOpenRegister={handleOpenRegister}
+            isAuthenticated={isAuthenticated}
             onNavigateToAdmin={handleNavigateToAdmin}
           />
           {sharedModals}

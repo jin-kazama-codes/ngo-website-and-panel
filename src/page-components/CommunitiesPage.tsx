@@ -11,14 +11,14 @@ import { translateCity, translateState } from '../lib/translateEntity';
 import { useDynamicTranslatedText } from '../lib/autoTranslate';
 
 interface CommunitiesPageProps {
-  onOpenRegister: () => void;
+  onOpenRegister?: () => void;
 }
 
 const DynamicCommunityCard: React.FC<{
   rawComm: Community;
   isLast: boolean;
   lastElementRef: (node: HTMLDivElement | null) => void;
-  onOpenRegister: () => void;
+  onOpenRegister?: () => void;
 }> = ({ rawComm, isLast, lastElementRef, onOpenRegister }) => {
   const { t, language } = useLanguage();
   const displayName = useDynamicTranslatedText(rawComm.name, language);
@@ -159,12 +159,14 @@ const DynamicCommunityCard: React.FC<{
         </div>
 
         {/* Join button */}
-        <button
-          onClick={onOpenRegister}
-          className="mfct-btn-dark w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <Users className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('communities.join_btn')}
-        </button>
+        {onOpenRegister && (
+          <button
+            onClick={onOpenRegister}
+            className="mfct-btn-dark w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Users className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {t('communities.join_btn')}
+          </button>
+        )}
       </div>
     </div>
   );

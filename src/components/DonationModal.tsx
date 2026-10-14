@@ -100,6 +100,7 @@ interface DonationModalProps {
   initialAmount?: number;
   initialCategory?: DonationCategory;
   currentUser?: User;
+  isAuthenticated?: boolean;
   onClose: () => void;
   onDonationSuccess: (donation: Donation) => void;
 }
@@ -109,6 +110,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   initialAmount,
   initialCategory,
   currentUser,
+  isAuthenticated,
   onClose,
   onDonationSuccess,
 }) => {
@@ -118,6 +120,11 @@ export const DonationModal: React.FC<DonationModalProps> = ({
     if (language === 'ur') return ur;
     return en;
   };
+
+  const isLoggedIn = Boolean(
+    isAuthenticated ||
+    (currentUser && currentUser.id && currentUser.name && currentUser.name !== 'No User')
+  );
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedCategory, setSelectedCategory] = useState<DonationCategory>(
@@ -136,14 +143,20 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotUploaded, setScreenshotUploaded] = useState<boolean>(false);
   const [donorName, setDonorName] = useState<string>(
-    currentUser?.name || tr('उदार दानदाता', 'عطیہ دہندہ', 'Generous Member')
+    (isLoggedIn && currentUser?.name && currentUser.name !== 'No User') ? currentUser.name : ''
+  );
+  const [donorMobile, setDonorMobile] = useState<string>(
+    (isLoggedIn && currentUser?.phone) ? currentUser.phone : ''
+  );
+  const [donorCity, setDonorCity] = useState<string>(
+    (isLoggedIn && (currentUser?.city || currentUser?.district)) ? (currentUser.city || currentUser.district || '') : ''
   );
   const [zakatGuardianName, setZakatGuardianName] = useState<string>('');
   const [zakatAddress, setZakatAddress] = useState<string>(
-    currentUser?.address || currentUser?.city || ''
+    (isLoggedIn && (currentUser?.address || currentUser?.city)) ? (currentUser.address || currentUser.city || '') : ''
   );
   const [zakatMobile, setZakatMobile] = useState<string>(
-    currentUser?.phone || ''
+    (isLoggedIn && currentUser?.phone) ? currentUser.phone : ''
   );
   const [zakatAmountWords, setZakatAmountWords] = useState<string>('');
   const [zakatAgreed, setZakatAgreed] = useState<boolean>(true);
@@ -152,6 +165,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [accountDetails, setAccountDetails] = useState<AccountDetails | null>(null);
+  const [accountDetailsLoading, setAccountDetailsLoading] = useState<boolean>(true);
   const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
@@ -159,14 +173,15 @@ export const DonationModal: React.FC<DonationModalProps> = ({
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const userCity = (currentUser?.city || '').trim();
+  // User's registered locality (only set for authenticated members, stays stable during typing)
+  const registeredCity = ((isLoggedIn ? (currentUser?.city || currentUser?.district) : '') || '').trim();
   const isPreselectedCampaign = Boolean(campaign);
 
   // Flexible city/community matching for donor's locality
   const isMatchUserCity = useCallback(
     (c: Campaign | null | undefined) => {
-      if (!c || !userCity) return false;
-      const uCity = userCity.toLowerCase().trim();
+      if (!c || !registeredCity) return false;
+      const uCity = registeredCity.toLowerCase().trim();
       const cCity = (c.city || '').toLowerCase().trim();
       const cDistrict = ((c as any).district || '').toLowerCase().trim();
       const cComm = (c.communityName || '').toLowerCase().trim();
@@ -177,32 +192,44 @@ export const DonationModal: React.FC<DonationModalProps> = ({
         (cComm && (cComm.includes(uCity) || uCity.includes(cComm)))
       );
     },
-    [userCity]
+    [registeredCity]
   );
 
   useEffect(() => {
+    let isMounted = true;
     if (!campaign) {
       setCampaignsLoading(true);
       getCampaigns({ status: 'active' }).then((data) => {
+        if (!isMounted) return;
         setCampaigns(data);
         if (data.length > 0) {
           // Select local city campaign first to avoid defaulting to outside city
-          const localCamp = userCity ? data.find(isMatchUserCity) : null;
+          const localCamp = registeredCity ? data.find(isMatchUserCity) : null;
           const targetId = localCamp ? localCamp.id : data[0].id;
-          setSelectedCampaignId(targetId);
+          setSelectedCampaignId((prev) => prev || targetId);
         }
-      }).catch(console.error).finally(() => setCampaignsLoading(false));
+      }).catch(console.error).finally(() => {
+        if (isMounted) setCampaignsLoading(false);
+      });
     }
+    setAccountDetailsLoading(true);
     getAccountDetails().then((data) => {
+      if (!isMounted) return;
       if (data && data.length > 0) {
         setAccountDetails(data[0]);
       }
-    }).catch(console.error);
-  }, [campaign, userCity, isMatchUserCity]);
+    }).catch(console.error).finally(() => {
+      if (isMounted) setAccountDetailsLoading(false);
+    });
 
-  // Ensure default campaign matches user city when available and not toggled to outside
+    return () => {
+      isMounted = false;
+    };
+  }, [campaign, registeredCity, isMatchUserCity]);
+
+  // Ensure default campaign matches registered user city once available and not toggled to outside
   useEffect(() => {
-    if (!campaign && userCity && campaigns.length > 0 && !isOutsideCommunity) {
+    if (!campaign && registeredCity && campaigns.length > 0 && !isOutsideCommunity) {
       const currentActive = campaigns.find((c) => c.id === selectedCampaignId);
       const isCurrentLocal = currentActive ? isMatchUserCity(currentActive) : false;
       if (!isCurrentLocal) {
@@ -212,7 +239,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
         }
       }
     }
-  }, [campaign, userCity, campaigns, selectedCampaignId, isOutsideCommunity, isMatchUserCity]);
+  }, [campaign, registeredCity, campaigns, selectedCampaignId, isOutsideCommunity, isMatchUserCity]);
 
   useEffect(() => {
     if (language === 'en' || !campaigns.length) return;
@@ -238,8 +265,8 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
   // Local city campaigns vs outside campaigns
   const localCityCampaigns = useMemo(
-    () => (userCity ? filteredCampaigns.filter(isMatchUserCity) : []),
-    [userCity, filteredCampaigns, isMatchUserCity]
+    () => (registeredCity ? filteredCampaigns.filter(isMatchUserCity) : []),
+    [registeredCity, filteredCampaigns, isMatchUserCity]
   );
 
   // Show user city campaigns only; other cities are not shown
@@ -249,7 +276,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   }, [localCityCampaigns, filteredCampaigns]);
 
   const isCampaignInUserCity = Boolean(
-    userCity &&
+    registeredCity &&
     activeCampaign &&
     isMatchUserCity(activeCampaign)
   );
@@ -278,7 +305,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const handleSelectCampaign = (id: string) => {
     setSelectedCampaignId(id);
     const chosen = campaigns.find((c) => c.id === id);
-    if (chosen && userCity) {
+    if (chosen && registeredCity) {
       const isLocal = isMatchUserCity(chosen);
       setIsOutsideCommunity(!isLocal);
     }
@@ -294,18 +321,24 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
   // Sync current user details if available
   useEffect(() => {
-    if (currentUser) {
-      if (currentUser.name && (!donorName || donorName === 'Generous Member' || donorName === 'उदार दानदाता')) {
+    if (isLoggedIn && currentUser) {
+      if (currentUser.name && currentUser.name !== 'No User' && !donorName.trim()) {
         setDonorName(currentUser.name);
       }
-      if (currentUser.phone && !zakatMobile) {
+      if (currentUser.phone && !donorMobile.trim()) {
+        setDonorMobile(currentUser.phone);
+      }
+      if ((currentUser.city || currentUser.district) && !donorCity.trim()) {
+        setDonorCity(currentUser.city || currentUser.district || '');
+      }
+      if (currentUser.phone && !zakatMobile.trim()) {
         setZakatMobile(currentUser.phone);
       }
-      if ((currentUser.address || currentUser.city) && !zakatAddress) {
-        setZakatAddress(currentUser.address || currentUser.city);
+      if ((currentUser.address || currentUser.city) && !zakatAddress.trim()) {
+        setZakatAddress(currentUser.address || currentUser.city || '');
       }
     }
-  }, [currentUser]);
+  }, [currentUser, isLoggedIn]);
 
   const handleAmountClick = (val: number) => {
     setAmount(val);
@@ -371,6 +404,21 @@ export const DonationModal: React.FC<DonationModalProps> = ({
         );
         return;
       }
+      // If NOT logged in / unregistered, validate required donor details
+      if (!isLoggedIn) {
+        if (!donorName || !donorName.trim()) {
+          showToast(
+            tr('कृपया अपना पूरा नाम दर्ज करें।', 'براہ کرم اپنا پورا نام درج کریں۔', 'Please enter your full name.')
+          );
+          return;
+        }
+        if (!donorMobile || !donorMobile.trim()) {
+          showToast(
+            tr('कृपया मोबाइल नंबर दर्ज करें।', 'براہ کرم موبائل नंबर درج کریں۔', 'Please enter your mobile number.')
+          );
+          return;
+        }
+      }
     }
     setStep(2);
   };
@@ -387,12 +435,32 @@ export const DonationModal: React.FC<DonationModalProps> = ({
       );
       return;
     }
+    if (!isLoggedIn && (!donorMobile || !donorMobile.trim())) {
+      showToast(
+        tr(
+          'कृपया मोबाइल नंबर दर्ज करें।',
+          'براہ کرم موبائل نمبر درج کریں۔',
+          'Please enter your mobile number.'
+        )
+      );
+      return;
+    }
     if (!utrNumber || !utrNumber.trim()) {
       showToast(
         tr(
           'कृपया बैंक UTR / संदर्भ संख्या दर्ज करें।',
           'براہ کرم بینک UTR / ٹرانزیکشن نمبر درج کریں۔',
           'Please enter Bank UTR / Transaction Ref No.'
+        )
+      );
+      return;
+    }
+    if (!/^\d{12}$/.test(utrNumber.trim())) {
+      showToast(
+        tr(
+          'कृपया सही 12 अंकों का UTR नंबर दर्ज करें।',
+          'براہ کرم درست 12 ہندسوں کا UTR نمبر درج کریں۔',
+          'Please enter the actual 12-digit UTR number.'
         )
       );
       return;
@@ -418,7 +486,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
       const finalUtr = utrNumber.trim();
       const isOutside = isOutsideCommunity || Boolean(
-        userCity &&
+        registeredCity &&
         activeCampaign &&
         !isMatchUserCity(activeCampaign)
       );
@@ -426,9 +494,9 @@ export const DonationModal: React.FC<DonationModalProps> = ({
         transactionId: `TXN${Math.floor(100000000 + Math.random() * 900000000)}`,
         utrNumber: finalUtr,
         donorName: donorName.trim(),
-        donorId: currentUser?.id || 'anonymous',
-        donorRole: ((currentUser?.districtRole?.trim() || currentUser?.district_role?.trim() || currentUser?.role || 'member') as UserRole),
-        donorAvatar: currentUser?.avatar || undefined,
+        donorId: (isLoggedIn && currentUser?.id) ? currentUser.id : 'anonymous',
+        donorRole: ((isLoggedIn && (currentUser?.districtRole?.trim() || currentUser?.district_role?.trim() || currentUser?.role)) || 'member') as UserRole,
+        donorAvatar: (isLoggedIn && currentUser?.avatar) ? currentUser.avatar : undefined,
         // When outside community: do NOT link to any specific campaign
         campaignId: isOutside ? 'general' : activeCampaign.id,
         campaignTitle: isOutside ? `${selectedCategory} General Fund (MFCT)` : activeCampaign.title,
@@ -441,13 +509,13 @@ export const DonationModal: React.FC<DonationModalProps> = ({
         status: 'pending_verification',
         date: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
         receiptNumber: `RCP-2024-${Math.floor(1000 + Math.random() * 9000)}`,
-        district: currentUser?.city || 'FBD',
+        district: (isLoggedIn ? (currentUser?.city || currentUser?.district) : donorCity.trim()) || activeCampaign.city || 'General',
         wakalahInformation: selectedCategory === 'Zakat' ? [
           {
             donorName: donorName.trim() || 'Anonymous',
             guardianName: zakatGuardianName.trim(),
             address: zakatAddress.trim(),
-            mobile: zakatMobile.trim(),
+            mobile: zakatMobile.trim() || donorMobile.trim(),
             amountINR: amount,
             amountInWords: zakatAmountWords || numberToWordsINR(amount, language === 'en' ? 'en' : 'hi'),
             isAccepted: true,
@@ -545,6 +613,69 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
         {step === 1 && (
           <div className="space-y-6">
+            {isLoggedIn ? (
+              <div
+                className="rounded-2xl p-4 flex items-center justify-between"
+                style={{
+                  background: 'rgba(16, 185, 129, 0.08)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-sm text-white shadow-sm"
+                    style={{ background: 'var(--mfct-dark-green)' }}
+                  >
+                    {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : '✓'}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>
+                        {currentUser?.name}
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900">
+                        {tr('पंजीकृत सदस्य ✓', 'رجسٹرڈ ممبر ✓', 'Registered Member ✓')}
+                      </span>
+                    </div>
+                    <p className="text-xs mt-0.5 font-medium" style={{ color: 'var(--mfct-text-muted)' }}>
+                      {currentUser?.phone ? `${currentUser.phone}` : ''}
+                      {(currentUser?.city || currentUser?.district) ? ` • ${currentUser?.city || currentUser?.district}` : ''}
+                      {' • '}
+                      <span className="text-emerald-700 font-semibold">
+                        {tr('खाता लिंक है', 'اکاؤنٹ منسلک ہے', 'Account Linked')}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="rounded-2xl p-4"
+                style={{
+                  background: 'rgba(200, 168, 75, 0.08)',
+                  border: '1px solid rgba(200, 168, 75, 0.25)',
+                }}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full" style={{ background: 'var(--mfct-gold)' }} />
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-dark-green)' }}>
+                      {tr('अतिथि दानदाता (साइन अप आवश्यक नहीं)', 'مہمان عطیہ دہندہ (سائن اپ ضروری نہیں)', 'Guest Donor (No Sign-up Required)')}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">
+                    {tr('सीधा दान', 'براہ راست عطیہ', 'Direct Giving')}
+                  </span>
+                </div>
+                <p className="text-xs" style={{ color: 'var(--mfct-text-muted)' }}>
+                  {tr(
+                    'दान करने के लिए सदस्यता या साइन अप आवश्यक नहीं है। दान रसीद आपके नाम पर जारी की जाएगी।',
+                    'عطیہ دینے کے لیے رکنیت یا سائن اپ ضروری نہیں ہے۔ عطیہ رسید آپ کے نام سے جاری ہوگی۔',
+                    'No membership or sign-up is required to donate. The receipt will be issued in your name.'
+                  )}
+                </p>
+              </div>
+            )}
 
             {/* Campaign Loading Skeleton */}
             {campaignsLoading && (
@@ -760,6 +891,69 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                     />
                   </div>
                 </div>
+
+                {/* Guest Donor Details for Non-Zakat Donations */}
+                {!isLoggedIn && selectedCategory !== 'Zakat' && (
+                  <div
+                    className="p-4 rounded-2xl border space-y-3"
+                    style={{ background: 'var(--mfct-warm-bg)', borderColor: 'var(--mfct-border)' }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-dark-green)' }}>
+                        {tr('दानदाता का विवरण', 'عطیہ دہندہ کی تفصیلات', 'Donor Details')}
+                      </label>
+                      <span className="text-[10px] font-semibold text-slate-500">
+                        {tr('रसीद व सत्यापन हेतु', 'رسید اور تصدیق کے لیے', 'For Receipt & Verification')}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                          {tr('आपका पूरा नाम', 'آپ کا پورا نام', 'Your Full Name')} <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={donorName}
+                          onChange={(e) => setDonorName(e.target.value)}
+                          placeholder={tr('उदा. मोहम्मद आरिफ़', 'مثال: محمد عارف', 'e.g. Mohammad Arif')}
+                          className="w-full p-2.5 rounded-xl text-xs font-medium outline-none bg-white"
+                          style={{ border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                          {tr('मोबाइल नंबर', 'موبائل نمبر', 'Mobile Number')} <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          value={donorMobile}
+                          onChange={(e) => setDonorMobile(e.target.value)}
+                          placeholder="उदा. 9876543210"
+                          className="w-full p-2.5 rounded-xl text-xs font-mono font-medium outline-none bg-white"
+                          style={{ border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-[11px] font-bold mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                          {tr('शहर / ज़िला', 'شہر / ضلع', 'City / District')}
+                        </label>
+                        <input
+                          type="text"
+                          value={donorCity}
+                          onChange={(e) => setDonorCity(e.target.value)}
+                          placeholder={tr('उदा. फ़रीदाबाद / दिल्ली', 'مثال: فرید آباد / دہلی', 'e.g. Faridabad / Delhi')}
+                          className="w-full p-2.5 rounded-xl text-xs font-medium outline-none bg-white"
+                          style={{ border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {selectedCategory === 'Zakat' && (
                   <ZakatWakalahForm
                     donorName={donorName}
@@ -858,18 +1052,28 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
             {paymentMethod === 'UPI' ? (
               <div className="p-6 text-white rounded-3xl text-center space-y-4 shadow-xl" style={{ background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}>
-                <div className="bg-white p-3 rounded-2xl inline-block shadow-lg">
-                  {accountDetails?.qr_code_url ? (
-                    <img src={accountDetails.qr_code_url} alt="QR Code" className="w-36 h-36 object-contain mx-auto" />
+                <div className="w-[162px] h-[162px] mx-auto bg-white p-4 rounded-2xl shadow-lg flex items-center justify-center">
+                  {accountDetailsLoading ? (
+                    <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                  ) : accountDetails?.qr_code_url ? (
+                    <img src={accountDetails.qr_code_url} alt="QR Code" className="w-[130px] h-[130px] object-contain mx-auto" />
                   ) : (
-                    <QrCode className="w-36 h-36 mx-auto" style={{ color: 'var(--mfct-dark-green)' }} />
+                    <p className="text-center text-xs font-medium text-slate-600">
+                      {tr('QR कोड उपलब्ध नहीं है', 'QR کوڈ دستیاب نہیں ہے', 'QR code is not available')}
+                    </p>
                   )}
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wider" style={{ color: 'var(--mfct-gold)' }}>{tr('सीधे एस्क्रो के लिए UPI ID', 'براہ راست اسکرو کے لیے یو پی آئی آئی ڈی', 'UPI ID for Direct Escrow')}</p>
-                  <p className="font-mono text-white font-bold text-lg select-all">
-                    {accountDetails?.upi_id || 'mfct@okicici'}
-                  </p>
+                  {accountDetails?.upi_id ? (
+                    <p className="font-mono text-white font-bold text-lg select-all">
+                      {accountDetails.upi_id}
+                    </p>
+                  ) : (
+                    <p className="text-xs font-medium text-slate-300 mt-1">
+                      {tr('UPI ID उपलब्ध नहीं है', 'UPI ID دستیاب نہیں है', 'UPI ID is not available')}
+                    </p>
+                  )}
                   <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.7)' }}>
                     {tr(
                       'Google Pay, PhonePe, Paytm या BHIM UPI द्वारा स्कैन करें',
@@ -887,6 +1091,10 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                     <span className="text-white font-medium">{accountDetails.account_holder_name}</span>
                   </div>
                 )}
+                <div className="flex justify-between border-b border-white/10 pb-2">
+                  <span style={{ color: 'rgba(200,168,75,0.8)' }}>{tr('खाताधारक का नाम:', 'اکاؤنٹ ہولڈر کا نام:', 'Account Holder:')}</span>
+                  <span className="text-white">{accountDetails?.account_holder_name || 'Mohammad Faeem Charitable Trust'}</span>
+                </div>
                 <div className="flex justify-between border-b border-white/10 pb-2">
                   <span style={{ color: 'rgba(200,168,75,0.8)' }}>{tr('बैंक का नाम:', 'بینک کا نام:', 'Bank Name:')}</span>
                   <span className="text-white">{accountDetails?.bank_name || 'ICICI Bank Ltd'}</span>
@@ -908,21 +1116,82 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               </div>
             )}
 
-            {/* UTR and Receipt Upload */}
+            {/* Donor Identity / Verification Confirmation */}
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
-                  {tr('आपका पूरा नाम', 'آپ کا پورا نام', 'Your Full Name')} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={donorName}
-                  onChange={(e) => setDonorName(e.target.value)}
-                  className="w-full p-3 rounded-xl text-sm font-medium outline-none"
-                  style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
-                />
-              </div>
+              {isLoggedIn ? (
+                <div
+                  className="p-3.5 rounded-2xl flex items-center justify-between"
+                  style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center font-extrabold text-xs text-white"
+                      style={{ background: 'var(--mfct-dark-green)' }}
+                    >
+                      {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : '✓'}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-extrabold" style={{ color: 'var(--mfct-dark-green)' }}>
+                          {donorName}
+                        </span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900">
+                          {tr('पंजीकृत दाता ✓', 'رجسٹرڈ عطیہ دہندہ ✓', 'Registered Donor ✓')}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-emerald-800 font-medium">
+                        {currentUser?.phone ? `${currentUser.phone} ` : ''}
+                        {(currentUser?.city || currentUser?.district) ? `• ${currentUser?.city || currentUser?.district}` : ''}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="p-3.5 rounded-2xl border space-y-3"
+                  style={{ background: 'var(--mfct-warm-bg)', borderColor: 'var(--mfct-border)' }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-dark-green)' }}>
+                      {tr('अतिथि दानदाता विवरण', 'مہمان عطیہ دہندہ کی تفصیلات', 'Guest Donor Details')}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">
+                      {tr('बिना पंजीकरण', 'بغیر رجسٹریشن', 'Unregistered')}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                        {tr('आपका पूरा नाम', 'آپ کا پورا نام', 'Your Full Name')} <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={donorName}
+                        onChange={(e) => setDonorName(e.target.value)}
+                        placeholder={tr('उदा. मोहम्मद आरिफ़', 'مثال: محمد عارف', 'e.g. Mohammad Arif')}
+                        className="w-full p-2.5 rounded-xl text-xs font-medium outline-none bg-white"
+                        style={{ border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
+                        {tr('मोबाइल नंबर', 'موبائل نمبر', 'Mobile Number')} <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        value={donorMobile}
+                        onChange={(e) => setDonorMobile(e.target.value)}
+                        placeholder="उदा. 9876543210"
+                        className="w-full p-2.5 rounded-xl text-xs font-medium font-mono outline-none bg-white"
+                        style={{ border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
@@ -931,9 +1200,11 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 <input
                   type="text"
                   required
+                  inputMode="numeric"
+                  maxLength={12}
                   placeholder={tr('उदा. 420199381029', 'مثال: 420199381029', 'e.g. 420199381029')}
                   value={utrNumber}
-                  onChange={(e) => setUtrNumber(e.target.value)}
+                  onChange={(e) => setUtrNumber(e.target.value.replace(/\D/g, '').slice(0, 12))}
                   className="w-full p-3 rounded-xl font-mono text-sm font-semibold outline-none"
                   style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-dark-green)' }}
                 />
@@ -1023,6 +1294,10 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               <div className="flex justify-between">
                 <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('रसीद संख्या:', 'رسید نمبر:', 'Receipt No:')}</span>
                 <span className="font-bold font-mono" style={{ color: 'var(--mfct-dark-green)' }}>{createdDonation.receiptNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('दानदाता:', 'عطیہ دہندہ:', 'Donor:')}</span>
+                <span className="font-semibold" style={{ color: 'var(--mfct-dark-green)' }}>{createdDonation.donorName}</span>
               </div>
               <div className="flex justify-between">
                 <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('यूटीआर संदर्भ:', 'یو ٹی آر ریفرنس:', 'UTR Reference:')}</span>

@@ -120,7 +120,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: targetEmail, userId: user.id }),
+        body: JSON.stringify({ email: targetEmail, userId: user.id, membershipId: user.membershipId }),
       });
 
       const data = await res.json();
@@ -211,6 +211,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: targetEmail,
+          membershipId: user.membershipId,
           otp: otp.trim(),
         }),
       });

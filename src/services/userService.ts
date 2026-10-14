@@ -102,6 +102,7 @@ function mapRow(row: Record<string, unknown>): User {
     communityId: row.community_id as string,
     communityName: row.community_name as string,
     membershipId: row.membership_id as string,
+    membershipFee: row.membership_fee as number | undefined,
     status: userStatus,
     isVerified: userStatus === 'approved',
     rejectionReason: effectiveRejectionReason,
@@ -140,6 +141,19 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 
 export async function getUserByPhone(phone: string): Promise<User | null> {
   const { data, error } = await supabase.from('users').select('*').eq('phone', phone.trim()).single();
+  if (error || !data) return null;
+  return mapRow(data);
+}
+
+export async function getUserByMembershipId(membershipId: string): Promise<User | null> {
+  const normalizedId = membershipId.trim().toUpperCase();
+  if (!normalizedId) return null;
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('membership_id', normalizedId)
+    .maybeSingle();
   if (error || !data) return null;
   return mapRow(data);
 }
@@ -188,7 +202,8 @@ export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaa
     avatar: user.avatar,
     community_id: user.communityId,
     community_name: user.communityName,
-    membership_id: user.membershipId,
+    membership_id: user.membershipId || null,
+    membership_fee: user.membershipFee ?? 100,
     status: initialStatus,
     is_verified: initialStatus === 'approved',
     rejection_reason: user.rejectionReason || user.rejection_reason || null,
@@ -270,7 +285,25 @@ export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaa
 
 export async function authenticateUser(identifier: string, plainPassword: string): Promise<{ success: boolean; user?: User; error?: string }> {
   try {
-    const user = identifier.includes('@') ? await getUserByEmail(identifier) : await getUserByPhone(identifier);
+    const cleanIdentifier = identifier.trim();
+    let user: User | null;
+    if (cleanIdentifier.includes('@')) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', cleanIdentifier.toLowerCase())
+        .limit(2);
+      if (error) throw error;
+      if ((data ?? []).length > 1) {
+        return {
+          success: false,
+          error: 'This email is linked to multiple accounts. Please sign in with your membership ID.',
+        };
+      }
+      user = data?.[0] ? mapRow(data[0]) : null;
+    } else {
+      user = await getUserByMembershipId(cleanIdentifier) || await getUserByPhone(cleanIdentifier);
+    }
     if (!user) {
       return { success: false, error: 'User account not found. Please register first.' };
     }
@@ -331,7 +364,6 @@ export async function updateUser(id: string, patch: Partial<User>): Promise<User
   if (patch.helpDetails !== undefined) update.help_details = patch.helpDetails;
   if (patch.passwordHash !== undefined) {
     update.password = patch.passwordHash;
-    update.password_hash = patch.passwordHash;
   }
 
   let updatePayload = { ...update };

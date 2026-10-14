@@ -633,6 +633,8 @@ export default function SignUpPage() {
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [registeredMembershipId, setRegisteredMembershipId] = useState('');
+  const [welcomeEmailSent, setWelcomeEmailSent] = useState(false);
   const formTopRef = useRef<HTMLDivElement>(null);
   const redirectTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -921,6 +923,30 @@ export default function SignUpPage() {
 
       const created = await createUser(newMember);
       const finalUser = created || newMember;
+      setRegisteredMembershipId(finalUser.membershipId || '');
+
+      let emailSent = false;
+      if (finalUser.email && finalUser.membershipId) {
+        try {
+          const emailResponse = await fetch('/api/auth/send-membership-welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: finalUser.id,
+              email: finalUser.email,
+              membershipId: finalUser.membershipId,
+            }),
+          });
+          const emailResult = await emailResponse.json();
+          emailSent = emailResponse.ok && emailResult.success && emailResult.emailSent;
+          if (!emailSent) {
+            console.error('Membership ID email was not sent:', emailResult.error || emailResponse.statusText);
+          }
+        } catch (emailError) {
+          console.error('Membership ID email request failed:', emailError);
+        }
+      }
+      setWelcomeEmailSent(emailSent);
 
       // Persist session
       const loginInfo = {
@@ -948,10 +974,10 @@ export default function SignUpPage() {
         confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
       } catch { }
 
-      // Auto redirect to 'Under Review' page
+      // Auto redirect to 'Under Review' page after allowing user to view their membership ID
       redirectTimerRef.current = setTimeout(() => {
         router.replace('/under-review');
-      }, 1200);
+      }, 5000);
     } catch (err: any) {
       console.error('Registration error:', err);
       if (err?.code === '23505' && (err?.message?.includes('users_email_key') || err?.details?.includes('email'))) {
@@ -1847,11 +1873,33 @@ export default function SignUpPage() {
                 </p>
               </div>
 
+              <div className="mx-auto max-w-md rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-left">
+                <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">
+                  {tr('आपकी सदस्यता आईडी', 'آپ کی ممبرشپ آئی ڈی', 'Your Membership ID')}
+                </p>
+                <p className="mt-2 font-mono text-2xl font-black tracking-wider text-[#0f3322]">
+                  {registeredMembershipId || tr('उपलब्ध नहीं', 'دستیاب نہیں', 'Not available')}
+                </p>
+                <p className="mt-2 text-xs font-medium text-slate-600">
+                  {welcomeEmailSent
+                    ? tr(
+                      `सदस्यता आईडी आपके ईमेल ${email} पर भेज दी गई है।`,
+                      `ممبرشپ آئی ڈی آپ کے ای میل ${email} پر بھیج دی گئی ہے۔`,
+                      `Your membership ID was emailed to ${email}.`
+                    )
+                    : tr(
+                      `ईमेल नहीं भेजा जा सका। कृपया अपनी सदस्यता आईडी सुरक्षित रखें और सहायता के लिए info@mfcttrust.com से संपर्क करें।`,
+                      `ای میل نہیں بھیجی جا سکی۔ اپنی ممبرشپ آئی ڈی محفوظ رکھیں اور info@mfcttrust.com سے رابطہ کریں۔`,
+                      'We could not send the email. Please save your membership ID and contact info@mfcttrust.com for help.'
+                    )}
+                </p>
+              </div>
+
               <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
                 {[
-                  { icon: ShieldCheck, hi: 'सत्यापित सदस्य', ur: 'تصدیق شدہ ممبر', en: 'Verified Member' },
+                  { icon: ShieldCheck, hi: 'समीक्षा में', ur: 'جائزے میں', en: 'Under Review' },
                   { icon: CheckCircle2, hi: 'UTR रिकॉर्ड', ur: 'UTR ریکارڈ', en: 'UTR Recorded' },
-                  { icon: HandHeart, hi: 'राहत के पात्र', ur: 'امداد کے اہل', en: 'Relief Eligible' },
+                  { icon: HandHeart, hi: 'सदस्यता आईडी जारी', ur: 'ممبرشپ آئی ڈی جاری', en: 'Membership ID Issued' },
                 ].map(({ icon: Icon, hi, ur, en }) => (
                   <div key={en} className="flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm">
                     <Icon className="w-4 h-4 text-emerald-600" />
