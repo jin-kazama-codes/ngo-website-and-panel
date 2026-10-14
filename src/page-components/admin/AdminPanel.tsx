@@ -46,6 +46,9 @@ import {
   MapPin,
   KeyRound,
   User as UserIcon,
+  Copy,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
 
 import { KycUpdateModal } from '../../components/KycUpdateModal';
@@ -129,6 +132,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [profileMenuOpen, setProfileMenuOpen] = useState<boolean>(false);
   const [kycUpdateOpen, setKycUpdateOpen] = useState<boolean>(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState<boolean>(false);
+  const [membershipIdCopyStatus, setMembershipIdCopyStatus] = useState<'copied' | 'error' | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('adminTheme');
@@ -138,6 +142,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   });
 
   const [globalDistrictFilter, setGlobalDistrictFilter] = useState<string>('All Districts');
+
+  const handleCopyMembershipId = async () => {
+    if (!activeUser.membershipId) return;
+
+    try {
+      await navigator.clipboard.writeText(activeUser.membershipId);
+      setMembershipIdCopyStatus('copied');
+    } catch (error) {
+      console.error('Failed to copy membership ID:', error);
+      setMembershipIdCopyStatus('error');
+    }
+
+    window.setTimeout(() => setMembershipIdCopyStatus(null), 2000);
+  };
 
   const selectTab = (tabId: string) => {
     setActiveTab(tabId);
@@ -561,6 +579,52 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 {roleBadge.icon}
               </div>
             </div>
+          )}
+
+          {desktopSidebarExpanded ? (
+            <button
+              type="button"
+              onClick={handleCopyMembershipId}
+              disabled={!activeUser.membershipId}
+              title={membershipIdCopyStatus === 'error' ? t('common.copyFailed', 'Copy failed') : t('admin.copyMembershipId', 'Copy membership ID')}
+              className="mx-3 mt-2 mb-1 w-[calc(100%-1.5rem)] rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-left transition-colors disabled:opacity-60"
+              style={{ background: 'rgba(200,168,75,0.10)', border: '1px solid rgba(200,168,75,0.2)', color: '#fff' }}
+              aria-label={t('admin.copyMembershipId', 'Copy membership ID')}
+            >
+              <span className="min-w-0">
+                <span className="block text-[9px] font-bold uppercase tracking-wider" style={{ color: 'rgba(200,168,75,0.65)' }}>
+                  {t('admin.membershipId', 'Membership ID')}
+                </span>
+                <span className="block truncate font-mono text-xs font-extrabold">
+                  {activeUser.membershipId || t('admin.membershipIdUnavailable', 'Unavailable')}
+                </span>
+              </span>
+              {membershipIdCopyStatus === 'copied' ? (
+                <Check className="w-4 h-4 shrink-0 text-emerald-300" />
+              ) : membershipIdCopyStatus === 'error' ? (
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-300" />
+              ) : (
+                <Copy className="w-4 h-4 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCopyMembershipId}
+              disabled={!activeUser.membershipId}
+              title={`${t('admin.copyMembershipId', 'Copy membership ID')}: ${activeUser.membershipId || t('admin.membershipIdUnavailable', 'Unavailable')}`}
+              aria-label={t('admin.copyMembershipId', 'Copy membership ID')}
+              className="hidden lg:flex mx-auto mt-2 mb-1 w-9 h-9 rounded-xl items-center justify-center transition-colors disabled:opacity-60"
+              style={{ background: 'rgba(200,168,75,0.10)', border: '1px solid rgba(200,168,75,0.2)' }}
+            >
+              {membershipIdCopyStatus === 'copied' ? (
+                <Check className="w-4 h-4 text-emerald-300" />
+              ) : membershipIdCopyStatus === 'error' ? (
+                <AlertCircle className="w-4 h-4 text-rose-300" />
+              ) : (
+                <Copy className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+              )}
+            </button>
           )}
 
           {/* Sidebar Menu Items */}

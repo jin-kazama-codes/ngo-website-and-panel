@@ -10,10 +10,11 @@ interface FooterProps {
   onPageChange?: (page: string) => void;
   onOpenDonate: () => void;
   onOpenRegister?: () => void;
+  isAuthenticated?: boolean;
   onNavigateToAdmin?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, onPageChange }) => {
+export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, isAuthenticated = false, onPageChange }) => {
   const { t, language } = useLanguage();
 
   return (
@@ -49,39 +50,41 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDonate, onOpenRegister, on
             </div>
 
             {/* Left Column: Become a Member (Order 2 on mobile, Order 1 on desktop) */}
-            <div className="order-2 lg:order-1 lg:col-span-5 p-4 sm:p-5 lg:p-0 rounded-2xl lg:rounded-none bg-black/25 lg:bg-transparent border border-white/10 lg:border-none flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3.5 sm:gap-5">
-              <div className="shrink-0 pt-0 sm:pt-1">
-                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(200, 168, 75, 0.15)' }}>
-                  <Users
-                    className="w-6 h-6 sm:w-7 sm:h-7"
-                    style={{ color: '#d4af37' }}
-                  />
+            {!isAuthenticated && (
+              <div className="order-2 lg:order-1 lg:col-span-5 p-4 sm:p-5 lg:p-0 rounded-2xl lg:rounded-none bg-black/25 lg:bg-transparent border border-white/10 lg:border-none flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3.5 sm:gap-5">
+                <div className="shrink-0 pt-0 sm:pt-1">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(200, 168, 75, 0.15)' }}>
+                    <Users
+                      className="w-6 h-6 sm:w-7 sm:h-7"
+                      style={{ color: '#d4af37' }}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-3 w-full sm:w-auto">
+                  <div>
+                    <h3 className="text-base sm:text-lg lg:text-xl font-bold text-white tracking-wide">
+                      {language === 'hi' ? 'सदस्य बनें' : language === 'ur' ? 'ممبر بنیں' : 'Become a Member'}
+                    </h3>
+                    <p className="text-xs sm:text-sm mt-1" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                      {language === 'hi'
+                        ? 'MFCT से जुड़ें और समाज सेवा का हिस्सा बनें।'
+                        : language === 'ur'
+                          ? 'ایم ایف سی ٹی سے جڑیں اور فلاحی کاموں کا حصہ بنیں۔'
+                          : 'Join MFCT and be a part of community service.'}
+                    </p>
+                  </div>
+                  <div className="flex justify-center sm:justify-start">
+                    <button
+                      onClick={onOpenRegister}
+                      className="mfct-btn-gold w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:-translate-y-0.5 transition-all"
+                    >
+                      <span>{language === 'hi' ? 'अभी जुड़ें' : language === 'ur' ? 'ابھی جڑیں' : 'JOIN NOW'}</span>
+                      <UserPlus className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-3 w-full sm:w-auto">
-                <div>
-                  <h3 className="text-base sm:text-lg lg:text-xl font-bold text-white tracking-wide">
-                    {language === 'hi' ? 'सदस्य बनें' : language === 'ur' ? 'ممبر بنیں' : 'Become a Member'}
-                  </h3>
-                  <p className="text-xs sm:text-sm mt-1" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-                    {language === 'hi'
-                      ? 'MFCT से जुड़ें और समाज सेवा का हिस्सा बनें।'
-                      : language === 'ur'
-                        ? 'ایم ایف سی ٹی سے جڑیں اور فلاحی کاموں کا حصہ بنیں۔'
-                        : 'Join MFCT and be a part of community service.'}
-                  </p>
-                </div>
-                <div className="flex justify-center sm:justify-start">
-                  <button
-                    onClick={onOpenRegister}
-                    className="mfct-btn-gold w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:-translate-y-0.5 transition-all"
-                  >
-                    <span>{language === 'hi' ? 'अभी जुड़ें' : language === 'ur' ? 'ابھی جڑیں' : 'JOIN NOW'}</span>
-                    <UserPlus className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
+            )}
 
             {/* Right Column: Support Our Cause (Order 3 on mobile, Order 3 on desktop) */}
             <div className="order-3 lg:col-span-5 p-4 sm:p-5 lg:p-0 rounded-2xl lg:rounded-none bg-black/25 lg:bg-transparent border border-white/10 lg:border-none flex flex-col sm:flex-row items-center sm:items-start lg:justify-end text-center sm:text-left lg:text-right gap-3.5 sm:gap-5">

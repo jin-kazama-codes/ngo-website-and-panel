@@ -47,6 +47,7 @@ export interface User {
   communityId: string;
   communityName: string;
   membershipId: string;
+  membershipFee?: number;
   status: 'pending' | 'approved' | 'reject' | 'rejected';
   rejection_reason?: string;
   rejectionReason?: string;
@@ -220,12 +221,12 @@ export interface ContactMessage {
 
 export interface AccountDetails {
   id: string;
+  account_holder_name?: string;
   bank_name: string;
+  branch_name?: string;
   account_number: string;
   ifsc_code: string;
   upi_id: string;
-  account_holder_name?: string;
-  branch_name?: string;
   qr_code_url?: string;
   created_at?: string;
   updated_at?: string;
@@ -292,5 +293,4 @@ export interface MemberBankDetails {
   created_at?: string;
   updated_at?: string;
 }
-
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Donation, User, UserRole } from '../../types';
 import { getDonations } from '../../services/donationService';
-import { Search, TrendingUp, IndianRupee, Users, FileText, FileCheck } from 'lucide-react';
+import { getUsers } from '../../services/userService';
+import { Search, TrendingUp, IndianRupee, Users, FileText, FileCheck, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
 import { translateCommunityName, translateCategory } from '../../lib/translateEntity';
@@ -106,30 +107,47 @@ export const FinancialAnalyticsTab: React.FC<FinancialAnalyticsTabProps> = ({ ac
   };
 
   const [donations, setDonations] = useState<Donation[]>([]);
+  const [registrationPayments, setRegistrationPayments] = useState<User[]>([]);
+  const [registrationPaymentsError, setRegistrationPaymentsError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const isCentralAdmin = currentRole === 'super_admin' || currentRole === 'executive_admin';
 
   useEffect(() => {
-    fetchDonations();
-  }, []);
+    const fetchFinancialData = async () => {
+      setLoading(true);
+      try {
+        const allDonations = await getDonations();
+        let filtered = allDonations;
 
-  const fetchDonations = async () => {
-    setLoading(true);
-    try {
-      const allDonations = await getDonations();
-      let filtered = allDonations;
-      
-      if (currentRole === 'community_admin' && activeUser?.communityName) {
-        filtered = allDonations.filter(d => d.communityName === activeUser.communityName);
+        if (currentRole === 'community_admin' && activeUser?.communityName) {
+          filtered = allDonations.filter(d => d.communityName === activeUser.communityName);
+        }
+
+        setDonations(filtered);
+        if (isCentralAdmin) {
+          try {
+            const allUsers = await getUsers();
+            setRegistrationPayments(allUsers.filter(
+              (user) => user.status === 'approved' && Boolean(user.paymentUtr?.trim())
+            ));
+            setRegistrationPaymentsError(false);
+          } catch (err) {
+            console.error('Failed to fetch registration payments:', err);
+            setRegistrationPaymentsError(true);
+          }
+        } else {
+          setRegistrationPayments([]);
+          setRegistrationPaymentsError(false);
+        }
+      } catch (err) {
+        console.error('Failed to fetch financial data:', err);
+      } finally {
+        setLoading(false);
       }
-      
-      setDonations(filtered);
-    } catch (err) {
-      console.error('Failed to fetch donations:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    fetchFinancialData();
+  }, [activeUser?.communityName, currentRole, isCentralAdmin]);
 
   const filteredDonations = donations.filter(
     (d) =>
@@ -141,6 +159,7 @@ export const FinancialAnalyticsTab: React.FC<FinancialAnalyticsTabProps> = ({ ac
 
   const totalAmount = filteredDonations.reduce((sum, d) => sum + (Number(d.amountINR) || 0), 0);
   const uniqueDonors = new Set(filteredDonations.map(d => d.donorId)).size;
+  const totalRegistrationPayments = registrationPayments.length * 100;
 
   return (
     <div className="space-y-6">
@@ -236,6 +255,71 @@ export const FinancialAnalyticsTab: React.FC<FinancialAnalyticsTabProps> = ({ ac
           </div>
         </div>
       </div>
+
+      {isCentralAdmin && (
+        <section className="space-y-4 rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm dark:border-emerald-900 dark:bg-slate-900">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">Registration Payments</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Payments attached to approved member registrations.
+              </p>
+            </div>
+            <div className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+              Received: ₹{totalRegistrationPayments.toLocaleString('en-IN')} ({registrationPayments.length} members)
+            </div>
+          </div>
+          {registrationPaymentsError ? (
+            <p role="alert" className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+              Registration payments could not be loaded. Please try again later.
+            </p>
+          ) : registrationPayments.length === 0 ? (
+            <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              No approved registrations with a recorded UTR.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-180 text-left text-sm">
+                <thead className="border-b border-slate-200 text-xs uppercase text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                  <tr>
+                    <th className="px-3 py-3">Member</th>
+                    <th className="px-3 py-3">Amount</th>
+                    <th className="px-3 py-3">Payment date</th>
+                    <th className="px-3 py-3">UTR / reference</th>
+                    <th className="px-3 py-3">Method / proof</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {registrationPayments.map((member) => (
+                    <tr key={member.id}>
+                      <td className="px-3 py-3">
+                        <div className="font-semibold text-slate-900 dark:text-white">{member.name}</div>
+                        <div className="text-xs text-slate-500">{member.membershipId}</div>
+                      </td>
+                      <td className="px-3 py-3 font-bold text-emerald-700 dark:text-emerald-400">₹100</td>
+                      <td className="px-3 py-3 text-slate-600 dark:text-slate-300">{member.joinDate || '—'}</td>
+                      <td className="px-3 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{member.paymentUtr}</td>
+                      <td className="px-3 py-3">
+                        <div className="text-slate-700 dark:text-slate-300">{member.paymentMethod || '—'}</div>
+                        {member.paymentScreenshotUrl && (
+                          <a
+                            href={member.paymentScreenshotUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
+                          >
+                            View payment proof <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
 
       {loading ? (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm animate-pulse">
