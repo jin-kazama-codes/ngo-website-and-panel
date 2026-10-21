@@ -34,6 +34,8 @@ export type DonationCategory =
 export interface User {
   id: string;
   name: string;
+  fatherName?: string;
+  father_name?: string;
   email?: string;
   phone: string;
   city: string;
@@ -42,6 +44,14 @@ export interface User {
   district_role?: string;
   state: string;
   address?: string;
+  houseNo?: string;
+  house_no?: string;
+  villageTown?: string;
+  village_town?: string;
+  postOffice?: string;
+  post_office?: string;
+  block?: string;
+  tehsil?: string;
   role: UserRole;
   avatar: string;
   communityId: string;
@@ -132,7 +142,8 @@ export interface Donation {
   amountINR: number;
   category: DonationCategory;
   isOutsideCommunity?: boolean;
-  paymentMethod: 'UPI' | 'Bank Transfer' | 'QR Code' | 'Card';
+  paymentMethod: 'UPI' | 'Bank Transfer' | 'QR Code' | 'Card' | string;
+  payment_method?: string;
   paymentScreenshotUrl?: string;
   status: 'verified' | 'pending_verification' | 'pending' | 'rejected';
   rejectionReason?: string;

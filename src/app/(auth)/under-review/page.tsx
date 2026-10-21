@@ -22,6 +22,8 @@ import {
   ArrowRight,
   ExternalLink,
   Info,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { useLanguage } from '../../../context/LanguageContext';
 import { LanguageSelector } from '../../../components/LanguageSelector';
@@ -45,7 +47,15 @@ export default function UnderReviewPage() {
   const [isKycModalOpen, setIsKycModalOpen] = useState(false);
   const [isTerminated, setIsTerminated] = useState(false);
   const [lastChecked, setLastChecked] = useState<Date>(new Date());
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const pollTimerRef = useRef<any>(null);
+
+  const copyToClipboard = (text: string, key: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
 
   // 1. Load initial user from localStorage
   useEffect(() => {
@@ -399,13 +409,13 @@ export default function UnderReviewPage() {
                 <span>{tr('अभी स्थिति जांचें', 'ابھی اسٹیٹس چیک کریں', 'Refresh Status Now')}</span>
               </button>
 
-              <button
+              {/* <button
                 onClick={() => setIsKycModalOpen(true)}
                 className="cursor-pointer w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 transition-all"
               >
                 <Edit3 className="w-4 h-4 text-emerald-800" />
                 <span>{tr('जमा किए गए विवरण देखें / सुधारें', 'تفصیلات دیکھیں یا تبدیل کریں', 'View / Edit Submitted Details')}</span>
-              </button>
+              </button> */}
             </div>
           </div>
         )}
@@ -431,29 +441,59 @@ export default function UnderReviewPage() {
               </div>
 
               {currentUser.phone && (
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  <span className="block text-xs font-semibold text-slate-400">
-                    {tr('मोबाइल', 'موبائل', 'Phone')}
-                  </span>
-                  <span className="font-bold text-slate-800">{currentUser.phone}</span>
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="block text-xs font-semibold text-slate-400">
+                      {tr('मोबाइल', 'موبائل', 'Phone')}
+                    </span>
+                    <span className="font-bold text-slate-800">{currentUser.phone}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(currentUser.phone!, 'phone')}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer text-slate-500"
+                    title={tr('मोबाइल नंबर कॉपी करें', 'موبائل کاپی کریں', 'Copy Phone')}
+                  >
+                    {copiedKey === 'phone' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
                 </div>
               )}
 
               {currentUser.email && (
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  <span className="block text-xs font-semibold text-slate-400">
-                    {tr('ईमेल', 'ای میل', 'Email')}
-                  </span>
-                  <span className="font-bold text-slate-800">{currentUser.email}</span>
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between">
+                  <div className="min-w-0 pr-2">
+                    <span className="block text-xs font-semibold text-slate-400">
+                      {tr('ईमेल', 'ای میل', 'Email')}
+                    </span>
+                    <span className="font-bold text-slate-800 truncate block">{currentUser.email}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(currentUser.email!, 'email')}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer text-slate-500 shrink-0"
+                    title={tr('ईमेल कॉपी करें', 'ای میل کاپی کریں', 'Copy Email')}
+                  >
+                    {copiedKey === 'email' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
                 </div>
               )}
 
               {currentUser.membershipId && (
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  <span className="block text-xs font-semibold text-slate-400">
-                    {tr('सदस्यता आईडी', 'ممبرشپ نمبر', 'Member ID')}
-                  </span>
-                  <span className="font-bold text-[#0f3322]">{currentUser.membershipId}</span>
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="block text-xs font-semibold text-slate-400">
+                      {tr('सदस्यता आईडी', 'ممبرشپ نمبر', 'Member ID')}
+                    </span>
+                    <span className="font-bold text-[#0f3322] font-mono">{currentUser.membershipId}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(currentUser.membershipId!, 'memId')}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer text-slate-500"
+                    title={tr('सदस्यता आईडी कॉपी करें', 'ممبرشپ نمبر کاپی کریں', 'Copy Member ID')}
+                  >
+                    {copiedKey === 'memId' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
                 </div>
               )}
             </div>

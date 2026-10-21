@@ -47,12 +47,17 @@ const MyDonationItem: React.FC<{
                 ? tr('⏳ सत्यापन लंबित', '⏳ زیر التواء', '⏳ Verification Pending')
                 : tr('❌ अस्वीकृत', '❌ مسترد', '❌ Rejected')}
           </span>
+          <span className="px-2 py-0.5 rounded-full font-bold text-[10px] bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 inline-flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            {don.paymentMethod || (don as any).payment_method || 'UPI'}
+          </span>
           <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">• {new Date(don.date).toLocaleDateString()}</span>
         </div>
         <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">{displayCampaign}</h4>
         <p className="text-slate-500 dark:text-slate-400">
           {tr('समुदाय:', 'برادری:', 'Community:')} {displayCommunity}{' '}
-          {don.utrNumber ? `• UTR: ${don.utrNumber}` : ''}
+          {don.utrNumber ? `• UTR: ${don.utrNumber}` : ''}{' '}
+          {`• ${tr('माध्यम:', 'طریقہ:', 'Method:')} ${don.paymentMethod || (don as any).payment_method || 'UPI'}`}
         </p>
 
         {don.status === 'rejected' && (don.rejectionReason || don.rejection_reason) && (

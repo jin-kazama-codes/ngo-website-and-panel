@@ -33,6 +33,10 @@ import {
   XCircle,
   Trash2,
   UserX,
+  ChevronLeft,
+  ChevronRight,
+  LayoutList,
+  Table as TableIcon,
 } from 'lucide-react';
 import { DarkListSkeleton } from '../../components/Skeletons';
 import { getUsers, updateUser, deleteUser } from '../../services/userService';
@@ -296,6 +300,420 @@ const KycUserCard: React.FC<{
     );
   };
 
+// ─── 1b. Subcomponent: KYC Table Pagination ──────────────────────────────────
+const KycPagination: React.FC<{
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
+}> = ({ currentPage, totalPages, totalItems, pageSize, onPageChange, onPageSizeChange }) => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
+  if (totalItems === 0) return null;
+
+  const startItem = (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 4) {
+        pages.push(1, 2, 3, 4, 5, '...', totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      }
+    }
+    return pages;
+  };
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 py-3.5 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-200 dark:border-slate-800 text-xs rounded-b-2xl">
+      <div className="flex flex-wrap items-center gap-3 text-slate-500 dark:text-slate-400">
+        <span>
+          {tr('दिखा रहे हैं', 'دکھا رہے ہیں', 'Showing')}{' '}
+          <strong className="font-bold text-slate-800 dark:text-slate-200">{startItem}</strong>
+          {' - '}
+          <strong className="font-bold text-slate-800 dark:text-slate-200">{endItem}</strong>
+          {' '}{tr('कुल', 'کل', 'of')}{' '}
+          <strong className="font-bold text-slate-800 dark:text-slate-200">{totalItems}</strong>
+          {' '}{tr('सदस्य', 'اراکین', 'members')}
+        </span>
+
+        {onPageSizeChange && (
+          <div className="flex items-center gap-1.5 ml-0 sm:ml-2">
+            <span className="text-[11px]">{tr('प्रति पृष्ठ:', 'فی صفحہ:', 'Per page:')}</span>
+            <select
+              value={pageSize}
+              onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              aria-label={tr('प्रति पृष्ठ रिकॉर्ड्स संख्या', 'فی صفحہ ریکارڈز کی تعداد', 'Records per page')}
+              className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 dark:text-white outline-none cursor-pointer focus:border-purple-500"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-1 self-center sm:self-auto">
+        <button
+          type="button"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          title={tr('पिछला पृष्ठ', 'پچھلا صفحہ', 'Previous Page')}
+        >
+          <ChevronLeft className="w-4 h-4" />
+          <span className="hidden sm:inline">{tr('पिछला', 'پچھلا', 'Prev')}</span>
+        </button>
+
+        <div className="flex items-center gap-1">
+          {getPageNumbers().map((page, idx) => {
+            if (page === '...') {
+              return (
+                <span key={`ellipsis-${idx}`} className="px-2 py-1 text-slate-400 font-bold">
+                  ...
+                </span>
+              );
+            }
+            const pageNum = Number(page);
+            const isActive = pageNum === currentPage;
+            return (
+              <button
+                key={pageNum}
+                type="button"
+                onClick={() => onPageChange(pageNum)}
+                className={`min-w-8 h-8 px-2 flex items-center justify-center rounded-lg font-bold text-xs transition-colors cursor-pointer ${
+                  isActive
+                    ? 'bg-purple-600 dark:bg-purple-500 text-white shadow-xs'
+                    : 'border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          title={tr('अगला पृष्ठ', 'اگلا صفحہ', 'Next Page')}
+        >
+          <span className="hidden sm:inline">{tr('अगला', 'اگلا', 'Next')}</span>
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─── 1c. Subcomponent: Interactive Dynamic KYC User Table Row ─────────────────
+const KycUserTableRow: React.FC<{
+  user: User;
+  canPerformKycAction: boolean;
+  processingId: string | null;
+  processingAction: 'approve' | 'reject' | null;
+  terminating: boolean;
+  onView: (u: User) => void;
+  onApprove: (id: string) => void;
+  onOpenReject: (u: User) => void;
+  onOpenTerminate: (u: User) => void;
+  onPreviewImage: (preview: { url: string; title: string }) => void;
+}> = ({
+  user: u,
+  canPerformKycAction,
+  processingId,
+  processingAction,
+  terminating,
+  onView,
+  onApprove,
+  onOpenReject,
+  onOpenTerminate,
+  onPreviewImage,
+}) => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
+  const displayName = useDynamicTranslatedText(u.name, language) || u.name;
+  const displayCity = useDynamicTranslatedText(u.city, language) || u.city;
+  const displayDistrict = u.district ? (useDynamicTranslatedText(u.district, language) || u.district) : '';
+  const displayState = useDynamicTranslatedText(u.state, language) || u.state;
+  const displayCommunity = u.communityName ? (useDynamicTranslatedText(u.communityName, language) || u.communityName) : '';
+
+  const locationText = [displayCity, displayDistrict || displayState].filter(Boolean).join(', ');
+
+  const uStatus = u.status || (u.isVerified ? 'approved' : 'pending');
+  const isApproved = uStatus === 'approved';
+  const isRejected = uStatus === 'reject' || uStatus === 'rejected';
+  const hasAadhaar = !!(u.aadhaarFrontUrl || u.aadhaarBackUrl);
+  const hasScreenshot = !!u.paymentScreenshotUrl;
+
+  const translatedReligion = translateReligion(u.religion, language);
+  const translatedHelpType = translateHelpType(u.helpType, language);
+
+  return (
+    <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+      {/* 1. Applicant Details */}
+      <td className="px-4 py-3.5">
+        <div className="flex items-center gap-3">
+          <div className="relative w-10 h-10 shrink-0 rounded-xl overflow-hidden bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs border border-purple-200 dark:border-purple-800">
+            {u.avatar ? (
+              <img
+                src={u.avatar}
+                alt={displayName}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              <span>{(displayName || 'U').trim().charAt(0).toUpperCase()}</span>
+            )}
+          </div>
+          <div className="min-w-0">
+            <div className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm truncate max-w-[180px]">
+              {displayName}
+            </div>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {u.membershipId ? (
+                <span className="font-mono text-[11px] font-semibold text-purple-700 dark:text-purple-400">
+                  #{u.membershipId}
+                </span>
+              ) : (
+                <span className="text-[10px] text-slate-400 italic">No ID</span>
+              )}
+            </div>
+            {u.joinDate && (
+              <div className="text-[10px] text-slate-400 mt-0.5">
+                {u.joinDate}
+              </div>
+            )}
+          </div>
+        </div>
+      </td>
+
+      {/* 2. Contact & Location */}
+      <td className="px-4 py-3.5">
+        <div className="space-y-1">
+          {u.phone && (
+            <div className="flex items-center gap-1.5 text-xs font-mono text-slate-700 dark:text-slate-300">
+              <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+              <span>{u.phone}</span>
+            </div>
+          )}
+          {u.email && (
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[180px]" title={u.email}>
+              <Mail className="w-3 h-3 text-slate-400 shrink-0" />
+              <span className="truncate">{u.email}</span>
+            </div>
+          )}
+          {locationText && (
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+              <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+              <span className="truncate max-w-[180px]">{locationText}</span>
+            </div>
+          )}
+          {displayCommunity && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
+              <Building2 className="w-2.5 h-2.5" />
+              <span className="truncate max-w-[140px]">{displayCommunity}</span>
+            </span>
+          )}
+        </div>
+      </td>
+
+      {/* 3. Category & Aid */}
+      <td className="px-4 py-3.5">
+        <div className="space-y-1">
+          {u.religion && (
+            <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              {translatedReligion || u.religion}
+            </span>
+          )}
+          {u.religion === 'Muslim' && (
+            <div>
+              {u.isMalikENisab ? (
+                <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                  {tr('मालिक-ए-निसाब', 'صاحبِ نصاب', 'Malik-e-Nisab')}
+                </span>
+              ) : (
+                <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  {tr(
+                    `पात्र (${translatedHelpType || tr('सामान्य', 'عام', 'General')})`,
+                    `اہل (${translatedHelpType || tr('عام', 'عام', 'General')})`,
+                    `Aid (${translatedHelpType || 'General'})`
+                  )}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      </td>
+
+      {/* 4. Documents & Payment / UTR */}
+      <td className="px-4 py-3.5">
+        <div className="space-y-1.5">
+          {/* Aadhaar Indicator / Preview Button */}
+          {hasAadhaar ? (
+            <button
+              type="button"
+              onClick={() =>
+                onPreviewImage({
+                  url: u.aadhaarFrontUrl || u.aadhaarBackUrl || '',
+                  title: `${displayName} - ${tr('आधार कार्ड', 'آدھار کارڈ', 'Aadhaar Card')}`,
+                })
+              }
+              className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
+            >
+              <IdCard className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{tr('आधार देखें', 'آدھار دیکھیں', 'View Aadhaar')}</span>
+            </button>
+          ) : (
+            <span className="text-[10px] text-slate-400 italic">
+              {tr('आधार अनुपलब्ध', 'آدھار موجود نہیں', 'No Aadhaar')}
+            </span>
+          )}
+
+          {/* Payment & UTR */}
+          {u.paymentUtr ? (
+            <div className="font-mono text-[11px] text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[150px]">
+              UTR: {u.paymentUtr}
+            </div>
+          ) : null}
+
+          {hasScreenshot && (
+            <button
+              type="button"
+              onClick={() =>
+                onPreviewImage({
+                  url: u.paymentScreenshotUrl!,
+                  title: `${displayName} - ${tr('भुगतान रसीद', 'ادائیگی کی رسید', 'Payment Proof')}`,
+                })
+              }
+              className="flex items-center gap-1 text-[10px] font-bold text-purple-700 dark:text-purple-400 hover:underline cursor-pointer"
+            >
+              <Receipt className="w-3 h-3 text-purple-600" />
+              <span>{tr('रसीद प्रमाण', 'رسید دیکھیں', 'Payment Proof')}</span>
+            </button>
+          )}
+        </div>
+      </td>
+
+      {/* 5. Status Badge */}
+      <td className="px-4 py-3.5">
+        <div>
+          {isApproved ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+              <span>{tr('सत्यापित', 'تصدیق شدہ', 'Approved')}</span>
+            </span>
+          ) : isRejected ? (
+            <div>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                <XCircle className="w-3 h-3 text-rose-600" />
+                <span>{tr('अस्वीकृत', 'مسترد شدہ', 'Rejected')}</span>
+              </span>
+              {(u.rejectionReason || u.rejection_reason) && (
+                <p className="text-[10px] text-rose-600 dark:text-rose-400 mt-1 max-w-[160px] truncate" title={u.rejectionReason || u.rejection_reason}>
+                  {u.rejectionReason || u.rejection_reason}
+                </p>
+              )}
+            </div>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+              <Clock className="w-3 h-3 text-amber-600" />
+              <span>{tr('लंबित', 'زیر التواء', 'Pending')}</span>
+            </span>
+          )}
+        </div>
+      </td>
+
+      {/* 6. Actions */}
+      <td className="px-4 py-3.5 text-right">
+        <div className="flex items-center justify-end gap-1.5 flex-wrap">
+          {/* Eye Icon: View Full Details Modal */}
+          <button
+            type="button"
+            onClick={() => onView(u)}
+            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors border border-slate-200 dark:border-slate-700 cursor-pointer"
+            title={tr('पूर्ण विवरण देखें', 'مکمل تفصیلات', 'View Full Details')}
+          >
+            <Eye className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          </button>
+
+          {canPerformKycAction && (
+            <>
+              {/* Approve Button */}
+              {!isApproved && (
+                <button
+                  type="button"
+                  onClick={() => onApprove(u.id)}
+                  disabled={processingId === u.id}
+                  className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
+                  title={isRejected ? tr('पुनः स्वीकृत करें', 'دوبارہ منظور کریں', 'Re-Approve') : tr('स्वीकृत करें', 'منظور کریں', 'Approve')}
+                >
+                  {processingId === u.id && processingAction === 'approve' ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
+                </button>
+              )}
+
+              {/* Reject / Revoke Button */}
+              <button
+                type="button"
+                onClick={() => onOpenReject(u)}
+                disabled={processingId === u.id || terminating}
+                className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 transition-colors disabled:opacity-50 cursor-pointer"
+                title={
+                  isApproved
+                    ? tr('सत्यापन हटाएं', 'منسوخ کریں', 'Revoke / Reject')
+                    : isRejected
+                      ? tr('कारण संपादित करें', 'وجہ تبدیل کریں', 'Edit Reason')
+                      : tr('अस्वीकार करें', 'مسترد کریں', 'Reject')
+                }
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Terminate Button */}
+              <button
+                type="button"
+                onClick={() => onOpenTerminate(u)}
+                disabled={processingId === u.id || terminating}
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-950/40 text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700 transition-colors disabled:opacity-50 cursor-pointer"
+                title={tr('खाता समाप्त करें (हटाएं)', 'اکاؤنٹ ختم کریں', 'Terminate & Delete')}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+};
+
 // ─── 2. Subcomponent: Full KYC & Registration Ledger Details Modal ─────────────
 const KycUserDetailModal: React.FC<{
   user: User;
@@ -437,6 +855,13 @@ const KycUserDetailModal: React.FC<{
                   <p className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">{tr('पूरा नाम', 'مکمل نام', 'Full Name')}</p>
                   <p className="font-bold text-slate-900 dark:text-white mt-0.5">{displayName}</p>
                 </div>
+
+                {(user.fatherName || user.father_name) && (
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <p className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">{tr('पिता का नाम', 'والد کا نام', "Father's Name")}</p>
+                    <p className="font-bold text-slate-900 dark:text-white mt-0.5">{user.fatherName || user.father_name}</p>
+                  </div>
+                )}
 
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                   <p className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">{tr('मोबाइल नंबर', 'موبائل نمبر', 'Mobile Number')}</p>
@@ -1208,6 +1633,16 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
   const [terminateModalUser, setTerminateModalUser] = useState<User | null>(null);
   const [terminating, setTerminating] = useState(false);
 
+  // Pagination & View Mode state (defaults to 10 records per page, tabular form)
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+
+  // Reset page to 1 whenever filters, search, or page size changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, selectedDistrictFilter, searchQuery, pageSize]);
+
   const loadUsers = async () => {
     try {
       setLoading(true);
@@ -1453,6 +1888,15 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
     });
   }, [districtFilteredUsers, activeFilter, searchQuery]);
 
+  // Pagination calculations
+  const totalItems = filteredUsers.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const validPage = Math.min(currentPage, totalPages);
+  const startIndex = (validPage - 1) * pageSize;
+  const paginatedUsers = useMemo(() => {
+    return filteredUsers.slice(startIndex, startIndex + pageSize);
+  }, [filteredUsers, startIndex, pageSize]);
+
   return (
     <div className="space-y-6 animate-fade-in pb-12">
       {/* 1. Header Banner */}
@@ -1534,12 +1978,12 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
         )}
 
         {/* Filter Pills & Controls Bar */}
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3.5">
           {/* Filter Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none flex-1">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setActiveFilter('pending')}
-              className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${activeFilter === 'pending'
+              className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap shrink-0 ${activeFilter === 'pending'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100'
                 }`}
@@ -1554,7 +1998,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
 
             <button
               onClick={() => setActiveFilter('approved')}
-              className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${activeFilter === 'approved'
+              className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap shrink-0 ${activeFilter === 'approved'
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100'
                 }`}
@@ -1569,7 +2013,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
 
             <button
               onClick={() => setActiveFilter('rejected')}
-              className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${activeFilter === 'rejected'
+              className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap shrink-0 ${activeFilter === 'rejected'
                 ? 'bg-rose-600 text-white shadow-sm'
                 : 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100'
                 }`}
@@ -1584,7 +2028,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
 
             <button
               onClick={() => setActiveFilter('all')}
-              className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${activeFilter === 'all'
+              className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap shrink-0 ${activeFilter === 'all'
                 ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
@@ -1599,7 +2043,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
           </div>
 
           {/* Right Controls: District Filter Dropdown & Search Box */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             {!isRestrictedToDistrict && (
               <div className="flex items-center gap-2 shrink-0">
                 <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -1637,6 +2081,34 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                 </button>
               )}
             </div>
+
+            {/* View Mode Toggle: Table vs Cards */}
+            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  viewMode === 'table'
+                    ? 'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-400 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+                title={tr('तालिका दृश्य (Tabular View)', 'ٹیبل کا منظر', 'Table View')}
+              >
+                <TableIcon className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('cards')}
+                className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  viewMode === 'cards'
+                    ? 'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-400 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+                title={tr('कार्ड दृश्य (Card View)', 'کارڈ کا منظر', 'Card View')}
+              >
+                <LayoutList className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1669,22 +2141,92 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
               </p>
             </div>
           </div>
+        ) : viewMode === 'table' ? (
+          /* TABULAR FORM VIEW */
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+                <thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                  <tr>
+                    <th className="px-4 py-3.5 whitespace-nowrap">
+                      {tr('आवेदक विवरण', 'امیدوار کی تفصیلات', 'Applicant / Member')}
+                    </th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">
+                      {tr('संपर्क एवं स्थान', 'رابطہ اور مقام', 'Contact & Location')}
+                    </th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">
+                      {tr('श्रेणी एवं पात्रता', 'کیٹیگری اور اہلیت', 'Category & Aid')}
+                    </th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">
+                      {tr('दस्तावेज एवं UTR', 'دستاویزات اور UTR', 'Documents & UTR')}
+                    </th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">
+                      {tr('सत्यापन स्थिति', 'تصدیق کی حیثیت', 'KYC Status')}
+                    </th>
+                    <th className="px-4 py-3.5 whitespace-nowrap text-right">
+                      {tr('कार्रवाई', 'کارروائی', 'Actions')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {paginatedUsers.map((u) => (
+                    <KycUserTableRow
+                      key={u.id}
+                      user={u}
+                      canPerformKycAction={canPerformKycAction}
+                      processingId={processingId}
+                      processingAction={processingAction}
+                      terminating={terminating}
+                      onView={setSelectedUser}
+                      onApprove={handleApprove}
+                      onOpenReject={openRejectModal}
+                      onOpenTerminate={openTerminateModal}
+                      onPreviewImage={setPreviewImage}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            <KycPagination
+              currentPage={validPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={(page) => setCurrentPage(page)}
+              onPageSizeChange={(size) => setPageSize(size)}
+            />
+          </div>
         ) : (
-          <div className="space-y-3.5">
-            {filteredUsers.map((u) => (
-              <KycUserCard
-                key={u.id}
-                user={u}
-                canPerformKycAction={canPerformKycAction}
-                processingId={processingId}
-                processingAction={processingAction}
-                terminating={terminating}
-                onView={setSelectedUser}
-                onApprove={handleApprove}
-                onOpenReject={openRejectModal}
-                onOpenTerminate={openTerminateModal}
-              />
-            ))}
+          /* CARD LIST VIEW */
+          <div className="space-y-4">
+            <div className="space-y-3.5">
+              {paginatedUsers.map((u) => (
+                <KycUserCard
+                  key={u.id}
+                  user={u}
+                  canPerformKycAction={canPerformKycAction}
+                  processingId={processingId}
+                  processingAction={processingAction}
+                  terminating={terminating}
+                  onView={setSelectedUser}
+                  onApprove={handleApprove}
+                  onOpenReject={openRejectModal}
+                  onOpenTerminate={openTerminateModal}
+                />
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            <KycPagination
+              currentPage={validPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={(page) => setCurrentPage(page)}
+              onPageSizeChange={(size) => setPageSize(size)}
+            />
           </div>
         )}
       </div>
