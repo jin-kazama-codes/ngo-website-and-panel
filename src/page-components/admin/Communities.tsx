@@ -11,7 +11,7 @@ import { uploadImage } from '../../lib/storage';
 import { useAppState } from '../../providers/AppStateProvider';
 import { STANDARD_DISTRICTS } from '../../data/districtsData';
 import { AdminCommunityCardSkeleton } from '../../components/Skeletons';
-import { div } from 'motion/react-client';
+import { TablePagination } from '../../components/TablePagination';
 
 const CommunityCard: React.FC<{
   community: Community;
@@ -236,6 +236,14 @@ export const Communities: React.FC<CommunitiesProps> = ({ activeUser: propActive
   const [selectedDistrictFilter, setSelectedDistrictFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(6);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDistrictFilter, searchQuery]);
+
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToastMessage({ message, type });
     setTimeout(() => setToastMessage(null), 3000);
@@ -321,6 +329,15 @@ export const Communities: React.FC<CommunitiesProps> = ({ activeUser: propActive
 
     return list;
   }, [communities, isDistrictPresident, userDistrict, selectedDistrictFilter, searchQuery]);
+
+  const totalItems = filteredCommunities.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const validPage = Math.min(currentPage, totalPages);
+
+  const paginatedCommunities = useMemo(() => {
+    const start = (validPage - 1) * pageSize;
+    return filteredCommunities.slice(start, start + pageSize);
+  }, [filteredCommunities, validPage, pageSize]);
 
   // Candidate users for becoming community admin:
   // - Super Admin & Executive Admin: all users are visible
@@ -752,18 +769,30 @@ export const Communities: React.FC<CommunitiesProps> = ({ activeUser: propActive
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredCommunities.map((c) => (
-              <CommunityCard
-                key={c.id}
-                community={c}
-                canVerify={isSuperOrExecutive}
-                onQuickVerify={handleQuickVerify}
-                onEdit={handleOpenEdit}
-                onDelete={(id) => setDeleteConfirmId(id)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {paginatedCommunities.map((c) => (
+                <CommunityCard
+                  key={c.id}
+                  community={c}
+                  canVerify={isSuperOrExecutive}
+                  onQuickVerify={handleQuickVerify}
+                  onEdit={handleOpenEdit}
+                  onDelete={(id) => setDeleteConfirmId(id)}
+                />
+              ))}
+            </div>
+
+            <TablePagination
+              currentPage={validPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              pageSizeOptions={[6, 12, 24, 48]}
+            />
+          </>
         )}
       </div>
 

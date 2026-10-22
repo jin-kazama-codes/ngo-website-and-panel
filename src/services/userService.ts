@@ -95,6 +95,8 @@ function mapRow(row: Record<string, unknown>): User {
   return {
     id: row.id as string,
     name: cleanDisplayName(row.name as string),
+    fatherName: (row.father_name || row.fatherName) as string | undefined,
+    father_name: (row.father_name || row.fatherName) as string | undefined,
     email: row.email as string,
     phone: row.phone as string,
     role: (row.role as string)?.replace(' ', '_') as UserRole,
@@ -114,6 +116,14 @@ function mapRow(row: Record<string, unknown>): User {
     district_role: (row.district_role || row.districtRole) as string | undefined,
     state: row.state as string,
     address: (row.address || row.adderess || row.full_address) as string | undefined,
+    houseNo: (row.house_no || row.houseNo) as string | undefined,
+    house_no: (row.house_no || row.houseNo) as string | undefined,
+    villageTown: (row.village_town || row.villageTown) as string | undefined,
+    village_town: (row.village_town || row.villageTown) as string | undefined,
+    postOffice: (row.post_office || row.postOffice) as string | undefined,
+    post_office: (row.post_office || row.postOffice) as string | undefined,
+    block: (row.block as string) || undefined,
+    tehsil: (row.tehsil as string) || undefined,
     passwordHash: (row.password || row.password_hash || row.passwordHash) as string | undefined,
     aadhaarFrontUrl: (row.aadhaar_front_url || row.aadhaarFrontUrl) as string | undefined,
     aadhaarBackUrl: (row.aadhaar_back_url || row.aadhaarBackUrl) as string | undefined,
@@ -196,6 +206,7 @@ export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaa
   const payload: Record<string, unknown> = {
     id: user.id,
     name: user.name,
+    father_name: user.fatherName || user.father_name || null,
     email: user.email?.trim() ? user.email.trim().toLowerCase() : null,
     phone: user.phone,
     role: user.role,
@@ -213,6 +224,11 @@ export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaa
     district_role: user.districtRole || user.district_role,
     state: user.state,
     address: user.address,
+    house_no: user.houseNo || user.house_no || null,
+    village_town: user.villageTown || user.village_town || null,
+    post_office: user.postOffice || user.post_office || null,
+    block: user.block || null,
+    tehsil: user.tehsil || null,
     aadhaar_front_url: user.aadhaarFrontUrl,
     aadhaar_back_url: user.aadhaarBackUrl,
     password: user.passwordHash,
@@ -349,10 +365,20 @@ export async function updateUser(id: string, patch: Partial<User>): Promise<User
   if (patch.communityId !== undefined) update.community_id = patch.communityId;
   if (patch.communityName !== undefined) update.community_name = patch.communityName;
   if (patch.name !== undefined) update.name = patch.name;
+  if (patch.fatherName !== undefined || patch.father_name !== undefined) {
+    update.father_name = patch.fatherName || patch.father_name || null;
+  }
   if (patch.email !== undefined) update.email = patch.email?.trim() ? patch.email.trim().toLowerCase() : null;
   if (patch.phone !== undefined) update.phone = patch.phone;
   if (patch.city !== undefined) update.city = patch.city;
+  if (patch.district !== undefined) update.district = patch.district;
   if (patch.state !== undefined) update.state = patch.state;
+  if (patch.address !== undefined) update.address = patch.address;
+  if (patch.houseNo !== undefined || patch.house_no !== undefined) update.house_no = patch.houseNo || patch.house_no || null;
+  if (patch.villageTown !== undefined || patch.village_town !== undefined) update.village_town = patch.villageTown || patch.village_town || null;
+  if (patch.postOffice !== undefined || patch.post_office !== undefined) update.post_office = patch.postOffice || patch.post_office || null;
+  if (patch.block !== undefined) update.block = patch.block || null;
+  if (patch.tehsil !== undefined) update.tehsil = patch.tehsil || null;
   if (patch.aadhaarFrontUrl !== undefined) update.aadhaar_front_url = patch.aadhaarFrontUrl;
   if (patch.aadhaarBackUrl !== undefined) update.aadhaar_back_url = patch.aadhaarBackUrl;
   if (patch.paymentMethod !== undefined) update.payment_method = patch.paymentMethod;

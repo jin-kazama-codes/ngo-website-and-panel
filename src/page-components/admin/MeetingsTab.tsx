@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../../types';
@@ -27,6 +27,7 @@ import { Meeting, getMeetings, createMeeting, approveMeeting } from '../../servi
 import { Announcement, createAnnouncement, getAllAnnouncements, getAnnouncementsBycity } from '../../services/announcementService';
 import { STANDARD_DISTRICTS } from '../../data/districtsData';
 import { MeetingCardSkeleton } from '../../components/Skeletons';
+import { TablePagination } from '../../components/TablePagination';
 
 // MeetingsTab connected to Supabase DB via meetingService
 
@@ -177,6 +178,22 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+  // Pagination state for meetings
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(6);
+
+  // Pagination state for announcements
+  const [announcementsPage, setAnnouncementsPage] = useState<number>(1);
+  const [announcementsPageSize, setAnnouncementsPageSize] = useState<number>(6);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [cityFilter, statusFilter, searchQuery]);
+
+  useEffect(() => {
+    setAnnouncementsPage(1);
+  }, [cityFilter]);
+
   // Helper to convert 24h format (HH:mm) to 12h format (hh:mm AM/PM)
   const formatTime12h = (t24: string) => {
     if (!t24) return '';
@@ -217,6 +234,24 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
   const filteredAnnouncements = isSuperOrExecutive && cityFilter !== 'all'
     ? announcements.filter((a) => a.city?.toLowerCase().includes(cityFilter.toLowerCase()))
     : announcements;
+
+  const totalMeetings = filteredMeetings.length;
+  const totalMeetingPages = Math.max(1, Math.ceil(totalMeetings / pageSize));
+  const validMeetingPage = Math.min(currentPage, totalMeetingPages);
+
+  const paginatedMeetings = filteredMeetings.slice(
+    (validMeetingPage - 1) * pageSize,
+    validMeetingPage * pageSize
+  );
+
+  const totalAnnouncements = filteredAnnouncements.length;
+  const totalAnnouncementPages = Math.max(1, Math.ceil(totalAnnouncements / announcementsPageSize));
+  const validAnnouncementPage = Math.min(announcementsPage, totalAnnouncementPages);
+
+  const paginatedAnnouncements = filteredAnnouncements.slice(
+    (validAnnouncementPage - 1) * announcementsPageSize,
+    validAnnouncementPage * announcementsPageSize
+  );
 
   const handleCreateMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -482,21 +517,22 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
 
       {/* 3. Meetings List */}
       {activeTab === 'meetings' && (
-        <div className="grid grid-cols-1 gap-4">
-          {loading ? (
-            <>
-              {[1, 2, 3].map((i) => (
-                <MeetingCardSkeleton key={i} />
-              ))}
-            </>
-          ) : filteredMeetings.length === 0 ? (
-            <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-              <Calendar className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
-              <p className="text-slate-700 dark:text-slate-300 font-bold">{tr('कोई बैठक रिकॉर्ड नहीं मिली', 'کوئی اجلاس نہیں ملا', 'No meetings found')}</p>
-              <p className="text-xs text-slate-500 mt-1">{tr('नया विवरण जोड़ने के लिए ऊपर दिए बटन पर क्लिक करें।', 'نیا اجلاس درج کرنے کے لیے بٹن پر کلک کریں۔', 'Click "+ Schedule / Record Meeting" to add the first record.')}</p>
-            </div>
-          ) : (
-            filteredMeetings.map((m) => (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            {loading ? (
+              <>
+                {[1, 2, 3].map((i) => (
+                  <MeetingCardSkeleton key={i} />
+                ))}
+              </>
+            ) : filteredMeetings.length === 0 ? (
+              <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <Calendar className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
+                <p className="text-slate-700 dark:text-slate-300 font-bold">{tr('कोई बैठक रिकॉर्ड नहीं मिली', 'کوئی اجلاس نہیں ملا', 'No meetings found')}</p>
+                <p className="text-xs text-slate-500 mt-1">{tr('नया विवरण जोड़ने के लिए ऊपर दिए बटन पर क्लिक करें।', 'نیا اجلاس درج کرنے کے لیے بٹن پر کلک کریں۔', 'Click "+ Schedule / Record Meeting" to add the first record.')}</p>
+              </div>
+            ) : (
+              paginatedMeetings.map((m) => (
               <div
                 key={m.id}
                 className={`bg-white dark:bg-slate-900 border rounded-2xl p-5 shadow-xs transition-all ${m.status === 'pending'
@@ -575,11 +611,23 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
             ))
           )}
         </div>
+
+        <TablePagination
+          currentPage={validMeetingPage}
+          totalPages={totalMeetingPages}
+          totalItems={totalMeetings}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[6, 12, 24, 48]}
+        />
+      </div>
       )}
 
       {/* Announcements List */}
       {activeTab === 'announcements' && (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
           {announcementsLoading ? (
             <>
               {[1, 2, 3].map((i) => (
@@ -593,7 +641,7 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
               <p className="text-xs text-slate-500 mt-1">{tr('घोषणा भेजने के लिए ऊपर का बटन दबाएं।', 'اعلان بھیجنے کے لیے بٹن دبائیں۔', 'Click "Send Announcement" above to create one.')}</p>
             </div>
           ) : (
-            filteredAnnouncements.map((a) => (
+            paginatedAnnouncements.map((a) => (
               <div key={a.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs hover:border-amber-400/60 transition-all">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-2.5">
@@ -620,6 +668,17 @@ export const MeetingsTab: React.FC<MeetingsTabProps> = ({ activeUser, currentRol
             ))
           )}
         </div>
+
+        <TablePagination
+          currentPage={validAnnouncementPage}
+          totalPages={totalAnnouncementPages}
+          totalItems={totalAnnouncements}
+          pageSize={announcementsPageSize}
+          onPageChange={setAnnouncementsPage}
+          onPageSizeChange={setAnnouncementsPageSize}
+          pageSizeOptions={[6, 12, 24, 48]}
+        />
+      </div>
       )}
 
       {/* 5. Detail Modal */}

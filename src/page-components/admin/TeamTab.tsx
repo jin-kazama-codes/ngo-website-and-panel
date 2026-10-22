@@ -39,6 +39,7 @@ import {
   Square,
   Check,
 } from 'lucide-react';
+import { TablePagination } from '../../components/TablePagination';
 
 export interface NewMemberDraft {
   id: string;
@@ -127,6 +128,14 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
 
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(6);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [cityFilter, searchQuery]);
 
   // Create Unit Modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -481,6 +490,15 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
     return true;
   });
 
+  const totalItems = filteredTeams.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const validPage = Math.min(currentPage, totalPages);
+
+  const paginatedTeams = filteredTeams.slice(
+    (validPage - 1) * pageSize,
+    validPage * pageSize
+  );
+
 
   return (
     <div className="space-y-6">
@@ -668,7 +686,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
             </p>
           </div>
         ) : (
-          filteredTeams.map((team) => {
+          paginatedTeams.map((team) => {
             const isExpanded = expandedTeamId === team.id;
 
             return (
@@ -873,6 +891,16 @@ export const TeamTab: React.FC<TeamTabProps> = ({ activeUser, currentRole }) => 
           })
         )}
       </div>
+
+      <TablePagination
+        currentPage={validPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[6, 12, 24, 48]}
+      />
 
       {/* 5. Create Block / City Team Modal */}
       {isCreateModalOpen && (

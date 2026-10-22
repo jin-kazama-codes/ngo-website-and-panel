@@ -1148,10 +1148,12 @@ export const MembershipCardModal: React.FC<MembershipCardModalProps> = ({ user: 
 
   </>);
 };
+
 interface ReceiptModalProps {
   donation: Donation;
   onClose: () => void;
 }
+
 export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, onClose }) => {
   const { language } = useLanguage();
   const tr = (hi: string, ur: string, en: string) => {
@@ -1164,175 +1166,146 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, onClose })
   const dynamicDonorName = useDynamicTranslatedText(donation.donorName, language);
   const dynamicCampaignTitle = useDynamicTranslatedText(donation.campaignTitle, language);
   const displayCategory = translateCategory(donation.category, language);
-  return (<div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-fade-in overflow-y-auto">
 
-    <div className="rounded-3xl max-w-xl w-full p-8 shadow-2xl relative overflow-y-auto max-h-[90vh]" style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-text-dark)' }}>
-
-      <button onClick={onClose} className="cursor-pointer absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 transition-colors" style={{ color: 'var(--mfct-text-muted)' }}>
-
-        <X className="w-5 h-5" />
-
-      </button>
-
-      {/* Official Header */}
-
-      <div className="flex items-center justify-between pb-5 mb-6" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
-
-        <div className="flex items-center gap-3">
-
-          <img src="/mfct-logo.png" alt="MFCT" className="w-10 h-10 rounded-full object-cover shadow-md border border-[var(--mfct-gold)]" />
-
-          <div>
-
-            <h3 className="font-bold text-xl leading-tight" style={{ color: 'var(--mfct-dark-green)' }}>MFCT Foundation</h3>
-
-            <p className="text-xs" style={{ color: 'var(--mfct-text-muted)' }}>
-
-              {tr('सेक्शन 8 पंजीकृत एनजीओ | 80G कर छूट', 'رجسٹرڈ این جی او | 80G ٹیکس چھوٹ', 'Regd NGO under Section 8 | 80G Tax Exempted')}
-
-            </p>
-
-          </div>
-
-        </div>
-
-        <div className="text-right">
-
-          <span className="inline-block px-2.5 py-1 rounded-md text-xs font-bold" style={{ background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-dark-green)', border: '1px solid rgba(200,168,75,0.3)' }}>
-
-            {tr('आधिकारिक रसीद', 'سرکاری رسید', 'OFFICIAL RECEIPT')}
-
-          </span>
-
-          <p className="text-xs font-mono mt-1" style={{ color: 'var(--mfct-text-muted)' }}>{donation.receiptNumber}</p>
-
-        </div>
-
-      </div>
-
-      {/* Donation Summary Table */}
-
-      <div className="rounded-2xl p-5 mb-6 text-sm space-y-3" style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)' }}>
-
-        <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
-
-          <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('दानदाता का नाम:', 'عطیہ دہندہ:', 'Donor Name:')}</span>
-
-          <span className="font-semibold" style={{ color: 'var(--mfct-dark-green)' }}>{dynamicDonorName || donation.donorName}</span>
-
-        </div>
-
-        <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
-
-          <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('अभियान / कारण:', 'فلاحی مہم:', 'Campaign / Cause:')}</span>
-
-          <span className="font-semibold text-right max-w-[280px]" style={{ color: 'var(--mfct-dark-green)' }}>
-
-            {dynamicCampaignTitle || translateCampaignTitle(donation.campaignTitle, language)}
-
-          </span>
-
-        </div>
-
-        <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
-
-          <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('दान की श्रेणी:', 'کیٹیگری:', 'Donation Category:')}</span>
-
-          <span className="inline-block px-2 py-0.5 rounded font-medium text-xs" style={{ background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-dark-green)', border: '1px solid rgba(200,168,75,0.3)' }}>
-
-            {displayCategory}
-
-          </span>
-
-        </div>
-
-        <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
-
-          <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('लेनदेन आईडी:', 'ٹرانزیکشن نمبر:', 'Transaction ID:')}</span>
-
-          <span className="font-mono text-xs" style={{ color: 'var(--mfct-text-muted)' }}>{donation.transactionId}</span>
-
-        </div>
-
-        <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
-
-          <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('बैंक यूटीआर संख्या:', 'بینک UTR نمبر:', 'Bank UTR Number:')}</span>
-
-          <span className="font-mono text-xs" style={{ color: 'var(--mfct-text-muted)' }}>{donation.utrNumber}</span>
-
-        </div>
-
-        <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
-
-          <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('भुगतान तिथि:', 'تاریخ:', 'Payment Date:')}</span>
-
-          <span style={{ color: 'var(--mfct-text-muted)' }}>{donation.date}</span>
-
-        </div>
-
-        <div className="flex justify-between pt-2 text-base">
-
-          <span className="font-bold" style={{ color: 'var(--mfct-dark-green)' }}>{tr('कुल दान राशि:', 'کل عطیہ رقم:', 'Total Donated Amount:')}</span>
-
-          <span className="font-bold text-xl" style={{ color: 'var(--mfct-dark-green)' }}>₹{donation.amountINR.toLocaleString('en-IN')}</span>
-
-        </div>
-
-      </div>
-
-      {/* Verification Stamp */}
-
-      <div className="flex items-center justify-between p-4 rounded-2xl mb-6" style={{ background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.3)' }}>
-
-        <div className="flex items-center gap-3">
-
-          <CheckCircle2 className="w-6 h-6" style={{ color: 'var(--mfct-gold)' }} />
-
-          <div>
-
-            <p className="text-xs font-bold" style={{ color: 'var(--mfct-dark-green)' }}>
-
-              {tr('ऑडिट एवं सत्यापन पूर्ण', 'آڈٹ اور تصدیق مکمل', 'Audit & Verification Complete')}
-
-            </p>
-
-            <p className="text-[11px]" style={{ color: 'var(--mfct-text-muted)' }}>
-
-              {tr('कार्यकारी टीम व बैंक एस्क्रो द्वारा सत्यापित', 'ایگزیکٹو ٹیم و بینک اسکرو سے تصدیق شدہ', 'Verified by Executive Team & Bank Escrow')}
-
-            </p>
-
-          </div>
-
-        </div>
-
-        <div className="text-right text-[10px]" style={{ color: 'var(--mfct-text-muted)' }}>
-
-          <span className="font-serif italic font-bold text-xs block" style={{ color: 'var(--mfct-dark-green)' }}>MFCT Audit Seal</span>
-
-          <span>{tr('डिजिटल रूप से हस्ताक्षरित', 'ڈیجیٹل تصدیق شدہ', 'Digitally Signed')}</span>
-
-        </div>
-
-      </div>
-
-      <div className="flex items-center gap-3">
-
-        <button onClick={() => window.print()} className="mfct-btn-gold cursor-pointer flex-1 py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2">
-
-          <Download className="w-4 h-4" /> {tr('रसीद डाउनलोड / प्रिंट करें (PDF)', 'پی ڈی ایف رسید ڈاؤن لوڈ کریں', 'Download PDF Receipt')}
-
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-fade-in overflow-y-auto">
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #mfct-printable-receipt,
+          #mfct-printable-receipt * {
+            visibility: visible !important;
+          }
+          #mfct-printable-receipt {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 24px !important;
+            border: 1px solid #d1fae5 !important;
+            box-shadow: none !important;
+            background: #ffffff !important;
+          }
+          .receipt-no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      <div
+        id="mfct-printable-receipt"
+        className="rounded-3xl max-w-xl w-full p-8 shadow-2xl relative overflow-y-auto max-h-[90vh]"
+        style={{ background: 'var(--mfct-white)', border: '1px solid var(--mfct-border)', color: 'var(--mfct-text-dark)' }}
+      >
+        <button
+          onClick={onClose}
+          className="receipt-no-print cursor-pointer absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 transition-colors"
+          style={{ color: 'var(--mfct-text-muted)' }}
+        >
+          <X className="w-5 h-5" />
         </button>
 
-        <button onClick={onClose} className="cursor-pointer py-3 px-5 rounded-xl font-bold text-xs transition-colors" style={{ background: 'var(--mfct-warm-bg-2)', color: 'var(--mfct-dark-green)', border: '1px solid var(--mfct-border)' }}>
+        {/* Official Header */}
+        <div className="flex items-center justify-between pb-5 mb-6" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
+          <div className="flex items-center gap-3">
+            <img src="/mfct-logo.png" alt="MFCT" className="w-10 h-10 rounded-full object-cover shadow-md border border-[var(--mfct-gold)]" />
+            <div>
+              <h3 className="font-bold text-xl leading-tight" style={{ color: 'var(--mfct-dark-green)' }}>MFCT Foundation</h3>
+              <p className="text-xs" style={{ color: 'var(--mfct-text-muted)' }}>
+                {tr('सेक्शन 8 पंजीकृत एनजीओ | 80G कर छूट', 'رجسٹرڈ این جی او | 80G ٹیکس چھوٹ', 'Regd NGO under Section 8 | 80G Tax Exempted')}
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="inline-block px-2.5 py-1 rounded-md text-xs font-bold" style={{ background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-dark-green)', border: '1px solid rgba(200,168,75,0.3)' }}>
+              {tr('आधिकारिक रसीद', 'سرکاری رسید', 'OFFICIAL RECEIPT')}
+            </span>
+            <p className="text-xs font-mono mt-1" style={{ color: 'var(--mfct-text-muted)' }}>{donation.receiptNumber}</p>
+          </div>
+        </div>
 
-          {tr('बंद करें', 'بند کریں', 'Close')}
+        {/* Donation Summary Table */}
+        <div className="rounded-2xl p-5 mb-6 text-sm space-y-3" style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)' }}>
+          <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
+            <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('दानदाता का नाम:', 'عطیہ دہندہ:', 'Donor Name:')}</span>
+            <span className="font-semibold" style={{ color: 'var(--mfct-dark-green)' }}>{dynamicDonorName || donation.donorName}</span>
+          </div>
 
-        </button>
+          <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
+            <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('अभियान / कारण:', 'فلاحی مہم:', 'Campaign / Cause:')}</span>
+            <span className="font-semibold text-right max-w-[280px]" style={{ color: 'var(--mfct-dark-green)' }}>
+              {dynamicCampaignTitle || translateCampaignTitle(donation.campaignTitle, language)}
+            </span>
+          </div>
 
+          <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
+            <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('दान की श्रेणी:', 'کیٹیگری:', 'Donation Category:')}</span>
+            <span className="inline-block px-2 py-0.5 rounded font-medium text-xs" style={{ background: 'rgba(200,168,75,0.15)', color: 'var(--mfct-dark-green)', border: '1px solid rgba(200,168,75,0.3)' }}>
+              {displayCategory}
+            </span>
+          </div>
+
+          <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
+            <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('भुगतान माध्यम:', 'طریقہ ادائیگی:', 'Payment Method:')}</span>
+            <span className="font-semibold text-xs inline-flex items-center gap-1.5" style={{ color: 'var(--mfct-dark-green)' }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              {donation.paymentMethod || (donation as any).payment_method || 'UPI'}
+            </span>
+          </div>
+
+          <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
+            <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('लेनदेन आईडी:', 'ٹرانزیکشن نمبر:', 'Transaction ID:')}</span>
+            <span className="font-mono text-xs" style={{ color: 'var(--mfct-text-muted)' }}>{donation.transactionId}</span>
+          </div>
+
+          <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
+            <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('बैंक यूटीआर संख्या:', 'بینک UTR نمبر:', 'Bank UTR Number:')}</span>
+            <span className="font-mono text-xs" style={{ color: 'var(--mfct-text-muted)' }}>{donation.utrNumber}</span>
+          </div>
+
+          <div className="flex justify-between pb-2" style={{ borderBottom: '1px solid var(--mfct-border)' }}>
+            <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('भुगतान तिथि:', 'تاریخ:', 'Payment Date:')}</span>
+            <span style={{ color: 'var(--mfct-text-muted)' }}>{donation.date}</span>
+          </div>
+
+          <div className="flex justify-between pt-2 text-base">
+            <span className="font-bold" style={{ color: 'var(--mfct-dark-green)' }}>{tr('कुल दान राशि:', 'کل عطیہ رقم:', 'Total Donated Amount:')}</span>
+            <span className="font-bold text-xl" style={{ color: 'var(--mfct-dark-green)' }}>₹{donation.amountINR.toLocaleString('en-IN')}</span>
+          </div>
+        </div>
+
+        {/* Verification Stamp */}
+        <div className="flex items-center justify-between p-4 rounded-2xl mb-6" style={{ background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.3)' }}>
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-6 h-6" style={{ color: 'var(--mfct-gold)' }} />
+            <div>
+              <p className="text-xs font-bold" style={{ color: 'var(--mfct-dark-green)' }}>
+                {tr('ऑडिट एवं सत्यापन पूर्ण', 'آڈٹ اور تصدیق مکمل', 'Audit & Verification Complete')}
+              </p>
+              <p className="text-[11px]" style={{ color: 'var(--mfct-text-muted)' }}>
+                {tr('कार्यकारी टीम व बैंक एस्क्रो द्वारा सत्यापित', 'ایگزیکٹو ٹیم و بینک اسکرو سے تصدیق شدہ', 'Verified by Executive Team & Bank Escrow')}
+              </p>
+            </div>
+          </div>
+          <div className="text-right text-[10px]" style={{ color: 'var(--mfct-text-muted)' }}>
+            <span className="font-serif italic font-bold text-xs block" style={{ color: 'var(--mfct-dark-green)' }}>MFCT Audit Seal</span>
+            <span>{tr('डिजिटल रूप से हस्ताक्षरित', 'ڈیجیٹل تصدیق شدہ', 'Digitally Signed')}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 receipt-no-print">
+          <button onClick={() => window.print()} className="mfct-btn-gold cursor-pointer flex-1 py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2">
+            <Download className="w-4 h-4" /> {tr('रसीद डाउनलोड / प्रिंट करें (PDF)', 'پی ڈی ایف رسید ڈاؤن لوڈ کریں', 'Download PDF Receipt')}
+          </button>
+          <button onClick={onClose} className="cursor-pointer py-3 px-5 rounded-xl font-bold text-xs transition-colors" style={{ background: 'var(--mfct-warm-bg-2)', color: 'var(--mfct-dark-green)', border: '1px solid var(--mfct-border)' }}>
+            {tr('बंद करें', 'بند کریں', 'Close')}
+          </button>
+        </div>
       </div>
-
     </div>
-
-  </div>);
+  );
 };

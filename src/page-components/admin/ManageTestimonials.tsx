@@ -9,6 +9,7 @@ import { useLanguage, Language } from '../../context/LanguageContext';
 import { autoTranslateText, autoTranslateStory, setMemoryCache, useDynamicTranslatedText } from '../../lib/autoTranslate';
 import { translateRole, translateCity } from '../../lib/translateEntity';
 import { STANDARD_DISTRICTS } from '../../data/districtsData';
+import { TablePagination } from '../../components/TablePagination';
 
 interface ManageTestimonialsProps {
   activeUser: User;
@@ -203,6 +204,14 @@ export const ManageTestimonials: React.FC<ManageTestimonialsProps> = ({ activeUs
   const [activeFilter, setActiveFilter] = useState<TestimonialStatusFilter>('all');
   const [selectedDistrictFilter, setSelectedDistrictFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(6);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, selectedDistrictFilter, searchQuery]);
 
   // Story Input State
   const [formData, setFormData] = useState({
@@ -458,6 +467,15 @@ export const ManageTestimonials: React.FC<ManageTestimonialsProps> = ({ activeUs
     });
   }, [districtFilteredTestimonials, activeFilter, searchQuery]);
 
+  const totalItems = displayedTestimonials.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const validPage = Math.min(currentPage, totalPages);
+
+  const paginatedTestimonials = useMemo(() => {
+    const start = (validPage - 1) * pageSize;
+    return displayedTestimonials.slice(start, start + pageSize);
+  }, [displayedTestimonials, validPage, pageSize]);
+
   return (
     <div className="space-y-6 animate-fade-in pb-12">
       {/* 1. Header Banner - Matching KYC & UTR Tabs */}
@@ -698,19 +716,31 @@ export const ManageTestimonials: React.FC<ManageTestimonialsProps> = ({ activeUs
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayedTestimonials.map((t) => (
-              <AdminTestimonialCard
-                key={t.id}
-                testimonial={t}
-                canApprove={canApproveTestimonial(t)}
-                approvingId={approvingId}
-                onApprove={handleApprove}
-                onEdit={handleOpenEdit}
-                onDelete={(id) => setDeleteConfirmId(id)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedTestimonials.map((t) => (
+                <AdminTestimonialCard
+                  key={t.id}
+                  testimonial={t}
+                  canApprove={canApproveTestimonial(t)}
+                  approvingId={approvingId}
+                  onApprove={handleApprove}
+                  onEdit={handleOpenEdit}
+                  onDelete={(id) => setDeleteConfirmId(id)}
+                />
+              ))}
+            </div>
+
+            <TablePagination
+              currentPage={validPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              pageSizeOptions={[6, 12, 24, 48]}
+            />
+          </>
         )}
       </div>
 
