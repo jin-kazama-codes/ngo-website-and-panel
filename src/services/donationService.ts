@@ -36,6 +36,7 @@ function mapRow(row: Record<string, unknown>): Donation {
     category: (row.category as DonationCategory) || 'General',
     isOutsideCommunity: Boolean(row.isOutsideCommunity ?? row.is_outside_community ?? false),
     paymentMethod: ((row.paymentMethod || row.payment_method) as Donation['paymentMethod']) || 'UPI',
+    payment_method: ((row.payment_method || row.paymentMethod) as string) || 'UPI',
     paymentScreenshotUrl: (row.paymentScreenshotUrl || row.payment_screenshot_url) as string | undefined,
     status: ((row.status as Donation['status']) || 'verified'),
     rejection_reason: (row.rejection_reason || row.rejectionReason) as string | undefined,

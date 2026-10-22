@@ -385,9 +385,9 @@ export const HomePage: React.FC<HomePageProps> = ({
   const totalRaised = communities.reduce((sum, c) => sum + c.totalRaisedINR, 0);
   const avgHealth = communities.length
     ? Math.round(
-        communities.reduce((sum, c) => sum + c.healthScore, 0) /
-          communities.length,
-      )
+      communities.reduce((sum, c) => sum + c.healthScore, 0) /
+      communities.length,
+    )
     : 0;
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
@@ -432,14 +432,14 @@ export const HomePage: React.FC<HomePageProps> = ({
   const myCommunityCampaigns =
     isAuthenticated && (activeUser?.communityId || activeUser?.communityName)
       ? campaigns.filter(
-          (c) =>
-            (activeUser.communityId &&
-              c.communityId === activeUser.communityId) ||
-            (activeUser.communityName &&
-              c.communityName &&
-              c.communityName.trim().toLowerCase() ===
-                activeUser.communityName.trim().toLowerCase()),
-        )
+        (c) =>
+          (activeUser.communityId &&
+            c.communityId === activeUser.communityId) ||
+          (activeUser.communityName &&
+            c.communityName &&
+            c.communityName.trim().toLowerCase() ===
+            activeUser.communityName.trim().toLowerCase()),
+      )
       : [];
 
   const translatedUserCommunity = useDynamicTranslatedText(
@@ -537,18 +537,16 @@ export const HomePage: React.FC<HomePageProps> = ({
         {heroImages.map((imgSrc, idx) => (
           <div
             key={idx}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              idx === currentSlide
-                ? "opacity-100 z-0"
-                : "opacity-0 z-0 pointer-events-none"
-            }`}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === currentSlide
+              ? "opacity-100 z-0"
+              : "opacity-0 z-0 pointer-events-none"
+              }`}
           >
             <img
               src={imgSrc}
               alt={`Hero Background ${idx + 1}`}
-              className={`w-full h-full object-cover object-center transform transition-transform duration-[7000ms] ease-out ${
-                idx === currentSlide ? "scale-105" : "scale-100"
-              }`}
+              className={`w-full h-full object-cover object-center transform transition-transform duration-[7000ms] ease-out ${idx === currentSlide ? "scale-105" : "scale-100"
+                }`}
             />
           </div>
         ))}
@@ -779,7 +777,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         {/* Right Side Bottom Corner: Compact QR Widget */}
-        <div className="absolute bottom-4 sm:bottom-5 right-4 sm:right-6 lg:right-8 z-30 hidden sm:block">
+        {/* <div className="absolute bottom-4 sm:bottom-5 right-4 sm:right-6 lg:right-8 z-30 hidden sm:block">
           <div
             onClick={() => setIsQrModalOpen(true)}
             className="group relative cursor-pointer rounded-2xl p-2 sm:p-2.5 max-w-[155px] sm:max-w-[170px] w-full shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-amber-500/20 active:scale-95"
@@ -791,7 +789,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             }}
             title="Click to Enlarge QR Code"
           >
-            {/* Header */}
+
             <div className="flex items-center justify-between gap-1 mb-1">
               <span
                 className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow"
@@ -811,7 +809,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
             </div>
 
-            {/* QR Thumbnail */}
+
             <div className="bg-white p-1 rounded-lg shadow-md flex justify-center items-center relative overflow-hidden group-hover:ring-2 ring-amber-400 transition-all">
               {accountDetails?.qr_code_url ? (
                 <img
@@ -823,12 +821,11 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <p className="text-center text-xs font-medium text-slate-600">
                   {tr(
                     "QR कोड उपलब्ध नहीं है",
-                    "QR کوڈ دستیاب नहीं है",
+                    "QR کوڈ دستیاب نہیں ہے",
                     "QR code is not available",
                   )}
                 </p>
               )}
-              {/* Tap to zoom hover overlay */}
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                 <span className="px-1.5 py-0.5 rounded text-[8px] font-bold text-white bg-black/80 backdrop-blur-sm">
                   Tap to Zoom
@@ -836,7 +833,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
             </div>
 
-            {/* Footer text */}
+
             <div className="text-center mt-1 space-y-0.5">
               <p
                 className="text-[8px] uppercase tracking-wider font-bold truncate"
@@ -849,7 +846,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               </p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Carousel Bottom Dots */}
         <div className="absolute bottom-2.5 sm:bottom-3 left-0 right-0 z-30 flex items-center justify-center gap-2">
@@ -857,11 +854,10 @@ export const HomePage: React.FC<HomePageProps> = ({
             <button
               key={i}
               onClick={() => setCurrentSlide(i)}
-              className={`transition-all duration-300 rounded-full cursor-pointer ${
-                currentSlide === i
-                  ? "w-6 h-2 bg-amber-400 shadow-lg shadow-amber-400/50"
-                  : "w-2 h-2 bg-white/40 hover:bg-white/80"
-              }`}
+              className={`transition-all duration-300 rounded-full cursor-pointer ${currentSlide === i
+                ? "w-6 h-2 bg-amber-400 shadow-lg shadow-amber-400/50"
+                : "w-2 h-2 bg-white/40 hover:bg-white/80"
+                }`}
               title={`Slide ${i + 1}`}
             />
           ))}
@@ -1684,13 +1680,13 @@ export const HomePage: React.FC<HomePageProps> = ({
                       style={
                         isSelected
                           ? {
-                              background: "var(--mfct-gold)",
-                              color: "#0d281a",
-                            }
+                            background: "var(--mfct-gold)",
+                            color: "#0d281a",
+                          }
                           : {
-                              background: "rgba(255,255,255,0.92)",
-                              color: "#1a4230",
-                            }
+                            background: "rgba(255,255,255,0.92)",
+                            color: "#1a4230",
+                          }
                       }
                     >
                       {cat.count}
@@ -1860,15 +1856,15 @@ export const HomePage: React.FC<HomePageProps> = ({
                 style={
                   selectedCategory === cat
                     ? {
-                        background: "var(--mfct-dark-green)",
-                        color: "#fff",
-                        border: "1px solid var(--mfct-mid-green)",
-                      }
+                      background: "var(--mfct-dark-green)",
+                      color: "#fff",
+                      border: "1px solid var(--mfct-mid-green)",
+                    }
                     : {
-                        background: "var(--mfct-white)",
-                        color: "var(--mfct-text-muted)",
-                        border: "1px solid var(--mfct-border)",
-                      }
+                      background: "var(--mfct-white)",
+                      color: "var(--mfct-text-muted)",
+                      border: "1px solid var(--mfct-border)",
+                    }
                 }
               >
                 {cat === "All"

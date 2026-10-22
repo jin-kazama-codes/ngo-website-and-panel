@@ -30,6 +30,7 @@ import { STANDARD_DISTRICTS } from '../../data/districtsData';
 import { useLanguage } from '../../context/LanguageContext';
 import { translateCampaignTitle, translateCategory } from '../../lib/translateEntity';
 import DynamicText from '../../components/DynamicText';
+import { TablePagination } from '../../components/TablePagination';
 
 // Inline mini carousel used inside admin campaign cards
 const MiniCarousel: React.FC<{ images: string[]; title: string }> = ({ images, title }) => {
@@ -111,6 +112,14 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
   const [loadingDonors, setLoadingDonors] = useState<boolean>(false);
   const [selectedDistrictFilter, setSelectedDistrictFilter] = useState<string>('');
   const [communities, setCommunities] = useState<any[]>([]);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(6);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, selectedDistrictFilter]);
 
   // Resolve role and district scope matching Communities component
   const rawDistRole = (
@@ -337,6 +346,15 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
     if (activeFilter === 'pending') return c.status === 'pending_approval' || c.status === 'pending';
     return true;
   });
+
+  const totalItems = filteredCampaigns.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const validPage = Math.min(currentPage, totalPages);
+
+  const paginatedCampaigns = useMemo(() => {
+    const start = (validPage - 1) * pageSize;
+    return filteredCampaigns.slice(start, start + pageSize);
+  }, [filteredCampaigns, validPage, pageSize]);
 
   const getEmptyStateContent = () => {
     switch (activeFilter) {
@@ -658,8 +676,9 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredCampaigns.map((c) => (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {paginatedCampaigns.map((c) => (
               <div key={c.id} className="p-0 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col shadow-sm">
                 {/* Mini image carousel for admin card */}
                 <MiniCarousel
@@ -793,7 +812,18 @@ export const CampaignsTab: React.FC<CampaignsTabProps> = ({
               </div>
             ))}
           </div>
-        )}
+
+          <TablePagination
+            currentPage={validPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[6, 12, 24, 48]}
+          />
+        </>
+      )}
 
         {/* Toast Notification */}
         {toastMessage && (

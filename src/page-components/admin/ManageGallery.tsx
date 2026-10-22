@@ -9,6 +9,7 @@ import { translateCategory, translateCity } from '../../lib/translateEntity';
 import DynamicText from '../../components/DynamicText';
 import { STANDARD_DISTRICTS } from '../../data/districtsData';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
+import { TablePagination } from '../../components/TablePagination';
 
 interface ManageGalleryProps {
   activeUser: User;
@@ -103,6 +104,14 @@ export const ManageGallery: React.FC<ManageGalleryProps> = ({ activeUser, curren
   const [activeFilter, setActiveFilter] = useState<PhotoStatusFilter>('all');
   const [selectedDistrictFilter, setSelectedDistrictFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(6);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, selectedDistrictFilter, searchQuery]);
 
   const [formData, setFormData] = useState<Partial<GalleryPhoto>>({
     title: '',
@@ -320,6 +329,15 @@ export const ManageGallery: React.FC<ManageGalleryProps> = ({ activeUser, curren
       return matchesStatus && matchesSearch;
     });
   }, [districtFilteredPhotos, activeFilter, searchQuery]);
+
+  const totalItems = displayedPhotos.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const validPage = Math.min(currentPage, totalPages);
+
+  const paginatedPhotos = useMemo(() => {
+    const start = (validPage - 1) * pageSize;
+    return displayedPhotos.slice(start, start + pageSize);
+  }, [displayedPhotos, validPage, pageSize]);
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
@@ -567,87 +585,99 @@ export const ManageGallery: React.FC<ManageGalleryProps> = ({ activeUser, curren
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayedPhotos.map((p) => (
-              <div
-                key={p.id}
-                className="bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col group shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all"
-              >
-                <div className="relative h-48 overflow-hidden bg-slate-100 dark:bg-slate-900">
-                  <img
-                    src={p.image}
-                    alt={p.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-white font-bold text-[10px]">
-                    {translateCategory(p.category, language)}
-                  </div>
-                  {p.status === 'pending' && (
-                    <div className="absolute top-2 right-2 px-2.5 py-1 bg-amber-500/90 backdrop-blur-sm rounded text-white font-bold text-[10px] flex items-center gap-1 shadow-sm">
-                      <Clock className="w-3 h-3" />
-                      <span>{tr('स्वीकृति लंबित', 'زیر التواء', 'Pending')}</span>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedPhotos.map((p) => (
+                <div
+                  key={p.id}
+                  className="bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col group shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all"
+                >
+                  <div className="relative h-48 overflow-hidden bg-slate-100 dark:bg-slate-900">
+                    <img
+                      src={p.image}
+                      alt={p.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-white font-bold text-[10px]">
+                      {translateCategory(p.category, language)}
                     </div>
-                  )}
-                  {p.status === 'approved' && (
-                    <div className="absolute top-2 right-2 px-2.5 py-1 bg-emerald-500/90 backdrop-blur-sm rounded text-white font-bold text-[10px] flex items-center gap-1 shadow-sm">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>{tr('स्वीकृत', 'منظور شدہ', 'Approved')}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h4 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2" title={p.title}>
-                      <DynamicText text={p.title} lang={language} />
-                    </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
-                      <span>📍</span>
-                      <DynamicText text={p.city} lang={language} fallback={translateCity(p.city, language)} />
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
-                    {p.status === 'pending' && canApprovePhoto(p) && (
-                      <button
-                        onClick={() => handleApprove(p.id)}
-                        disabled={approvingId === p.id}
-                        className="cursor-pointer flex-1 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
-                      >
-                        {approvingId === p.id ? (
-                          <div className="w-3.5 h-3.5 border-2 border-emerald-600 dark:border-emerald-400 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                        )}
-                        <span>
-                          {approvingId === p.id
-                            ? tr('स्वीकार हो रहा है...', 'منظور ہو رہا ہے...', 'Approving...')
-                            : tr('स्वीकार करें', 'منظور کریں', 'Approve')}
-                        </span>
-                      </button>
+                    {p.status === 'pending' && (
+                      <div className="absolute top-2 right-2 px-2.5 py-1 bg-amber-500/90 backdrop-blur-sm rounded text-white font-bold text-[10px] flex items-center gap-1 shadow-sm">
+                        <Clock className="w-3 h-3" />
+                        <span>{tr('स्वीकृति लंबित', 'زیر التواء', 'Pending')}</span>
+                      </div>
                     )}
+                    {p.status === 'approved' && (
+                      <div className="absolute top-2 right-2 px-2.5 py-1 bg-emerald-500/90 backdrop-blur-sm rounded text-white font-bold text-[10px] flex items-center gap-1 shadow-sm">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>{tr('स्वीकृत', 'منظور شدہ', 'Approved')}</span>
+                      </div>
+                    )}
+                  </div>
 
-                    <button
-                      onClick={() => handleOpenEdit(p)}
-                      className="cursor-pointer flex-1 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                      <span>{tr('संपादित करें', 'ترمیم', 'Edit')}</span>
-                    </button>
+                  <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2" title={p.title}>
+                        <DynamicText text={p.title} lang={language} />
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                        <span>📍</span>
+                        <DynamicText text={p.city} lang={language} fallback={translateCity(p.city, language)} />
+                      </p>
+                    </div>
 
-                    <button
-                      onClick={() => setDeleteConfirmId(p.id)}
-                      className="cursor-pointer flex-1 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>{tr('हटाएं', 'حذف کریں', 'Delete')}</span>
-                    </button>
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+                      {p.status === 'pending' && canApprovePhoto(p) && (
+                        <button
+                          onClick={() => handleApprove(p.id)}
+                          disabled={approvingId === p.id}
+                          className="cursor-pointer flex-1 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+                        >
+                          {approvingId === p.id ? (
+                            <div className="w-3.5 h-3.5 border-2 border-emerald-600 dark:border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          )}
+                          <span>
+                            {approvingId === p.id
+                              ? tr('स्वीकार हो रहा है...', 'منظور ہو رہا ہے...', 'Approving...')
+                              : tr('स्वीकार करें', 'منظور کریں', 'Approve')}
+                          </span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleOpenEdit(p)}
+                        className="cursor-pointer flex-1 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        <span>{tr('संपादित करें', 'ترمیم', 'Edit')}</span>
+                      </button>
+
+                      <button
+                        onClick={() => setDeleteConfirmId(p.id)}
+                        className="cursor-pointer flex-1 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>{tr('हटाएं', 'حذف کریں', 'Delete')}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            <TablePagination
+              currentPage={validPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              pageSizeOptions={[6, 12, 24, 48]}
+            />
+          </>
         )}
       </div>
 
