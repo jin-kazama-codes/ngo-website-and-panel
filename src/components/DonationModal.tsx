@@ -138,7 +138,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const [campaignsLoading, setCampaignsLoading] = useState<boolean>(!campaign);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(campaign?.id || '');
   const [isOutsideCommunity, setIsOutsideCommunity] = useState<boolean>(false);
-  const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'Bank Transfer'>('UPI');
+  const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'Bank Transfer'>('Bank Transfer');
   const [utrNumber, setUtrNumber] = useState<string>('');
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotUploaded, setScreenshotUploaded] = useState<boolean>(false);
@@ -1039,7 +1039,8 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             )}
 
             {/* Payment Method Tabs */}
-            <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl" style={{ background: 'var(--mfct-warm-bg-2)', border: '1px solid var(--mfct-border)' }}>
+            {/* QR/UPI tab hidden — MFCT does not have a QR code */}
+            {/* <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl" style={{ background: 'var(--mfct-warm-bg-2)', border: '1px solid var(--mfct-border)' }}>
               <button
                 type="button"
                 onClick={() => setPaymentMethod('UPI')}
@@ -1056,9 +1057,10 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               >
                 {tr('प्रत्यक्ष बैंक NEFT / RTGS', 'براہ راست بینک NEFT / RTGS', 'Direct Bank NEFT / RTGS')}
               </button>
-            </div>
+            </div> */}
 
-            {paymentMethod === 'UPI' ? (
+            {/* QR/UPI panel hidden — MFCT does not have a QR code */}
+            {/* {paymentMethod === 'UPI' ? (
               <div className="p-6 text-white rounded-3xl text-center space-y-4 shadow-xl" style={{ background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}>
                 <div className="w-[162px] h-[162px] mx-auto bg-white p-4 rounded-2xl shadow-lg flex items-center justify-center">
                   {accountDetailsLoading ? (
@@ -1101,44 +1103,44 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                   </p>
                 </div>
               </div>
-            ) : (
-              <div
-                className="p-5 text-white rounded-3xl space-y-3 text-xs shadow-xl font-mono"
-                style={{ background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
-              >
-                {accountDetails ? (
-                  [
-                    accountDetails.account_holder_name ? { label: tr('खाताधारक का नाम:', 'کھاتہ دار کا نام:', 'Account Holder:'), val: accountDetails.account_holder_name, copyKey: 'name' } : null,
-                    accountDetails.bank_name ? { label: tr('बैंक का नाम:', 'بینک کا نام:', 'Bank Name:'), val: accountDetails.bank_name, copyKey: 'bank' } : null,
-                    accountDetails.branch_name ? { label: tr('शाखा का नाम:', 'برانچ کا نام:', 'Branch Name:'), val: accountDetails.branch_name, copyKey: 'branch' } : null,
-                    accountDetails.account_number ? { label: tr('खाता संख्या:', 'اکاؤنٹ نمبر:', 'Account Number:'), val: accountDetails.account_number, copyKey: 'acc' } : null,
-                    accountDetails.ifsc_code ? { label: tr('IFSC कोड:', 'آئی ایف ایس سی کوڈ:', 'IFSC Code:'), val: accountDetails.ifsc_code, copyKey: 'ifsc' } : null,
-                  ].filter(Boolean).map((item) => {
-                    const { label, val, copyKey } = item!;
-                    return (
-                      <div key={copyKey} className="flex justify-between items-center pb-2.5 border-b border-white/10 last:border-0 last:pb-0 font-sans">
-                        <span style={{ color: 'rgba(200,168,75,0.85)' }} className="font-medium">{label}</span>
-                        <div className="flex items-center gap-1.5 font-mono">
-                          <span className="font-bold select-all text-white" style={{ color: copyKey === 'acc' || copyKey === 'ifsc' ? 'var(--mfct-gold)' : undefined }}>{val}</span>
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(val, copyKey)}
-                            className="p-1 hover:bg-white/10 rounded transition-colors cursor-pointer text-amber-200"
-                            title={`Copy ${label}`}
-                          >
-                            {copiedKey === copyKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
+            ) : ( */}
+            <div
+              className="p-5 text-white rounded-3xl space-y-3 text-xs shadow-xl font-mono"
+              style={{ background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
+            >
+              {accountDetails ? (
+                [
+                  accountDetails.account_holder_name ? { label: tr('खाताधारक का नाम:', 'کھاتہ دار کا نام:', 'Account Holder:'), val: accountDetails.account_holder_name, copyKey: 'name' } : null,
+                  accountDetails.bank_name ? { label: tr('बैंक का नाम:', 'بینک کا نام:', 'Bank Name:'), val: accountDetails.bank_name, copyKey: 'bank' } : null,
+                  accountDetails.branch_name ? { label: tr('शाखा का नाम:', 'برانچ کا نام:', 'Branch Name:'), val: accountDetails.branch_name, copyKey: 'branch' } : null,
+                  accountDetails.account_number ? { label: tr('खाता संख्या:', 'اکاؤنٹ نمبر:', 'Account Number:'), val: accountDetails.account_number, copyKey: 'acc' } : null,
+                  accountDetails.ifsc_code ? { label: tr('IFSC कोड:', 'آئی ایف ایس سی کوڈ:', 'IFSC Code:'), val: accountDetails.ifsc_code, copyKey: 'ifsc' } : null,
+                ].filter(Boolean).map((item) => {
+                  const { label, val, copyKey } = item!;
+                  return (
+                    <div key={copyKey} className="flex justify-between items-center pb-2.5 border-b border-white/10 last:border-0 last:pb-0 font-sans">
+                      <span style={{ color: 'rgba(200,168,75,0.85)' }} className="font-medium">{label}</span>
+                      <div className="flex items-center gap-1.5 font-mono">
+                        <span className="font-bold select-all text-white" style={{ color: copyKey === 'acc' || copyKey === 'ifsc' ? 'var(--mfct-gold)' : undefined }}>{val}</span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(val, copyKey)}
+                          className="p-1 hover:bg-white/10 rounded transition-colors cursor-pointer text-amber-200"
+                          title={`Copy ${label}`}
+                        >
+                          {copiedKey === copyKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
                       </div>
-                    );
-                  })
-                ) : (
-                  <div className="p-4 text-center text-slate-300 font-sans">
-                    {tr('बैंक विवरण अभी उपलब्ध नहीं है।', 'بینک کی تفصیلات دستیاب नहीं ہیں۔', 'Bank details not configured.')}
-                  </div>
-                )}
-              </div>
-            )}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="p-4 text-center text-slate-300 font-sans">
+                  {tr('बैंक विवरण अभी उपलब्ध नहीं है।', 'بینک کی تفصیلات دستیاب नहीं ہیں۔', 'Bank details not configured.')}
+                </div>
+              )}
+            </div>
+            {/* )} */}
 
             {/* Donor Identity / Verification Confirmation */}
             <div className="space-y-4">

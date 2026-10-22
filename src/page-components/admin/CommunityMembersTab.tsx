@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Users } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Users, Search, X } from 'lucide-react';
 import { User } from '../../types';
 import { getUsers } from '../../services/userService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
+import { TablePagination } from '../../components/TablePagination';
 
 interface CommunityMembersTabProps {
   activeUser: User;
@@ -107,6 +108,15 @@ export const CommunityMembersTab: React.FC<CommunityMembersTabProps> = ({
 
   const [members, setMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Search & Pagination state matching ManageUsers
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const districtRoleKeys = [
     'district_president',
@@ -234,6 +244,28 @@ export const CommunityMembersTab: React.FC<CommunityMembersTabProps> = ({
     activeUser?.districtRole,
   ]);
 
+  const filteredMembers = useMemo(() => {
+    if (!searchQuery.trim()) return members;
+    const q = searchQuery.toLowerCase().trim();
+    return members.filter((member) => {
+      const name = (member.name || '').toLowerCase();
+      const city = (member.city || '').toLowerCase();
+      const state = (member.state || '').toLowerCase();
+      const phone = (member.phone || '').toLowerCase();
+      const memId = (member.membershipId || member.id || '').toLowerCase();
+      return name.includes(q) || city.includes(q) || state.includes(q) || phone.includes(q) || memId.includes(q);
+    });
+  }, [members, searchQuery]);
+
+  const totalItems = filteredMembers.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const validPage = Math.min(currentPage, totalPages);
+
+  const paginatedMembers = useMemo(() => {
+    const start = (validPage - 1) * pageSize;
+    return filteredMembers.slice(start, start + pageSize);
+  }, [filteredMembers, validPage, pageSize]);
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -331,6 +363,34 @@ export const CommunityMembersTab: React.FC<CommunityMembersTabProps> = ({
 
       {/* Members List */}
       <div className="rounded-2xl p-6 space-y-4 transition-all bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+        {/* Search & Counter row */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder={tr('नाम, आईडी, मोबाइल या शहर से खोजें...', 'نام، شناختی کارڈ، موبائل یا شہر سے تلاش کریں...', 'Search by name, ID, phone or city...')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            {tr('दिखा रहे हैं:', 'دکھا رہے ہیں:', 'Showing:')}{' '}
+            <strong className="text-slate-900 dark:text-white font-bold">{totalItems}</strong>{' '}
+            {tr('सदस्य', 'ممبران', 'members')}
+          </div>
+        </div>
+
         <div className="space-y-2">
           {loading ? (
             <div className="space-y-2 animate-pulse">
@@ -365,11 +425,21 @@ export const CommunityMembersTab: React.FC<CommunityMembersTabProps> = ({
                 )}
             </div>
           ) : (
-            members.map((member) => (
+            paginatedMembers.map((member) => (
               <MemberItem key={member.id} member={member} />
             ))
           )}
         </div>
+
+        <TablePagination
+          currentPage={validPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[10, 20, 50]}
+        />
       </div>
     </div>
   );

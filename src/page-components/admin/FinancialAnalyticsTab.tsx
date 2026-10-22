@@ -120,11 +120,10 @@ const TablePagination: React.FC<{
                 key={pageNum}
                 type="button"
                 onClick={() => onPageChange(pageNum)}
-                className={`min-w-8 h-8 px-2 flex items-center justify-center rounded-lg font-bold text-xs transition-colors cursor-pointer ${
-                  isActive
-                    ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-xs'
-                    : 'border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-                }`}
+                className={`min-w-8 h-8 px-2 flex items-center justify-center rounded-lg font-bold text-xs transition-colors cursor-pointer ${isActive
+                  ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-xs'
+                  : 'border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                  }`}
               >
                 {pageNum}
               </button>
@@ -531,49 +530,15 @@ export const FinancialAnalyticsTab: React.FC<FinancialAnalyticsTabProps> = ({ ac
         </div>
       </div>
 
-      {/* District Finance Coordinator / Audit Support Mandate Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-transparent border border-amber-300 dark:border-amber-800/60 p-4 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
-        <div className="flex items-start gap-3">
-          <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-xs mt-0.5 shrink-0">
-            <FileCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                {tr('जिला वित्त समन्वयक कार्यक्षेत्र', 'ضلعی فنانس کوآرڈینیٹر ورک اسپیس', 'District Finance Coordinator Desk')}
-              </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-                {tr('आधिकारिक दायित्व', 'سرکاری ذمہ داری', 'Official Responsibility')}
-              </span>
-            </div>
-            <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
-              {tr(
-                'आधिकारिक लेन-देन के लिए वित्तीय रिकॉर्ड और दस्तावेजी सहायता।',
-                'سرکاری لین دین کے لیے مالیاتی ریکارڈ اور دستاویزی معاونت۔',
-                'Financial records and documentary support for official transactions.'
-              )}
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {tr(
-                'सभी दान पर्चियों, बैंक यूटीआर प्रविष्टियों और बहीखाता विवरणों का आधिकारिक दस्तावेजी सत्यापन।',
-                'تمام عطیات کی رسیدوں، بینک UTR اندراجات اور کھاتہ جاتی تفصیلات کی باضابطہ دستاویزی تصدیق۔',
-                'Official documentary maintenance, transaction receipts audit trail, and banking UTR reconciliation.'
-              )}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Analytics Cards (3 Cards: Total Donations, Registration Fees, Total) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Card 1: Total Donations */}
         <div
           onClick={() => setActiveTab('donations')}
-          className={`bg-white dark:bg-slate-900 border p-4 rounded-2xl flex items-center justify-between gap-4 shadow-sm cursor-pointer transition-all hover:shadow-md ${
-            activeTab === 'donations'
-              ? 'border-emerald-500 ring-2 ring-emerald-500/20'
-              : 'border-slate-200 dark:border-slate-800 hover:border-emerald-400'
-          }`}
+          className={`bg-white dark:bg-slate-900 border p-4 rounded-2xl flex items-center justify-between gap-4 shadow-sm cursor-pointer transition-all hover:shadow-md ${activeTab === 'donations'
+            ? 'border-emerald-500 ring-2 ring-emerald-500/20'
+            : 'border-slate-200 dark:border-slate-800 hover:border-emerald-400'
+            }`}
           title={tr('दान तालिका देखने के लिए क्लिक करें', 'عطیات کا جدول دیکھنے کے لیے کلک کریں', 'Click to view Donations table')}
         >
           <div className="flex items-center gap-4">
@@ -602,11 +567,10 @@ export const FinancialAnalyticsTab: React.FC<FinancialAnalyticsTabProps> = ({ ac
         {/* Card 2: Registration Fees */}
         <div
           onClick={() => setActiveTab('registrations')}
-          className={`bg-white dark:bg-slate-900 border p-4 rounded-2xl flex items-center justify-between gap-4 shadow-sm cursor-pointer transition-all hover:shadow-md ${
-            activeTab === 'registrations'
-              ? 'border-blue-500 ring-2 ring-blue-500/20'
-              : 'border-slate-200 dark:border-slate-800 hover:border-blue-400'
-          }`}
+          className={`bg-white dark:bg-slate-900 border p-4 rounded-2xl flex items-center justify-between gap-4 shadow-sm cursor-pointer transition-all hover:shadow-md ${activeTab === 'registrations'
+            ? 'border-blue-500 ring-2 ring-blue-500/20'
+            : 'border-slate-200 dark:border-slate-800 hover:border-blue-400'
+            }`}
           title={tr('पंजीकरण शुल्क तालिका देखने के लिए क्लिक करें', 'رجسٹریشن فیس کا جدول دیکھنے کے لیے کلک کریں', 'Click to view Registration Fees table')}
         >
           <div className="flex items-center gap-4">
@@ -662,20 +626,18 @@ export const FinancialAnalyticsTab: React.FC<FinancialAnalyticsTabProps> = ({ ac
               setActiveTab('donations');
               setDonationsPage(1);
             }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-              activeTab === 'donations'
-                ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${activeTab === 'donations'
+              ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
           >
             <IndianRupee className="w-4 h-4" />
             <span>{tr('दान विवरण', 'عطیات کی تفصیلات', 'Donations')}</span>
             <span
-              className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
-                activeTab === 'donations'
-                  ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-              }`}
+              className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeTab === 'donations'
+                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                }`}
             >
               {filteredDonations.length}
             </span>
@@ -687,20 +649,18 @@ export const FinancialAnalyticsTab: React.FC<FinancialAnalyticsTabProps> = ({ ac
               setActiveTab('registrations');
               setRegistrationsPage(1);
             }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-              activeTab === 'registrations'
-                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${activeTab === 'registrations'
+              ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
           >
             <UserCheck className="w-4 h-4" />
             <span>{tr('पंजीकरण शुल्क', 'رجسٹریشن فیس', 'Registration Fees')}</span>
             <span
-              className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
-                activeTab === 'registrations'
-                  ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-              }`}
+              className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeTab === 'registrations'
+                ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                }`}
             >
               {filteredRegistrationPayments.length}
             </span>

@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { User, Donation } from '../../types';
 import { getDonations } from '../../services/donationService';
-import { ShieldCheck, Heart, Download, Building2, CheckCircle2, QrCode, FileText } from 'lucide-react';
+import { ShieldCheck, Heart, Download, Building2 } from 'lucide-react';
 import { downloadRegistrationPaymentSlip } from '../../lib/registrationPaymentSlip';
+import { useLanguage } from '../../context/LanguageContext';
+import { translateCommunityName, translateCity } from '../../lib/translateEntity';
 
 interface MemberDashboardProps {
   user: User;
@@ -19,6 +21,13 @@ export const MemberDashboard: React.FC<MemberDashboardProps> = ({
   onOpenMembershipCard,
   onSelectDonationReceipt,
 }) => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
   const [userDonations, setUserDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,6 +40,9 @@ export const MemberDashboard: React.FC<MemberDashboardProps> = ({
 
   const totalDonatedAmount = userDonations.reduce((sum, donation) => sum + donation.amountINR, 0);
   const totalDonationsCount = userDonations.length;
+
+  const displayCommunity = translateCommunityName(user.communityName || '', language);
+  const displayCity = translateCity(user.city || '', language);
 
 
   return (
@@ -56,14 +68,14 @@ export const MemberDashboard: React.FC<MemberDashboardProps> = ({
                 border: '1px solid rgba(200,168,75,0.3)',
               }}
             >
-              <ShieldCheck className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> Active Verified Community Member
+              <ShieldCheck className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} /> {tr('सक्रिय सत्यापित समुदाय सदस्य', 'فعال تصدیق شدہ کمیونٹی ممبر', 'Active Verified Community Member')}
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-              Welcome back, {user.name}!
+              {tr('वापसी पर स्वागत है', 'خوش آمدید', 'Welcome back')}, {user.name}!
             </h1>
             <p className="text-xs sm:text-sm flex items-center gap-2" style={{ color: 'rgba(200,168,75,0.85)' }}>
               <Building2 className="w-4 h-4 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
-              <span>{user.communityName} • {user.city}</span>
+              <span>{displayCommunity || user.communityName}{displayCity ? ` • ${displayCity}` : user.city ? ` • ${user.city}` : ''}</span>
             </p>
           </div>
 
@@ -72,7 +84,7 @@ export const MemberDashboard: React.FC<MemberDashboardProps> = ({
               onClick={onOpenDonate}
               className="mfct-btn-gold py-3 px-5 rounded-2xl text-xs font-bold flex items-center gap-2 cursor-pointer transition-all"
             >
-              <Heart className="w-4 h-4 fill-current" /> Donate Now
+              <Heart className="w-4 h-4 fill-current" /> {tr('दान करें', 'عطیہ دیں', 'Donate Now')}
             </button>
           </div>
         </div>
@@ -81,36 +93,56 @@ export const MemberDashboard: React.FC<MemberDashboardProps> = ({
       {/* Summary Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all overflow-hidden">
-          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">Total Donated</span>
+          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">
+            {tr('कुल दान', 'کل عطیات', 'Total Donated')}
+          </span>
           <p className="text-2xl font-extrabold mt-1 truncate text-emerald-600 dark:text-emerald-400">₹ {totalDonatedAmount.toLocaleString('en-IN')}</p>
-          <span className="text-[11px] font-semibold mt-1 block truncate text-amber-600 dark:text-amber-400">100% Tax Exempt (80G)</span>
+          <span className="text-[11px] font-semibold mt-1 block truncate text-amber-600 dark:text-amber-400">
+            {tr('100% कर मुक्त (80G)', '100٪ ٹیکس سے مستثنیٰ (80G)', '100% Tax Exempt (80G)')}
+          </span>
         </div>
 
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all overflow-hidden">
-          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">Contributions Made</span>
-          <p className="text-2xl font-extrabold mt-1 truncate text-slate-900 dark:text-white">{totalDonationsCount} {totalDonationsCount === 1 ? 'Donation' : 'Donations'}</p>
-          <span className="text-[11px] mt-1 block truncate text-slate-500 dark:text-slate-400">Across Verified Causes</span>
+          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">
+            {tr('किए गए योगदान', 'کیے گئے تعاون', 'Contributions Made')}
+          </span>
+          <p className="text-2xl font-extrabold mt-1 truncate text-slate-900 dark:text-white">
+            {totalDonationsCount} {totalDonationsCount === 1 ? tr('दान', 'عطیہ', 'Donation') : tr('दान', 'عطیات', 'Donations')}
+          </p>
+          <span className="text-[11px] font-semibold mt-1 block truncate text-slate-500 dark:text-slate-400">
+            {tr('सत्यापित कार्यों में', 'تصدیق شدہ مقاصد में', 'Across Verified Causes')}
+          </span>
         </div>
 
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all overflow-hidden">
-          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">Member ID</span>
+          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">
+            {tr('सदस्य आईडी', 'ممبر آئی ڈی', 'Member ID')}
+          </span>
           <p className="text-base font-mono font-bold mt-1.5 truncate text-emerald-600 dark:text-emerald-400">{user.membershipId}</p>
-          <span className="text-[11px] mt-1 block truncate text-slate-500 dark:text-slate-400">Joined: {user.joinDate}</span>
+          <span className="text-[11px] mt-1 block truncate text-slate-500 dark:text-slate-400">
+            {tr('शामिल हुए:', 'شمولیت:', 'Joined:')} {user.joinDate}
+          </span>
         </div>
 
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all overflow-hidden">
-          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">Community Status</span>
+          <span className="text-xs font-bold uppercase tracking-wider block truncate text-slate-500 dark:text-slate-400">
+            {tr('समुदाय स्थिति', 'کمیونٹی کی حیثیت', 'Community Status')}
+          </span>
           <p className="text-sm font-bold mt-1.5 flex items-center gap-1.5 truncate text-slate-900 dark:text-white">
             {user.religion === 'Muslim' ? (
-              user.isMalikENisab ? 'Muslim • Sahib-e-Nisab' : `Muslim • ${user.helpType || 'Aid'} Eligible`
+              user.isMalikENisab
+                ? tr('मुस्लिम • साहिब-ए-निसब', 'مسلم • صاحبِ نصاب', 'Muslim • Sahib-e-Nisab')
+                : `${tr('मुस्लिम', 'مسلم', 'Muslim')} • ${user.helpType || tr('सहायता', 'امداد', 'Aid')} ${tr('पात्र', 'اہل', 'Eligible')}`
             ) : user.religion ? (
-              `${user.religion} Member`
+              `${user.religion} ${tr('सदस्य', 'ممبر', 'Member')}`
             ) : (
-              'Verified Member'
+              tr('सत्यापित सदस्य', 'تصدیق شدہ ممبر', 'Verified Member')
             )}
           </p>
           <span className="text-[11px] mt-1 block truncate text-slate-500 dark:text-slate-400">
-            {user.religion === 'Muslim' && !user.isMalikENisab && user.helpDetails ? user.helpDetails : `${user.city || 'Verified'} Chapter`}
+            {user.religion === 'Muslim' && !user.isMalikENisab && user.helpDetails
+              ? user.helpDetails
+              : `${displayCity || user.city || tr('सत्यापित', 'تصدیق شدہ', 'Verified')} ${tr('शाखा', 'شاخ', 'Chapter')}`}
           </span>
         </div>
       </div>
@@ -120,13 +152,17 @@ export const MemberDashboard: React.FC<MemberDashboardProps> = ({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                Registration Payment Slip
+                {tr('पंजीकरण भुगतान रसीद', 'رجسٹریشن ادائیگی سلپ', 'Registration Payment Slip')}
               </h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                Your ₹100 membership registration payment has been recorded.
+                {tr(
+                  'आपका ₹100 सदस्यता पंजीकरण भुगतान दर्ज कर लिया गया है।',
+                  'آپ کی ₹100 ممبرشپ رجسٹریشن کی ادائیگی درج کر لی گئی ہے۔',
+                  'Your ₹100 membership registration payment has been recorded.'
+                )}
               </p>
               <p className="mt-1 font-mono text-xs text-slate-500 dark:text-slate-400">
-                UTR: {user.paymentUtr}
+                {tr('यूटीआर', 'یو ٹی آر', 'UTR')}: {user.paymentUtr}
               </p>
             </div>
             <button
@@ -136,13 +172,17 @@ export const MemberDashboard: React.FC<MemberDashboardProps> = ({
                   downloadRegistrationPaymentSlip(user);
                 } catch (error) {
                   console.error('Failed to create registration payment slip:', error);
-                  window.alert(error instanceof Error ? error.message : 'Could not create the payment slip.');
+                  window.alert(
+                    error instanceof Error
+                      ? error.message
+                      : tr('भुगतान रसीद बनाने में असमर्थ।', 'ادائیگی سلپ بنانے میں ناکام۔', 'Could not create the payment slip.')
+                  );
                 }
               }}
               className="mfct-btn-gold inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold"
             >
               <Download className="h-4 w-4" />
-              Download Payment Slip
+              {tr('भुगतान रसीद डाउनलोड करें', 'ادائیگی سلپ ڈاؤن لوڈ کریں', 'Download Payment Slip')}
             </button>
           </div>
         </section>
