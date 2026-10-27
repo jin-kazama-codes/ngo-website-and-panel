@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { User, UserRole } from '../../types';
+import { User, UserRole, FemaleFamilyMember } from '../../types';
 import {
   UserCheck,
   Check,
@@ -37,9 +37,11 @@ import {
   ChevronRight,
   LayoutList,
   Table as TableIcon,
+  Users,
 } from 'lucide-react';
 import { DarkListSkeleton } from '../../components/Skeletons';
 import { getUsers, updateUser, deleteUser } from '../../services/userService';
+import { getFemaleFamilyMembers, updateFemaleFamilyMember } from '../../services/memberService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAppState } from '../../providers/AppStateProvider';
 import { STANDARD_DISTRICTS } from '../../data/districtsData';
@@ -1532,6 +1534,539 @@ const TerminateUserModal: React.FC<{
   );
 };
 
+// ─── Subcomponent: Female Member Verification Card ───────────────────────────
+const FemaleMemberCard: React.FC<{
+  member: FemaleFamilyMember;
+  primaryUser?: User;
+  canPerformKycAction: boolean;
+  processingId: string | null;
+  processingAction: 'approve' | 'reject' | null;
+  onApprove: (m: FemaleFamilyMember) => void;
+  onOpenReject: (m: FemaleFamilyMember) => void;
+  onPreviewImage: (img: { url: string; title: string }) => void;
+}> = ({
+  member: m,
+  primaryUser,
+  canPerformKycAction,
+  processingId,
+  processingAction,
+  onApprove,
+  onOpenReject,
+  onPreviewImage,
+}) => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
+  const isApproved = m.status === 'approved';
+  const isRejected = m.status === 'rejected';
+  const isPending = !isApproved && !isRejected;
+  const isBusy = processingId === m.id;
+
+  const [copiedUtr, setCopiedUtr] = useState(false);
+  const handleCopyUtr = (utr: string) => {
+    navigator.clipboard.writeText(utr);
+    setCopiedUtr(true);
+    setTimeout(() => setCopiedUtr(false), 2000);
+  };
+
+  return (
+    <div
+      className={`p-5 rounded-2xl border transition-all duration-200 relative overflow-hidden ${
+        isApproved
+          ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60 shadow-sm'
+          : isRejected
+            ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/60 shadow-sm'
+            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-600 shadow-sm hover:shadow-md'
+      }`}
+    >
+      {/* Top Banner Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
+            {m.photo_url ? (
+              <img src={m.photo_url} alt={m.name} className="w-full h-full object-cover rounded-2xl" />
+            ) : (
+              <Heart className="w-5 h-5 fill-white/80" />
+            )}
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-extrabold text-base text-slate-900 dark:text-white">{m.name}</h3>
+              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-pink-100 dark:bg-pink-950/70 text-pink-700 dark:text-pink-300 border border-pink-200 dark:border-pink-800/50">
+                {m.relation}
+              </span>
+              {m.age ? (
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                  • {m.age} {tr('वर्ष', 'سال', 'Yrs')}
+                </span>
+              ) : null}
+            </div>
+            {primaryUser ? (
+              <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+                <UserIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span>{tr('मुख्य सदस्य:', 'بنیادی ممبر:', 'Primary Member:')}</span>
+                <span className="font-bold text-slate-700 dark:text-slate-200">{primaryUser.name}</span>
+                {primaryUser.membershipId && (
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 font-mono text-slate-600 dark:text-slate-300">
+                    {primaryUser.membershipId}
+                  </span>
+                )}
+                {primaryUser.district && (
+                  <span className="text-[10px] text-slate-400">• {primaryUser.district}</span>
+                )}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-mono">
+                {tr('सदस्य आईडी:', 'ممبر شناختی نمبر:', 'User ID:')} {m.user_id}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Status Badge */}
+        <div className="self-start sm:self-auto shrink-0">
+          {isApproved ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{tr('सत्यापित / स्वीकृत', 'تصدیق شدہ', 'VERIFIED')}</span>
+            </span>
+          ) : isRejected ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+              <XCircle className="w-3.5 h-3.5 text-rose-600" />
+              <span>{tr('अस्वीकृत', 'مسترد شدہ', 'REJECTED')}</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 animate-pulse">
+              <Clock className="w-3.5 h-3.5 text-amber-600" />
+              <span>{tr('लंबित सत्यापन', 'زیر التواء', 'PENDING')}</span>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Details Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 py-3.5 text-xs text-slate-600 dark:text-slate-300">
+        <div>
+          <span className="text-[10px] uppercase font-bold text-slate-400 block">{tr('फ़ोन नंबर', 'فون نمبر', 'Phone Number')}</span>
+          <p className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{m.phone || '—'}</p>
+        </div>
+        <div>
+          <span className="text-[10px] uppercase font-bold text-slate-400 block">{tr('आधार संख्या', 'آدھار نمبر', 'Aadhaar Number')}</span>
+          <p className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5 font-mono">{m.aadhaar_number || '—'}</p>
+        </div>
+        <div>
+          <span className="text-[10px] uppercase font-bold text-slate-400 block">{tr('पंजीकरण शुल्क', 'فیس', 'Enrollment Fee')}</span>
+          <p className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">₹{m.fee_amount || 50} ({m.payment_method || 'UPI'})</p>
+        </div>
+        <div>
+          <span className="text-[10px] uppercase font-bold text-slate-400 block">{tr('आवेदन तिथि', 'تاریخ', 'Registered At')}</span>
+          <p className="font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
+            {m.created_at ? new Date(m.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+          </p>
+        </div>
+      </div>
+
+      {/* Payment UTR & Screenshot Verification Bar */}
+      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2 flex-wrap">
+          <CreditCard className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <span className="font-bold text-slate-700 dark:text-slate-300">UTR / Ref:</span>
+          <span className="font-mono font-bold text-slate-900 dark:text-white px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+            {m.payment_utr || tr('उपलब्ध नहीं', 'دستیاب نہیں', 'N/A')}
+          </span>
+          {m.payment_utr && (
+            <button
+              onClick={() => handleCopyUtr(m.payment_utr)}
+              className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              title={tr('कॉपी करें', 'کاپی کریں', 'Copy UTR')}
+            >
+              {copiedUtr ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+          )}
+        </div>
+
+        {/* Screenshot View button */}
+        {m.payment_screenshot_url ? (
+          <button
+            onClick={() => onPreviewImage({ url: m.payment_screenshot_url!, title: `${m.name} - ₹${m.fee_amount || 50} Payment Proof` })}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/60 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-800 transition-colors cursor-pointer"
+          >
+            <ImageIcon className="w-3.5 h-3.5" />
+            <span>{tr('भुगतान रसीद देखें', 'ادائیگی کی رسید دیکھیں', 'View Payment Receipt')}</span>
+          </button>
+        ) : (
+          <span className="text-[11px] text-slate-400 italic">
+            {tr('रसीद अपलोड नहीं है', 'رسید اپ لوڈ نہیں', 'No receipt uploaded')}
+          </span>
+        )}
+      </div>
+
+      {/* Rejection Note if any */}
+      {m.rejection_reason && (
+        <div className="mt-3 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold">{tr('अस्वीकृति कारण:', 'مسترد کرنے کی وجہ:', 'Rejection Reason:')} </span>
+            <span>{m.rejection_reason}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      {canPerformKycAction && (
+        <div className="flex items-center justify-end gap-2.5 pt-3.5 mt-3.5 border-t border-slate-100 dark:border-slate-800">
+          {(!isApproved || isRejected) && (
+            <button
+              onClick={() => onApprove(m)}
+              disabled={isBusy}
+              className="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>{isBusy && processingAction === 'approve' ? tr('स्वीकृत हो रहा...', 'منظور ہو رہا...', 'Approving...') : tr('स्वीकृत करें', 'منظور کریں', 'Approve')}</span>
+            </button>
+          )}
+
+          {(!isRejected || isApproved) && (
+            <button
+              onClick={() => onOpenReject(m)}
+              disabled={isBusy}
+              className="px-4 py-2 rounded-xl text-xs font-extrabold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/80 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>{tr('अस्वीकृत करें', 'مسترد کریں', 'Reject')}</span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Subcomponent: Female Member Table Row ────────────────────────────────────
+const FemaleMemberTableRow: React.FC<{
+  member: FemaleFamilyMember;
+  primaryUser?: User;
+  canPerformKycAction: boolean;
+  processingId: string | null;
+  processingAction: 'approve' | 'reject' | null;
+  onApprove: (m: FemaleFamilyMember) => void;
+  onOpenReject: (m: FemaleFamilyMember) => void;
+  onPreviewImage: (img: { url: string; title: string }) => void;
+}> = ({
+  member: m,
+  primaryUser,
+  canPerformKycAction,
+  processingId,
+  processingAction,
+  onApprove,
+  onOpenReject,
+  onPreviewImage,
+}) => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
+  const isApproved = m.status === 'approved';
+  const isRejected = m.status === 'rejected';
+  const isBusy = processingId === m.id;
+
+  const [copiedUtr, setCopiedUtr] = useState(false);
+  const handleCopyUtr = (utr: string) => {
+    navigator.clipboard.writeText(utr);
+    setCopiedUtr(true);
+    setTimeout(() => setCopiedUtr(false), 2000);
+  };
+
+  return (
+    <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+      {/* 1. Female Member */}
+      <td className="px-4 py-3.5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-pink-100 dark:bg-pink-950/70 text-pink-700 dark:text-pink-300 flex items-center justify-center font-bold text-sm shrink-0">
+            {m.photo_url ? (
+              <img src={m.photo_url} alt={m.name} className="w-full h-full object-cover rounded-xl" />
+            ) : (
+              <Heart className="w-4 h-4 fill-pink-500 text-pink-500" />
+            )}
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-extrabold text-slate-900 dark:text-white">{m.name}</span>
+              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-pink-100 dark:bg-pink-950/70 text-pink-700 dark:text-pink-300">
+                {m.relation}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              {m.age ? `${m.age} ${tr('वर्ष', 'سال', 'Yrs')}` : ''}
+              {m.created_at ? ` • ${new Date(m.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}` : ''}
+            </p>
+          </div>
+        </div>
+      </td>
+
+      {/* 2. Primary Member */}
+      <td className="px-4 py-3.5">
+        {primaryUser ? (
+          <div>
+            <p className="font-bold text-slate-800 dark:text-slate-200 text-xs">{primaryUser.name}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+              {primaryUser.membershipId || primaryUser.phone || primaryUser.id}
+            </p>
+            {primaryUser.district && (
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">
+                {primaryUser.district}
+              </span>
+            )}
+          </div>
+        ) : (
+          <span className="text-xs font-mono text-slate-500">{m.user_id}</span>
+        )}
+      </td>
+
+      {/* 3. Contact & Aadhaar */}
+      <td className="px-4 py-3.5">
+        <p className="font-semibold text-slate-800 dark:text-slate-200 text-xs">{m.phone || '—'}</p>
+        <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">{m.aadhaar_number || '—'}</p>
+      </td>
+
+      {/* 4. Fee & Payment Proof */}
+      <td className="px-4 py-3.5">
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs">₹{m.fee_amount || 50}</span>
+            <span className="text-[10px] text-slate-500">({m.payment_method || 'UPI'})</span>
+          </div>
+          {m.payment_utr && (
+            <div className="flex items-center gap-1">
+              <span className="text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300">
+                {m.payment_utr}
+              </span>
+              <button
+                onClick={() => handleCopyUtr(m.payment_utr)}
+                className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                title="Copy UTR"
+              >
+                {copiedUtr ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+              </button>
+            </div>
+          )}
+          {m.payment_screenshot_url && (
+            <button
+              onClick={() => onPreviewImage({ url: m.payment_screenshot_url!, title: `${m.name} - ₹50 Payment Proof` })}
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+            >
+              <ImageIcon className="w-3 h-3" />
+              <span>{tr('रसीद देखें', 'رسید دیکھیں', 'View Proof')}</span>
+            </button>
+          )}
+        </div>
+      </td>
+
+      {/* 5. KYC Status */}
+      <td className="px-4 py-3.5">
+        {isApproved ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+            <span>{tr('स्वीकृत', 'منظور شدہ', 'Approved')}</span>
+          </span>
+        ) : isRejected ? (
+          <div>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+              <XCircle className="w-3 h-3 text-rose-600" />
+              <span>{tr('अस्वीकृत', 'مسترد', 'Rejected')}</span>
+            </span>
+            {m.rejection_reason && (
+              <p className="text-[10px] text-rose-600 dark:text-rose-400 mt-0.5 max-w-[150px] truncate" title={m.rejection_reason}>
+                {m.rejection_reason}
+              </p>
+            )}
+          </div>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+            <Clock className="w-3 h-3 text-amber-600" />
+            <span>{tr('लंबित', 'زیر التواء', 'Pending')}</span>
+          </span>
+        )}
+      </td>
+
+      {/* 6. Actions */}
+      <td className="px-4 py-3.5 text-right whitespace-nowrap">
+        {canPerformKycAction ? (
+          <div className="inline-flex items-center gap-1.5">
+            {(!isApproved || isRejected) && (
+              <button
+                onClick={() => onApprove(m)}
+                disabled={isBusy}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                title={tr('स्वीकृत करें', 'منظور کریں', 'Approve')}
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>{tr('स्वीकृत', 'منظور', 'Approve')}</span>
+              </button>
+            )}
+
+            {(!isRejected || isApproved) && (
+              <button
+                onClick={() => onOpenReject(m)}
+                disabled={isBusy}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-extrabold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-900 border border-rose-200 dark:border-rose-800 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                title={tr('अस्वीकृत करें', 'مسترد کریں', 'Reject')}
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>{tr('अस्वीकृत', 'مسترد', 'Reject')}</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <span className="text-xs text-slate-400 italic">{tr('केवल दृश्य', 'صرف دیکھیں', 'View Only')}</span>
+        )}
+      </td>
+    </tr>
+  );
+};
+
+// ─── Subcomponent: Female Member Reject Reason Modal ─────────────────────────
+const FemaleMemberRejectModal: React.FC<{
+  member: FemaleFamilyMember;
+  processingId: string | null;
+  onClose: () => void;
+  onConfirm: (reason: string) => Promise<void>;
+}> = ({ member, processingId, onClose, onConfirm }) => {
+  const { language } = useLanguage();
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
+  const [reasonInput, setReasonInput] = useState(member.rejection_reason || '');
+  const [error, setError] = useState('');
+
+  const quickReasons = [
+    { hi: 'अमान्य UTR नंबर / भुगतान प्राप्त नहीं हुआ', ur: 'غلط UTR نمبر / ادائیگی موصول نہیں ہوئی', en: 'Invalid UTR Number / Payment not received' },
+    { hi: 'भुगतान रसीद अस्पष्ट या गलत है', ur: 'ادائیگی کی رسید واضح نہیں ہے', en: 'Payment receipt screenshot unclear or invalid' },
+    { hi: 'गलत आधार कार्ड विवरण', ur: 'غلط آدھار کارڈ کی تفصیلات', en: 'Incorrect Aadhaar details' },
+    { hi: 'अधूरी जानकारी दर्ज की गई है', ur: 'نامکمل معلومات درج کی گئی ہیں', en: 'Incomplete female member information' },
+  ];
+
+  const handleConfirm = () => {
+    const trimmed = reasonInput.trim();
+    if (!trimmed) {
+      setError(
+        tr(
+          'कृपया अस्वीकृति का कारण दर्ज करें।',
+          'براہ کرم مسترد کرنے کی وجہ درج کریں۔',
+          'Please enter a rejection reason.'
+        )
+      );
+      return;
+    }
+    onConfirm(trimmed);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-950/80 z-[110] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+      <div
+        className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col animate-scale-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-rose-50/60 dark:bg-rose-950/20">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+              <XCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                {tr('महिला सदस्य अस्वीकृति कारण', 'خاتون رکن مسترد کرنے کی وجہ', 'Female Member Rejection')}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {member.name} ({member.relation}) • ₹{member.fee_amount || 50}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-5 sm:p-6 space-y-4">
+          <p className="text-xs text-slate-600 dark:text-slate-300">
+            {tr(
+              'कृपया अस्वीकार करने का कारण चुनें या दर्ज करें। यह सदस्य को दिखाई देगा:',
+              'براہ کرم مسترد کرنے کی وجہ منتخب کریں یا درج کریں۔ یہ ممبر کو نظر آئے گی:',
+              'Select or type the reason for rejecting this female family member registration:'
+            )}
+          </p>
+
+          <div className="space-y-1.5">
+            <span className="text-[10px] uppercase font-bold text-slate-400">
+              {tr('त्वरित कारण चुनें', 'فوری وجوہات منتخب کریں', 'Quick Select Reason')}
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {quickReasons.map((r, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setReasonInput(language === 'hi' ? r.hi : language === 'ur' ? r.ur : r.en);
+                    setError('');
+                  }}
+                  className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-rose-100 hover:text-rose-700 dark:bg-slate-800 dark:hover:bg-rose-950/60 dark:hover:text-rose-300 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-all text-left cursor-pointer"
+                >
+                  + {language === 'hi' ? r.hi : language === 'ur' ? r.ur : r.en}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <textarea
+              rows={3}
+              value={reasonInput}
+              onChange={(e) => {
+                setReasonInput(e.target.value);
+                if (error) setError('');
+              }}
+              placeholder={tr('अस्वीकृति का विस्तृत कारण यहाँ लिखें...', 'تفصیلی وجہ یہاں لکھیں...', 'Provide detailed rejection reason here...')}
+              className="w-full text-xs p-3 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+            />
+            {error && <p className="text-xs text-rose-600 mt-1">{error}</p>}
+          </div>
+        </div>
+
+        <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2.5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+          >
+            {tr('रद्द करें', 'منسوخ کریں', 'Cancel')}
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={processingId === member.id}
+            className="px-5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+          >
+            <XCircle className="w-3.5 h-3.5" />
+            <span>{processingId === member.id ? tr('प्रक्रिया जारी...', 'پروسیسنگ...', 'Processing...') : tr('अस्वीकार करें', 'مسترد کریں', 'Confirm Reject')}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── 5. Main Component: Executive KYC Tab Dashboard ────────────────────────────
 export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUser, currentRole }) => {
   const { language } = useLanguage();
@@ -1638,10 +2173,32 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
+  // Segmented view: Primary User KYC vs Female Family Members KYC
+  const [kycSection, setKycSection] = useState<'primary' | 'female_members'>('primary');
+
+  // Female Family Members State
+  const [femaleMembers, setFemaleMembers] = useState<FemaleFamilyMember[]>([]);
+  const [loadingFemaleMembers, setLoadingFemaleMembers] = useState(false);
+  const [femaleProcessingId, setFemaleProcessingId] = useState<string | null>(null);
+  const [femaleProcessingAction, setFemaleProcessingAction] = useState<'approve' | 'reject' | null>(null);
+  const [rejectFemaleMember, setRejectFemaleMember] = useState<FemaleFamilyMember | null>(null);
+
   // Reset page to 1 whenever filters, search, or page size changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeFilter, selectedDistrictFilter, searchQuery, pageSize]);
+  }, [activeFilter, selectedDistrictFilter, searchQuery, pageSize, kycSection]);
+
+  const loadFemaleMembers = async () => {
+    try {
+      setLoadingFemaleMembers(true);
+      const data = await getFemaleFamilyMembers();
+      setFemaleMembers(data || []);
+    } catch (err) {
+      console.error('Failed to load female family members:', err);
+    } finally {
+      setLoadingFemaleMembers(false);
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -1666,6 +2223,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
 
   useEffect(() => {
     loadUsers();
+    loadFemaleMembers();
   }, [role, isRestrictedToDistrict, userDistrict, cleanDistrict]);
 
   const handleApprove = async (id: string) => {
@@ -1844,7 +2402,17 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
     return list;
   }, [users, isRestrictedToDistrict, userDistrict, cleanDistrict, selectedDistrictFilter]);
 
-  // Counts based on active district scope
+  // Fast lookup map for primary users by id and membershipId
+  const usersMap = useMemo(() => {
+    const map = new Map<string, User>();
+    users.forEach((u) => {
+      map.set(u.id, u);
+      if (u.membershipId) map.set(u.membershipId, u);
+    });
+    return map;
+  }, [users]);
+
+  // Counts based on active district scope for Primary Users
   const counts = {
     all: districtFilteredUsers.length,
     pending: districtFilteredUsers.filter((u) => {
@@ -1861,7 +2429,20 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
     }).length,
   };
 
-  // Filtered list with status and search
+  // Female Family Members Counts
+  const femaleCounts = useMemo(() => {
+    const pending = femaleMembers.filter((m) => (m.status || 'pending') === 'pending').length;
+    const approved = femaleMembers.filter((m) => m.status === 'approved').length;
+    const rejected = femaleMembers.filter((m) => m.status === 'rejected').length;
+    return {
+      all: femaleMembers.length,
+      pending,
+      approved,
+      rejected,
+    };
+  }, [femaleMembers]);
+
+  // Filtered list with status and search for Primary Users
   const filteredUsers = useMemo(() => {
     return districtFilteredUsers.filter((u) => {
       const uStatus = u.status || (u.isVerified ? 'approved' : 'pending');
@@ -1888,7 +2469,46 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
     });
   }, [districtFilteredUsers, activeFilter, searchQuery]);
 
-  // Pagination calculations
+  // Filtered list with status, search, and district filter for Female Family Members
+  const filteredFemaleMembers = useMemo(() => {
+    return femaleMembers.filter((m) => {
+      const mStatus = m.status || 'pending';
+      let matchesFilter = true;
+      if (activeFilter === 'pending') matchesFilter = mStatus === 'pending';
+      else if (activeFilter === 'approved') matchesFilter = mStatus === 'approved';
+      else if (activeFilter === 'rejected') matchesFilter = mStatus === 'rejected';
+
+      const pUser = usersMap.get(m.user_id);
+
+      // District filter: check primary user's district
+      if (isRestrictedToDistrict && userDistrict && pUser) {
+        const uDist = (pUser.district || '').toLowerCase();
+        const target = (cleanDistrict || userDistrict).toLowerCase();
+        if (!uDist.includes(target) && !target.includes(uDist)) return false;
+      } else if (selectedDistrictFilter && pUser) {
+        const uDist = (pUser.district || '').toLowerCase();
+        const target = selectedDistrictFilter.toLowerCase();
+        if (!uDist.includes(target) && !target.includes(uDist)) return false;
+      }
+
+      if (!searchQuery.trim()) return matchesFilter;
+
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        m.name.toLowerCase().includes(q) ||
+        m.relation.toLowerCase().includes(q) ||
+        (m.phone && m.phone.toLowerCase().includes(q)) ||
+        (m.aadhaar_number && m.aadhaar_number.toLowerCase().includes(q)) ||
+        (m.payment_utr && m.payment_utr.toLowerCase().includes(q)) ||
+        (pUser && pUser.name.toLowerCase().includes(q)) ||
+        (pUser && pUser.phone?.toLowerCase().includes(q)) ||
+        (pUser && pUser.membershipId?.toLowerCase().includes(q));
+
+      return matchesFilter && matchesSearch;
+    });
+  }, [femaleMembers, activeFilter, searchQuery, selectedDistrictFilter, isRestrictedToDistrict, userDistrict, cleanDistrict, usersMap]);
+
+  // Primary Pagination calculations
   const totalItems = filteredUsers.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const validPage = Math.min(currentPage, totalPages);
@@ -1896,6 +2516,56 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
   const paginatedUsers = useMemo(() => {
     return filteredUsers.slice(startIndex, startIndex + pageSize);
   }, [filteredUsers, startIndex, pageSize]);
+
+  // Female Pagination calculations
+  const totalFemaleItems = filteredFemaleMembers.length;
+  const totalFemalePages = Math.max(1, Math.ceil(totalFemaleItems / pageSize));
+  const validFemalePage = Math.min(currentPage, totalFemalePages);
+  const startFemaleIndex = (validFemalePage - 1) * pageSize;
+  const paginatedFemaleMembers = useMemo(() => {
+    return filteredFemaleMembers.slice(startFemaleIndex, startFemaleIndex + pageSize);
+  }, [filteredFemaleMembers, startFemaleIndex, pageSize]);
+
+  // Female Member Action Handlers
+  const handleApproveFemaleMember = async (member: FemaleFamilyMember) => {
+    if (!canPerformKycAction) return;
+    try {
+      setFemaleProcessingId(member.id);
+      setFemaleProcessingAction('approve');
+      await updateFemaleFamilyMember(member.id, { status: 'approved', rejection_reason: '' });
+      setFemaleMembers((prev) =>
+        prev.map((m) => (m.id === member.id ? { ...m, status: 'approved', rejection_reason: '' } : m))
+      );
+    } catch (err) {
+      console.error('Failed to approve female family member:', err);
+    } finally {
+      setFemaleProcessingId(null);
+      setFemaleProcessingAction(null);
+    }
+  };
+
+  const handleOpenRejectFemaleMember = (member: FemaleFamilyMember) => {
+    setRejectFemaleMember(member);
+  };
+
+  const handleConfirmRejectFemaleMember = async (reason: string) => {
+    if (!rejectFemaleMember || !canPerformKycAction) return;
+    const member = rejectFemaleMember;
+    try {
+      setFemaleProcessingId(member.id);
+      setFemaleProcessingAction('reject');
+      await updateFemaleFamilyMember(member.id, { status: 'rejected', rejection_reason: reason });
+      setFemaleMembers((prev) =>
+        prev.map((m) => (m.id === member.id ? { ...m, status: 'rejected', rejection_reason: reason } : m))
+      );
+      setRejectFemaleMember(null);
+    } catch (err) {
+      console.error('Failed to reject female family member:', err);
+    } finally {
+      setFemaleProcessingId(null);
+      setFemaleProcessingAction(null);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
@@ -1937,6 +2607,61 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
 
       {/* Verification Queue Card */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+        {/* Section Switcher: Primary User KYC vs Female Family Members KYC */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700/80">
+          <div className="flex items-center gap-1.5 flex-1">
+            <button
+              type="button"
+              onClick={() => {
+                setKycSection('primary');
+                setCurrentPage(1);
+              }}
+              className={`flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                kycSection === 'primary'
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-700'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-900/50'
+              }`}
+            >
+              <UserIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>{tr('मुख्य सदस्य पंजीकरण (₹100)', 'بنیادی ممبران رجسٹریشن (100 روپے)', 'Primary Members KYC (₹100)')}</span>
+              {counts.pending > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white">
+                  {counts.pending}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setKycSection('female_members');
+                setCurrentPage(1);
+              }}
+              className={`flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                kycSection === 'female_members'
+                  ? 'bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-sm ring-1 ring-pink-200 dark:ring-pink-800/60'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-pink-600 dark:hover:text-pink-400 hover:bg-white/50 dark:hover:bg-slate-900/50'
+              }`}
+            >
+              <Heart className="w-4 h-4 text-pink-500 fill-pink-500/20" />
+              <span>{tr('महिला पारिवारिक सदस्य (₹50)', 'خواتین فیملی ممبرز (50 روپے)', 'Female Family Members (₹50)')}</span>
+              {femaleCounts.pending > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-pink-500 text-white">
+                  {femaleCounts.pending}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-center justify-end px-3 text-xs text-slate-500 dark:text-slate-400 font-medium">
+            {kycSection === 'primary' ? (
+              <span>{counts.all} {tr('पंजीकरण कुल', 'کل رجسٹریشنز', 'Total Registrations')}</span>
+            ) : (
+              <span>{femaleCounts.all} {tr('महिला सदस्य कुल', 'کل خواتین ممبرز', 'Total Female Members')}</span>
+            )}
+          </div>
+        </div>
+
         {/* District Role Filter Indicator Banner */}
         {isRestrictedToDistrict && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs">
@@ -1992,7 +2717,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
               <span>{tr('लंबित सत्यापन', 'زیر التواء', 'Pending Approval')}</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'pending' ? 'bg-white/20 text-white' : 'bg-amber-200/80 dark:bg-amber-900 text-amber-900 dark:text-amber-200'
                 }`}>
-                {counts.pending}
+                {kycSection === 'primary' ? counts.pending : femaleCounts.pending}
               </span>
             </button>
 
@@ -2007,7 +2732,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
               <span>{tr('सत्यापित / स्वीकृत', 'تصدیق شدہ', 'Approved & Verified')}</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'approved' ? 'bg-white/20 text-white' : 'bg-emerald-200/80 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200'
                 }`}>
-                {counts.approved}
+                {kycSection === 'primary' ? counts.approved : femaleCounts.approved}
               </span>
             </button>
 
@@ -2022,7 +2747,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
               <span>{tr('अस्वीकृत', 'مسترد شدہ', 'Rejected')}</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'rejected' ? 'bg-white/20 text-white' : 'bg-rose-200/80 dark:bg-rose-900 text-rose-900 dark:text-rose-200'
                 }`}>
-                {counts.rejected}
+                {kycSection === 'primary' ? counts.rejected : femaleCounts.rejected}
               </span>
             </button>
 
@@ -2034,10 +2759,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
                 }`}
             >
               <UserCheck className="w-3.5 h-3.5" />
-              <span>{tr('सभी सदस्य', 'تمام اراکین', 'All Registrations')}</span>
+              <span>{tr('सभी रिकॉर्ड', 'تمام ریکارڈز', 'All Records')}</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${activeFilter === 'all' ? 'bg-white/20 dark:bg-slate-900/20 text-white dark:text-slate-900' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                 }`}>
-                {counts.all}
+                {kycSection === 'primary' ? counts.all : femaleCounts.all}
               </span>
             </button>
           </div>
@@ -2112,9 +2837,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
           </div>
         </div>
 
-        {/* Users List */}
-        {loading ? (
-          <DarkListSkeleton items={4} />
+        {/* ─── Primary Users List OR Female Family Members List ─── */}
+        {kycSection === 'primary' ? (
+          loading ? (
+            <DarkListSkeleton items={4} />
         ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center space-y-4 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
             <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400">
@@ -2228,6 +2954,120 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
               onPageSizeChange={(size) => setPageSize(size)}
             />
           </div>
+        )
+      ) : (
+        /* FEMALE FAMILY MEMBERS KYC SECTION */
+          loadingFemaleMembers ? (
+            <DarkListSkeleton items={4} />
+          ) : filteredFemaleMembers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center space-y-4 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
+              <div className="w-16 h-16 bg-pink-50 dark:bg-pink-950/40 rounded-full flex items-center justify-center text-pink-500">
+                <Heart className="w-8 h-8 fill-pink-500/30 text-pink-500" />
+              </div>
+              <div className="max-w-sm space-y-1">
+                <h4 className="font-bold text-base text-slate-900 dark:text-white">
+                  {searchQuery
+                    ? tr('कोई मिलान नहीं मिला', 'کوئی نتیجہ نہیں ملا', 'No matching female members found')
+                    : activeFilter === 'pending'
+                      ? tr('कोई लंबित महिला सदस्य सत्यापन नहीं है', 'کوئی زیر التواء خواتین تصدیق نہیں ہے', 'No pending female member approvals')
+                      : activeFilter === 'rejected'
+                        ? tr('कोई अस्वीकृत महिला सदस्य नहीं है', 'کوئی مسترد شدہ خواتین ممبر नहीं है', 'No rejected female members')
+                        : tr('कोई महिला पारिवारिक सदस्य नहीं मिला', 'کوئی خاتون فیملی ممبر نہیں ملا', 'No female family members found')}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {searchQuery
+                    ? tr('कृपया अलग खोज शब्द का प्रयास करें।', 'براہ کرم کوئی دوسرا لفظ تلاش کریں۔', 'Try adjusting your search criteria.')
+                    : activeFilter === 'pending'
+                      ? tr('सभी पंजीकृत महिला सदस्यों की समीक्षा पूरी हो चुकी है।', 'تمام رجسٹرڈ خواتین ممبران کی تصدیق مکمل ہے۔', 'All submitted female family members have been approved.')
+                      : tr('इस श्रेणी में अभी कोई रिकॉर्ड उपलब्ध नहीं है।', 'اس کیٹیگری میں فی الحال کوئی ریکارڈ موجود نہیں ہے۔', 'No records found in this category.')}
+                </p>
+              </div>
+            </div>
+          ) : viewMode === 'table' ? (
+            /* FEMALE MEMBERS TABULAR FORM VIEW */
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+                  <thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                    <tr>
+                      <th className="px-4 py-3.5 whitespace-nowrap">
+                        {tr('महिला सदस्य', 'خاتون رکن', 'Female Member')}
+                      </th>
+                      <th className="px-4 py-3.5 whitespace-nowrap">
+                        {tr('मुख्य सदस्य (पंजीकर्ता)', 'بنیادی رکن (رجسٹر کنندہ)', 'Primary Member')}
+                      </th>
+                      <th className="px-4 py-3.5 whitespace-nowrap">
+                        {tr('संपर्क एवं आधार', 'رابطہ اور آدھار', 'Contact & Aadhaar')}
+                      </th>
+                      <th className="px-4 py-3.5 whitespace-nowrap">
+                        {tr('शुल्क एवं भुगतान (₹50)', 'فیس اور ادائیگی (50 روپے)', 'Fee & Payment (₹50)')}
+                      </th>
+                      <th className="px-4 py-3.5 whitespace-nowrap">
+                        {tr('सत्यापन स्थिति', 'تصدیق کی حیثیت', 'KYC Status')}
+                      </th>
+                      <th className="px-4 py-3.5 whitespace-nowrap text-right">
+                        {tr('कार्रवाई', 'کارروائی', 'Actions')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                    {paginatedFemaleMembers.map((m) => (
+                      <FemaleMemberTableRow
+                        key={m.id}
+                        member={m}
+                        primaryUser={usersMap.get(m.user_id)}
+                        canPerformKycAction={canPerformKycAction}
+                        processingId={femaleProcessingId}
+                        processingAction={femaleProcessingAction}
+                        onApprove={handleApproveFemaleMember}
+                        onOpenReject={handleOpenRejectFemaleMember}
+                        onPreviewImage={setPreviewImage}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Female Pagination Controls */}
+              <KycPagination
+                currentPage={validFemalePage}
+                totalPages={totalFemalePages}
+                totalItems={totalFemaleItems}
+                pageSize={pageSize}
+                onPageChange={(page) => setCurrentPage(page)}
+                onPageSizeChange={(size) => setPageSize(size)}
+              />
+            </div>
+          ) : (
+            /* FEMALE MEMBERS CARD LIST VIEW */
+            <div className="space-y-4">
+              <div className="space-y-3.5">
+                {paginatedFemaleMembers.map((m) => (
+                  <FemaleMemberCard
+                    key={m.id}
+                    member={m}
+                    primaryUser={usersMap.get(m.user_id)}
+                    canPerformKycAction={canPerformKycAction}
+                    processingId={femaleProcessingId}
+                    processingAction={femaleProcessingAction}
+                    onApprove={handleApproveFemaleMember}
+                    onOpenReject={handleOpenRejectFemaleMember}
+                    onPreviewImage={setPreviewImage}
+                  />
+                ))}
+              </div>
+
+              {/* Female Pagination Controls */}
+              <KycPagination
+                currentPage={validFemalePage}
+                totalPages={totalFemalePages}
+                totalItems={totalFemaleItems}
+                pageSize={pageSize}
+                onPageChange={(page) => setCurrentPage(page)}
+                onPageSizeChange={(size) => setPageSize(size)}
+              />
+            </div>
+          )
         )}
       </div>
 
@@ -2254,6 +3094,16 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ activeUs
           processingId={processingId}
           onClose={() => setRejectModalUser(null)}
           onConfirm={handleConfirmReject}
+        />
+      )}
+
+      {/* Female Member Reject Reason Modal */}
+      {rejectFemaleMember && (
+        <FemaleMemberRejectModal
+          member={rejectFemaleMember}
+          processingId={femaleProcessingId}
+          onClose={() => setRejectFemaleMember(null)}
+          onConfirm={handleConfirmRejectFemaleMember}
         />
       )}
 
