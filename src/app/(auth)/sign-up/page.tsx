@@ -1289,19 +1289,20 @@ export default function SignUpPage() {
                   className="p-6 rounded-3xl text-center space-y-4 text-white shadow-xl"
                   style={{ background: 'linear-gradient(135deg, #0f3322 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
                 >
-                  <div className="bg-white p-3.5 rounded-2xl inline-block shadow-lg">
+                  <div className="bg-white p-1 rounded-2xl shadow-2xl inline-block max-w-[260px] sm:max-w-[280px] w-full overflow-hidden">
                     {accountDetails?.qr_code_url ? (
                       <img
                         src={accountDetails.qr_code_url}
                         alt="UPI QR Code"
-                        className="w-36 h-36 object-contain mx-auto"
+                        className="w-full h-auto max-h-[320px] object-contain rounded-xl mx-auto block"
                       />
                     ) : (
-                      <QrCode className="w-36 h-36 mx-auto text-slate-900" />
+                      <QrCode className="w-36 h-36 mx-auto text-slate-900 p-2" />
                     )}
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-wider text-amber-300 font-bold">
+                    {/* UPI ID hidden — NGO currently does not have a UPI ID */}
+                    {/* <p className="text-xs uppercase tracking-wider text-amber-300 font-bold">
                       {tr('प्रत्यक्ष एस्क्रो के लिए UPI ID', 'براہ راست ادائیگی کے لیے UPI ID', 'UPI ID for Direct Escrow')}
                     </p>
                     {accountDetails?.upi_id ? (
@@ -1322,7 +1323,7 @@ export default function SignUpPage() {
                       <p className="text-xs font-semibold text-slate-300 mt-1">
                         {tr('UPI आईडी अभी उपलब्ध नहीं है', 'UPI ID فی الحال دستیاب نہیں ہے', 'UPI ID not configured')}
                       </p>
-                    )}
+                    )} */}
                     <p className="text-[11px] text-slate-300 mt-2">
                       {tr('Google Pay, PhonePe, Paytm या BHIM UPI द्वारा स्कैन करें', 'Google Pay, PhonePe, Paytm کے ذریعے اسکین کریں', 'Scan using Google Pay, PhonePe, Paytm, or BHIM UPI')}
                     </p>
