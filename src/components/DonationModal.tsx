@@ -138,7 +138,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const [campaignsLoading, setCampaignsLoading] = useState<boolean>(!campaign);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(campaign?.id || '');
   const [isOutsideCommunity, setIsOutsideCommunity] = useState<boolean>(false);
-  const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'Bank Transfer'>('Bank Transfer');
+  const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'Bank Transfer'>('UPI');
   const [utrNumber, setUtrNumber] = useState<string>('');
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotUploaded, setScreenshotUploaded] = useState<boolean>(false);
@@ -1039,8 +1039,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             )}
 
             {/* Payment Method Tabs */}
-            {/* QR/UPI tab hidden — MFCT does not have a QR code */}
-            {/* <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl" style={{ background: 'var(--mfct-warm-bg-2)', border: '1px solid var(--mfct-border)' }}>
+            <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl" style={{ background: 'var(--mfct-warm-bg-2)', border: '1px solid var(--mfct-border)' }}>
               <button
                 type="button"
                 onClick={() => setPaymentMethod('UPI')}
@@ -1057,24 +1056,24 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               >
                 {tr('प्रत्यक्ष बैंक NEFT / RTGS', 'براہ راست بینک NEFT / RTGS', 'Direct Bank NEFT / RTGS')}
               </button>
-            </div> */}
+            </div>
 
-            {/* QR/UPI panel hidden — MFCT does not have a QR code */}
-            {/* {paymentMethod === 'UPI' ? (
+            {paymentMethod === 'UPI' ? (
               <div className="p-6 text-white rounded-3xl text-center space-y-4 shadow-xl" style={{ background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}>
-                <div className="w-[162px] h-[162px] mx-auto bg-white p-4 rounded-2xl shadow-lg flex items-center justify-center">
+                <div className="rounded-2xl overflow-hidden shadow-2xl bg-white p-1 max-w-[260px] sm:max-w-[280px] w-full mx-auto flex items-center justify-center">
                   {accountDetailsLoading ? (
                     <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
                   ) : accountDetails?.qr_code_url ? (
-                    <img src={accountDetails.qr_code_url} alt="QR Code" className="w-[130px] h-[130px] object-contain mx-auto" />
+                    <img src={accountDetails.qr_code_url} alt="QR Code" className="w-full h-auto max-h-[320px] object-contain rounded-xl mx-auto block" />
                   ) : (
                     <p className="text-center text-xs font-medium text-slate-600">
-                      {tr('QR कोड उपलब्ध नहीं है', 'QR کوڈ دستیاب نہیں ہے', 'QR code is not available')}
+                      {tr('QR कोड उपलब्ध नहीं है', 'QR کوڈ دستیاب नहीं ہے', 'QR code is not available')}
                     </p>
                   )}
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-wider" style={{ color: 'var(--mfct-gold)' }}>{tr('सीधे एस्क्रो के लिए UPI ID', 'براہ راست اسکرو کے لیے یو پی آئی آئی ڈی', 'UPI ID for Direct Escrow')}</p>
+                  {/* UPI ID hidden — NGO currently does not have a UPI ID */}
+                  {/* <p className="text-xs uppercase tracking-wider" style={{ color: 'var(--mfct-gold)' }}>{tr('सीधे एस्क्रो के लिए UPI ID', 'براہ راست اسکرو کے لیے یو پی آئی آئی ڈی', 'UPI ID for Direct Escrow')}</p>
                   {accountDetails?.upi_id ? (
                     <div className="inline-flex items-center gap-2 mt-1 px-4 py-1.5 rounded-xl bg-white/10 border border-white/20">
                       <span className="font-mono text-white font-bold text-lg select-all" style={{ color: 'var(--mfct-gold)' }}>
@@ -1091,9 +1090,9 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                     </div>
                   ) : (
                     <p className="text-xs font-medium text-slate-300 mt-1">
-                      {tr('UPI ID उपलब्ध नहीं है', 'UPI ID دستیاب نہیں ہے', 'UPI ID is not available')}
+                      {tr('UPI ID उपलब्ध नहीं है', 'UPI ID دستیاب नहीं ہے', 'UPI ID is not available')}
                     </p>
-                  )}
+                  )} */}
                   <p className="text-[11px] mt-2" style={{ color: 'rgba(255,255,255,0.7)' }}>
                     {tr(
                       'Google Pay, PhonePe, Paytm या BHIM UPI द्वारा स्कैन करें',
@@ -1103,7 +1102,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                   </p>
                 </div>
               </div>
-            ) : ( */}
+            ) : (
             <div
               className="p-5 text-white rounded-3xl space-y-3 text-xs shadow-xl font-mono"
               style={{ background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
@@ -1140,7 +1139,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 </div>
               )}
             </div>
-            {/* )} */}
+            )}
 
             {/* Donor Identity / Verification Confirmation */}
             <div className="space-y-4">
