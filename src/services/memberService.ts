@@ -1,4 +1,4 @@
-import { MemberNominee, MemberBankDetails } from '../types';
+import { MemberNominee, MemberBankDetails, FemaleFamilyMember } from '../types';
 
 // ─── MEMBER NOMINEE SERVICE (DIRECT API) ───────────────────────────────────────
 
@@ -101,5 +101,60 @@ export async function deleteMemberBankDetails(id: string): Promise<void> {
   const json = await res.json().catch(() => ({}));
   if (!res.ok || !json.success) {
     throw new Error(json.error || `Failed to delete bank details (${res.status})`);
+  }
+}
+
+// ─── FEMALE FAMILY MEMBER SERVICE (DIRECT API) ────────────────────────────────
+
+export async function getFemaleFamilyMembers(userId?: string): Promise<FemaleFamilyMember[]> {
+  const url = userId
+    ? `/api/female-members?userId=${encodeURIComponent(userId)}`
+    : '/api/female-members';
+  const res = await fetch(url);
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || `Failed to fetch female members (${res.status})`);
+  }
+  return json.data || [];
+}
+
+export async function saveFemaleFamilyMember(
+  data: Omit<FemaleFamilyMember, 'id' | 'created_at' | 'updated_at'> & { id?: string }
+): Promise<FemaleFamilyMember> {
+  const res = await fetch('/api/female-members', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || `Failed to save female member (${res.status})`);
+  }
+  return json.data;
+}
+
+export async function updateFemaleFamilyMember(
+  id: string,
+  updates: Partial<FemaleFamilyMember>
+): Promise<FemaleFamilyMember> {
+  const res = await fetch('/api/female-members', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, ...updates }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || `Failed to update female member (${res.status})`);
+  }
+  return json.data;
+}
+
+export async function deleteFemaleFamilyMember(id: string): Promise<void> {
+  const res = await fetch(`/api/female-members?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || `Failed to delete female member (${res.status})`);
   }
 }
