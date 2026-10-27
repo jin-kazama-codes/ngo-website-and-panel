@@ -75,6 +75,7 @@ import { ContactMessagesTab } from './ContactMessagesTab';
 import { AccountDetailsTab } from './AccountDetailsTab';
 import { NomineeDetailsTab } from './NomineeDetailsTab';
 import { MemberBankDetailsTab } from './MemberBankDetailsTab';
+import { FemaleMembersTab } from './FemaleMembersTab';
 import { MeetingsTab } from './MeetingsTab';
 import { TeamTab } from './TeamTab';
 import { DistrictCommitteeTab } from './DistrictCommitteeTab';
@@ -354,6 +355,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         label: t('admin.tabMemberBank', 'Bank Account Details'),
         icon: Building,
       });
+      commonMenus.push({
+        id: 'female_family_members',
+        label: t('admin.tabFemaleMembers', 'Female Family Members'),
+        icon: Heart,
+      });
     }
 
     let roleMenus: { id: string; label: string; icon: any; badge?: string }[] = [];
@@ -375,6 +381,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
           { id: 'ContactMessageTab', label: t('admin.tabContactMessages', 'Contact Messages'), icon: MessageSquare },
           { id: 'account_details', label: t('admin.tabAccountDetails', 'Account Details'), icon: FileCheck },
+          { id: 'female_family_members', label: t('admin.tabFemaleMembers', 'Female Family Members'), icon: Heart },
         ];
         break;
 
@@ -393,6 +400,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
           { id: 'ContactMessageTab', label: t('admin.tabContactMessages', 'Contact Messages'), icon: MessageSquare },
           { id: 'account_details', label: t('admin.tabAccountDetails', 'Account Details'), icon: FileCheck },
+          { id: 'female_family_members', label: t('admin.tabFemaleMembers', 'Female Family Members'), icon: Heart },
         ];
         break;
 
@@ -1040,6 +1048,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           <span>{t('admin.tabMemberBank', 'Bank Account Details')}</span>
                         </button>
 
+                        {/* Female Family Members Link */}
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            selectTab('female_family_members');
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
+                        >
+                          <Heart className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                          <span>{t('admin.tabFemaleMembers', 'Female Family Members')}</span>
+                        </button>
+
                         <div className="my-1 border-t" style={{ borderColor: 'rgba(200,168,75,0.15)' }} />
 
                         {/* Logout Button */}
@@ -1184,6 +1204,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             )}
             {activeTab === 'member_bank_details' && (
               <MemberBankDetailsTab activeUser={activeUser} />
+            )}
+            {activeTab === 'female_family_members' && (
+              <FemaleMembersTab activeUser={activeUser} />
             )}
             {activeTab === 'meetings_manage' && (
               <MeetingsTab activeUser={activeUser} currentRole={normalizedRole} />
