@@ -301,6 +301,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [accountDetails, setAccountDetails] = useState<AccountDetails | null>(
     null,
   );
+  const [accountDetailsLoading, setAccountDetailsLoading] = useState(true);
 
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
@@ -315,6 +316,14 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   useEffect(() => {
     setMounted(true);
+    getAccountDetails()
+      .then((data) => {
+        if (data && data.length > 0) {
+          setAccountDetails(data[0]);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setAccountDetailsLoading(false));
   }, []);
 
   const handleCopyUpi = () => {
@@ -372,6 +381,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         ) {
           setAccountDetails(accRes.value[0]);
         }
+        setAccountDetailsLoading(false);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -777,7 +787,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         {/* Right Side Bottom Corner: Compact QR Widget */}
-        {/* <div className="absolute bottom-4 sm:bottom-5 right-4 sm:right-6 lg:right-8 z-30 hidden sm:block">
+        <div className="absolute bottom-4 sm:bottom-5 right-4 sm:right-6 lg:right-8 z-30 hidden sm:block">
           <div
             onClick={() => setIsQrModalOpen(true)}
             className="group relative cursor-pointer rounded-2xl p-2 sm:p-2.5 max-w-[155px] sm:max-w-[170px] w-full shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-amber-500/20 active:scale-95"
@@ -811,14 +821,18 @@ export const HomePage: React.FC<HomePageProps> = ({
 
 
             <div className="bg-white p-1 rounded-lg shadow-md flex justify-center items-center relative overflow-hidden group-hover:ring-2 ring-amber-400 transition-all">
-              {accountDetails?.qr_code_url ? (
+              {accountDetailsLoading ? (
+                <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center bg-slate-100 animate-pulse rounded">
+                  <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : accountDetails?.qr_code_url ? (
                 <img
                   src={accountDetails.qr_code_url}
                   alt="QR Code"
                   className="w-14 h-14 sm:w-16 sm:h-16 object-contain transition-transform duration-300 group-hover:scale-105"
                 />
               ) : (
-                <p className="text-center text-xs font-medium text-slate-600">
+                <p className="text-center text-[10px] sm:text-xs font-medium text-slate-600 p-1">
                   {tr(
                     "QR कोड उपलब्ध नहीं है",
                     "QR کوڈ دستیاب نہیں ہے",
@@ -826,13 +840,14 @@ export const HomePage: React.FC<HomePageProps> = ({
                   )}
                 </p>
               )}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold text-white bg-black/80 backdrop-blur-sm">
-                  Tap to Zoom
-                </span>
-              </div>
+              {!accountDetailsLoading && accountDetails?.qr_code_url && (
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold text-white bg-black/80 backdrop-blur-sm">
+                    Tap to Zoom
+                  </span>
+                </div>
+              )}
             </div>
-
 
             <div className="text-center mt-1 space-y-0.5">
               <p
@@ -841,12 +856,17 @@ export const HomePage: React.FC<HomePageProps> = ({
               >
                 {t("home.scan_donate", "UPI Direct Donate")}
               </p>
-              <p className="font-mono text-white font-bold text-[9px] select-all tracking-wide truncate">
-                {accountDetails?.upi_id || ""}
-              </p>
+              {/* UPI ID hidden — NGO does not have a UPI ID */}
+              {/* {accountDetailsLoading ? (
+                <div className="h-2.5 w-16 bg-white/20 rounded animate-pulse mx-auto mt-0.5" />
+              ) : (
+                <p className="font-mono text-white font-bold text-[9px] select-all tracking-wide truncate">
+                  {accountDetails?.upi_id || ""}
+                </p>
+              )} */}
             </div>
           </div>
-        </div> */}
+        </div>
 
         {/* Carousel Bottom Dots */}
         <div className="absolute bottom-2.5 sm:bottom-3 left-0 right-0 z-30 flex items-center justify-center gap-2">
@@ -918,12 +938,17 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
 
               {/* QR Code */}
-              <div className="bg-white p-3 rounded-2xl shadow-xl mx-auto w-fit max-w-full">
-                {accountDetails?.qr_code_url ? (
+              <div className="bg-white p-1 rounded-2xl shadow-2xl mx-auto w-fit max-w-[280px] overflow-hidden">
+                {accountDetailsLoading ? (
+                  <div className="w-56 h-56 sm:w-64 sm:h-64 flex flex-col items-center justify-center bg-slate-50 animate-pulse rounded-xl gap-2.5">
+                    <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs font-semibold text-slate-400">Loading QR Code...</span>
+                  </div>
+                ) : accountDetails?.qr_code_url ? (
                   <img
                     src={accountDetails.qr_code_url}
                     alt="Enlarged QR Code"
-                    className="w-44 h-44 sm:w-48 sm:h-48 object-contain mx-auto"
+                    className="w-full h-auto max-h-[340px] object-contain rounded-xl mx-auto block"
                   />
                 ) : (
                   <p className="text-center text-xs font-medium text-slate-600">
@@ -937,7 +962,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
 
               {/* UPI ID Box with 1-Click Copy */}
-              <div
+              {/* <div
                 className="rounded-xl p-3 flex items-center justify-between gap-2 text-left"
                 style={{
                   background: "rgba(255,255,255,0.08)",
@@ -976,7 +1001,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     </>
                   )}
                 </button>
-              </div>
+              </div> */}
 
               {/* Accepted Apps */}
               <div className="flex items-center justify-center gap-1.5 flex-wrap pt-0.5">
