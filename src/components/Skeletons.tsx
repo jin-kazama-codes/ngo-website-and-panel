@@ -310,3 +310,56 @@ export const MemberBankCardSkeleton = () => (
     <div className="h-10 rounded-2xl bg-slate-100 dark:bg-slate-800/60" />
   </div>
 );
+
+// --- FEMALE MEMBER CARD SKELETON ---
+export const FemaleMemberCardSkeleton = () => (
+  <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 space-y-4 animate-pulse flex flex-col justify-between">
+    <div className="space-y-3.5">
+      {/* Header Row */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 shrink-0" />
+          <div className="space-y-1.5">
+            <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-28" />
+            <div className="h-3 bg-slate-100 dark:bg-slate-800/60 rounded w-16" />
+          </div>
+        </div>
+        <div className="h-5 w-16 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0" />
+      </div>
+
+      {/* Details Box */}
+      <div className="space-y-2 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80">
+        <div className="flex justify-between items-center">
+          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-14" />
+          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20" />
+        </div>
+        <div className="flex justify-between items-center">
+          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-12" />
+          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-24" />
+        </div>
+        <div className="flex justify-between items-center">
+          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-16" />
+          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-28 font-mono" />
+        </div>
+        <div className="flex justify-between items-center pt-1 border-t border-slate-200/60 dark:border-slate-800">
+          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20" />
+          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-16" />
+        </div>
+        <div className="flex justify-between items-center">
+          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-16" />
+          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-24 font-mono" />
+        </div>
+      </div>
+    </div>
+
+    {/* Footer */}
+    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+      <div className="h-7 w-16 rounded-xl bg-slate-200 dark:bg-slate-800" />
+      <div className="flex items-center gap-1.5">
+        <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-800" />
+        <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-800" />
+      </div>
+    </div>
+  </div>
+);
+
