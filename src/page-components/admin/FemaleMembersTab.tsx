@@ -12,6 +12,7 @@ import { getAccountDetails } from '../../services/adminService';
 import { uploadImage } from '../../lib/storage';
 import { useLanguage } from '../../context/LanguageContext';
 import { MFCT_LOGO_BASE64 } from '../../lib/mfctLogoBase64';
+import { FemaleMemberCardSkeleton } from '../../components/Skeletons';
 import {
   Heart,
   UserCheck,
@@ -534,7 +535,13 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             {tr('कुल महिला सदस्य', 'کل خواتین ارکان', 'Total Female Members')}
           </span>
-          <p className="text-2xl font-black mt-1 text-slate-900 dark:text-white">{totalMembersCount}</p>
+          <p className="text-2xl font-black mt-1 text-slate-900 dark:text-white">
+            {loading ? (
+              <span className="inline-block w-12 h-7 bg-slate-200 dark:bg-slate-800 rounded-md animate-pulse align-middle" />
+            ) : (
+              totalMembersCount
+            )}
+          </p>
           <span className="text-[11px] text-slate-500 mt-1 block">
             {tr('परिवार में नामांकित', 'خاندان میں شامل', 'Enrolled in family registry')}
           </span>
@@ -544,7 +551,13 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             {tr('सत्यापित सदस्य', 'تصدیق شدہ ارکان', 'Verified Members')}
           </span>
-          <p className="text-2xl font-black mt-1 text-emerald-600 dark:text-emerald-400">{verifiedCount}</p>
+          <p className="text-2xl font-black mt-1 text-emerald-600 dark:text-emerald-400">
+            {loading ? (
+              <span className="inline-block w-12 h-7 bg-emerald-100 dark:bg-emerald-950/60 rounded-md animate-pulse align-middle" />
+            ) : (
+              verifiedCount
+            )}
+          </p>
           <span className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 block">
             {tr('सक्रिय व सत्यापित', 'فعال اور تصدیق شدہ', 'Active and verified')}
           </span>
@@ -554,7 +567,13 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             {tr('सत्यापन प्रक्रियाधीन', 'زیر التوا تصدیق', 'Pending Verification')}
           </span>
-          <p className="text-2xl font-black mt-1 text-amber-500 dark:text-amber-400">{pendingCount}</p>
+          <p className="text-2xl font-black mt-1 text-amber-500 dark:text-amber-400">
+            {loading ? (
+              <span className="inline-block w-12 h-7 bg-amber-100 dark:bg-amber-950/60 rounded-md animate-pulse align-middle" />
+            ) : (
+              pendingCount
+            )}
+          </p>
           <span className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 block">
             {tr('यूटीआर ऑडिट के अधीन', 'یو ٹی آر آڈٹ کے تحت', 'Under UTR audit review')}
           </span>
@@ -564,7 +583,13 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             {tr('कुल शुल्क भुगतान', 'کل فیس کی ادائیگی', 'Total Fee Paid (₹50/member)')}
           </span>
-          <p className="text-2xl font-black mt-1 text-[#0c4a2b] dark:text-emerald-400">₹{totalFeesCollected}</p>
+          <p className="text-2xl font-black mt-1 text-[#0c4a2b] dark:text-emerald-400">
+            {loading ? (
+              <span className="inline-block w-16 h-7 bg-slate-200 dark:bg-slate-800 rounded-md animate-pulse align-middle" />
+            ) : (
+              `₹${totalFeesCollected}`
+            )}
+          </p>
           <span className="text-[11px] text-slate-500 mt-1 block">
             {tr('₹50 प्रति महिला सदस्य', '₹50 فی خاتون رکن', '₹50 per female member')}
           </span>
@@ -599,11 +624,10 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
 
         {/* Content Body */}
         {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center space-y-3">
-            <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
-            <p className="text-xs font-bold text-slate-500">
-              {tr('महिला सदस्यों की जानकारी लोड हो रही है...', 'تفصیلات لوڈ ہو رہی ہیں...', 'Loading female family members...')}
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
+            <FemaleMemberCardSkeleton />
+            <FemaleMemberCardSkeleton />
+            <FemaleMemberCardSkeleton />
           </div>
         ) : members.length === 0 ? (
           <div className="py-16 text-center space-y-4 max-w-md mx-auto">
