@@ -163,22 +163,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Preconnect to Google Fonts CDN */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </head>
-      <body>
-        {/* Google AdSense Script - Next/Script handles execution after hydration safely */}
+        {/* Google AdSense Script - between <head></head> for AdSense crawler verification */}
         {ADSENSE_CLIENT_ID && (
-          <Script
-            id="google-adsense"
-            strategy="afterInteractive"
+          <script
+            async
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
             crossOrigin="anonymous"
           />
         )}
-        {/* JSON-LD Structured Data */}
-        <Script
-          id="organization-schema"
+      </head>
+      <body suppressHydrationWarning>
+        {/* JSON-LD Structured Data - safe in body to avoid third-party script collision */}
+        <script
           type="application/ld+json"
-          strategy="afterInteractive"
+          id="organization-schema"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
         {/* Google Analytics (gtag.js) */}
