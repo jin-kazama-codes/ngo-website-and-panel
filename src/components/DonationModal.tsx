@@ -1060,11 +1060,16 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
             {paymentMethod === 'UPI' ? (
               <div className="p-6 text-white rounded-3xl text-center space-y-4 shadow-xl" style={{ background: 'linear-gradient(135deg, var(--mfct-dark-green) 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}>
-                <div className="rounded-2xl overflow-hidden shadow-2xl bg-white p-1 max-w-[260px] sm:max-w-[280px] w-full mx-auto flex items-center justify-center">
+                <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white w-[200px] sm:w-[230px] aspect-square bg-white mx-auto relative flex items-center justify-center">
                   {accountDetailsLoading ? (
                     <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
                   ) : accountDetails?.qr_code_url ? (
-                    <img src={accountDetails.qr_code_url} alt="QR Code" className="w-full h-auto max-h-[320px] object-contain rounded-xl mx-auto block" />
+                    <img
+                      src={accountDetails.qr_code_url}
+                      alt="QR Code"
+                      className="w-full h-full object-cover scale-[1.46] pointer-events-none select-none"
+                      style={{ objectPosition: 'center 50%' }}
+                    />
                   ) : (
                     <p className="text-center text-xs font-medium text-slate-600">
                       {tr('QR कोड उपलब्ध नहीं है', 'QR کوڈ دستیاب नहीं ہے', 'QR code is not available')}
