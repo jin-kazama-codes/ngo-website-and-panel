@@ -3,6 +3,7 @@ import Script from 'next/script';
 import './globals.css';
 import { LanguageProvider } from '../context/LanguageContext';
 import { GA_MEASUREMENT_ID } from '../lib/gtag';
+import GoogleAnalyticsPageView from '../components/GoogleAnalyticsPageView';
 
 const BASE_URL = 'https://www.mfcttrust.com';
 
@@ -195,7 +196,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   function gtag(){dataLayer.push(arguments);}
                   gtag('js', new Date());
                   gtag('config', '${GA_MEASUREMENT_ID}', {
-                    page_path: window.location.pathname,
+                    send_page_view: false,
                   });
                 `,
               }}
@@ -221,7 +222,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             ⚠️ DEV ENVIRONMENT — Using <code style={{background:'rgba(0,0,0,0.15)',padding:'0 4px',borderRadius:'3px'}}>dev</code> schema — Dummy Data Only — Changes won&apos;t affect production
           </div>
         )}
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          <GoogleAnalyticsPageView />
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );
