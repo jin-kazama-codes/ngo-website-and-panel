@@ -260,6 +260,117 @@ const HomeTestimonialSkeleton: React.FC = () => (
   </div>
 );
 
+const QrCodeSkeleton: React.FC = () => (
+  <div className="w-full h-full p-3.5 sm:p-4.5 flex flex-col justify-between animate-pulse bg-white select-none">
+    {/* Top Row: 2 Corner Finder Patterns + Matrix lines */}
+    <div className="flex items-start justify-between gap-2">
+      {/* Top Left Pattern */}
+      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg border-[3px] border-slate-300 p-1 flex items-center justify-center bg-slate-50 shrink-0">
+        <div className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-slate-400" />
+      </div>
+
+      {/* Top Center Matrix Pattern */}
+      <div className="flex-1 flex flex-col gap-1.5 pt-1 px-1">
+        <div className="flex gap-1 justify-center">
+          <div className="w-2 h-2 rounded-sm bg-slate-200" />
+          <div className="w-4 h-2 rounded-sm bg-slate-300" />
+          <div className="w-2 h-2 rounded-sm bg-slate-200" />
+          <div className="w-3 h-2 rounded-sm bg-slate-300" />
+        </div>
+        <div className="flex gap-1 justify-center">
+          <div className="w-3 h-2 rounded-sm bg-slate-300" />
+          <div className="w-2 h-2 rounded-sm bg-slate-200" />
+          <div className="w-4 h-2 rounded-sm bg-slate-200" />
+        </div>
+        <div className="flex gap-1 justify-center">
+          <div className="w-2 h-2 rounded-sm bg-slate-300" />
+          <div className="w-3 h-2 rounded-sm bg-slate-200" />
+          <div className="w-2 h-2 rounded-sm bg-slate-300" />
+        </div>
+      </div>
+
+      {/* Top Right Pattern */}
+      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg border-[3px] border-slate-300 p-1 flex items-center justify-center bg-slate-50 shrink-0">
+        <div className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-slate-400" />
+      </div>
+    </div>
+
+    {/* Center Section: Matrix Bits & Center Emblem */}
+    <div className="flex items-center justify-between gap-1.5 my-auto py-1">
+      {/* Left matrix chunk */}
+      <div className="flex flex-col gap-1.5 flex-1">
+        <div className="flex gap-1">
+          <div className="w-3 h-2 rounded-sm bg-slate-200" />
+          <div className="w-2 h-2 rounded-sm bg-slate-300" />
+          <div className="w-4 h-2 rounded-sm bg-slate-200" />
+        </div>
+        <div className="flex gap-1">
+          <div className="w-2 h-2 rounded-sm bg-slate-300" />
+          <div className="w-4 h-2 rounded-sm bg-slate-200" />
+        </div>
+        <div className="flex gap-1">
+          <div className="w-4 h-2 rounded-sm bg-slate-200" />
+          <div className="w-2 h-2 rounded-sm bg-slate-300" />
+        </div>
+      </div>
+
+      {/* Center QR Logo Badge */}
+      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-50 border border-emerald-300/70 flex items-center justify-center shrink-0 shadow-xs">
+        <div className="w-3.5 h-3.5 rounded-full bg-emerald-600/30" />
+      </div>
+
+      {/* Right matrix chunk */}
+      <div className="flex flex-col gap-1.5 flex-1 items-end">
+        <div className="flex gap-1 justify-end">
+          <div className="w-2 h-2 rounded-sm bg-slate-300" />
+          <div className="w-4 h-2 rounded-sm bg-slate-200" />
+          <div className="w-2 h-2 rounded-sm bg-slate-300" />
+        </div>
+        <div className="flex gap-1 justify-end">
+          <div className="w-4 h-2 rounded-sm bg-slate-200" />
+          <div className="w-3 h-2 rounded-sm bg-slate-200" />
+        </div>
+        <div className="flex gap-1 justify-end">
+          <div className="w-2 h-2 rounded-sm bg-slate-200" />
+          <div className="w-3 h-2 rounded-sm bg-slate-300" />
+          <div className="w-2 h-2 rounded-sm bg-slate-200" />
+        </div>
+      </div>
+    </div>
+
+    {/* Bottom Row: Bottom Left Pattern + Bottom Right matrix & alignment pattern */}
+    <div className="flex items-end justify-between gap-2">
+      {/* Bottom Left Pattern */}
+      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg border-[3px] border-slate-300 p-1 flex items-center justify-center bg-slate-50 shrink-0">
+        <div className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-slate-400" />
+      </div>
+
+      {/* Bottom Center Matrix */}
+      <div className="flex-1 flex flex-col gap-1.5 pb-1 px-1">
+        <div className="flex gap-1 justify-center">
+          <div className="w-3 h-2 rounded-sm bg-slate-200" />
+          <div className="w-2 h-2 rounded-sm bg-slate-300" />
+          <div className="w-3 h-2 rounded-sm bg-slate-200" />
+        </div>
+        <div className="flex gap-1 justify-center">
+          <div className="w-4 h-2 rounded-sm bg-slate-200" />
+          <div className="w-2 h-2 rounded-sm bg-slate-300" />
+        </div>
+        <div className="flex gap-1 justify-center">
+          <div className="w-2 h-2 rounded-sm bg-slate-300" />
+          <div className="w-3 h-2 rounded-sm bg-slate-200" />
+          <div className="w-2 h-2 rounded-sm bg-slate-200" />
+        </div>
+      </div>
+
+      {/* Bottom Right Alignment Pattern */}
+      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md border-2 border-slate-300 p-0.5 flex items-center justify-center bg-slate-50 shrink-0">
+        <div className="w-2.5 h-2.5 rounded-sm bg-slate-400" />
+      </div>
+    </div>
+  </div>
+);
+
 interface HomePageProps {
   onDonate: (campaign?: Campaign) => void;
   onOpenRegister: () => void;
@@ -301,6 +412,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     null,
   );
   const [accountDetailsLoading, setAccountDetailsLoading] = useState(true);
+  const [qrImageLoaded, setQrImageLoaded] = useState(false);
 
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
@@ -777,16 +889,23 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* Carousel Right Top: Only QR Code (Cropped to Pure QR Code, No Extra Standee Text) */}
         <div className="absolute top-4 sm:top-5 lg:top-7 right-4 sm:right-6 lg:right-8 z-30 hidden sm:block">
           {accountDetailsLoading ? (
-            <div className="w-44 h-44 sm:w-52 sm:h-52 lg:w-60 lg:h-60 flex flex-col items-center justify-center bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-3 border border-white/50">
-              <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mb-2" />
-              <span className="text-xs font-semibold text-slate-500">Loading QR...</span>
+            <div className="rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.65)] border-4 border-white w-[170px] sm:w-[200px] lg:w-[230px] aspect-square bg-white relative flex items-center justify-center">
+              <QrCodeSkeleton />
             </div>
           ) : accountDetails?.qr_code_url ? (
             <div className="rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.65)] border-4 border-white w-[170px] sm:w-[200px] lg:w-[230px] aspect-square bg-white transition-transform duration-300 hover:scale-[1.03] relative flex items-center justify-center">
+              {!qrImageLoaded && (
+                <div className="absolute inset-0 z-10">
+                  <QrCodeSkeleton />
+                </div>
+              )}
               <img
                 src={accountDetails.qr_code_url}
                 alt="Donation QR Code"
-                className="w-full h-full object-cover scale-[1.46] pointer-events-none select-none"
+                onLoad={() => setQrImageLoaded(true)}
+                className={`w-full h-full object-cover scale-[1.46] pointer-events-none select-none transition-opacity duration-300 ${
+                  qrImageLoaded ? "opacity-100" : "opacity-0"
+                }`}
                 style={{ objectPosition: "center 50%" }}
               />
             </div>
