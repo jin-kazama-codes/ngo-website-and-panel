@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import './globals.css';
 import { LanguageProvider } from '../context/LanguageContext';
+import { GA_MEASUREMENT_ID } from '../lib/gtag';
 
 const BASE_URL = 'https://www.mfcttrust.com';
 
@@ -104,6 +106,10 @@ export const metadata: Metadata = {
   // },
 
   category: 'charity',
+
+  other: {
+    'google-adsense-account': 'ca-pub-9950098479644890',
+  },
 };
 
 // ─── Viewport / Theme Color ──────────────────────────────────────────────────
@@ -147,21 +153,57 @@ const organizationSchema = {
   nonprofitStatus: 'Section8Company',
 };
 
+const ADSENSE_CLIENT_ID = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-9950098479644890';
+
 // ─── RootLayout ──────────────────────────────────────────────────────────────
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="hi" dir="ltr">
+    <html lang="hi" dir="ltr" suppressHydrationWarning>
       <head>
-        {/* JSON-LD Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-        />
         {/* Preconnect to Google Fonts CDN */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>
+        {/* Google AdSense Script - Next/Script handles execution after hydration safely */}
+        {ADSENSE_CLIENT_ID && (
+          <Script
+            id="google-adsense"
+            strategy="afterInteractive"
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+            crossOrigin="anonymous"
+          />
+        )}
+        {/* JSON-LD Structured Data */}
+        <Script
+          id="organization-schema"
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        {/* Google Analytics (gtag.js) */}
+        {GA_MEASUREMENT_ID && (
+          <>
+            <Script
+              strategy="afterInteractive"
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+            />
+            <Script
+              id="google-analytics"
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${GA_MEASUREMENT_ID}', {
+                    page_path: window.location.pathname,
+                  });
+                `,
+              }}
+            />
+          </>
+        )}
         {process.env.NEXT_PUBLIC_ENV === 'development' && (
           <div style={{
             position: 'fixed',

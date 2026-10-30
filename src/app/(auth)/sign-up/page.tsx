@@ -1289,12 +1289,13 @@ export default function SignUpPage() {
                   className="p-6 rounded-3xl text-center space-y-4 text-white shadow-xl"
                   style={{ background: 'linear-gradient(135deg, #0f3322 0%, #0d2017 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
                 >
-                  <div className="bg-white p-1 rounded-2xl shadow-2xl inline-block max-w-[260px] sm:max-w-[280px] w-full overflow-hidden">
+                  <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white w-[200px] sm:w-[230px] aspect-square bg-white mx-auto relative flex items-center justify-center">
                     {accountDetails?.qr_code_url ? (
                       <img
                         src={accountDetails.qr_code_url}
                         alt="UPI QR Code"
-                        className="w-full h-auto max-h-[320px] object-contain rounded-xl mx-auto block"
+                        className="w-full h-full object-cover scale-[1.46] pointer-events-none select-none"
+                        style={{ objectPosition: 'center 50%' }}
                       />
                     ) : (
                       <QrCode className="w-36 h-36 mx-auto text-slate-900 p-2" />

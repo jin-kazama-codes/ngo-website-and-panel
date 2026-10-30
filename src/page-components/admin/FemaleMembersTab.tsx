@@ -1063,12 +1063,13 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
                     className="p-5 rounded-2xl text-center space-y-3 text-white shadow-md"
                     style={{ background: 'linear-gradient(135deg, #0c2b1d 0%, #081a12 100%)', border: '1px solid rgba(200,168,75,0.3)' }}
                   >
-                    <div className="bg-white p-2 rounded-xl shadow-lg inline-block max-w-[200px] w-full">
+                    <div className="bg-white rounded-2xl shadow-lg inline-block w-[180px] aspect-square overflow-hidden border-2 border-white relative">
                       {accountDetails?.qr_code_url ? (
                         <img
                           src={accountDetails.qr_code_url}
                           alt="MFCT Trust QR Code"
-                          className="w-full h-auto object-contain rounded-lg mx-auto"
+                          className="w-full h-full object-cover scale-[1.46] pointer-events-none select-none"
+                          style={{ objectPosition: 'center 50%' }}
                         />
                       ) : (
                         <QrCode className="w-32 h-32 mx-auto text-slate-900 p-2" />
