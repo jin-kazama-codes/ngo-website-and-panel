@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
 import {
   Campaign,
   Testimonial,
@@ -310,12 +309,8 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   // ─── Hero Carousel Background Images ─────────────────────────────────────
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
-  const [copiedUpi, setCopiedUpi] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     getAccountDetails()
       .then((data) => {
         if (data && data.length > 0) {
@@ -325,13 +320,6 @@ export const HomePage: React.FC<HomePageProps> = ({
       .catch(console.error)
       .finally(() => setAccountDetailsLoading(false));
   }, []);
-
-  const handleCopyUpi = () => {
-    const upi = accountDetails?.upi_id || "";
-    navigator.clipboard.writeText(upi);
-    setCopiedUpi(true);
-    setTimeout(() => setCopiedUpi(false), 2500);
-  };
 
   const heroImages = [
     "/hero-slide-1.webp",
@@ -786,86 +774,23 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
         </div>
 
-        {/* Right Side Bottom Corner: Compact QR Widget */}
-        <div className="absolute bottom-4 sm:bottom-5 right-4 sm:right-6 lg:right-8 z-30 hidden sm:block">
-          <div
-            onClick={() => setIsQrModalOpen(true)}
-            className="group relative cursor-pointer rounded-2xl p-2 sm:p-2.5 max-w-[155px] sm:max-w-[170px] w-full shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-amber-500/20 active:scale-95"
-            style={{
-              background: "rgba(10, 28, 20, 0.92)",
-              backdropFilter: "blur(16px)",
-              border: "1.5px solid rgba(200,168,75,0.45)",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
-            }}
-            title="Click to Enlarge QR Code"
-          >
-
-            <div className="flex items-center justify-between gap-1 mb-1">
-              <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow"
-                style={{
-                  background: "var(--mfct-gold)",
-                  color: "var(--mfct-dark-green)",
-                }}
-              >
-                <span
-                  className="w-1 h-1 rounded-full animate-pulse"
-                  style={{ background: "var(--mfct-dark-green)" }}
-                />
-                Live & Verified
-              </span>
-              <div className="p-0.5 rounded bg-white/10 text-white/70 group-hover:text-amber-300 group-hover:bg-white/20 transition-all">
-                <Maximize2 className="w-3 h-3" />
-              </div>
+        {/* Carousel Right Top: Only QR Code (Cropped to Pure QR Code, No Extra Standee Text) */}
+        <div className="absolute top-4 sm:top-5 lg:top-7 right-4 sm:right-6 lg:right-8 z-30 hidden sm:block">
+          {accountDetailsLoading ? (
+            <div className="w-44 h-44 sm:w-52 sm:h-52 lg:w-60 lg:h-60 flex flex-col items-center justify-center bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-3 border border-white/50">
+              <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mb-2" />
+              <span className="text-xs font-semibold text-slate-500">Loading QR...</span>
             </div>
-
-
-            <div className="bg-white p-1 rounded-lg shadow-md flex justify-center items-center relative overflow-hidden group-hover:ring-2 ring-amber-400 transition-all">
-              {accountDetailsLoading ? (
-                <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center bg-slate-100 animate-pulse rounded">
-                  <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : accountDetails?.qr_code_url ? (
-                <img
-                  src={accountDetails.qr_code_url}
-                  alt="QR Code"
-                  className="w-14 h-14 sm:w-16 sm:h-16 object-contain transition-transform duration-300 group-hover:scale-105"
-                />
-              ) : (
-                <p className="text-center text-[10px] sm:text-xs font-medium text-slate-600 p-1">
-                  {tr(
-                    "QR कोड उपलब्ध नहीं है",
-                    "QR کوڈ دستیاب نہیں ہے",
-                    "QR code is not available",
-                  )}
-                </p>
-              )}
-              {!accountDetailsLoading && accountDetails?.qr_code_url && (
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold text-white bg-black/80 backdrop-blur-sm">
-                    Tap to Zoom
-                  </span>
-                </div>
-              )}
+          ) : accountDetails?.qr_code_url ? (
+            <div className="rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.65)] border-4 border-white w-[170px] sm:w-[200px] lg:w-[230px] aspect-square bg-white transition-transform duration-300 hover:scale-[1.03] relative flex items-center justify-center">
+              <img
+                src={accountDetails.qr_code_url}
+                alt="Donation QR Code"
+                className="w-full h-full object-cover scale-[1.46] pointer-events-none select-none"
+                style={{ objectPosition: "center 50%" }}
+              />
             </div>
-
-            <div className="text-center mt-1 space-y-0.5">
-              <p
-                className="text-[8px] uppercase tracking-wider font-bold truncate"
-                style={{ color: "var(--mfct-gold)" }}
-              >
-                {t("home.scan_donate", "UPI Direct Donate")}
-              </p>
-              {/* UPI ID hidden — NGO does not have a UPI ID */}
-              {/* {accountDetailsLoading ? (
-                <div className="h-2.5 w-16 bg-white/20 rounded animate-pulse mx-auto mt-0.5" />
-              ) : (
-                <p className="font-mono text-white font-bold text-[9px] select-all tracking-wide truncate">
-                  {accountDetails?.upi_id || ""}
-                </p>
-              )} */}
-            </div>
-          </div>
+          ) : null}
         </div>
 
         {/* Carousel Bottom Dots */}
@@ -883,148 +808,6 @@ export const HomePage: React.FC<HomePageProps> = ({
           ))}
         </div>
       </section>
-
-      {/* Enlarged QR Code Modal */}
-      {isQrModalOpen &&
-        mounted &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            className="fixed inset-0 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-fade-in"
-            style={{ zIndex: 99999 }}
-            onClick={() => setIsQrModalOpen(false)}
-          >
-            <div
-              className="relative w-full max-w-sm rounded-3xl p-5 sm:p-6 text-center space-y-3.5 shadow-2xl transition-all my-auto max-h-[90vh] overflow-y-auto animate-scale-up"
-              style={{
-                background: "#0a1c14",
-                border: "2px solid rgba(200,168,75,0.6)",
-                boxShadow:
-                  "0 25px 60px rgba(0,0,0,0.85), 0 0 35px rgba(200,168,75,0.18)",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Close Button */}
-              <button
-                onClick={() => setIsQrModalOpen(false)}
-                className="absolute top-3 right-3 p-1.5 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all cursor-pointer z-10"
-                title="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              {/* Modal Header */}
-              <div className="space-y-1 pr-6 pl-2 pt-1">
-                <span
-                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow"
-                  style={{
-                    background: "var(--mfct-gold)",
-                    color: "var(--mfct-dark-green)",
-                  }}
-                >
-                  <span
-                    className="w-1.5 h-1.5 rounded-full animate-pulse"
-                    style={{ background: "var(--mfct-dark-green)" }}
-                  />
-                  Live & Verified Account
-                </span>
-                <h3 className="text-xl font-black text-white pt-1">
-                  Scan to Donate
-                </h3>
-                <p className="text-[11px] text-white/70">
-                  Direct bank transfer via any UPI app with 100% audit
-                  transparency
-                </p>
-              </div>
-
-              {/* QR Code */}
-              <div className="bg-white p-1 rounded-2xl shadow-2xl mx-auto w-fit max-w-[280px] overflow-hidden">
-                {accountDetailsLoading ? (
-                  <div className="w-56 h-56 sm:w-64 sm:h-64 flex flex-col items-center justify-center bg-slate-50 animate-pulse rounded-xl gap-2.5">
-                    <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-xs font-semibold text-slate-400">Loading QR Code...</span>
-                  </div>
-                ) : accountDetails?.qr_code_url ? (
-                  <img
-                    src={accountDetails.qr_code_url}
-                    alt="Enlarged QR Code"
-                    className="w-full h-auto max-h-[340px] object-contain rounded-xl mx-auto block"
-                  />
-                ) : (
-                  <p className="text-center text-xs font-medium text-slate-600">
-                    {tr(
-                      "QR कोड उपलब्ध नहीं है",
-                      "QR کوڈ دستیاب नहीं है",
-                      "QR code is not available",
-                    )}
-                  </p>
-                )}
-              </div>
-
-              {/* UPI ID Box with 1-Click Copy */}
-              {/* <div
-                className="rounded-xl p-3 flex items-center justify-between gap-2 text-left"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(200,168,75,0.35)",
-                }}
-              >
-                <div className="min-w-0 flex-1">
-                  <p
-                    className="text-[9px] uppercase tracking-wider font-bold"
-                    style={{ color: "var(--mfct-gold)" }}
-                  >
-                    Official UPI ID
-                  </p>
-                  <p className="font-mono text-white font-bold text-xs sm:text-sm select-all truncate">
-                    {accountDetails?.upi_id || "i"}
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleCopyUpi}
-                  className="px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer shadow"
-                  style={{
-                    background: copiedUpi ? "#10b981" : "var(--mfct-gold)",
-                    color: copiedUpi ? "#ffffff" : "var(--mfct-dark-green)",
-                  }}
-                >
-                  {copiedUpi ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </button>
-              </div> */}
-
-              {/* Accepted Apps */}
-              <div className="flex items-center justify-center gap-1.5 flex-wrap pt-0.5">
-                {["GPay", "PhonePe", "Paytm", "BHIM", "Amazon Pay"].map(
-                  (app) => (
-                    <span
-                      key={app}
-                      className="px-2 py-0.5 rounded text-[9px] font-bold"
-                      style={{
-                        background: "rgba(200,168,75,0.15)",
-                        color: "var(--mfct-gold)",
-                        border: "1px solid rgba(200,168,75,0.3)",
-                      }}
-                    >
-                      {app}
-                    </span>
-                  ),
-                )}
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
 
       {/* 2. OUR MISSION SECTION (हमारा उद्देश्य) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4">

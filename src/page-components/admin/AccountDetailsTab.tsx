@@ -113,8 +113,13 @@ const AccountDetailsCard: React.FC<{
 
         {detail.qr_code_url && (
           <div className="shrink-0 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/40 p-4 rounded-3xl border border-slate-200 dark:border-slate-700">
-            <div className="w-32 h-32 rounded-2xl overflow-hidden bg-white p-2 shadow-sm mb-3">
-              <img src={detail.qr_code_url} alt="UPI QR Code" className="w-full h-full object-contain" />
+            <div className="w-32 h-32 rounded-2xl overflow-hidden bg-white shadow-sm mb-3 relative flex items-center justify-center border-2 border-slate-100">
+              <img
+                src={detail.qr_code_url}
+                alt="UPI QR Code"
+                className="w-full h-full object-cover scale-[1.46] pointer-events-none select-none"
+                style={{ objectPosition: 'center 50%' }}
+              />
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
               <QrCode className="w-3 h-3" /> {tr('भुगतान के लिए स्कैन करें', 'ادائیگی کے لیے اسکین کریں', 'Scan to Pay')}
