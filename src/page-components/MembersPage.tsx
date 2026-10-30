@@ -30,214 +30,43 @@ import {
 } from 'lucide-react';
 import { TableSkeleton } from '../components/Skeletons';
 import { useLanguage } from '../context/LanguageContext';
-import { ORGANIZATIONAL_HIERARCHY } from '../data/districtsData';
-
-// Comprehensive Name / Word Translation Map
-const TRANSLATION_MAP: Record<string, { hi: string; ur: string }> = {
-  'mohd nayeem': { hi: 'मोहम्मद नईम', ur: 'محمد نعیم' },
-  'mohammad nayeem': { hi: 'मोहम्मद नईम', ur: 'محمد نعیم' },
-  'nayeem': { hi: 'नईम', ur: 'نعیم' },
-  'er. mohammad zahid': { hi: 'इंजी. मोहम्मद जाहिद', ur: 'انجینئر محمد زاہد' },
-  'er mohammad zahid': { hi: 'इंजी. मोहम्मद जाहिद', ur: 'انجینئر محمد زاہد' },
-  'uttar pradesh': { hi: 'उत्तर प्रदेश', ur: 'اتر پردیش' },
-  // Names
-  'gulam raza': { hi: 'गुलाम रज़ा', ur: 'غलाम رضا' },
-  'ghulam raza': { hi: 'गुलाम रज़ा', ur: 'غलाम رضا' },
-  'farhan ali siddiqui': { hi: 'फरहान अली सिद्दीकी', ur: 'فرحان علی صدیقی' },
-  'dr. shakeel ahmad usmani': { hi: 'डॉ. शकील अहमद उस्मानी', ur: 'ڈاکٹر شکیل احمد عثمانی' },
-  'shakeel ahmad usmani': { hi: 'शकील अहमद उस्मानी', ur: 'شکیل احمد عثمانی' },
-  'mohammad faeem': { hi: 'मोहम्मद फ़ईम', ur: 'محمد فہیم' },
-  'aafaq ahmad': { hi: 'आफ़ाक़ अहमद', ur: 'آفاق احمد' },
-  'tariq khan': { hi: 'तारिक खान', ur: 'طارق خان' },
-  'zaid ahmed': { hi: 'ज़ैद अहमद', ur: 'زید احمد' },
-  'mohd arshad': { hi: 'मोहम्मद अरशद', ur: 'محمد ارشد' },
-  'salman khan': { hi: 'सलमान खान', ur: 'سلمان خان' },
-  'rehan ali': { hi: 'रेहान अली', ur: 'ریحان علی' },
-  'sohail ahmad': { hi: 'सोहेल अहमद', ur: 'سہیل احمد' },
-  'imran khan': { hi: 'इमरान खान', ur: 'عمران خان' },
-  'adnan siddiqui': { hi: 'अदनान सिद्दीकी', ur: 'عدنان صدیقی' },
-  'waseem akram': { hi: 'वसीम अकरम', ur: 'وسیم اکرم' },
-  'irfan habib': { hi: 'इरफान हबीब', ur: 'عرفان حبیب' },
-  'nasir hussain': { hi: 'नासिर हुसैन', ur: 'ناصر حسین' },
-  'kamran ali': { hi: 'कामरान अली', ur: 'کامران علی' },
-  'aslam khan': { hi: 'अस्लम खान', ur: 'اسلم خان' },
-  'nadeem ahmad': { hi: 'नदीम अहमद', ur: 'ندیم احمد' },
-  'shabnam bano': { hi: 'शबनम बानो', ur: 'شبنم بانو' },
-  'yasmeen parveen': { hi: 'यासमीन परवीन', ur: 'یاسمین پروین' },
-  'fatima khatoon': { hi: 'फातिमा खातून', ur: 'فاطمہ خاتون' },
-  'aisha begum': { hi: 'आयशा बेगम', ur: 'عائشہ بیگم' },
-  'farhana parveen': { hi: 'फरहाना परवीन', ur: 'فرحانہ پروین' },
-  'rubina bano': { hi: 'रुबीना बानो', ur: 'روبینہ بانو' },
-  'gulzar ahmad': { hi: 'गुलज़ार अहमद', ur: 'گلزار احمد' },
-
-  // Communities
-  'bareilly central care society (headquarters)': { hi: 'बरेली सेंट्रल केयर सोसाइटी (मुख्यालय)', ur: 'بریلی سنٹرل کیئر سوسائٹی (ہیڈ کوارٹر)' },
-  'rohilkhand educational & nikah trust': { hi: 'रुहेलखंड एजुकेशनल एवं निकाह ट्रस्ट', ur: 'روہیل کھنڈ ایجوکیشنل اینڈ نکاح ٹرسٹ' },
-  'maharajganj welfare foundation': { hi: 'महराजगंज वेलफेयर फाउंडेशन', ur: 'مہراج گنج ویلفیئر فاؤنڈیشن' },
-  'lucknow youth care': { hi: 'लखनऊ यूथ केयर', ur: 'لکھنؤ یوتھ کیئر' },
-  'moradabad health network': { hi: 'मुरादाबाद हेल्थ नेटवर्क', ur: 'مرادآباد ہیلتھ نیٹ ورک' },
-
-  // Districts
-  'bareilly': { hi: 'बरेली', ur: 'بریلی' },
-  'maharajganj': { hi: 'महराजगंज', ur: 'مہراج گنج' },
-  'lucknow': { hi: 'लखनऊ', ur: 'لکھنؤ' },
-  'moradabad': { hi: 'मुरादाबाद', ur: 'مرادآباد' },
-  'rampur': { hi: 'रामपुर', ur: 'رام پور' },
-  'pilibhit': { hi: 'पीलीभीत', ur: 'پیلی بھیت' },
-  'shahjahanpur': { hi: 'शाहजहांपुर', ur: 'شاہجہاں پور' },
-  'budaun': { hi: 'बदायूँ', ur: 'بدایوں' },
-  'bijnor': { hi: 'बिजनौर', ur: 'بجنور' },
-  'sambhal': { hi: 'संभल', ur: 'سنبھل' },
-  'meerut': { hi: 'मेरठ', ur: 'میرٹھ' },
-  'aligarh': { hi: 'अलीगढ़', ur: 'علی گڑھ' },
-  'agra': { hi: 'आगरा', ur: 'آگرہ' },
-  'varanasi': { hi: 'वाराणसी', ur: 'وارانسی' },
-  'kanpur': { hi: 'कानपुर', ur: 'کانپور' },
-  'prayagraj': { hi: 'प्रयागराज', ur: 'پریاگ راج' },
-  'gorakhpur': { hi: 'गोरखपुर', ur: 'گورکھپور' },
-
-  // Roles
-  'district president': { hi: 'जिला अध्यक्ष', ur: 'ضلعی صدر' },
-  'district_president': { hi: 'जिला अध्यक्ष', ur: 'ضلعی صدر' },
-  'district coordinator': { hi: 'जिला समन्वयक', ur: 'ضلعی کوآرڈینیٹر' },
-  'district_coordinator': { hi: 'जिला समन्वयक', ur: 'ضلعی کوآرڈینیٹر' },
-  'district general secretary': { hi: 'जिला महासचिव', ur: 'ضلعی جنرل سیکرٹری' },
-  'district_gen_secretary': { hi: 'जिला महासचिव', ur: 'ضلعی جنرل سیکرٹری' },
-  'district secretary': { hi: 'जिला सचिव', ur: 'ضلعی سیکرٹری' },
-  'district_secretary': { hi: 'जिला सचिव', ur: 'ضلعی سیکرٹری' },
-  'district finance coordinator': { hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر' },
-  'district_finance_coord': { hi: 'जिला वित्त समन्वयक', ur: 'ضلعی فنانس کوآرڈینیٹر' },
-  'general member': { hi: 'साधारण सदस्य', ur: 'عام ممبر' },
-  'member': { hi: 'सदस्य', ur: 'ممبر' },
-  'executive admin': { hi: 'कार्यकारी व्यवस्थापक', ur: 'ایگزیکٹو ایڈمن' },
-  'executive_admin': { hi: 'कार्यकारी व्यवस्थापक', ur: 'ایگزیکٹو ایڈمن' },
-  'community admin': { hi: 'समुदाय व्यवस्थापक', ur: 'کمیونٹی ایڈمن' },
-  'community_admin': { hi: 'समुदाय व्यवस्थापक', ur: 'کمیونٹی ایڈمن' },
-  'premium donor': { hi: 'विशिष्ट दानदाता', ur: 'پریمیم ڈونر' },
-  'premium_donor': { hi: 'विशिष्ट दानदाता', ur: 'پریمیم ڈونر' },
-};
-
+import { ORGANIZATIONAL_HIERARCHY, STANDARD_DISTRICTS } from '../data/districtsData';
+import { getUsers } from '../services/userService';
 import { useDynamicTranslatedText } from '../lib/autoTranslate';
+import { translateDistrictRole } from '../lib/translateEntity';
 
-function detectScript(text: string): 'hi' | 'ur' | 'en' {
-  if (/[\u0900-\u097F]/.test(text)) return 'hi';
-  if (/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text)) return 'ur';
-  return 'en';
-}
 
-// Transliterate / Translate helper with bidirectional fallback
-function formatTextByLang(text: string | undefined | null, lang: string): string {
-  if (!text) return '—';
-  const trimmed = text.trim();
-  if (detectScript(trimmed) === lang) return trimmed;
 
-  const key = trimmed.toLowerCase();
-  if (TRANSLATION_MAP[key]) {
-    if (lang === 'en') {
-      return key.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    }
-    return lang === 'ur' ? TRANSLATION_MAP[key].ur : TRANSLATION_MAP[key].hi;
-  }
-
-  // Reverse lookup across entries if input is in Hindi or Urdu
-  for (const [enKey, val] of Object.entries(TRANSLATION_MAP)) {
-    if (val.hi === trimmed || val.ur === trimmed) {
-      if (lang === 'en') {
-        return enKey.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-      }
-      return val[lang as 'hi' | 'ur'] || trimmed;
-    }
-  }
-
-  // Handle strings with brackets like "Farhan Ali Siddiqui (Executive Admin)"
-  const bracketMatch = trimmed.match(/^(.+?)\s*\((.+?)\)$/);
-  if (bracketMatch) {
-    const mainPart = formatTextByLang(bracketMatch[1], lang);
-    const subPart = formatTextByLang(bracketMatch[2], lang);
-    return `${mainPart} (${subPart})`;
-  }
-
-  return trimmed;
-}
-
-// UP Districts List
-const UP_DISTRICTS = [
-  'Bareilly',
-  'Maharajganj',
-  'Lucknow',
-  'Agra',
-  'Aligarh',
-  'Ambedkar Nagar',
-  'Amethi',
-  'Amroha',
-  'Auraiya',
-  'Ayodhya',
-  'Azamgarh',
-  'Baghpat',
-  'Bahraich',
-  'Ballia',
-  'Balrampur',
-  'Banda',
-  'Barabanki',
-  'Basti',
-  'Bijnor',
-  'Budaun',
-  'Bulandshahr',
-  'Chandauli',
-  'Chitrakoot',
-  'Deoria',
-  'Etah',
-  'Etawah',
-  'Farrukhabad',
-  'Fatehpur',
-  'Firozabad',
-  'Gautam Buddha Nagar (Noida)',
-  'Ghaziabad',
-  'Ghazipur',
-  'Gonda',
-  'Gorakhpur',
-  'Hamirpur',
-  'Hapur',
-  'Hardoi',
-  'Hathras',
-  'Jalaun',
-  'Jaunpur',
-  'Jhansi',
-  'Kannauj',
-  'Kanpur Dehat',
-  'Kanpur Nagar',
-  'Kasganj',
-  'Kaushambi',
-  'Kushinagar',
-  'Lakhimpur Kheri',
-  'Lalitpur',
-  'Mahoba',
-  'Mainpuri',
-  'Mathura',
-  'Mau',
-  'Meerut',
-  'Mirzapur',
-  'Moradabad',
-  'Muzaffarnagar',
-  'Pilibhit',
-  'Pratapgarh',
-  'Prayagraj',
-  'Raebareli',
-  'Rampur',
-  'Saharanpur',
-  'Sambhal',
-  'Sant Kabir Nagar',
-  'Sant Ravidas Nagar (Bhadohi)',
-  'Shahjahanpur',
-  'Shamli',
-  'Shravasti',
-  'Siddharthnagar',
-  'Sitapur',
-  'Sonbhadra',
-  'Sultanpur',
-  'Unnao',
-  'Varanasi'
+const DIST_ROLE_KEYS = [
+  'district_president',
+  'district_coordinator',
+  'district_gen_secretary',
+  'district_secretary',
+  'district_finance_coord',
 ];
+
+// Priority helper: Admin & Executive first (1..3), District Officers second (10..15), Members third (100)
+const getMemberPriority = (u: any): number => {
+  const role = (u.role || '').toLowerCase();
+  const distRole = (u.districtRole || u.district_role || '').toLowerCase();
+
+  // Tier 1: Admin & Executive people
+  if (role === 'super_admin') return 1;
+  if (role === 'executive_admin') return 2;
+  if (role === 'community_admin' || distRole === 'community_admin') return 3;
+
+  // Tier 2: District Role people
+  const effectiveDistRole = distRole || (DIST_ROLE_KEYS.includes(role) ? role : '');
+  if (effectiveDistRole === 'district_president') return 10;
+  if (effectiveDistRole === 'district_coordinator') return 11;
+  if (effectiveDistRole === 'district_gen_secretary') return 12;
+  if (effectiveDistRole === 'district_secretary') return 13;
+  if (effectiveDistRole === 'district_finance_coord') return 14;
+  if (effectiveDistRole) return 15;
+
+  // Tier 3: Member people
+  return 100;
+};
 
 const MemberTableRow: React.FC<{
   member: any;
@@ -245,74 +74,71 @@ const MemberTableRow: React.FC<{
   currentPage: number;
   pageSize: number;
   language: any;
-  copiedId: string | null;
-  handleCopyId: (id: string) => void;
-}> = ({ member, idx, currentPage, pageSize, language, copiedId, handleCopyId }) => {
+}> = ({ member, idx, currentPage, pageSize, language }) => {
   const serialNumber = (currentPage - 1) * pageSize + idx + 1;
-  const memId = member.membership_id || member.membershipId || `MFCT-${(member.id || '').slice(-6).toUpperCase()}`;
+
+  // Translated name using useDynamicTranslatedText like ManageUsers
   const rawName = member.name || 'Member';
-  const dynamicName = useDynamicTranslatedText(rawName, language);
-  const displayName = (language !== 'en' && !/[\u0900-\u097F\u0600-\u06FF]/.test(dynamicName))
-    ? formatTextByLang(rawName, language) || dynamicName
-    : dynamicName;
+  const displayName = useDynamicTranslatedText(rawName, language) || rawName;
+
   const email = member.email || '—';
-  const communityId = member.community_id || member.communityId || '—';
-  const rawCommName = member.community_name || member.communityName || 'Bareilly Central Care Society (Headquarters)';
-  const dynamicCommName = useDynamicTranslatedText(rawCommName, language);
-  const displayCommName = (language !== 'en' && !/[\u0900-\u097F\u0600-\u06FF]/.test(dynamicCommName))
-    ? formatTextByLang(rawCommName, language) || dynamicCommName
-    : dynamicCommName;
-  const rawDistrict = member.city || member.district || 'Bareilly';
-  const dynamicDistrict = useDynamicTranslatedText(rawDistrict, language);
-  const displayDistrict = (language !== 'en' && !/[\u0900-\u097F\u0600-\u06FF]/.test(dynamicDistrict))
-    ? formatTextByLang(rawDistrict, language) || dynamicDistrict
-    : dynamicDistrict;
+
+  const rawDistrict = member.district || member.city || 'Bareilly';
+  const displayDistrict = useDynamicTranslatedText(rawDistrict, language) || rawDistrict;
+
+  const tr = (hi: string, ur: string, en: string) => {
+    if (language === 'hi') return hi;
+    if (language === 'ur') return ur;
+    return en;
+  };
+
+  const effectiveDistrictRole = member.districtRole || member.district_role || (DIST_ROLE_KEYS.includes(member.role) ? member.role : '');
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'super_admin':
+        return tr('सुपर एडमिन', 'سپر ایڈمن', 'SUPER ADMIN');
+      case 'executive_admin':
+        return tr('कार्यकारी एडमिन', 'ایگزیکٹو ایڈمن', 'EXECUTIVE ADMIN');
+      case 'community_admin':
+        return tr('सामुदायिक एडमिन', 'کمیونٹی ایڈمن', 'COMMUNITY ADMIN');
+      case 'district_president':
+        return tr('जिला अध्यक्ष', 'ضلعی صدر', 'DISTRICT PRESIDENT');
+      case 'district_coordinator':
+        return tr('जिला समन्वयक', 'ضلعی کوآرڈینیٹر', 'DISTRICT COORDINATOR');
+      case 'district_gen_secretary':
+        return tr('जिला महासचिव', 'ضلعی جنرل سیکرٹری', 'DISTRICT GEN SEC');
+      case 'district_secretary':
+        return tr('जिला सचिव', 'ضلعی سیکرٹری', 'DISTRICT SECRETARY');
+      case 'district_finance_coord':
+        return tr('जिला वित्त समन्वयक', 'ضلعی فنانس کوآرڈینیٹر', 'DISTRICT FINANCE COORD');
+      default:
+        return tr('सदस्य', 'ممبر', 'MEMBER');
+    }
+  };
 
   const roleRaw = (member.role || 'member').toLowerCase();
-  const roleLabel =
-    roleRaw === 'community_admin'
-      ? language === 'hi'
-        ? 'समुदाय व्यवस्थापक'
-        : language === 'ur'
-        ? 'کمیونٹی ایڈمن'
-        : 'Community Admin'
-      : roleRaw === 'executive_admin'
-      ? language === 'hi'
-        ? 'कार्यकारी व्यवस्थापक'
-        : language === 'ur'
-        ? 'ایگزیکٹو ایڈمن'
-        : 'Executive Admin'
-      : roleRaw === 'premium_donor'
-      ? language === 'hi'
-        ? 'विशिष्ट दानदाता'
-        : language === 'ur'
-        ? 'پریمیم ڈونر'
-        : 'Premium Donor'
-      : language === 'hi'
-      ? 'सदस्य'
-      : language === 'ur'
-      ? 'ممبر'
-      : 'Member';
+  const roleLabel = getRoleLabel(roleRaw);
 
   const roleBadgeClass =
-    roleRaw === 'community_admin'
-      ? 'bg-blue-50 text-blue-700 border-blue-200'
+    roleRaw === 'super_admin'
+      ? 'bg-rose-50 text-rose-700 border-rose-300 font-black'
       : roleRaw === 'executive_admin'
-      ? 'bg-purple-50 text-purple-700 border-purple-200'
-      : roleRaw === 'premium_donor'
-      ? 'bg-amber-50 text-amber-800 border-amber-300'
-      : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        ? 'bg-purple-50 text-purple-700 border-purple-200 font-extrabold'
+        : roleRaw === 'community_admin'
+          ? 'bg-blue-50 text-blue-700 border-blue-200 font-bold'
+          : effectiveDistrictRole
+            ? 'bg-amber-50 text-amber-800 border-amber-300 font-bold'
+            : 'bg-emerald-50 text-emerald-700 border-emerald-200';
 
   const joinDate = member.created_at || member.joinDate || member.join_date;
   const formattedDate = joinDate
     ? new Date(joinDate).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      })
-    : language === 'hi'
-    ? 'सक्रिय'
-    : 'Active';
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })
+    : tr('सक्रिय', 'فعال', 'Active');
 
   return (
     <tr
@@ -324,23 +150,7 @@ const MemberTableRow: React.FC<{
         {serialNumber}
       </td>
 
-      {/* 2. Unique ID */}
-      <td className="py-3.5 px-3 whitespace-nowrap">
-        <button
-          onClick={() => handleCopyId(memId)}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-900 font-mono font-bold text-[11px] hover:bg-amber-100 border border-slate-200/80 transition-colors whitespace-nowrap cursor-pointer"
-          title="Click to copy ID"
-        >
-          <span>{memId}</span>
-          {copiedId === memId ? (
-            <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-          ) : (
-            <Copy className="w-3 h-3 text-slate-400 group-hover:text-slate-600 shrink-0" />
-          )}
-        </button>
-      </td>
-
-      {/* 3. Name */}
+      {/* 2. Name */}
       <td className="py-3.5 px-4 whitespace-nowrap">
         <div className="flex items-center gap-2.5">
           {member.avatar && !member.avatar.startsWith('file://') ? (
@@ -360,7 +170,7 @@ const MemberTableRow: React.FC<{
         </div>
       </td>
 
-      {/* 4. Email */}
+      {/* 3. Email */}
       <td className="py-3.5 px-3 whitespace-nowrap">
         {email !== '—' ? (
           <div className="flex items-center gap-1.5 text-slate-700 font-medium">
@@ -374,42 +184,23 @@ const MemberTableRow: React.FC<{
         )}
       </td>
 
-      {/* 5. Role */}
+      {/* 4. Role */}
       <td className="py-3.5 px-3 whitespace-nowrap">
         <div className="flex flex-col gap-1 items-start">
           <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${roleBadgeClass} whitespace-nowrap`}>
             <Shield className="w-3 h-3" />
             <span>{roleLabel}</span>
           </span>
-          {(member.districtRole || member.district_role) && (
+          {effectiveDistrictRole && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-300 whitespace-nowrap shadow-xs">
               <Award className="w-3 h-3 text-amber-600 shrink-0" />
-              <span>{formatTextByLang((member.districtRole || member.district_role) as string, language)}</span>
+              <span>{translateDistrictRole(effectiveDistrictRole, language)}</span>
             </span>
           )}
         </div>
       </td>
 
-      {/* 6. Community ID */}
-      <td className="py-3.5 px-3 whitespace-nowrap">
-        {communityId !== '—' ? (
-          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[11px] border border-slate-200">
-            {communityId}
-          </span>
-        ) : (
-          <span className="text-slate-400">—</span>
-        )}
-      </td>
-
-      {/* 7. Community Name */}
-      <td className="py-3.5 px-4 font-semibold text-slate-800 whitespace-nowrap">
-        <div className="flex items-center gap-1.5">
-          <Building2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-          <span>{displayCommName}</span>
-        </div>
-      </td>
-
-      {/* 8. District */}
+      {/* 5. District */}
       <td className="py-3.5 px-3 font-semibold text-slate-800 whitespace-nowrap">
         <div className="flex items-center gap-1.5">
           <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -417,7 +208,7 @@ const MemberTableRow: React.FC<{
         </div>
       </td>
 
-      {/* 9. Join Date */}
+      {/* 6. Join Date */}
       <td className="py-3.5 px-3 text-right font-medium text-slate-600 whitespace-nowrap">
         <div className="inline-flex items-center gap-1">
           <Calendar className="w-3.5 h-3.5 text-slate-400" />
@@ -440,40 +231,63 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
   const [selectedRole, setSelectedRole] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(15);
+  const [pageSize, setPageSize] = useState<number>(10);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showHierarchyModal, setShowHierarchyModal] = useState<boolean>(false);
 
   // Fetch Users from Database
   useEffect(() => {
+    let isMounted = true;
+
     const fetchMembers = async () => {
       setLoading(true);
       try {
+        // 1. Try fetching from /api/users
         const res = await fetch('/api/users');
         if (res.ok) {
           const json = await res.json();
           if (json.success && Array.isArray(json.data)) {
-            // Filter out super_admin per user request: "members will be all except super_admin"
-            const nonSuperAdmins = json.data.filter((u: any) => u.role !== 'super_admin');
-            setUsers(nonSuperAdmins);
+            if (isMounted) {
+              setUsers(json.data);
+              return;
+            }
           }
+        }
+
+        // 2. Direct Supabase query fallback via userService
+        try {
+          const directUsers = await getUsers();
+          if (Array.isArray(directUsers)) {
+            if (isMounted) {
+              setUsers(directUsers);
+              return;
+            }
+          }
+        } catch (dbErr) {
+          console.warn('Direct database users query fallback warning:', dbErr);
         }
       } catch (err) {
         console.error('Failed to fetch members from API:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchMembers();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Filtered members list
+  // Filtered members list with 3-tier sorting:
+  // 1. Admin and executive people
+  // 2. District role people
+  // 3. Member people
   const filteredMembers = useMemo(() => {
-    return users.filter((u) => {
-      // Exclude super_admin always
-      if (u.role === 'super_admin') return false;
-
+    const list = users.filter((u) => {
       // District Filter
       if (selectedDistrict) {
         const uDistrict = (u.city || u.district || '').toLowerCase();
@@ -484,7 +298,23 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
 
       // Role Filter
       if (selectedRole !== 'all') {
-        if (u.role !== selectedRole) return false;
+        const uRole = (u.role || '').toLowerCase();
+        const uDistRole = (u.districtRole || u.district_role || '').toLowerCase();
+        const effectiveDist = uDistRole || (DIST_ROLE_KEYS.includes(uRole) ? uRole : '');
+
+        if (selectedRole === 'admin_executive') {
+          const isTier1 = ['super_admin', 'executive_admin', 'community_admin'].includes(uRole) || uDistRole === 'community_admin';
+          if (!isTier1) return false;
+        } else if (selectedRole === 'district_roles') {
+          if (!effectiveDist) return false;
+        } else if (selectedRole === 'member') {
+          const isTier1 = ['super_admin', 'executive_admin', 'community_admin'].includes(uRole) || uDistRole === 'community_admin';
+          if (isTier1 || effectiveDist) return false;
+        } else {
+          if (uRole !== selectedRole && uDistRole !== selectedRole && effectiveDist !== selectedRole) {
+            return false;
+          }
+        }
       }
 
       // Search Query
@@ -512,6 +342,21 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
 
       return true;
     });
+
+    // Sort order:
+    // 1st: Admin and Executive people
+    // 2nd: District role people
+    // 3rd: Member people
+    return list.sort((a, b) => {
+      const pA = getMemberPriority(a);
+      const pB = getMemberPriority(b);
+      if (pA !== pB) return pA - pB;
+
+      // Secondary tie-breaker: newest creation date first
+      const dateA = new Date(a.created_at || a.joinDate || a.join_date || 0).getTime();
+      const dateB = new Date(b.created_at || b.joinDate || b.join_date || 0).getTime();
+      return dateB - dateA;
+    });
   }, [users, selectedDistrict, selectedRole, searchQuery]);
 
   // Reset Filters
@@ -524,11 +369,29 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
 
   // Pagination calculations
   const totalItems = filteredMembers.length;
-  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
   const paginatedMembers = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
+    const start = (validCurrentPage - 1) * pageSize;
     return filteredMembers.slice(start, start + pageSize);
-  }, [filteredMembers, currentPage, pageSize]);
+  }, [filteredMembers, validCurrentPage, pageSize]);
+
+  // Generate page numbers with smart ellipsis
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (validCurrentPage <= 4) {
+        pages.push(1, 2, 3, 4, 5, '...', totalPages);
+      } else if (validCurrentPage >= totalPages - 3) {
+        pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', validCurrentPage - 1, validCurrentPage, validCurrentPage + 1, '...', totalPages);
+      }
+    }
+    return pages;
+  };
 
   // Copy membership ID handler
   const handleCopyId = (idText: string) => {
@@ -539,13 +402,13 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 pb-20">
-      
+
       {/* ── 1. Hero Header Banner ── */}
       <section className="relative overflow-hidden text-white pt-10 pb-14 px-4 sm:px-6 lg:px-8" style={{ background: 'radial-gradient(ellipse at top, #133c2a 0%, #081e13 100%)' }}>
         <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#c8a84b_1px,transparent_1px)] [background-size:24px_24px]" />
-        
+
         <div className="relative max-w-5xl mx-auto text-center space-y-3.5">
-          
+
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest shadow-md" style={{ background: 'rgba(200,168,75,0.18)', border: '1.5px solid var(--mfct-gold)', color: 'var(--mfct-gold)' }}>
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
@@ -560,8 +423,8 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
             {language === 'hi'
               ? '“याद उनकी, सेवा हमारी” — पारदर्शी एवं पंजीकृत सदस्य डेटाबेस'
               : language === 'ur'
-              ? '”یاد ان کی، خدمت ہماری“ — شفاف و رجسٹرڈ ممبر ڈیٹا بیس'
-              : '“In Their Memory, In Our Service” — Transparent & Registered Member Directory'}
+                ? '”یاد ان کی، خدمت ہماری“ — شفاف و رجسٹرڈ ممبر ڈیٹا بیس'
+                : '“In Their Memory, In Our Service” — Transparent & Registered Member Directory'}
           </p>
 
           {/* Quick Metric Cards */}
@@ -603,7 +466,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
       {/* ── 2. Filters & Search Box ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20">
         <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl border border-slate-200/80 space-y-4">
-          
+
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-emerald-700" />
@@ -617,7 +480,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            
+
             {/* 1. Search Query */}
             <div className="relative lg:col-span-2">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -627,8 +490,8 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
                   language === 'hi'
                     ? 'नाम, यूनिक ID, ईमेल, समुदाय नाम से खोजें...'
                     : language === 'ur'
-                    ? 'نام، شناختی نمبر، ای میل، کمیونٹی سے تلاش کریں...'
-                    : 'Search by Name, Unique ID, Email, Community...'
+                      ? 'نام، شناختی نمبر، ای میل، کمیونٹی سے تلاش کریں...'
+                      : 'Search by Name, Unique ID, Email, Community...'
                 }
                 value={searchQuery}
                 onChange={(e) => {
@@ -652,9 +515,9 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
                 <option value="">
                   {language === 'hi' ? 'सभी जिले (All Districts)' : language === 'ur' ? 'تمام اضلاع' : 'Select District (All)'}
                 </option>
-                {UP_DISTRICTS.map((dist) => (
-                  <option key={dist} value={dist}>
-                    {language === 'hi' ? formatTextByLang(dist, 'hi') : dist}
+                {STANDARD_DISTRICTS.map((dist) => (
+                  <option key={dist.id} value={dist.nameEn}>
+                    {language === 'hi' ? dist.nameHi : language === 'ur' ? dist.nameUr : dist.nameEn}
                   </option>
                 ))}
               </select>
@@ -673,17 +536,23 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
                 <option value="all">
                   {language === 'hi' ? 'सभी पद (All Roles)' : language === 'ur' ? 'تمام عہدے' : 'All Roles'}
                 </option>
-                <option value="member">
-                  {language === 'hi' ? 'सदस्य (Member)' : language === 'ur' ? 'ممبر' : 'Member'}
+                <option value="admin_executive">
+                  {language === 'hi' ? 'प्रशासनिक व कार्यकारी (Admins & Executive)' : language === 'ur' ? 'انتظامی و ایگزیکٹو' : 'Admins & Executive'}
                 </option>
-                <option value="community_admin">
-                  {language === 'hi' ? 'समुदाय व्यवस्थापक (Community Admin)' : language === 'ur' ? 'کمیونٹی ایڈمن' : 'Community Admin'}
+                <option value="district_roles">
+                  {language === 'hi' ? 'जिला पदाधिकारी (District Officers)' : language === 'ur' ? 'ضلعی عہدیداران' : 'District Officers'}
+                </option>
+                <option value="member">
+                  {language === 'hi' ? 'सामान्य सदस्य (General Members)' : language === 'ur' ? 'عام ممبران' : 'General Members'}
+                </option>
+                <option value="super_admin">
+                  {language === 'hi' ? 'सुपर एडमिन (Super Admin)' : language === 'ur' ? 'سپر ایڈمن' : 'Super Admin'}
                 </option>
                 <option value="executive_admin">
                   {language === 'hi' ? 'कार्यकारी व्यवस्थापक (Executive Admin)' : language === 'ur' ? 'ایگزیکٹو ایڈمن' : 'Executive Admin'}
                 </option>
-                <option value="premium_donor">
-                  {language === 'hi' ? 'विशिष्ट दानदाता (Premium Donor)' : language === 'ur' ? 'پریمیم ڈونر' : 'Premium Donor'}
+                <option value="community_admin">
+                  {language === 'hi' ? 'सामुदायिक एडमिन (Community Admin)' : language === 'ur' ? 'کمیونٹی ایڈمن' : 'Community Admin'}
                 </option>
               </select>
 
@@ -691,7 +560,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
                 <button
                   onClick={handleResetFilters}
                   title="Reset Filters"
-                  className="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors shrink-0 flex items-center gap-1 text-xs font-bold"
+                  className="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors shrink-0 flex items-center gap-1 text-xs font-bold cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">{language === 'hi' ? 'रीसेट' : 'Reset'}</span>
@@ -704,208 +573,49 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
         </div>
       </section>
 
-      {/* ── 3. District Executive Committee Showcase (When District Selected or Available) ── */}
+      {/* ── 3. Member Directory Table (Direct Simple List) ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
-        {selectedDistrict && (
-          <div className="bg-gradient-to-br from-[#0a2318] to-[#103825] rounded-3xl p-5 sm:p-7 text-white shadow-xl border border-amber-400/30">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-emerald-700/60">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-400 text-slate-950">
-                    {language === 'hi' ? 'जिला टीम' : language === 'ur' ? 'ضلعی ٹیم' : 'DISTRICT CHAPTER'}
-                  </span>
-                  <span className="text-emerald-300 text-xs font-semibold">MFCT Chapter</span>
-                </div>
-                <h3 className="text-xl sm:text-2xl font-black text-white mt-1 flex items-center gap-2">
-                  <Award className="w-6 h-6 text-amber-400" />
-                  <span>
-                    {language === 'hi'
-                      ? `${formatTextByLang(selectedDistrict, 'hi')} जिला कार्यकारिणी`
-                      : language === 'ur'
-                      ? `${formatTextByLang(selectedDistrict, 'ur')} ضلعی کمیٹی`
-                      : `${selectedDistrict} District Executive Committee`}
-                  </span>
-                </h3>
-                <p className="text-xs text-emerald-100/80 mt-1 max-w-2xl">
-                  {language === 'hi'
-                    ? 'जिले में ट्रस्ट की समग्र गतिविधियों, विस्तार, संचालन एवं सहायता हेतु अधिकृत पदाधिकारी।'
-                    : language === 'ur'
-                    ? 'ضلع میں ٹرسٹ کی سرگرمیوں، تنظیمی توسیع اور رفاہی کاموں کے لیے نامزد عہدیداران۔'
-                    : 'Authorized office-bearers leading trust operations, relief drives, and community coordination in this district.'}
-                </p>
-              </div>
-
-              {/* Organizational Hierarchy Modal Button (Image 2) */}
-              <button
-                onClick={() => setShowHierarchyModal(true)}
-                className="px-4 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs flex items-center gap-2 transition-all shadow-md self-start sm:self-auto cursor-pointer"
-              >
-                <Network className="w-4 h-4 text-slate-950" />
-                <span>{language === 'hi' ? 'संगठनात्मक ढांचा' : language === 'ur' ? 'تنظیمی ڈھانچہ' : 'Organizational Hierarchy'}</span>
-              </button>
-            </div>
-
-            {/* 5 District Office-Bearer Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 pt-5">
-              {[
-                {
-                  slotNumber: '01',
-                  key: 'district_president',
-                  titleEn: 'District President',
-                  titleHi: 'जिला अध्यक्ष',
-                  titleUr: 'ضلعی صدر',
-                  workEn: 'Leadership and coordination of all MFCT activities in the district.',
-                  workHi: 'जिले में समस्त गतिविधियों का नेतृत्व एवं समन्वय।',
-                  workUr: 'ضلع میں تمام سرگرمیوں کی قیادت اور رابطہ کاری۔',
-                  badge: 'bg-rose-500/20 text-rose-300 border-rose-400/40',
-                },
-                {
-                  slotNumber: '02',
-                  key: 'district_coordinator',
-                  titleEn: 'District Coordinator',
-                  titleHi: 'जिला संयोजक',
-                  titleUr: 'ضلعی کوآرڈینیٹر',
-                  workEn: 'Daily coordination, membership expansion, team formation, and reporting.',
-                  workHi: 'दैनिक समन्वय, सदस्यता विस्तार, टीम गठन एवं रिपोर्टिंग।',
-                  workUr: 'روزمرہ رابطہ کاری، رکنیت سازی، ٹیم کی تشکیل اور رپورٹنگ۔',
-                  badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40',
-                },
-                {
-                  slotNumber: '03',
-                  key: 'district_gen_secretary',
-                  titleEn: 'District General Secretary / Org Incharge',
-                  titleHi: 'जिला महासचिव / संगठन प्रभारी',
-                  titleUr: 'ضلعی جنرل سیکرٹری / انچارج تنظیم',
-                  workEn: 'Organizational expansion and coordination of block / city teams.',
-                  workHi: 'संगठन विस्तार एवं ब्लॉक / नगर टीमों का समन्वय।',
-                  workUr: 'تنظیمی توسیع اور بلاک / بلدیاتی ٹیموں کی رابطہ کاری۔',
-                  badge: 'bg-purple-500/20 text-purple-300 border-purple-400/40',
-                },
-                {
-                  slotNumber: '04',
-                  key: 'district_secretary',
-                  titleEn: 'District Secretary',
-                  titleHi: 'जिला सचिव',
-                  titleUr: 'ضلعی سیکرٹری',
-                  workEn: 'Correspondence, meeting proceedings, and documentation.',
-                  workHi: 'पत्राचार, बैठक कार्यवाही एवं दस्तावेजीकरण।',
-                  workUr: 'خط و کتابت، میٹنگ کی کارروائی اور دفتری ریکارڈ۔',
-                  badge: 'bg-blue-500/20 text-blue-300 border-blue-400/40',
-                },
-                {
-                  slotNumber: '05',
-                  key: 'district_finance_coord',
-                  titleEn: 'District Finance Coordinator',
-                  titleHi: 'जिला वित्त समन्वयक',
-                  titleUr: 'ضلعی فنانس کوآرڈینیٹر',
-                  workEn: 'Financial records and documentary support for official transactions.',
-                  workHi: 'वित्तीय रिकॉर्ड एवं आधिकारिक लेन-देन के दस्तावेजी सहयोग।',
-                  workUr: 'مالیاتی ریکارڈ اور سرکاری لین دین میں دستاویزی معاونت۔',
-                  badge: 'bg-amber-500/20 text-amber-300 border-amber-400/40',
-                },
-              ].map((roleSlot) => {
-                const assignedMember = users.find((u) => {
-                  const uDist = (u.district || u.city || '').toLowerCase();
-                  const isDist = uDist === selectedDistrict.toLowerCase() || uDist.includes(selectedDistrict.toLowerCase());
-                  const r = (u.districtRole || u.district_role || (u.role as string) || '').toLowerCase();
-                  return isDist && (r === roleSlot.key || r === roleSlot.titleEn.toLowerCase());
-                });
-
-                const roleTitle = language === 'hi' ? roleSlot.titleHi : language === 'ur' ? roleSlot.titleUr : roleSlot.titleEn;
-                const roleWork = language === 'hi' ? roleSlot.workHi : language === 'ur' ? roleSlot.workUr : roleSlot.workEn;
-
-                return (
-                  <div
-                    key={roleSlot.key}
-                    className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-all shadow-inner"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-1 mb-2.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="w-5 h-5 rounded-md flex items-center justify-center font-black text-[10px] bg-amber-400 text-slate-950 shrink-0">
-                            {roleSlot.slotNumber}
-                          </span>
-                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border truncate ${roleSlot.badge}`}>
-                            {roleTitle}
-                          </span>
-                        </div>
-                      </div>
-
-                      {assignedMember ? (
-                        <div className="space-y-2 mt-2">
-                          <div className="flex items-center gap-2.5">
-                            {assignedMember.avatar ? (
-                              <img
-                                src={assignedMember.avatar}
-                                alt={assignedMember.name}
-                                className="w-10 h-10 rounded-full object-cover border-2 border-amber-400 shrink-0"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-amber-400 text-slate-950 font-black text-sm flex items-center justify-center shrink-0">
-                                {(assignedMember.name || 'U')[0].toUpperCase()}
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <h4 className="text-xs font-bold text-white truncate">
-                                {formatTextByLang(assignedMember.name, language)}
-                              </h4>
-                              <p className="text-[10px] text-emerald-200 font-mono truncate">
-                                ID: {assignedMember.membership_id || assignedMember.membershipId || assignedMember.id?.slice(0, 8)}
-                              </p>
-                            </div>
-                          </div>
-
-                          {assignedMember.phone && (
-                            <div className="flex items-center gap-1 text-[11px] text-emerald-200">
-                              <Phone className="w-3 h-3 text-amber-400 shrink-0" />
-                              <span className="font-mono truncate">{assignedMember.phone}</span>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="py-3 text-center border border-dashed border-white/20 rounded-xl bg-black/10 mt-1">
-                          <span className="text-[11px] text-emerald-200/60 font-medium">
-                            {language === 'hi' ? 'पद रिक्त (Open Post)' : language === 'ur' ? 'عہدہ خالی ہے' : 'Post Open'}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <p className="text-[10px] text-emerald-100/70 border-t border-white/10 pt-2.5 mt-3 leading-relaxed">
-                      {roleWork}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
-          
+
           {/* Top Bar inside card */}
           <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50/50">
             <div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2 flex-wrap">
                 <Users className="w-5 h-5 text-emerald-700" />
                 <span>
                   {language === 'hi'
                     ? 'MFCT सदस्य विवरण तालिका'
                     : language === 'ur'
-                    ? 'ایم ایف سی ٹی ممبر تفصیلات'
-                    : 'MFCT Member Details Directory'}
+                      ? 'ایم ایف سی ٹی ممبر تفصیلات'
+                      : 'MFCT Member Details Directory'}
                 </span>
+                {selectedDistrict && (
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    {selectedDistrict}
+                  </span>
+                )}
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
                 {language === 'hi'
                   ? 'सभी वैधानिक एवं सक्रिय सदस्यों का पूर्ण पारदर्शी रिकॉर्ड'
                   : language === 'ur'
-                  ? 'تمام رجسٹرڈ اور فعال ممبران کی مکمل شفاف تفصیلات'
-                  : 'Complete transparent records of active & registered MFCT members'}
+                    ? 'تمام رجسٹرڈ اور فعال ممبران की مکمل شفاف تفصیلات'
+                    : 'Complete transparent records of active & registered MFCT members'}
               </p>
             </div>
 
-            <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+              {/* Organizational Hierarchy Modal Button */}
+              <button
+                type="button"
+                onClick={() => setShowHierarchyModal(true)}
+                className="py-1.5 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs shrink-0 cursor-pointer"
+                title="View Organizational Framework"
+              >
+                <Network className="w-3.5 h-3.5 text-emerald-700" />
+                <span>{language === 'hi' ? 'संगठनात्मक ढांचा' : language === 'ur' ? 'تنظیمی ڈھانچہ' : 'Hierarchy'}</span>
+              </button>
+
               {/* Page Size Select */}
               <div className="flex items-center gap-1.5 text-xs text-slate-600">
                 <span>{language === 'hi' ? 'दिखाएँ:' : 'Show:'}</span>
@@ -915,10 +625,11 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
                     setPageSize(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none"
+                  className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none cursor-pointer"
                 >
-                  <option value={15}>15</option>
-                  <option value={30}>30</option>
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
                   <option value={50}>50</option>
                   <option value={100}>100</option>
                 </select>
@@ -965,12 +676,9 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
                 <thead>
                   <tr className="bg-[#103825] text-white uppercase text-[11px] tracking-wider font-bold">
                     <th className="py-3.5 px-3 text-center w-12 whitespace-nowrap">S.No.</th>
-                    <th className="py-3.5 px-3 whitespace-nowrap">Unique ID</th>
                     <th className="py-3.5 px-4 whitespace-nowrap">{language === 'hi' ? 'नाम (Name)' : 'Name'}</th>
                     <th className="py-3.5 px-3 whitespace-nowrap">{language === 'hi' ? 'ईमेल (Email)' : 'Email'}</th>
                     <th className="py-3.5 px-3 whitespace-nowrap">{language === 'hi' ? 'पद (Role)' : 'Role'}</th>
-                    <th className="py-3.5 px-3 whitespace-nowrap">Community ID</th>
-                    <th className="py-3.5 px-4 whitespace-nowrap">{language === 'hi' ? 'समुदाय नाम (Community Name)' : 'Community Name'}</th>
                     <th className="py-3.5 px-3 whitespace-nowrap">{language === 'hi' ? 'जिला (District)' : 'District'}</th>
                     <th className="py-3.5 px-3 text-right whitespace-nowrap">{language === 'hi' ? 'शामिल होने की तिथि (Joining Date)' : language === 'ur' ? 'شمولیت کی تاریخ' : 'Joining Date'}</th>
                   </tr>
@@ -981,11 +689,9 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
                       key={member.id || idx}
                       member={member}
                       idx={idx}
-                      currentPage={currentPage}
+                      currentPage={validCurrentPage}
                       pageSize={pageSize}
                       language={language}
-                      copiedId={copiedId}
-                      handleCopyId={handleCopyId}
                     />
                   ))}
                 </tbody>
@@ -994,48 +700,119 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
           )}
 
           {/* Pagination Controls */}
-          {!loading && totalPages > 1 && (
-            <div className="p-4 border-t border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <span className="text-slate-500 font-medium">
-                {language === 'hi'
-                  ? `कुल ${totalItems} में से ${Math.min((currentPage - 1) * pageSize + 1, totalItems)} से ${Math.min(currentPage * pageSize, totalItems)} सदस्य दिखाए जा रहे हैं`
-                  : `Showing ${Math.min((currentPage - 1) * pageSize + 1, totalItems)} to ${Math.min(currentPage * pageSize, totalItems)} of ${totalItems} members`}
-              </span>
+          {!loading && totalItems > 0 && (
+            <div className="p-4 border-t border-slate-100 bg-slate-50/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+              {/* Left: Summary & Rows Per Page */}
+              <div className="flex flex-wrap items-center gap-3 text-slate-600">
+                <span>
+                  {language === 'hi' ? 'प्रविष्टियाँ:' : language === 'ur' ? 'اندراجات:' : 'Showing:'}{' '}
+                  <strong className="font-bold text-slate-900">
+                    {(validCurrentPage - 1) * pageSize + 1} - {Math.min(validCurrentPage * pageSize, totalItems)}
+                  </strong>{' '}
+                  {language === 'hi' ? 'कुल' : language === 'ur' ? 'کل' : 'of'}{' '}
+                  <strong className="font-bold text-slate-900">{totalItems}</strong>{' '}
+                  {language === 'hi' ? 'सदस्य' : language === 'ur' ? 'ممبران' : 'members'}
+                </span>
 
-              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 ml-0 sm:ml-2">
+                  <span className="text-[11px] text-slate-500">
+                    {language === 'hi' ? 'प्रति पृष्ठ:' : language === 'ur' ? 'فی صفحہ:' : 'Per page:'}
+                  </span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 outline-none cursor-pointer hover:border-emerald-500 transition-colors"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Right: Page Navigation Buttons */}
+              <div className="flex items-center gap-1.5 self-center sm:self-auto">
+                {/* First Page */}
                 <button
-                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  type="button"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={validCurrentPage <= 1}
+                  className="px-2 py-1.5 rounded-lg border border-slate-200 bg-white font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  title={language === 'hi' ? 'पहला पृष्ठ' : language === 'ur' ? 'پہلا صفحہ' : 'First Page'}
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  «
                 </button>
 
-                {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-                  const pageNum = i + 1;
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`w-7 h-7 rounded-lg font-bold transition-all ${
-                        currentPage === pageNum
-                          ? 'bg-[#103825] text-amber-300 shadow-sm'
-                          : 'bg-white border border-slate-200 hover:bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-
-                {totalPages > 5 && <span className="px-1 text-slate-400">...</span>}
-
+                {/* Prev Page */}
                 <button
-                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={validCurrentPage <= 1}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  title={language === 'hi' ? 'पिछला पृष्ठ' : language === 'ur' ? 'پچھلا صفحہ' : 'Previous Page'}
                 >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">
+                    {language === 'hi' ? 'पिछला' : language === 'ur' ? 'پچھلا' : 'Prev'}
+                  </span>
+                </button>
+
+                {/* Numbered Page Buttons */}
+                <div className="flex items-center gap-1">
+                  {getPageNumbers().map((page, idx) => {
+                    if (page === '...') {
+                      return (
+                        <span key={`ellipsis-${idx}`} className="px-2 py-1 text-slate-400 font-bold">
+                          ...
+                        </span>
+                      );
+                    }
+                    const pageNum = Number(page);
+                    const isActive = pageNum === validCurrentPage;
+                    return (
+                      <button
+                        key={pageNum}
+                        type="button"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`min-w-8 h-8 px-2 flex items-center justify-center rounded-lg font-bold text-xs transition-colors cursor-pointer ${isActive
+                            ? 'bg-[#103825] text-amber-300 shadow-sm border border-[#103825]'
+                            : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                          }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Next Page */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                  disabled={validCurrentPage >= totalPages}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  title={language === 'hi' ? 'अगला पृष्ठ' : language === 'ur' ? 'اگلا صفحہ' : 'Next Page'}
+                >
+                  <span className="hidden sm:inline">
+                    {language === 'hi' ? 'अगला' : language === 'ur' ? 'اگلا' : 'Next'}
+                  </span>
                   <ChevronRight className="w-4 h-4" />
+                </button>
+
+                {/* Last Page */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={validCurrentPage >= totalPages}
+                  className="px-2 py-1.5 rounded-lg border border-slate-200 bg-white font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  title={language === 'hi' ? 'अंतिम पृष्ठ' : language === 'ur' ? 'آخری صفحہ' : 'Last Page'}
+                >
+                  »
                 </button>
               </div>
             </div>
@@ -1063,15 +840,15 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
                   {language === 'hi'
                     ? 'MFCT संगठनात्मक ढांचा एवं कार्यप्रणाली'
                     : language === 'ur'
-                    ? 'MFCT تنظیمی ڈھانچہ اور درجہ بندی'
-                    : 'MFCT Organizational Hierarchy & Workflow'}
+                      ? 'MFCT تنظیمی ڈھانچہ اور درجہ بندی'
+                      : 'MFCT Organizational Hierarchy & Workflow'}
                 </h2>
                 <p className="text-xs text-slate-500 mt-1 max-w-lg mx-auto">
                   {language === 'hi'
                     ? 'केंद्रीय नेतृत्व से लेकर जमीनी स्तर के स्वयंसेवकों तक 8-स्तरीय पारदर्शी प्रशासनिक श्रृंखला।'
                     : language === 'ur'
-                    ? 'مرکزی قیادت سے لے کر نچلی سطح کے رضاکاروں تک شفاف 8 درجاتی تنظیمی سلسلہ۔'
-                    : 'Transparent 8-tier administrative chain connecting central apex leadership with grassroots volunteers.'}
+                      ? 'مرکزی قیادت سے لے کر نچلی سطح کے رضاکاروں تک شفاف 8 درجاتی تنظیمی سلسلہ۔'
+                      : 'Transparent 8-tier administrative chain connecting central apex leadership with grassroots volunteers.'}
                 </p>
               </div>
 
@@ -1084,11 +861,10 @@ export const MembersPage: React.FC<MembersPageProps> = ({ onOpenRegister }) => {
                   return (
                     <React.Fragment key={tier.level}>
                       <div
-                        className={`p-3.5 rounded-2xl border text-center transition-all shadow-xs ${
-                          tier.isGoldHighlight
-                            ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 border-amber-400 font-extrabold'
-                            : 'bg-emerald-950 text-white border-emerald-700/80 font-bold'
-                        }`}
+                        className={`p-3.5 rounded-2xl border text-center transition-all shadow-xs ${tier.isGoldHighlight
+                          ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 border-amber-400 font-extrabold'
+                          : 'bg-emerald-950 text-white border-emerald-700/80 font-bold'
+                          }`}
                       >
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <span className="text-[10px] uppercase font-mono tracking-wider opacity-75">
