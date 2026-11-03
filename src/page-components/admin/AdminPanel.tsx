@@ -381,6 +381,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
           { id: 'ContactMessageTab', label: t('admin.tabContactMessages', 'Contact Messages'), icon: MessageSquare },
           { id: 'account_details', label: t('admin.tabAccountDetails', 'Account Details'), icon: FileCheck },
+          { id: 'nominee_details', label: t('admin.tabNominee', 'Nominee Details'), icon: UserCheck },
           { id: 'female_family_members', label: t('admin.tabFemaleMembers', 'Female Family Members'), icon: Heart },
         ];
         break;
@@ -400,6 +401,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           { id: 'gallery_manage', label: t('admin.tabGalleryManage', 'Manage Gallery'), icon: Sparkles },
           { id: 'ContactMessageTab', label: t('admin.tabContactMessages', 'Contact Messages'), icon: MessageSquare },
           { id: 'account_details', label: t('admin.tabAccountDetails', 'Account Details'), icon: FileCheck },
+          { id: 'nominee_details', label: t('admin.tabNominee', 'Nominee Details'), icon: UserCheck },
           { id: 'female_family_members', label: t('admin.tabFemaleMembers', 'Female Family Members'), icon: Heart },
         ];
         break;
