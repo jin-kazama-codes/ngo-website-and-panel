@@ -2,8 +2,9 @@ import { MemberNominee, MemberBankDetails, FemaleFamilyMember } from '../types';
 
 // ─── MEMBER NOMINEE SERVICE (DIRECT API) ───────────────────────────────────────
 
-export async function getMemberNominees(userId: string): Promise<MemberNominee[]> {
-  const res = await fetch(`/api/member-nominee?userId=${encodeURIComponent(userId)}`);
+export async function getMemberNominees(userId?: string): Promise<MemberNominee[]> {
+  const url = userId ? `/api/member-nominee?userId=${encodeURIComponent(userId)}` : '/api/member-nominee';
+  const res = await fetch(url);
   const json = await res.json().catch(() => ({}));
   if (!res.ok || !json.success) {
     throw new Error(json.error || `Failed to fetch nominee details (${res.status})`);
