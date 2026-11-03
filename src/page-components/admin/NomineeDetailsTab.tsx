@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { User, MemberNominee } from '../../types';
 import {
   getMemberNominees,
@@ -8,6 +8,7 @@ import {
   updateMemberNominee,
   deleteMemberNominee,
 } from '../../services/memberService';
+import { getUsers } from '../../services/userService';
 import { uploadImage } from '../../lib/storage';
 import { useLanguage } from '../../context/LanguageContext';
 import { NomineeCardSkeleton } from '../../components/Skeletons';
@@ -30,6 +31,10 @@ import {
   FileText,
   User as UserIcon,
   Percent,
+  Search,
+  Users,
+  Filter,
+  Check,
 } from 'lucide-react';
 
 interface NomineeDetailsTabProps {
@@ -49,8 +54,18 @@ const RELATION_OPTIONS = [
 
 export const NomineeDetailsTab: React.FC<NomineeDetailsTabProps> = ({ activeUser }) => {
   const { language } = useLanguage();
+
+  const isSuperOrExecutive =
+    activeUser?.role === 'super_admin' ||
+    activeUser?.role === 'executive_admin';
+
   const [nominees, setNominees] = useState<MemberNominee[]>([]);
+  const [usersList, setUsersList] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [viewScope, setViewScope] = useState<'all' | 'mine'>(isSuperOrExecutive ? 'all' : 'mine');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [relationFilter, setRelationFilter] = useState<string>('all');
+
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [editingNominee, setEditingNominee] = useState<MemberNominee | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -58,6 +73,7 @@ export const NomineeDetailsTab: React.FC<NomineeDetailsTabProps> = ({ activeUser
   const [modalError, setModalError] = useState<string>('');
 
   // Form State
+  const [targetUserId, setTargetUserId] = useState<string>(activeUser?.id || '');
   const [nomineeName, setNomineeName] = useState('');
   const [relation, setRelation] = useState('Spouse');
   const [phone, setPhone] = useState('');
@@ -83,12 +99,29 @@ export const NomineeDetailsTab: React.FC<NomineeDetailsTabProps> = ({ activeUser
     setTimeout(() => setToastMsg(null), 4000);
   };
 
+  const userMap = useMemo(() => {
+    const map = new Map<string, User>();
+    usersList.forEach((u) => {
+      if (u.id) map.set(u.id, u);
+    });
+    return map;
+  }, [usersList]);
+
   const loadData = async () => {
     if (!activeUser?.id) return;
     setLoading(true);
     try {
-      const data = await getMemberNominees(activeUser.id);
-      setNominees(data);
+      if (isSuperOrExecutive) {
+        const [nomData, usrData] = await Promise.all([
+          getMemberNominees(), // all nominees
+          getUsers().catch(() => []),
+        ]);
+        setNominees(nomData || []);
+        setUsersList(usrData || []);
+      } else {
+        const nomData = await getMemberNominees(activeUser.id);
+        setNominees(nomData || []);
+      }
     } catch (err: any) {
       console.error('Error loading nominee details:', err);
       showToast(err.message || 'Failed to load nominees', 'error');
@@ -99,10 +132,12 @@ export const NomineeDetailsTab: React.FC<NomineeDetailsTabProps> = ({ activeUser
 
   useEffect(() => {
     loadData();
-  }, [activeUser?.id]);
+  }, [activeUser?.id, isSuperOrExecutive]);
 
   const openAddModal = () => {
+    if (isSuperOrExecutive) return;
     setEditingNominee(null);
+    setTargetUserId(activeUser?.id || '');
     setNomineeName('');
     setRelation('Spouse');
     setPhone('');
@@ -110,7 +145,7 @@ export const NomineeDetailsTab: React.FC<NomineeDetailsTabProps> = ({ activeUser
     setDob('');
     setAge('');
     setAadhaarNumber('');
-    setAddress(activeUser.address || '');
+    setAddress(activeUser?.address || '');
     setSharePercentage('100');
     setIdProofUrl('');
     setModalError('');
@@ -119,6 +154,7 @@ export const NomineeDetailsTab: React.FC<NomineeDetailsTabProps> = ({ activeUser
 
   const openEditModal = (nom: MemberNominee) => {
     setEditingNominee(nom);
+    setTargetUserId(nom.user_id || activeUser?.id || '');
     setNomineeName(nom.nominee_name);
     setRelation(nom.relation);
     setPhone(nom.phone);
@@ -167,8 +203,9 @@ export const NomineeDetailsTab: React.FC<NomineeDetailsTabProps> = ({ activeUser
 
     setSubmitting(true);
     try {
+      const resolvedUserId = isSuperOrExecutive ? (targetUserId || activeUser.id) : activeUser.id;
       const payload: Partial<MemberNominee> = {
-        user_id: activeUser.id,
+        user_id: resolvedUserId,
         nominee_name: nomineeName.trim(),
         relation,
         phone: phone.trim(),
@@ -186,7 +223,7 @@ export const NomineeDetailsTab: React.FC<NomineeDetailsTabProps> = ({ activeUser
         showToast(tr('नॉमिनी विवरण सफलतापूर्वक अपडेट किया गया', 'نامزد کی تفصیلات کامیابی سے اپ ڈیٹ ہو گئیں', 'Nominee details updated successfully'));
       } else {
         await saveMemberNominee(payload as any);
-        showToast(tr('नॉमिनी सफलतापूर्वक जोड़ा गया', 'نامزد کامیابی سے شامل کیا गया', 'Nominee added successfully'));
+        showToast(tr('नॉमिनी सफलतापूर्वक जोड़ा गया', 'نامزد کامیابی سے شامل کیا ਗਿਆ', 'Nominee added successfully'));
       }
 
       setModalOpen(false);
@@ -209,15 +246,62 @@ export const NomineeDetailsTab: React.FC<NomineeDetailsTabProps> = ({ activeUser
       setDeleteConfirmId(null);
       await loadData();
     } catch (err: any) {
-      showToast(err.message || tr('हटाने में विफल', 'حذف کرنے में ناکام', 'Failed to remove nominee'), 'error');
+      showToast(err.message || tr('हटाने में विफल', 'حذف کرنے میں ناکام', 'Failed to remove nominee'), 'error');
     } finally {
       setDeletingId(null);
     }
   };
 
+  // Filtered nominees list
+  const filteredNominees = useMemo(() => {
+    return nominees.filter((nom) => {
+      // 1. Scope filter
+      if (!isSuperOrExecutive && nom.user_id !== activeUser?.id) {
+        return false;
+      }
+
+      // 2. Relation filter
+      if (relationFilter !== 'all' && nom.relation.toLowerCase() !== relationFilter.toLowerCase()) {
+        return false;
+      }
+
+      // 3. Search query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const member = userMap.get(nom.user_id);
+        const matchesNominee =
+          (nom.nominee_name && nom.nominee_name.toLowerCase().includes(q)) ||
+          (nom.phone && nom.phone.includes(q)) ||
+          (nom.aadhaar_number && nom.aadhaar_number.includes(q)) ||
+          (nom.relation && nom.relation.toLowerCase().includes(q));
+
+        const matchesMember =
+          member &&
+          ((member.name && member.name.toLowerCase().includes(q)) ||
+            (member.membershipId && member.membershipId.toLowerCase().includes(q)) ||
+            (member.phone && member.phone.includes(q)) ||
+            (member.city && member.city.toLowerCase().includes(q)));
+
+        if (!matchesNominee && !matchesMember) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [nominees, viewScope, relationFilter, searchQuery, activeUser?.id, userMap]);
+
+  // Statistics
+  const totalCount = nominees.length;
+  const myCount = nominees.filter((n) => n.user_id === activeUser?.id).length;
+  const uniqueMembersCovered = useMemo(() => {
+    return new Set(nominees.map((n) => n.user_id)).size;
+  }, [nominees]);
+  const withIdProofCount = nominees.filter((n) => Boolean(n.id_proof_url)).length;
+
   return (
     <div className="space-y-6">
-      {/* Toast Notification - Centered at top with highest z-index so it is clearly visible everywhere */}
+      {/* Toast Notification */}
       {toastMsg && (
         <div
           className={`fixed top-8 left-1/2 -translate-x-1/2 z-[9999] min-w-[320px] max-w-lg px-6 py-4 rounded-2xl shadow-2xl flex items-center justify-between gap-3.5 border text-sm font-bold animate-in fade-in zoom-in-95 backdrop-blur-md ${
@@ -248,77 +332,221 @@ export const NomineeDetailsTab: React.FC<NomineeDetailsTabProps> = ({ activeUser
               <ShieldCheck className="w-3.5 h-3.5" />
               {tr('नियम 13 - सीधे नॉमिनी सहायता', 'قاعدہ 13 - براہ راست نامزد امداد', 'Trust Bylaw Rule 13 - Mutual Solace')}
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              {tr('सदस्य नॉमिनी विवरण', 'ممبر نامزد تفصیلات', 'Member Nominee Details')}
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
+              <span>{isSuperOrExecutive ? tr('सभी सदस्य नॉमिनी विवरण (प्रशासक)', 'تمام ممبر نامزد تفصیلات (ایڈمن)', 'Member Nominees Central Registry') : tr('सदस्य नॉमिनी विवरण', 'ممبر نامزد تفصیلات', 'Member Nominee Details')}</span>
             </h2>
             <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
               {tr(
                 'किसी सदस्य के असामयिक निधन की दुर्भाग्यपूर्ण स्थिति में, ट्रस्ट की पारस्परिक सहयोग राशि केवल आपके द्वारा नामित व सत्यापित नॉमिनी को सीधे बैंक खाते में प्रदान की जाती है।',
                 'کسی ممبر کے ناگہانی انتقال کی صورت میں ٹرسٹ کی باہمی مالی امداد براہ راست نامزد وارث کے بینک اکاؤنٹ میں فراہم کی جاتی ہے۔',
-                'In the unfortunate event of an untimely demise, the Trust mutual assistance solace is disbursed directly into the verified bank account of your designated nominee.'
+                'In the unfortunate event of an untimely demise, the Trust mutual assistance solace is disbursed directly into the verified bank account of the designated nominee.'
               )}
             </p>
           </div>
 
-          <button
-            onClick={openAddModal}
-            className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm shadow-lg shadow-emerald-900/30 transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
-          >
-            <Plus className="w-4 h-4 stroke-[3]" />
-            {nominees.length > 0
-              ? tr('दूसरा नॉमिनी जोड़ें', 'دوسرا نامزد شامل کریں', 'Add Co-Nominee')
-              : tr('नॉमिनी जोड़ें', 'نامزد شامل کریں', 'Add Nominee')}
-          </button>
+          {/* Create Button - Only for Member and District roles, NOT for Super Admin and Executive Admin */}
+          {!isSuperOrExecutive && (
+            <button
+              onClick={openAddModal}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm shadow-lg shadow-emerald-900/30 transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              {tr('नॉमिनी जोड़ें', 'نامزد شامل کریں', '+ Add Nominee')}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Admin Metric Cards (Super Admin & Exec Admin only) */}
+      {isSuperOrExecutive && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tr('कुल पंजीकृत नॉमिनी', 'کل رجسٹرڈ نامزد', 'Total Registered Nominees')}
+            </span>
+            <p className="text-2xl font-black mt-1 text-slate-900 dark:text-white">
+              {loading ? <span className="inline-block w-12 h-7 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" /> : totalCount}
+            </p>
+            <span className="text-[11px] text-slate-500 mt-1 block">
+              {tr('सभी सदस्यों के नॉमिनी', 'تمام ممبران کے نامزد', 'Across entire membership')}
+            </span>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tr('कवर किए गए सदस्य', 'شامل ممبران', 'Members with Nominees')}
+            </span>
+            <p className="text-2xl font-black mt-1 text-emerald-600 dark:text-emerald-400">
+              {loading ? <span className="inline-block w-12 h-7 bg-emerald-100 dark:bg-emerald-950/60 rounded animate-pulse" /> : uniqueMembersCovered}
+            </p>
+            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 block">
+              {tr('सत्यापित परिवार सुरक्षा', 'خاندانی تحفظ محفوظ', 'Family welfare secured')}
+            </span>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tr('आईडी प्रमाण संलग्न', 'شناختی ثبوت منسلک', 'ID Proofs Attached')}
+            </span>
+            <p className="text-2xl font-black mt-1 text-teal-600 dark:text-teal-400">
+              {loading ? <span className="inline-block w-12 h-7 bg-teal-100 dark:bg-teal-950/60 rounded animate-pulse" /> : withIdProofCount}
+            </p>
+            <span className="text-[11px] text-teal-600 dark:text-teal-400 mt-1 block">
+              {tr('सत्यापन दस्तावेज उपलब्ध', 'دستاویزات دستیاب', 'Verified document on file')}
+            </span>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tr('सह-नॉमिनी संख्या', 'شریک نامزد', 'Co-Nominees Count')}
+            </span>
+            <p className="text-2xl font-black mt-1 text-indigo-600 dark:text-indigo-400">
+              {loading ? <span className="inline-block w-12 h-7 bg-indigo-100 dark:bg-indigo-950/60 rounded animate-pulse" /> : Math.max(0, totalCount - uniqueMembersCovered)}
+            </p>
+            <span className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-1 block">
+              {tr('अतिरिक्त नामांकित व्यक्ति', 'اضافی نامزد', 'Secondary beneficiaries')}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Search & Filters Bar */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {isSuperOrExecutive ? (
+            <div className="flex items-center gap-2.5 text-slate-800 dark:text-slate-200 font-extrabold text-sm">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                <Users className="w-4 h-4" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span>{tr('सभी सदस्यों के पंजीकृत नॉमिनी', 'تمام ممبران کے رجسٹرڈ نامزد', 'All Registered Members’ Nominees')}</span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  {totalCount}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-bold text-sm">
+              <UserCheck className="w-4 h-4 text-emerald-500" />
+              <span>{tr('मेरे पंजीकृत नॉमिनी', 'میرے رجسٹرڈ نامزد', 'My Registered Nominees')} ({totalCount})</span>
+            </div>
+          )}
+
+          {/* Quick Search & Relation Filter */}
+          <div className="flex flex-wrap items-center gap-3 flex-1 max-w-xl justify-end">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={
+                  isSuperOrExecutive && viewScope === 'all'
+                    ? tr('नॉमिनी, फ़ोन, आधार, या सदस्य नाम/ID से खोजें...', 'تلاش نامزد، فون، یا ممبر...', 'Search nominee, phone, Aadhaar, member...')
+                    : tr('नॉमिनी नाम या फ़ोन से खोजें...', 'تلاش نامزد یا فون...', 'Search nominee name or phone...')
+                }
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-white placeholder-slate-400 font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            <select
+              value={relationFilter}
+              onChange={(e) => setRelationFilter(e.target.value)}
+              className="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-800 dark:text-slate-200 font-bold focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+            >
+              <option value="all">{tr('सभी रिश्ते (All Relations)', 'تمام رشتے', 'All Relations')}</option>
+              {RELATION_OPTIONS.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {language === 'hi' ? r.labelHi : language === 'ur' ? r.labelUr : r.labelEn}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Nominees Grid */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <NomineeCardSkeleton />
           <NomineeCardSkeleton />
         </div>
-      ) : nominees.length === 0 ? (
+      ) : filteredNominees.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-8 sm:p-12 text-center flex flex-col items-center justify-center">
           <div className="w-20 h-20 rounded-3xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-5 shadow-inner">
             <HeartHandshake className="w-10 h-10 stroke-[1.5]" />
           </div>
           <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">
-            {tr('कोई नॉमिनी पंजीकृत नहीं है', 'کوئی نامزد رجسٹرڈ نہیں ہے', 'No Nominee Registered Yet')}
+            {searchQuery || relationFilter !== 'all'
+              ? tr('कोई नॉमिनी परिणाम नहीं मिला', 'کوئی نتیجہ نہیں ملا', 'No Nominees Matched Your Filter')
+              : tr('कोई नॉमिनी पंजीकृत नहीं है', 'کوئی نامزد رجسٹرڈ نہیں ہے', 'No Nominees Registered Yet')}
           </h3>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
-            {tr(
-              'ट्रस्ट नियमावली के अनुसार सभी सदस्यों के लिए नॉमिनी का विवरण दर्ज करना अनिवार्य है। कृपया अपने परिवार की सुरक्षा व सहायता हेतु नॉमिनी जोड़ें।',
-              'ٹرسٹ کے قواعد کے مطابق تمام ممبران کے لیے نامزد کی تفصیلات درج کرنا لازمی ہے۔ براہ کرم نامزد شخص کا اندراج کریں۔',
-              'In accordance with Trust guidelines, designating a verified nominee is required so mutual relief can be smoothly granted without dispute.'
-            )}
+            {searchQuery || relationFilter !== 'all'
+              ? tr('कृपया अपनी खोज या फ़िल्टर बदलें।', 'براہ کرم تلاش تبدیل کریں۔', 'Try clearing your search query or relation filter to see all results.')
+              : tr(
+                  'ट्रस्ट नियमावली के अनुसार सभी सदस्यों के लिए नॉमिनी का विवरण दर्ज करना अनिवार्य है। कृपया अपने परिवार की सुरक्षा व सहायता हेतु नॉमिनी जोड़ें।',
+                  'ٹرسٹ کے قواعد کے مطابق تمام ممبران کے لیے نامزد کی تفصیلات درج کرنا لازمی ہے۔ براہ کرم نامزد شخص کا اندراج کریں۔',
+                  'In accordance with Trust guidelines, designating a verified nominee is required so mutual relief can be smoothly granted without dispute.'
+                )}
           </p>
-          <button
-            onClick={openAddModal}
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-xl shadow-emerald-700/20 transition-all hover:scale-105 cursor-pointer"
-          >
-            <Plus className="w-4 h-4 stroke-[3]" />
-            {tr('अभी नॉमिनी जोड़ें', 'ابھی نامزد شامل کریں', 'Register Nominee Now')}
-          </button>
+          {!isSuperOrExecutive && (
+            <button
+              onClick={openAddModal}
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-xl shadow-emerald-700/20 transition-all hover:scale-105 cursor-pointer"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              {tr('अभी नॉमिनी जोड़ें', 'ابھی نامزد شامل کریں', 'Register Nominee Now')}
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {nominees.map((nom, index) => {
+          {filteredNominees.map((nom, index) => {
             const relObj = RELATION_OPTIONS.find((r) => r.value.toLowerCase() === nom.relation.toLowerCase());
             const displayRelation = relObj
               ? language === 'hi'
-              ? relObj.labelHi
-              : language === 'ur'
-              ? relObj.labelUr
-              : relObj.labelEn
+                ? relObj.labelHi
+                : language === 'ur'
+                ? relObj.labelUr
+                : relObj.labelEn
               : nom.relation;
+
+            const memberObj = userMap.get(nom.user_id);
+            const isOwner = nom.user_id === activeUser?.id;
+            const canManage = !isSuperOrExecutive && isOwner;
 
             return (
               <div
                 key={nom.id}
                 className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col justify-between transition-all hover:shadow-2xl hover:border-emerald-500/40 relative group"
               >
-                {/* Header */}
+                {/* Associated Member Header Bar (For Super Admin / Exec Admin) */}
+                {isSuperOrExecutive && viewScope === 'all' && (
+                  <div className="px-6 py-2.5 bg-slate-100/90 dark:bg-slate-800/90 border-b border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 truncate">
+                      <UserCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="font-extrabold text-slate-800 dark:text-slate-100 truncate">
+                        {memberObj ? memberObj.name : tr('सदस्य', 'ممبر', 'Member')} {memberObj?.membershipId ? `(${memberObj.membershipId})` : ''}
+                      </span>
+                    </div>
+                    {memberObj?.city && (
+                      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">
+                        {memberObj.city}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Nominee Header */}
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800/80 bg-gradient-to-r from-emerald-50/50 to-teal-50/20 dark:from-emerald-950/20 dark:to-transparent flex items-start justify-between">
                   <div className="flex items-center gap-3.5">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white shadow-lg shadow-emerald-900/20 font-black text-lg">
@@ -339,22 +567,24 @@ export const NomineeDetailsTab: React.FC<NomineeDetailsTabProps> = ({ activeUser
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => openEditModal(nom)}
-                      className="p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-all cursor-pointer"
-                      title={tr('संपादित करें', 'ترمیم کریں', 'Edit')}
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirmId(String(nom.id))}
-                      className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all cursor-pointer"
-                      title={tr('हटाएं', 'حذف کریں', 'Delete')}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  {canManage && (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => openEditModal(nom)}
+                        className="p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-all cursor-pointer"
+                        title={tr('संपादित करें', 'ترمیم کریں', 'Edit')}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirmId(String(nom.id))}
+                        className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all cursor-pointer"
+                        title={tr('हटाएं', 'حذف کریں', 'Delete')}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Details Body */}
@@ -453,50 +683,70 @@ export const NomineeDetailsTab: React.FC<NomineeDetailsTabProps> = ({ activeUser
         </div>
       )}
 
-      {/* Add / Edit Modal */}
+      {/* Add / Edit Nominee Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl my-8 animate-in fade-in zoom-in-95">
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-950/60">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
                   <UserCheck className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-black text-slate-900 dark:text-white text-lg">
                     {editingNominee
-                      ? tr('नॉमिनी विवरण संपादित करें', 'نامزد تفصیلات میں ترمیم کریں', 'Edit Nominee Details')
+                      ? tr('नॉमिनी विवरण संपादित करें', 'نامزد تفصیلات میں ترمیم', 'Edit Nominee Details')
                       : tr('नया नॉमिनी जोड़ें', 'نیا نامزد شامل کریں', 'Register New Nominee')}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {tr('पारस्परिक सहायता योजना हेतु कानूनी उत्तराधिकारी', 'باہمی امدادی اسکیم کے لیے قانونی وارث', 'Designated heir for mutual assistance solace')}
+                    {tr('पारस्परिक राहत हेतु कानूनी रूप से वैध विवरण भरें', 'قانونی طور پر درست تفصیلات درج کریں', 'Enter legally valid details for mutual relief registry')}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setModalOpen(false)}
-                className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 transition-colors cursor-pointer"
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* In-Modal Feedback Banner */}
-            {modalError && (
-              <div className="mx-6 mt-4 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 font-bold flex items-center gap-2 text-xs animate-in fade-in slide-in-from-top-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
-                <span className="flex-1">{modalError}</span>
-                <button
-                  type="button"
-                  onClick={() => setModalError('')}
-                  className="p-1 text-rose-500 hover:text-rose-700 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
+            {/* Modal Form */}
+            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 text-xs">
+              {modalError && (
+                <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 flex items-center gap-2 font-bold">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{modalError}</span>
+                </div>
+              )}
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
+              {/* If Super / Executive Admin: Option to select Member */}
+              {isSuperOrExecutive && !editingNominee && usersList.length > 0 && (
+                <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
+                  <label className="block text-amber-900 dark:text-amber-200 font-extrabold uppercase text-[11px] mb-1.5 flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-amber-600" />
+                    <span>{tr('सदस्य चुनें (वैकल्पिक - स्वतः आपके खाते में जुड़ेगा)', 'ممبر منتخب کریں (اختیاری)', 'Assign to Member (Optional - Defaults to Admin)')}</span>
+                  </label>
+                  <select
+                    value={targetUserId}
+                    onChange={(e) => setTargetUserId(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none cursor-pointer text-xs"
+                  >
+                    <option value={activeUser.id}>
+                      {activeUser.name} ({activeUser.membershipId || 'Admin Self'})
+                    </option>
+                    {usersList
+                      .filter((u) => u.id !== activeUser.id)
+                      .map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name} {u.membershipId ? `(${u.membershipId})` : ''} - {u.phone} ({u.city || ''})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
+
               {/* Nominee Name */}
               <div>
                 <label className="block text-slate-700 dark:text-slate-300 font-extrabold uppercase text-[11px] mb-1.5">
@@ -623,7 +873,7 @@ export const NomineeDetailsTab: React.FC<NomineeDetailsTabProps> = ({ activeUser
               {/* ID Proof Upload */}
               <div>
                 <label className="block text-slate-700 dark:text-slate-300 font-extrabold uppercase text-[11px] mb-1.5">
-                  {tr('पहचान पत्र की फोटो (वैकल्पिक)', 'شناختی ثبوت की تصویر (اختیاری)', 'ID Proof Photo / Document (Optional)')}
+                  {tr('पहचान पत्र की फोटो (वैकल्पिक)', 'شناختی ثبوت کی تصویر (اختیاری)', 'ID Proof Photo / Document (Optional)')}
                 </label>
                 <div className="flex items-center gap-3">
                   <label className="flex-1 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 transition-colors bg-slate-50 dark:bg-slate-950">
