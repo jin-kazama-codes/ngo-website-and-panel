@@ -78,6 +78,12 @@ export interface User {
   help_type?: string;
   helpDetails?: string;
   help_details?: string;
+  monthlyPayment?: 'yes' | 'no' | boolean | string;
+  monthly_payment?: 'yes' | 'no' | boolean | string;
+  monthlyPaymentDate?: string;
+  monthly_payment_date?: string;
+  monthlyPaymentAmount?: number;
+  monthly_payment_amount?: number;
 }
 
 export interface Community {
@@ -282,6 +288,9 @@ export interface MemberNominee {
   date_of_birth?: string;
   age?: number;
   aadhaar_number?: string;
+  photo_url?: string;
+  aadhaar_front_url?: string;
+  aadhaar_back_url?: string;
   id_proof_url?: string;
   address?: string;
   share_percentage?: number;
@@ -316,6 +325,8 @@ export interface FemaleFamilyMember {
   aadhaar_number?: string;
   address?: string;
   photo_url?: string;
+  aadhaar_front_url?: string;
+  aadhaar_back_url?: string;
   fee_amount: number;
   payment_method: string;
   payment_utr: string;

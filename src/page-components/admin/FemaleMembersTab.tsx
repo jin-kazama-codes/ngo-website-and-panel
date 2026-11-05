@@ -39,6 +39,9 @@ import {
   Sparkles,
   ExternalLink,
   Users,
+  Camera,
+  Eye,
+  XCircle,
 } from 'lucide-react';
 
 interface FemaleMembersTabProps {
@@ -74,6 +77,13 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
   const [address, setAddress] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [aadhaarFrontUrl, setAadhaarFrontUrl] = useState('');
+  const [uploadingAadhaarFront, setUploadingAadhaarFront] = useState(false);
+  const [aadhaarBackUrl, setAadhaarBackUrl] = useState('');
+  const [uploadingAadhaarBack, setUploadingAadhaarBack] = useState(false);
+
+  // Lightbox / Image Preview Modal
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
   // Fee & Payment State (Fixed ₹50)
   const feeAmount = 50;
@@ -84,6 +94,13 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Status update & Admin verification states
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+  const [rejectModalMember, setRejectModalMember] = useState<FemaleFamilyMember | null>(null);
+  const [rejectionReasonInput, setRejectionReasonInput] = useState('');
+
+  const isSuperOrExec = activeUser?.role === 'super_admin' || activeUser?.role === 'executive_admin';
 
   const tr = (hi: string, ur: string, en: string) => {
     if (language === 'hi') return hi;
@@ -153,6 +170,8 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
     setAadhaarNumber('');
     setAddress(activeUser?.city || '');
     setPhotoUrl('');
+    setAadhaarFrontUrl('');
+    setAadhaarBackUrl('');
     setPaymentMethod('UPI');
     setPaymentUtr('');
     setPaymentScreenshotUrl('');
@@ -170,6 +189,8 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
     setAadhaarNumber(member.aadhaar_number || '');
     setAddress(member.address || '');
     setPhotoUrl(member.photo_url || '');
+    setAadhaarFrontUrl(member.aadhaar_front_url || '');
+    setAadhaarBackUrl(member.aadhaar_back_url || '');
     setPaymentMethod((member.payment_method as any) || 'UPI');
     setPaymentUtr(member.payment_utr || '');
     setPaymentScreenshotUrl(member.payment_screenshot_url || '');
@@ -193,6 +214,46 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
       setModalError(err.message || 'Failed to upload photo');
     } finally {
       setUploadingPhoto(false);
+    }
+  };
+
+  const handleAadhaarFrontUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 6 * 1024 * 1024) {
+      setModalError(tr('दस्तावेज़ 6MB से कम होना चाहिए', 'دستاویز 6MB سے کم ہونا چاہیے', 'File must be under 6MB'));
+      return;
+    }
+    setUploadingAadhaarFront(true);
+    setModalError('');
+    try {
+      const url = await uploadImage('users', file, `female_aadhaar_front_${Date.now()}_${file.name}`);
+      setAadhaarFrontUrl(url);
+      showToast(tr('आधार कार्ड (सामने का भाग) अपलोड हो गया', 'آدھار کارڈ سامنے کا حصہ اپلوڈ ہو گیا', 'Aadhaar front image uploaded successfully'));
+    } catch (err: any) {
+      setModalError(err.message || 'Failed to upload Aadhaar front image');
+    } finally {
+      setUploadingAadhaarFront(false);
+    }
+  };
+
+  const handleAadhaarBackUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 6 * 1024 * 1024) {
+      setModalError(tr('दस्तावेज़ 6MB से कम होना चाहिए', 'دستاویز 6MB سے کم ہونا چاہیے', 'File must be under 6MB'));
+      return;
+    }
+    setUploadingAadhaarBack(true);
+    setModalError('');
+    try {
+      const url = await uploadImage('users', file, `female_aadhaar_back_${Date.now()}_${file.name}`);
+      setAadhaarBackUrl(url);
+      showToast(tr('आधार कार्ड (पीछे का भाग) अपलोड हो गया', 'آدھار کارڈ پیچھے کا حصہ اپلوڈ ہو گیا', 'Aadhaar back image uploaded successfully'));
+    } catch (err: any) {
+      setModalError(err.message || 'Failed to upload Aadhaar back image');
+    } finally {
+      setUploadingAadhaarBack(false);
     }
   };
 
@@ -260,6 +321,42 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
       return;
     }
 
+    // Require Photo of Female Member
+    if (!photoUrl) {
+      setModalError(
+        tr(
+          'कृपया महिला सदस्य की फोटो अपलोड करें (अनिवार्य)',
+          'براہ کرم خاتون رکن کی تصویر اپلوڈ کریں (لازمی)',
+          'Please upload female member photo (Mandatory)'
+        )
+      );
+      return;
+    }
+
+    // Require Aadhaar Front
+    if (!aadhaarFrontUrl) {
+      setModalError(
+        tr(
+          'कृपया आधार कार्ड (सामने का भाग) अपलोड करें (अनिवार्य)',
+          'براہ کرم آدھار کارڈ (سامنے کا حصہ) اپلوڈ کریں (لازمی)',
+          'Please upload Aadhaar card (front side) image (Mandatory)'
+        )
+      );
+      return;
+    }
+
+    // Require Aadhaar Back
+    if (!aadhaarBackUrl) {
+      setModalError(
+        tr(
+          'कृपया आधार कार्ड (पीछे का भाग) अपलोड करें (अनिवार्य)',
+          'براہ کرم آدھار کارڈ (پیچھے کا حصہ) اپلوڈ کریں (لازمی)',
+          'Please upload Aadhaar card (back side) image (Mandatory)'
+        )
+      );
+      return;
+    }
+
     setSubmitting(true);
     try {
       if (editingMember) {
@@ -272,6 +369,8 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
           aadhaar_number: aadhaarNumber.trim(),
           address: address.trim(),
           photo_url: photoUrl,
+          aadhaar_front_url: aadhaarFrontUrl,
+          aadhaar_back_url: aadhaarBackUrl,
           payment_method: paymentMethod,
           payment_utr: paymentUtr.trim(),
           payment_screenshot_url: paymentScreenshotUrl,
@@ -290,6 +389,8 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
           aadhaar_number: aadhaarNumber.trim(),
           address: address.trim(),
           photo_url: photoUrl,
+          aadhaar_front_url: aadhaarFrontUrl,
+          aadhaar_back_url: aadhaarBackUrl,
           fee_amount: feeAmount,
           payment_method: paymentMethod,
           payment_utr: paymentUtr.trim(),
@@ -322,6 +423,29 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
       showToast(err.message || 'Failed to delete female member', 'error');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleUpdateStatus = async (id: string, newStatus: 'approved' | 'rejected' | 'pending', reason?: string) => {
+    setUpdatingStatusId(id);
+    try {
+      await updateFemaleFamilyMember(id, {
+        status: newStatus,
+        rejection_reason: reason !== undefined ? reason : undefined,
+      });
+      showToast(
+        newStatus === 'approved'
+          ? tr('महिला सदस्य सफलतापूर्वक सत्यापित हो गई', 'خاتون ممبر کامیابی سے تصدیق ہو گئی', 'Female member verified successfully')
+          : newStatus === 'rejected'
+          ? tr('महिला सदस्य अस्वीकृत कर दी गई', 'خاتون ممبر مسترد کر دی گئی', 'Female member marked as rejected')
+          : tr('स्थिति समीक्षाधीन पर सेट की गई', 'حیثیت زیر جائزہ پر سیٹ کی گئی', 'Status set back to pending review')
+      );
+      await loadData();
+    } catch (err: any) {
+      console.error('Update female member status error:', err);
+      showToast(err.message || 'Failed to update member status', 'error');
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
@@ -660,6 +784,7 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
               const relObj = FEMALE_RELATION_OPTIONS.find((r) => r.value === member.relation);
               const relLabel = relObj ? (language === 'hi' ? relObj.labelHi : language === 'ur' ? relObj.labelUr : relObj.labelEn) : member.relation;
               const isApproved = member.status === 'approved';
+              const isRejected = member.status === 'rejected';
 
               return (
                 <div
@@ -674,7 +799,9 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
                           <img
                             src={member.photo_url}
                             alt={member.name}
-                            className="w-12 h-12 rounded-2xl object-cover ring-2 ring-emerald-500/20"
+                            onClick={() => setPreviewImage({ url: member.photo_url!, title: `${member.name} (Photo)` })}
+                            className="w-12 h-12 rounded-2xl object-cover ring-2 ring-emerald-500/20 cursor-pointer hover:scale-105 transition-transform"
+                            title={tr('फोटो बड़ी देखें', 'تصویر بڑی دیکھیں', 'Click to view photo')}
                           />
                         ) : (
                           <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-black text-lg">
@@ -693,6 +820,8 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
                       <span
                         className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${isApproved
                           ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
+                          : isRejected
+                          ? 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-700'
                           : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700'
                           }`}
                       >
@@ -700,6 +829,11 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
                           <>
                             <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                             <span>{tr('सत्यापित', 'تصدیق شدہ', 'Verified')}</span>
+                          </>
+                        ) : isRejected ? (
+                          <>
+                            <XCircle className="w-3 h-3 text-rose-600" />
+                            <span>{tr('अस्वीकृत', 'مسترد', 'Rejected')}</span>
                           </>
                         ) : (
                           <>
@@ -755,7 +889,102 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
                           </span>
                         </div>
                       )}
+
+                      {(member.aadhaar_front_url || member.aadhaar_back_url) && (
+                        <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800 space-y-1.5">
+                          <span className="text-[10px] font-extrabold uppercase text-slate-400 flex items-center gap-1">
+                            <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                            {tr('आधार कार्ड दस्तावेज', 'آدھار دستاویز', 'Aadhaar Documents')}
+                          </span>
+                          <div className="grid grid-cols-2 gap-2">
+                            {member.aadhaar_front_url && (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewImage({ url: member.aadhaar_front_url!, title: `${member.name} - ${tr('आधार कार्ड (सामने)', 'آدھار کارڈ سامنے', 'Aadhaar (Front)')}` })}
+                                className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-center gap-1 hover:bg-emerald-100 transition-colors cursor-pointer"
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span>{tr('सामने का भाग', 'سامنے', 'Front Side')}</span>
+                              </button>
+                            )}
+                            {member.aadhaar_back_url && (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewImage({ url: member.aadhaar_back_url!, title: `${member.name} - ${tr('आधार कार्ड (पीछे)', 'آدھار کارڈ پیچھے', 'Aadhaar (Back)')}` })}
+                                className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-[10px] font-bold text-amber-800 dark:text-amber-300 flex items-center justify-center gap-1 hover:bg-amber-100 transition-colors cursor-pointer"
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span>{tr('पीछे का भाग', 'پیچھے', 'Back Side')}</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Admin Verification Action Bar for Super / Executive Admin */}
+                    {isSuperOrExec && (
+                      <div className="pt-2.5 border-t border-slate-200/70 dark:border-slate-800 space-y-2 bg-emerald-50/40 dark:bg-emerald-950/20 p-2.5 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                          <span className="flex items-center gap-1 text-[#0c4a2b] dark:text-emerald-400 font-extrabold">
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            {tr('व्यवस्थापक सत्यापन:', 'ایڈمن تصدیقی کارروائی:', 'Admin Verification:')}
+                          </span>
+                          {member.rejection_reason && (
+                            <span className="text-rose-500 text-[10px] truncate max-w-[140px]" title={member.rejection_reason}>
+                              {member.rejection_reason}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {member.status !== 'approved' && (
+                            <button
+                              type="button"
+                              disabled={updatingStatusId === member.id}
+                              onClick={() => handleUpdateStatus(member.id, 'approved')}
+                              className="flex-1 py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                              title={tr('सत्यापित व स्वीकृत करें', 'تصدیق کریں', 'Approve / Verify Member')}
+                            >
+                              {updatingStatusId === member.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                              )}
+                              <span>{tr('सत्यापित करें', 'تصدیق کریں', 'Approve / Verify')}</span>
+                            </button>
+                          )}
+
+                          {member.status !== 'rejected' && (
+                            <button
+                              type="button"
+                              disabled={updatingStatusId === member.id}
+                              onClick={() => {
+                                setRejectModalMember(member);
+                                setRejectionReasonInput('');
+                              }}
+                              className="py-1.5 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 font-bold text-xs flex items-center justify-center gap-1 transition-all cursor-pointer disabled:opacity-50"
+                              title={tr('अस्वीकार करें', 'مسترد کریں', 'Reject')}
+                            >
+                              <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                              <span>{tr('अस्वीकृत', 'مسترد', 'Reject')}</span>
+                            </button>
+                          )}
+
+                          {member.status === 'approved' && (
+                            <button
+                              type="button"
+                              disabled={updatingStatusId === member.id}
+                              onClick={() => handleUpdateStatus(member.id, 'pending')}
+                              className="py-1.5 px-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer disabled:opacity-50"
+                              title={tr('पुनः समीक्षा में भेजें', 'دوبارہ جائزے میں ڈالیں', 'Set Pending Review')}
+                            >
+                              <span>{tr('पुनः समीक्षा', 'دوبارہ جائزہ', 'Set Pending')}</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Actions Footer */}
@@ -828,6 +1057,63 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
                 className="py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
               >
                 {deletingId ? <Loader2 className="w-4 h-4 animate-spin" /> : tr('हटाएं', 'حذف کریں', 'Delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Rejection Modal with Reason */}
+      {rejectModalMember && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full space-y-4 border border-slate-200 dark:border-slate-800 shadow-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center mx-auto">
+              <XCircle className="w-6 h-6" />
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
+                {tr('महिला सदस्य अस्वीकृत करें?', 'خاتون ممبر مسترد کریں؟', 'Reject Female Member?')}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {rejectModalMember.name} ({rejectModalMember.relation})
+              </p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
+                {tr('अस्वीकृति का कारण (वैकल्पिक)', 'وجہ مسترد (اختیاری)', 'Rejection Reason (Optional)')}
+              </label>
+              <input
+                type="text"
+                value={rejectionReasonInput}
+                onChange={(e) => setRejectionReasonInput(e.target.value)}
+                placeholder={tr('उदा. अवैध UTR या अस्पष्ट आधार कार्ड', 'مثال: غلط یو ٹی آر', 'e.g. Invalid UTR or blurry document')}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:border-rose-500"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setRejectModalMember(null);
+                  setRejectionReasonInput('');
+                }}
+                className="py-2.5 px-4 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                {tr('रद्द करें', 'منسوخ کریں', 'Cancel')}
+              </button>
+              <button
+                type="button"
+                disabled={updatingStatusId === rejectModalMember.id}
+                onClick={async () => {
+                  const mId = rejectModalMember.id;
+                  const reason = rejectionReasonInput.trim();
+                  setRejectModalMember(null);
+                  setRejectionReasonInput('');
+                  await handleUpdateStatus(mId, 'rejected', reason);
+                }}
+                className="py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
+              >
+                {updatingStatusId === rejectModalMember.id ? <Loader2 className="w-4 h-4 animate-spin" /> : tr('अस्वीकृत करें', 'مسترد کریں', 'Confirm Reject')}
               </button>
             </div>
           </div>
@@ -976,19 +1262,19 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
                   </div>
                 </div>
 
-                {/* Photo / ID Upload */}
+                {/* Photo Upload */}
                 <div className="space-y-1.5">
                   <label className="font-bold text-slate-700 dark:text-slate-300">
-                    {tr('फोटो / पहचान पत्र प्रमाण (वैकल्पिक)', 'تصویر / شناختی کارڈ پروف (اختیاری)', 'Photo / ID Proof (Optional)')}
+                    {tr('महिला सदस्य की पासपोर्ट साइज फोटो * (अनिवार्य)', 'خاتون کی تصویر * (لازمی)', 'Photo of Female Member * (Mandatory)')}
                   </label>
                   <div className="flex items-center gap-4">
                     {photoUrl ? (
-                      <div className="relative w-16 h-16 rounded-2xl overflow-hidden border border-emerald-500 shrink-0">
+                      <div className="relative w-16 h-16 rounded-2xl overflow-hidden border border-emerald-500 shrink-0 shadow-sm">
                         <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
                         <button
                           type="button"
                           onClick={() => setPhotoUrl('')}
-                          className="absolute top-0.5 right-0.5 bg-rose-600 text-white p-0.5 rounded-full"
+                          className="absolute top-0.5 right-0.5 bg-rose-600 text-white p-0.5 rounded-full cursor-pointer hover:bg-rose-700 transition-colors"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -1011,10 +1297,138 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
                       ) : (
                         <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 font-semibold">
                           <UploadCloud className="w-4 h-4 text-emerald-600" />
-                          <span>{photoUrl ? tr('फोटो बदलें', 'تصویر تبدیل کریں', 'Change Photo') : tr('फोटो अपलोड करें (JPG / PNG)', 'تصویر منتخب کریں', 'Upload Photo (JPG/PNG)')}</span>
+                          <span>{photoUrl ? tr('फोटो बदलें', 'تصویر تبدیل کریں', 'Change Photo') : tr('फोटो अपलोड करें (JPG / PNG, अधिकतम 5MB)', 'تصویر اپلوڈ کریں', 'Upload Member Photo (JPG/PNG, Max 5MB)')}</span>
                         </div>
                       )}
                     </label>
+                  </div>
+                </div>
+
+                {/* Aadhaar Card Front & Back Uploads */}
+                <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <h5 className="font-extrabold text-xs uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>{tr('आधार कार्ड दस्तावेज (सामने और पीछे का भाग) * (अनिवार्य)', 'آدھار کارڈ دستاویزات (سامنے اور پیچھے) * (لازمی)', 'Aadhaar Card Images (Front & Back - Mandatory) *')}</span>
+                  </h5>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Front Side */}
+                    <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                          {tr('आधार कार्ड (सामने का भाग) *', 'آدھار کارڈ (سامنے کا حصہ) *', 'Aadhaar Card (Front Side) *')}
+                        </span>
+                        {aadhaarFrontUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setAadhaarFrontUrl('')}
+                            className="text-rose-500 hover:text-rose-700 text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+                          >
+                            <X className="w-3 h-3" /> {tr('हटाएं', 'ہٹائیں', 'Remove')}
+                          </button>
+                        )}
+                      </div>
+
+                      {aadhaarFrontUrl ? (
+                        <div
+                          className="relative rounded-xl overflow-hidden border border-emerald-400/60 h-24 bg-slate-900 flex items-center justify-center cursor-pointer group/prev"
+                          onClick={() => setPreviewImage({ url: aadhaarFrontUrl, title: `${name || 'Member'} - ${tr('आधार कार्ड (सामने)', 'آدھار کارڈ سامنے', 'Aadhaar Front')}` })}
+                        >
+                          <img src={aadhaarFrontUrl} alt="Aadhaar Front Preview" className="w-full h-full object-contain" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/prev:opacity-100 flex items-center justify-center text-white text-xs font-bold gap-1.5 transition-opacity">
+                            <Eye className="w-4 h-4" />
+                            <span>{tr('बड़ा देखें', 'دیکھیں', 'View Full')}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="h-20 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 text-xs bg-white dark:bg-slate-900">
+                          <FileText className="w-5 h-5 mb-0.5 text-slate-400" />
+                          <span className="text-[11px]">{tr('सामने का भाग संलग्न नहीं है', 'سامنے کا حصہ منسلک نہیں', 'No Front Document')}</span>
+                        </div>
+                      )}
+
+                      <label className="block w-full py-2 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-emerald-600 text-slate-700 dark:text-slate-200 text-xs font-semibold text-center cursor-pointer transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          onChange={handleAadhaarFrontUpload}
+                          disabled={uploadingAadhaarFront}
+                        />
+                        {uploadingAadhaarFront ? (
+                          <span className="flex items-center justify-center gap-1.5 text-emerald-600 font-bold">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            {tr('अपलोड हो रहा है...', 'اپلوڈ ہو رہا ہے...', 'Uploading...')}
+                          </span>
+                        ) : (
+                          <span className="flex items-center justify-center gap-1.5">
+                            <UploadCloud className="w-3.5 h-3.5 text-emerald-600" />
+                            {aadhaarFrontUrl
+                              ? tr('सामने का भाग बदलें', 'تبدیل کریں', 'Replace Front')
+                              : tr('सामने का भाग अपलोड करें', 'اپلوڈ کریں', 'Upload Front')}
+                          </span>
+                        )}
+                      </label>
+                    </div>
+
+                    {/* Back Side */}
+                    <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                          {tr('आधार कार्ड (पीछे का भाग) *', 'آدھار کارڈ (پیچھے کا حصہ) *', 'Aadhaar Card (Back Side) *')}
+                        </span>
+                        {aadhaarBackUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setAadhaarBackUrl('')}
+                            className="text-rose-500 hover:text-rose-700 text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+                          >
+                            <X className="w-3 h-3" /> {tr('हटाएं', 'ہٹائیں', 'Remove')}
+                          </button>
+                        )}
+                      </div>
+
+                      {aadhaarBackUrl ? (
+                        <div
+                          className="relative rounded-xl overflow-hidden border border-amber-400/60 h-24 bg-slate-900 flex items-center justify-center cursor-pointer group/prev"
+                          onClick={() => setPreviewImage({ url: aadhaarBackUrl, title: `${name || 'Member'} - ${tr('आधार कार्ड (पीछे)', 'آدھار کارڈ پیچھے', 'Aadhaar Back')}` })}
+                        >
+                          <img src={aadhaarBackUrl} alt="Aadhaar Back Preview" className="w-full h-full object-contain" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/prev:opacity-100 flex items-center justify-center text-white text-xs font-bold gap-1.5 transition-opacity">
+                            <Eye className="w-4 h-4" />
+                            <span>{tr('बड़ा देखें', 'دیکھیں', 'View Full')}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="h-20 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 text-xs bg-white dark:bg-slate-900">
+                          <FileText className="w-5 h-5 mb-0.5 text-slate-400" />
+                          <span className="text-[11px]">{tr('पीछे का भाग संलग्न नहीं है', 'پیچھے کا حصہ منسلک نہیں', 'No Back Document')}</span>
+                        </div>
+                      )}
+
+                      <label className="block w-full py-2 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-emerald-600 text-slate-700 dark:text-slate-200 text-xs font-semibold text-center cursor-pointer transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          onChange={handleAadhaarBackUpload}
+                          disabled={uploadingAadhaarBack}
+                        />
+                        {uploadingAadhaarBack ? (
+                          <span className="flex items-center justify-center gap-1.5 text-emerald-600 font-bold">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            {tr('अपलोड हो रहा है...', 'اپلوڈ ہو رہا ہے...', 'Uploading...')}
+                          </span>
+                        ) : (
+                          <span className="flex items-center justify-center gap-1.5">
+                            <UploadCloud className="w-3.5 h-3.5 text-emerald-600" />
+                            {aadhaarBackUrl
+                              ? tr('पीछे का भाग बदलें', 'تبدیل کریں', 'Replace Back')
+                              : tr('पीछे का भाग अपलोड करें', 'اپلوڈ کریں', 'Upload Back')}
+                          </span>
+                        )}
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1181,7 +1595,7 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting || uploadingPhoto || uploadingScreenshot}
+                  disabled={submitting || uploadingPhoto || uploadingScreenshot || uploadingAadhaarFront || uploadingAadhaarBack}
                   className="mfct-btn-gold py-2.5 px-6 rounded-xl font-bold flex items-center gap-2 cursor-pointer shadow-lg disabled:opacity-50"
                 >
                   {submitting ? (
@@ -1195,6 +1609,40 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Lightbox / Document Preview Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="relative max-w-3xl w-full bg-slate-950 rounded-3xl border border-slate-800 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-white text-xs font-bold">
+              <span className="truncate pr-4">{previewImage.title}</span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewImage.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="p-1.5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white"
+                  title="Open original in new tab"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+                <button
+                  onClick={() => setPreviewImage(null)}
+                  className="p-1.5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-black/50 min-h-[300px]">
+              <img
+                src={previewImage.url}
+                alt={previewImage.title}
+                className="max-h-[75vh] w-auto max-w-full object-contain rounded-xl"
+              />
+            </div>
           </div>
         </div>
       )}

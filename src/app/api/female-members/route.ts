@@ -1,6 +1,33 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
+function parseFemaleMemberRow(row: any) {
+  let photo_url = row.photo_url || '';
+  let aadhaar_front_url = row.aadhaar_front_url || '';
+  let aadhaar_back_url = row.aadhaar_back_url || '';
+
+  if (photo_url && typeof photo_url === 'string') {
+    const trimmed = photo_url.trim();
+    if (trimmed.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        photo_url = parsed.photo_url || parsed.photo || '';
+        if (!aadhaar_front_url) aadhaar_front_url = parsed.aadhaar_front_url || parsed.front || '';
+        if (!aadhaar_back_url) aadhaar_back_url = parsed.aadhaar_back_url || parsed.back || '';
+      } catch {
+        // Keep as-is if parsing fails
+      }
+    }
+  }
+
+  return {
+    ...row,
+    photo_url,
+    aadhaar_front_url,
+    aadhaar_back_url,
+  };
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -22,7 +49,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, error: error.message, data: [] }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, data: data || [] });
+    const mapped = (data || []).map(parseFemaleMemberRow);
+    return NextResponse.json({ success: true, data: mapped });
   } catch (err: any) {
     console.error('Error fetching female family members:', err);
     return NextResponse.json(
@@ -45,6 +73,8 @@ export async function POST(request: Request) {
       aadhaar_number,
       address,
       photo_url,
+      aadhaar_front_url,
+      aadhaar_back_url,
       fee_amount,
       payment_method,
       payment_utr,
@@ -88,6 +118,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // If aadhaar documents are provided, bundle into photo_url fallback in case dedicated columns don't exist yet
+    const photoBundle = (aadhaar_front_url || aadhaar_back_url)
+      ? JSON.stringify({
+          photo_url: photo_url || '',
+          aadhaar_front_url: aadhaar_front_url || '',
+          aadhaar_back_url: aadhaar_back_url || '',
+        })
+      : (photo_url || '');
+
     const record: Record<string, any> = {
       user_id: String(user_id),
       name: name.trim(),
@@ -97,7 +136,9 @@ export async function POST(request: Request) {
       phone: phone?.trim() || '',
       aadhaar_number: aadhaar_number?.trim() || '',
       address: address?.trim() || '',
-      photo_url: photo_url || '',
+      photo_url: photoBundle,
+      aadhaar_front_url: aadhaar_front_url || '',
+      aadhaar_back_url: aadhaar_back_url || '',
       fee_amount: fee_amount ? Number(fee_amount) : 50,
       payment_method: payment_method || 'UPI',
       payment_utr: payment_utr?.trim() || '',
@@ -111,18 +152,37 @@ export async function POST(request: Request) {
       record.id = Number(body.id);
     }
 
-    const { data, error } = await supabaseAdmin
+    let insertResult = await supabaseAdmin
       .from('member_female_family')
       .insert(record)
       .select()
       .single();
 
-    if (error) {
-      console.error('Supabase insert error on member_female_family:', error);
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    if (insertResult.error && (insertResult.error.message.includes('column') || insertResult.error.code === '42703')) {
+      delete record.aadhaar_front_url;
+      delete record.aadhaar_back_url;
+      insertResult = await supabaseAdmin
+        .from('member_female_family')
+        .insert(record)
+        .select()
+        .single();
     }
 
-    return NextResponse.json({ success: true, data });
+    if (insertResult.error) {
+      console.error('Supabase insert error on member_female_family:', insertResult.error);
+      return NextResponse.json({ success: false, error: insertResult.error.message }, { status: 500 });
+    }
+
+    const parsedData = parseFemaleMemberRow(insertResult.data);
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...parsedData,
+        photo_url: photo_url || parsedData.photo_url,
+        aadhaar_front_url: aadhaar_front_url || parsedData.aadhaar_front_url,
+        aadhaar_back_url: aadhaar_back_url || parsedData.aadhaar_back_url,
+      },
+    });
   } catch (err: any) {
     console.error('POST /api/female-members error:', err);
     return NextResponse.json(
@@ -153,6 +213,8 @@ export async function PUT(request: Request) {
       'aadhaar_number',
       'address',
       'photo_url',
+      'aadhaar_front_url',
+      'aadhaar_back_url',
       'fee_amount',
       'payment_method',
       'payment_utr',
@@ -168,19 +230,53 @@ export async function PUT(request: Request) {
       }
     }
 
-    const { data, error } = await supabaseAdmin
+    // If aadhaar documents are being updated, keep bundle in photo_url as fallback
+    if (updates.photo_url !== undefined || updates.aadhaar_front_url !== undefined || updates.aadhaar_back_url !== undefined) {
+      const pUrl = updates.photo_url !== undefined ? updates.photo_url : '';
+      const fUrl = updates.aadhaar_front_url !== undefined ? updates.aadhaar_front_url : '';
+      const bUrl = updates.aadhaar_back_url !== undefined ? updates.aadhaar_back_url : '';
+      if (fUrl || bUrl) {
+        payload.photo_url = JSON.stringify({
+          photo_url: pUrl,
+          aadhaar_front_url: fUrl,
+          aadhaar_back_url: bUrl,
+        });
+      }
+    }
+
+    let updateResult = await supabaseAdmin
       .from('member_female_family')
       .update(payload)
       .eq('id', id)
       .select()
       .single();
 
-    if (error) {
-      console.error('Supabase update error on member_female_family:', error);
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    if (updateResult.error && (updateResult.error.message.includes('column') || updateResult.error.code === '42703')) {
+      delete payload.aadhaar_front_url;
+      delete payload.aadhaar_back_url;
+      updateResult = await supabaseAdmin
+        .from('member_female_family')
+        .update(payload)
+        .eq('id', id)
+        .select()
+        .single();
     }
 
-    return NextResponse.json({ success: true, data });
+    if (updateResult.error) {
+      console.error('Supabase update error on member_female_family:', updateResult.error);
+      return NextResponse.json({ success: false, error: updateResult.error.message }, { status: 500 });
+    }
+
+    const parsedData = parseFemaleMemberRow(updateResult.data);
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...parsedData,
+        photo_url: updates.photo_url !== undefined ? updates.photo_url : parsedData.photo_url,
+        aadhaar_front_url: updates.aadhaar_front_url !== undefined ? updates.aadhaar_front_url : parsedData.aadhaar_front_url,
+        aadhaar_back_url: updates.aadhaar_back_url !== undefined ? updates.aadhaar_back_url : parsedData.aadhaar_back_url,
+      },
+    });
   } catch (err: any) {
     console.error('PUT /api/female-members error:', err);
     return NextResponse.json(

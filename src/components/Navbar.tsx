@@ -11,6 +11,7 @@ import { LanguageSelector } from './LanguageSelector';
 import { translateDistrictRole } from '../lib/translateEntity';
 import { KycUpdateModal } from './KycUpdateModal';
 import { ChangePasswordModal } from './ChangePasswordModal';
+import { MonthlyPaymentToggle } from './MonthlyPaymentToggle';
 
 interface NavbarProps {
   currentPage: string;
@@ -460,6 +461,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                             <span>{t('nav.changePassword', 'Change Password')}</span>
                           </button>
 
+                          {/* Monthly Payment Preference & Details */}
+                          <div className="pt-1">
+                            <MonthlyPaymentToggle
+                              user={currentUser}
+                              onOpenDonate={() => {
+                                setProfileMenuOpen(false);
+                                onOpenDonate();
+                              }}
+                            />
+                          </div>
+
                           <div className="my-1 border-t" style={{ borderColor: 'rgba(200,168,75,0.15)' }} />
 
                           {/* Logout Button */}
@@ -682,6 +694,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span>{t('nav.changePassword', 'Change Password')}</span>
                   </button>
                 </>
+              )}
+
+              {/* Monthly Payment in mobile drawer */}
+              {onLogout && (
+                <div className="pt-1">
+                  <MonthlyPaymentToggle
+                    user={currentUser}
+                    onOpenDonate={() => {
+                      setMobileMenuOpen(false);
+                      onOpenDonate();
+                    }}
+                  />
+                </div>
               )}
 
               {isInitialized && !onLogout && (

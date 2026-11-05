@@ -453,17 +453,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
       );
       return;
     }
-    if (!utrNumber || !utrNumber.trim()) {
-      showToast(
-        tr(
-          'कृपया बैंक UTR / संदर्भ संख्या दर्ज करें।',
-          'براہ کرم بینک UTR / ٹرانزیکشن نمبر درج کریں۔',
-          'Please enter Bank UTR / Transaction Ref No.'
-        )
-      );
-      return;
-    }
-    if (!/^\d{12}$/.test(utrNumber.trim())) {
+    if (utrNumber.trim() && !/^\d{12}$/.test(utrNumber.trim())) {
       showToast(
         tr(
           'कृपया सही 12 अंकों का UTR नंबर दर्ज करें।',
@@ -473,17 +463,6 @@ export const DonationModal: React.FC<DonationModalProps> = ({
       );
       return;
     }
-    if (!screenshotFile && !screenshotUploaded) {
-      showToast(
-        tr(
-          'कृपया भुगतान स्क्रीनशॉट अपलोड करें।',
-          'براہ کرم ادائیگی کی رسید اپلوڈ کریں۔',
-          'Please upload payment screenshot.'
-        )
-      );
-      return;
-    }
-    if (!activeCampaign) return;
     setSubmitting(true);
 
     try {
@@ -493,7 +472,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
       }
 
       const finalUtr = utrNumber.trim();
-      const isOutside = isOutsideCommunity || Boolean(
+      const isOutside = isOutsideCommunity || !activeCampaign || Boolean(
         registeredCity &&
         activeCampaign &&
         !isMatchUserCity(activeCampaign)
@@ -505,10 +484,10 @@ export const DonationModal: React.FC<DonationModalProps> = ({
         donorId: (isLoggedIn && currentUser?.id) ? currentUser.id : 'anonymous',
         donorRole: ((isLoggedIn && (currentUser?.districtRole?.trim() || currentUser?.district_role?.trim() || currentUser?.role)) || 'member') as UserRole,
         donorAvatar: (isLoggedIn && currentUser?.avatar) ? currentUser.avatar : undefined,
-        // When outside community: do NOT link to any specific campaign
-        campaignId: isOutside ? 'general' : activeCampaign.id,
-        campaignTitle: isOutside ? `${selectedCategory} General Fund (MFCT)` : activeCampaign.title,
-        communityName: isOutside ? 'Mohammad Faeem Charitable Trust (MFCT)' : activeCampaign.communityName,
+        // When outside community or no specific campaign: do NOT link to any specific campaign
+        campaignId: isOutside || !activeCampaign ? 'general' : activeCampaign.id,
+        campaignTitle: isOutside || !activeCampaign ? `${selectedCategory} General Fund (MFCT)` : activeCampaign.title,
+        communityName: isOutside || !activeCampaign ? 'Mohammad Faeem Charitable Trust (MFCT)' : activeCampaign.communityName,
         amountINR: amount,
         category: selectedCategory,
         isOutsideCommunity: isOutside,
@@ -517,7 +496,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
         status: 'pending_verification',
         date: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
         receiptNumber: `RCP-2024-${Math.floor(1000 + Math.random() * 9000)}`,
-        district: (isLoggedIn ? (currentUser?.city || currentUser?.district) : donorCity.trim()) || activeCampaign.city || 'General',
+        district: (isLoggedIn ? (currentUser?.city || currentUser?.district) : donorCity.trim()) || activeCampaign?.city || 'General',
         wakalahInformation: selectedCategory === 'Zakat' ? [
           {
             donorName: donorName.trim() || 'Anonymous',
@@ -798,7 +777,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 {/* Target Campaign Selection / Auto-Selected Display */}
                 {isOutsideCommunity ? (
                   <></>
-                ) : (
+                ) : manualCampaigns.length > 0 ? (
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--mfct-dark-green)' }}>
                       {tr('2. लक्षित अभियान चुनें', '2. ہدف مہم منتخب کریں', '2. Select Target Campaign')}
@@ -820,6 +799,23 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                         );
                       })}
                     </select>
+                  </div>
+                ) : (
+                  <div className="p-3.5 rounded-2xl border flex items-center justify-between" style={{ background: 'var(--mfct-warm-bg)', borderColor: 'var(--mfct-border)' }}>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ background: 'var(--mfct-gold)' }} />
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-dark-green)' }}>
+                          {tr(`${getCategoryLabel(selectedCategory)} सामान्य कल्याण कोष`, `${getCategoryLabel(selectedCategory)} عام فلاحی فنڈ`, `${selectedCategory} General Relief Fund`)}
+                        </span>
+                      </div>
+                      <p className="text-[11px] mt-0.5" style={{ color: 'var(--mfct-text-muted)' }}>
+                        {tr('दान सीधे ट्रस्ट द्वारा योग्य लाभार्थियों तक पहुंचाया जाएगा।', 'عطیہ براہ راست ٹرسٹ کے ذریعے مستحقین تک پہنچایا جائے گا۔', 'Donation directly routed to verified beneficiaries by Trust.')}
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 shrink-0">
+                      {tr('स्वतः चयनित ✓', 'خودکار منتخب ✓', 'Auto-Selected ✓')}
+                    </span>
                   </div>
                 )}
 
@@ -1003,18 +999,19 @@ export const DonationModal: React.FC<DonationModalProps> = ({
           </div>
         )}
 
-        {step === 2 && activeCampaign && (
+        {step === 2 && (
           <form onSubmit={handleSubmitPayment} className="space-y-6">
             <div className="p-4 rounded-2xl flex items-center justify-between text-sm" style={{ background: 'var(--mfct-warm-bg)', border: '1px solid var(--mfct-border)' }}>
               <div>
-                <span className="text-xs block" style={{ color: 'var(--mfct-text-muted)' }}>{tr('चयनित अभियान:', 'منتخب مہم:', 'Selected Campaign:')}</span>
+                <span className="text-xs block" style={{ color: 'var(--mfct-text-muted)' }}>{tr('चयनित अभियान / कोष:', 'منتخب مہم / فنڈ:', 'Selected Campaign / Fund:')}</span>
                 <span className="font-bold truncate max-w-[280px] block" style={{ color: 'var(--mfct-dark-green)' }}>
-                  {dynamicActiveTitle || translateCampaignTitle(activeCampaign.title, language)}
-                  {activeCampaign.city ? ` — (${activeCampaign.city})` : ''}
+                  {activeCampaign
+                    ? `${dynamicActiveTitle || translateCampaignTitle(activeCampaign.title, language)}${activeCampaign.city ? ` — (${activeCampaign.city})` : ''}`
+                    : `${getCategoryLabel(selectedCategory)} ${tr('सामान्य कोष (MFCT)', 'جنرل فنڈ (MFCT)', 'General Fund (MFCT)')}`}
                 </span>
-                {isOutsideCommunity && (
+                {(isOutsideCommunity || !activeCampaign) && (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 mt-1 inline-block">
-                    {tr('बाहरी समुदाय सहायता', 'بیرونی کمیونٹی امداد', 'Outside Community Relief')}
+                    {tr('सामान्य कोष सहायता', 'جنرل فنڈ امداد', 'General Fund Relief')}
                   </span>
                 )}
               </div>
@@ -1224,15 +1221,19 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               )}
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
-                  {tr('12 अंकों का बैंक UTR / संदर्भ संख्या', '12 ہندسوں کا بینک UTR / ٹرانزیکشن نمبر', '12-Digit Bank UTR / Transaction Ref No')} <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-dark-green)' }}>
+                    {tr('12 अंकों का बैंक UTR / संदर्भ संख्या', '12 ہندسوں کا بینک UTR / ٹرانزیکشن نمبر', '12-Digit Bank UTR / Transaction Ref No')}
+                  </label>
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    ({tr('वैकल्पिक', 'اختیاری', 'Optional')})
+                  </span>
+                </div>
                 <input
                   type="text"
-                  required
                   inputMode="numeric"
                   maxLength={12}
-                  placeholder={tr('उदा. 420199381029', 'مثال: 420199381029', 'e.g. 420199381029')}
+                  placeholder={tr('उदा. 420199381029 (वैकल्पिक)', 'مثال: 420199381029 (اختیاری)', 'e.g. 420199381029 (Optional)')}
                   value={utrNumber}
                   onChange={(e) => setUtrNumber(e.target.value.replace(/\D/g, '').slice(0, 12))}
                   className="w-full p-3 rounded-xl font-mono text-sm font-semibold outline-none"
@@ -1241,34 +1242,56 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--mfct-dark-green)' }}>
-                  {tr('या भुगतान स्क्रीनशॉट अपलोड करें', 'یا ادائیگی کی رسید اپلوڈ کریں', 'Or Upload Payment Screenshot')} <span className="text-red-500">*</span>
-                </label>
-                <label
-                  className="p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center"
-                  style={screenshotUploaded ? {
-                    background: 'rgba(200,168,75,0.12)', borderColor: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)'
-                  } : {
-                    background: 'var(--mfct-warm-bg)', borderColor: 'var(--mfct-border)', color: 'var(--mfct-text-muted)'
-                  }}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) { setScreenshotFile(file); setScreenshotUploaded(true); }
-                    }}
-                  />
-                  <Upload className="w-5 h-5 mb-1" style={{ color: 'var(--mfct-gold)' }} />
-                  <span className="text-xs font-bold">
-                    {screenshotUploaded
-                      ? `✓ ${screenshotFile?.name ?? tr('स्क्रीनशॉट संलग्न है', 'رسید منسلک ہے', 'Screenshot Attached')}`
-                      : tr('भुगतान स्क्रीनशॉट अपलोड करने के लिए क्लिक करें', 'ادائیگی کی رسید اپلوڈ کریں', 'Click to upload payment screenshot')}
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--mfct-dark-green)' }}>
+                    {tr('भुगतान स्क्रीनशॉट अपलोड करें', 'ادائیگی کی رسید اپلوڈ کریں', 'Upload Payment Screenshot')}
+                  </label>
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    ({tr('वैकल्पिक', 'اختیاری', 'Optional')})
                   </span>
-                </label>
+                </div>
+                <div className="relative">
+                  <label
+                    className="p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center"
+                    style={screenshotUploaded ? {
+                      background: 'rgba(200,168,75,0.12)', borderColor: 'var(--mfct-gold)', color: 'var(--mfct-dark-green)'
+                    } : {
+                      background: 'var(--mfct-warm-bg)', borderColor: 'var(--mfct-border)', color: 'var(--mfct-text-muted)'
+                    }}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) { setScreenshotFile(file); setScreenshotUploaded(true); }
+                      }}
+                    />
+                    <Upload className="w-5 h-5 mb-1" style={{ color: 'var(--mfct-gold)' }} />
+                    <span className="text-xs font-bold">
+                      {screenshotUploaded
+                        ? `✓ ${screenshotFile?.name ?? tr('स्क्रीनशॉट संलग्न है', 'رسید منسلک ہے', 'Screenshot Attached')}`
+                        : tr('भुगतान स्क्रीनशॉट अपलोड करने के लिए क्लिक करें (वैकल्पिक)', 'ادائیگی کی رسید اپلوڈ کریں (اختیاری)', 'Click to upload payment screenshot (Optional)')}
+                    </span>
+                  </label>
+                  {screenshotUploaded && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setScreenshotFile(null);
+                        setScreenshotUploaded(false);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-200/80 hover:bg-slate-300 text-slate-700 transition-colors cursor-pointer"
+                      title={tr('स्क्रीनशॉट हटाएं', 'رسید ہٹائیں', 'Remove screenshot')}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1336,10 +1359,12 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                   {createdDonation.paymentMethod || (createdDonation as any).payment_method || 'UPI'}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('यूटीआर संदर्भ:', 'یو ٹی آر ریفرنس:', 'UTR Reference:')}</span>
-                <span className="font-mono" style={{ color: 'var(--mfct-dark-green)' }}>{createdDonation.utrNumber}</span>
-              </div>
+              {createdDonation.utrNumber ? (
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('यूटीआर संदर्भ:', 'یو ٹی آر ریفرنس:', 'UTR Reference:')}</span>
+                  <span className="font-mono" style={{ color: 'var(--mfct-dark-green)' }}>{createdDonation.utrNumber}</span>
+                </div>
+              ) : null}
               <div className="flex justify-between">
                 <span style={{ color: 'var(--mfct-text-muted)' }}>{tr('श्रेणी:', 'کیٹیگری:', 'Category:')}</span>
                 <span className="font-semibold" style={{ color: 'var(--mfct-dark-green)' }}>{getCategoryLabel(createdDonation.category)}</span>
