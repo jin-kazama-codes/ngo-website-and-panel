@@ -53,6 +53,7 @@ import {
 
 import { KycUpdateModal } from '../../components/KycUpdateModal';
 import { ChangePasswordModal } from '../../components/ChangePasswordModal';
+import { MonthlyPaymentToggle } from '../../components/MonthlyPaymentToggle';
 
 import { MemberDashboard } from '../dashboards/MemberDashboard';
 import { CommunityAdminDashboard } from '../dashboards/CommunityAdminDashboard';
@@ -120,6 +121,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
     return 'overview';
   });
+
+  const [currentUser, setCurrentUser] = useState<User>(activeUser);
+  useEffect(() => { setCurrentUser(activeUser); }, [activeUser]);
+
+  const isMonthlyOn = Boolean(
+    currentUser?.monthlyPayment === 'yes' ||
+    currentUser?.monthly_payment === 'yes' ||
+    currentUser?.monthlyPayment === true ||
+    currentUser?.monthly_payment === true
+  );
 
   const [editingCampaign, setEditingCampaign] = useState<Campaign | undefined>(undefined);
   const [desktopSidebarExpanded, setDesktopSidebarExpanded] = useState<boolean>(true);
@@ -496,7 +507,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (validTabIds.length > 0 && !validTabIds.includes(activeTab)) {
       setActiveTab(validTabIds[0]);
     }
-  }, [normalizedRole]);
+  }, [normalizedRole, isMonthlyOn]);
 
   const roleBadge = roleBadges[normalizedRole] || roleBadges.member;
 
@@ -684,6 +695,45 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     </React.Fragment>
                   );
                 })}
+
+                {/* Monthly Payment Details in Portal Sidebar (Only shown when monthly payment is ON) */}
+                {isMonthlyOn && (
+                  desktopSidebarExpanded ? (
+                    <div className="pt-2 px-1">
+                      <MonthlyPaymentToggle
+                        user={currentUser}
+                        showSwitch={false}
+                        onOpenDonate={() => {
+                          onOpenDonate();
+                          setMobileNavOpen(false);
+                        }}
+                        onUserUpdated={(updated) => {
+                          setCurrentUser(updated);
+                          if (typeof window !== 'undefined') {
+                            try {
+                              const stored = localStorage.getItem('mfct_active_user');
+                              if (stored) {
+                                const parsed = JSON.parse(stored);
+                                localStorage.setItem('mfct_active_user', JSON.stringify({ ...parsed, ...updated }));
+                              }
+                            } catch {}
+                          }
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex justify-center pt-2" title={t('admin.monthlyPayment', 'Monthly Payment')}>
+                      <button
+                        type="button"
+                        onClick={() => setDesktopSidebarExpanded(true)}
+                        className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-colors"
+                        style={{ background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.2)' }}
+                      >
+                        <Calendar className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                      </button>
+                    </div>
+                  )
+                )}
               </div>
             </div>
 
@@ -1026,41 +1076,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           <span>{t('nav.changePassword', 'Change Password')}</span>
                         </button>
 
-                        {/* Nominee Details Link */}
-                        <button
-                          onClick={() => {
-                            setProfileMenuOpen(false);
-                            selectTab('nominee_details');
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
-                        >
-                          <UserCheck className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                          <span>{t('admin.tabNominee', 'Nominee Details')}</span>
-                        </button>
+                        {/* Monthly Payment Preference & Details */}
+                        <div className="pt-1">
+                          <MonthlyPaymentToggle
+                            user={currentUser}
+                            onOpenDonate={() => {
+                              setProfileMenuOpen(false);
+                              onOpenDonate();
+                            }}
+                            onUserUpdated={(updated) => {
+                              setCurrentUser(updated);
+                              if (typeof window !== 'undefined') {
+                                try {
+                                  const stored = localStorage.getItem('mfct_active_user');
+                                  if (stored) {
+                                    const parsed = JSON.parse(stored);
+                                    localStorage.setItem('mfct_active_user', JSON.stringify({ ...parsed, ...updated }));
+                                  }
+                                } catch {}
+                              }
+                            }}
+                          />
+                        </div>
 
-                        {/* Member Bank Details Link */}
-                        <button
-                          onClick={() => {
-                            setProfileMenuOpen(false);
-                            selectTab('member_bank_details');
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
-                        >
-                          <Building className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                          <span>{t('admin.tabMemberBank', 'Bank Account Details')}</span>
-                        </button>
 
-                        {/* Female Family Members Link */}
-                        <button
-                          onClick={() => {
-                            setProfileMenuOpen(false);
-                            selectTab('female_family_members');
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-colors text-xs font-semibold text-left cursor-pointer"
-                        >
-                          <Heart className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                          <span>{t('admin.tabFemaleMembers', 'Female Family Members')}</span>
-                        </button>
 
                         <div className="my-1 border-t" style={{ borderColor: 'rgba(200,168,75,0.15)' }} />
 

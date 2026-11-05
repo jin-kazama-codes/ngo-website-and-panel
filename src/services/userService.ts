@@ -134,6 +134,12 @@ function mapRow(row: Record<string, unknown>): User {
     isMalikENisab: (row.is_malik_e_nisab ?? row.isMalikENisab) as boolean | undefined,
     helpType: (row.help_type || row.helpType) as string | undefined,
     helpDetails: (row.help_details || row.helpDetails) as string | undefined,
+    monthlyPayment: (row.monthly_payment ?? row.monthlyPayment) as string | undefined,
+    monthly_payment: (row.monthly_payment ?? row.monthlyPayment) as string | undefined,
+    monthlyPaymentDate: (row.monthly_payment_date ?? row.monthlyPaymentDate) as string | undefined,
+    monthly_payment_date: (row.monthly_payment_date ?? row.monthlyPaymentDate) as string | undefined,
+    monthlyPaymentAmount: (row.monthly_payment_amount ?? row.monthlyPaymentAmount) as number | undefined,
+    monthly_payment_amount: (row.monthly_payment_amount ?? row.monthlyPaymentAmount) as number | undefined,
   };
 }
 
@@ -388,6 +394,16 @@ export async function updateUser(id: string, patch: Partial<User>): Promise<User
   if (patch.isMalikENisab !== undefined) update.is_malik_e_nisab = patch.isMalikENisab;
   if (patch.helpType !== undefined) update.help_type = patch.helpType;
   if (patch.helpDetails !== undefined) update.help_details = patch.helpDetails;
+  if (patch.monthlyPayment !== undefined || patch.monthly_payment !== undefined) {
+    const mv = patch.monthlyPayment ?? patch.monthly_payment;
+    update.monthly_payment = typeof mv === 'boolean' ? (mv ? 'yes' : 'no') : String(mv);
+  }
+  if (patch.monthlyPaymentDate !== undefined || patch.monthly_payment_date !== undefined) {
+    update.monthly_payment_date = patch.monthlyPaymentDate ?? patch.monthly_payment_date;
+  }
+  if (patch.monthlyPaymentAmount !== undefined || patch.monthly_payment_amount !== undefined) {
+    update.monthly_payment_amount = patch.monthlyPaymentAmount ?? patch.monthly_payment_amount;
+  }
   if (patch.passwordHash !== undefined) {
     update.password = patch.passwordHash;
   }
