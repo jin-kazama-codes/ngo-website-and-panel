@@ -89,9 +89,15 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    if (!/^\d{12}$/.test(utrNumber) || !/^https:\/\/\S+$/.test(paymentScreenshotUrl)) {
+    if (utrNumber && !/^\d{12}$/.test(utrNumber)) {
       return NextResponse.json(
-        { success: false, error: 'A valid 12-digit UTR and payment screenshot are required.' },
+        { success: false, error: 'If provided, UTR must be a valid 12-digit number.' },
+        { status: 400 }
+      );
+    }
+    if (paymentScreenshotUrl && !/^https?:\/\/\S+$/.test(paymentScreenshotUrl)) {
+      return NextResponse.json(
+        { success: false, error: 'If provided, payment screenshot must be a valid URL.' },
         { status: 400 }
       );
     }
@@ -110,7 +116,7 @@ export async function POST(request: Request) {
     const newDonation: Record<string, any> = {
       id: body.id || `don_${Date.now()}`,
       transaction_id: body.transactionId || body.transaction_id || `TXN${Date.now()}`,
-      utr_number: utrNumber,
+      utr_number: utrNumber || null,
       donor_name: donorName,
       donor_id: donorId,
       donor_role: body.donorRole || body.donor_role || 'member',
@@ -122,7 +128,7 @@ export async function POST(request: Request) {
       category: body.category || 'General',
       is_outside_community: body.isOutsideCommunity !== undefined ? Boolean(body.isOutsideCommunity) : false,
       payment_method: body.paymentMethod || body.payment_method || 'UPI',
-      payment_screenshot_url: paymentScreenshotUrl,
+      payment_screenshot_url: paymentScreenshotUrl || null,
       status: 'pending_verification',
       date: body.date || new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
       created_at: nowIso,
@@ -160,6 +166,18 @@ export async function POST(request: Request) {
       // 2. If error is foreign key violation on donor_id, set donor_id = null and retry
       if (error && (error.message?.includes('donations_donor_id_fkey') || error.message?.includes('donor_id'))) {
         newDonation.donor_id = null;
+        const retryRes = await supabaseAdmin.from('donations').insert(newDonation).select().single();
+        if (!retryRes.error) {
+          data = retryRes.data;
+          error = null;
+        } else {
+          error = retryRes.error;
+        }
+      }
+
+      // 2b. If error is not-null on utr_number, retry with empty string
+      if (error && (error.message?.includes('utr_number') || error.message?.includes('null value in column "utr_number"'))) {
+        newDonation.utr_number = '';
         const retryRes = await supabaseAdmin.from('donations').insert(newDonation).select().single();
         if (!retryRes.error) {
           data = retryRes.data;
