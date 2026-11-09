@@ -52,6 +52,8 @@ export interface User {
   post_office?: string;
   block?: string;
   tehsil?: string;
+  pincode?: string;
+  pin_code?: string;
   role: UserRole;
   avatar: string;
   communityId: string;

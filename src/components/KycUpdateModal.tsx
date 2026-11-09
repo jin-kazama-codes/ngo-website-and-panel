@@ -213,24 +213,17 @@ export const KycUpdateModal: React.FC<KycUpdateModalProps> = ({
 
     setSubmitting(true);
     try {
-      let finalAvatarUrl = avatarUrl;
-      if (avatarFile) {
-        finalAvatarUrl = await uploadImage('users', avatarFile);
-      }
+      const [upAvatar, upFront, upBack, upReceipt] = await Promise.all([
+        avatarFile ? uploadImage('users', avatarFile) : Promise.resolve(''),
+        aadhaarFrontFile ? uploadImage('users', aadhaarFrontFile) : Promise.resolve(''),
+        aadhaarBackFile ? uploadImage('users', aadhaarBackFile) : Promise.resolve(''),
+        paymentScreenshotFile ? uploadImage('receipts', paymentScreenshotFile) : Promise.resolve(''),
+      ]);
 
-      let finalFrontUrl = aadhaarFrontUrl;
-      let finalBackUrl = aadhaarBackUrl;
-      let finalReceiptUrl = paymentScreenshotUrl;
-
-      if (aadhaarFrontFile) {
-        finalFrontUrl = await uploadImage('users', aadhaarFrontFile);
-      }
-      if (aadhaarBackFile) {
-        finalBackUrl = await uploadImage('users', aadhaarBackFile);
-      }
-      if (paymentScreenshotFile) {
-        finalReceiptUrl = await uploadImage('users', paymentScreenshotFile);
-      }
+      const finalAvatarUrl = upAvatar || avatarUrl;
+      const finalFrontUrl = upFront || aadhaarFrontUrl;
+      const finalBackUrl = upBack || aadhaarBackUrl;
+      const finalReceiptUrl = upReceipt || paymentScreenshotUrl;
 
       const payload: Partial<User> = {
         name: fullName.trim(),

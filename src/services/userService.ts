@@ -124,6 +124,8 @@ function mapRow(row: Record<string, unknown>): User {
     post_office: (row.post_office || row.postOffice) as string | undefined,
     block: (row.block as string) || undefined,
     tehsil: (row.tehsil as string) || undefined,
+    pincode: (row.pincode || row.pin_code || row.pinCode) as string | undefined,
+    pin_code: (row.pincode || row.pin_code || row.pinCode) as string | undefined,
     passwordHash: (row.password || row.password_hash || row.passwordHash) as string | undefined,
     aadhaarFrontUrl: (row.aadhaar_front_url || row.aadhaarFrontUrl) as string | undefined,
     aadhaarBackUrl: (row.aadhaar_back_url || row.aadhaarBackUrl) as string | undefined,
@@ -235,6 +237,8 @@ export async function createUser(user: User & { aadhaarFrontUrl?: string; aadhaa
     post_office: user.postOffice || user.post_office || null,
     block: user.block || null,
     tehsil: user.tehsil || null,
+    pincode: user.pincode || user.pin_code || null,
+    pin_code: user.pincode || user.pin_code || null,
     aadhaar_front_url: user.aadhaarFrontUrl,
     aadhaar_back_url: user.aadhaarBackUrl,
     password: user.passwordHash,
@@ -385,6 +389,10 @@ export async function updateUser(id: string, patch: Partial<User>): Promise<User
   if (patch.postOffice !== undefined || patch.post_office !== undefined) update.post_office = patch.postOffice || patch.post_office || null;
   if (patch.block !== undefined) update.block = patch.block || null;
   if (patch.tehsil !== undefined) update.tehsil = patch.tehsil || null;
+  if (patch.pincode !== undefined || patch.pin_code !== undefined) {
+    update.pincode = patch.pincode || patch.pin_code || null;
+    update.pin_code = patch.pincode || patch.pin_code || null;
+  }
   if (patch.aadhaarFrontUrl !== undefined) update.aadhaar_front_url = patch.aadhaarFrontUrl;
   if (patch.aadhaarBackUrl !== undefined) update.aadhaar_back_url = patch.aadhaarBackUrl;
   if (patch.paymentMethod !== undefined) update.payment_method = patch.paymentMethod;
