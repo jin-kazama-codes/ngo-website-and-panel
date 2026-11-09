@@ -106,7 +106,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
       state: activeUser?.state || 'Uttar Pradesh',
       adminName: activeUser?.name || 'Community Admin',
       adminRoleTitle: 'Community Admin',
-      avatar: activeUser?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
+      avatar: activeUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeUser?.name || 'Community')}&background=0f3322&color=f0c868`,
       totalMembers: 1,
       activeCampaigns: 0,
       totalRaisedINR: 0,

@@ -5,6 +5,7 @@ import { User, UserRole, Community, MemberNominee, MemberBankDetails } from '../
 import { getUsers, createUser, deleteUser, updateUser } from '../../services/userService';
 import { getMemberNominees, getMemberBankDetails } from '../../services/memberService';
 import { getCommunities } from '../../services/communityService';
+import { uploadImage } from '../../lib/storage';
 import { hashPassword } from '../../lib/auth';
 import { PlusCircle, Edit2, X, Users, CheckCircle2, Search, Upload, Trash2, Mail, Phone, MapPin, Award, Eye, ShieldCheck, FileText, Building2, Calendar, ExternalLink, Lock, Filter, HeartHandshake, Building, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
@@ -672,14 +673,20 @@ export const ManageUsers: React.FC = () => {
 
       let avatarUrl =
         existingAvatar ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || '')}&background=random`;
-      if (avatarFile) avatarUrl = await fileToBase64(avatarFile);
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || '')}&background=0f3322&color=f0c868`;
+      if (avatarFile) {
+        avatarUrl = await uploadImage('users', avatarFile);
+      }
 
       let docUrl = existingDoc || undefined;
-      if (documentFile) docUrl = await fileToBase64(documentFile);
+      if (documentFile) {
+        docUrl = await uploadImage('users', documentFile);
+      }
 
       let screenshotUrl = existingScreenshot || undefined;
-      if (screenshotFile) screenshotUrl = await fileToBase64(screenshotFile);
+      if (screenshotFile) {
+        screenshotUrl = await uploadImage('receipts', screenshotFile);
+      }
 
       if (editingId) {
         const patch: Partial<User> = {

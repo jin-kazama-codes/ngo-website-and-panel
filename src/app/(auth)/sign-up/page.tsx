@@ -62,6 +62,7 @@ export default function SignUpPage() {
   const [postOffice, setPostOffice] = useState('');
   const [block, setBlock] = useState('');
   const [tehsil, setTehsil] = useState('');
+  const [pincode, setPincode] = useState('');
   const [district, setDistrict] = useState('');
   const [state, setState] = useState('');
   const city = (villageTown.trim() || district.trim());
@@ -219,11 +220,6 @@ export default function SignUpPage() {
     if (!fatherName.trim()) missing.push(tr('पिता का नाम', 'والد کا نام', "Father's Name"));
     if (!phone.trim()) missing.push(tr('मोबाइल नंबर', 'موبائل نمبر', 'Mobile Number'));
     if (!password) missing.push(tr('पासवर्ड', 'پاس ورڈ', 'Password'));
-    if (!houseNo.trim()) missing.push(tr('मकान संख्या (H.No.)', 'مکان نمبر (H.No.)', 'House No. (H.No.)'));
-    if (!villageTown.trim()) missing.push(tr('गाँव / कस्बा (Village / Town)', 'گاؤں / قصبہ (Village / Town)', 'Village / Town'));
-    if (!postOffice.trim()) missing.push(tr('डाकघर (Post Office)', 'پوسٹ آفس (Post Office)', 'Post Office'));
-    if (!block.trim()) missing.push(tr('ब्लॉक (Block)', 'بلاک (Block)', 'Block'));
-    if (!tehsil.trim()) missing.push(tr('तहसील (Tehsil)', 'تحصیل (Tehsil)', 'Tehsil'));
     if (!district.trim()) missing.push(tr('ज़िला (District)', 'ضلع (District)', 'District'));
     if (!state.trim()) missing.push(tr('राज्य (State)', 'ریاست (State)', 'State'));
     if (!religion) missing.push(tr('धर्म', 'مذہب', 'Religion'));
@@ -342,14 +338,16 @@ export default function SignUpPage() {
 
     setSubmitting(true);
     try {
-      let aadhaarFrontUrl: string | undefined;
-      if (aadhaarFrontFile) aadhaarFrontUrl = await uploadImage('users', aadhaarFrontFile);
-      let aadhaarBackUrl: string | undefined;
-      if (aadhaarBackFile) aadhaarBackUrl = await uploadImage('users', aadhaarBackFile);
-      let avatarUrl = '';
-      if (avatarFile) avatarUrl = await uploadImage('users', avatarFile);
-      let screenshotUrl: string | undefined;
-      if (screenshotFile) screenshotUrl = await uploadImage('receipts', screenshotFile);
+      const [aadhaarFrontUrl, aadhaarBackUrl, uploadedAvatarUrl, screenshotUrl] = await Promise.all([
+        aadhaarFrontFile ? uploadImage('users', aadhaarFrontFile) : Promise.resolve(undefined),
+        aadhaarBackFile ? uploadImage('users', aadhaarBackFile) : Promise.resolve(undefined),
+        avatarFile ? uploadImage('users', avatarFile) : Promise.resolve(''),
+        screenshotFile ? uploadImage('receipts', screenshotFile) : Promise.resolve(undefined),
+      ]);
+
+      const avatarUrl =
+        uploadedAvatarUrl ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName.trim())}&background=0f3322&color=f0c868`;
 
       const hashedPassword = await hashPassword(password);
 
@@ -361,6 +359,7 @@ export default function SignUpPage() {
         tehsil.trim() ? `Tehsil: ${tehsil.trim()}` : '',
         district.trim() ? `District: ${district.trim()}` : '',
         state.trim() ? `State: ${state.trim()}` : '',
+        pincode.trim() ? `PIN: ${pincode.trim()}` : '',
       ].filter(Boolean).join(', ');
 
       const memberCity = villageTown.trim() || district.trim();
@@ -384,6 +383,8 @@ export default function SignUpPage() {
         post_office: postOffice.trim(),
         block: block.trim(),
         tehsil: tehsil.trim(),
+        pincode: pincode.trim() || undefined,
+        pin_code: pincode.trim() || undefined,
         role: 'member',
         avatar: avatarUrl,
         communityId: activeCommunity.id,
@@ -802,7 +803,7 @@ export default function SignUpPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    {tr('मकान संख्या (H.No.) *', 'مکان نمبر (H.No.) *', 'House No. (H.No.) *')}
+                    {tr('मकान संख्या (H.No.)', 'مکان نمبر (H.No.)', 'House No. (H.No.)')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -810,7 +811,6 @@ export default function SignUpPage() {
                     </div>
                     <input
                       type="text"
-                      required
                       placeholder={tr('उदा. 12B या वार्ड नं. 4', 'مثال: 12B یا وارڈ 4', 'e.g. 12B / Ward No. 4')}
                       value={houseNo}
                       onChange={(e) => setHouseNo(e.target.value)}
@@ -821,7 +821,7 @@ export default function SignUpPage() {
 
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    {tr('गाँव / कस्बा (Village / Town) *', 'گاؤں / قصبہ (Village / Town) *', 'Village / Town *')}
+                    {tr('गाँव / कस्बा (Village / Town)', 'گاؤں / قصبہ (Village / Town)', 'Village / Town')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -829,7 +829,6 @@ export default function SignUpPage() {
                     </div>
                     <input
                       type="text"
-                      required
                       placeholder={tr('उदा. शेरगढ़ / भोजीपुरा', 'مثال: شیرگڑھ / قصبہ', 'e.g. Shergarh / Town name')}
                       value={villageTown}
                       onChange={(e) => setVillageTown(e.target.value)}
@@ -843,7 +842,7 @@ export default function SignUpPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    {tr('डाकघर (Post Office) *', 'پوسٹ آفس (Post Office) *', 'Post Office *')}
+                    {tr('डाकघर (Post Office)', 'پوسٹ آفس (Post Office)', 'Post Office')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -851,7 +850,6 @@ export default function SignUpPage() {
                     </div>
                     <input
                       type="text"
-                      required
                       placeholder={tr('उदा. मुख्य डाकघर', 'مثال: مرکزی ڈاکخانہ', 'e.g. Main Post Office')}
                       value={postOffice}
                       onChange={(e) => setPostOffice(e.target.value)}
@@ -862,7 +860,7 @@ export default function SignUpPage() {
 
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    {tr('ब्लॉक / प्रखंड (Block) *', 'بلاک (Block) *', 'Block *')}
+                    {tr('ब्लॉक / प्रखंड (Block)', 'بلاک (Block)', 'Block')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -870,7 +868,6 @@ export default function SignUpPage() {
                     </div>
                     <input
                       type="text"
-                      required
                       placeholder={tr('उदा. नवाबगंज', 'مثال: نواب گنج', 'e.g. Nawabganj')}
                       value={block}
                       onChange={(e) => setBlock(e.target.value)}
@@ -880,11 +877,11 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              {/* 5. Tehsil & 6. District */}
+              {/* 5. Tehsil & 6. PIN Code */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    {tr('तहसील (Tehsil) *', 'تحصیل (Tehsil) *', 'Tehsil *')}
+                    {tr('तहसील (Tehsil)', 'تحصیل (Tehsil)', 'Tehsil')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -892,7 +889,6 @@ export default function SignUpPage() {
                     </div>
                     <input
                       type="text"
-                      required
                       placeholder={tr('उदा. मीरगंज / सदर', 'مثال: میر گنج / صدر', 'e.g. Meerganj / Sadar')}
                       value={tehsil}
                       onChange={(e) => setTehsil(e.target.value)}
@@ -901,6 +897,29 @@ export default function SignUpPage() {
                   </div>
                 </div>
 
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    {tr('पिन कोड (PIN Code)', 'پن کوڈ (PIN Code)', 'PIN Code')}
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder={tr('उदा. 243001', 'مثال: 243001', 'e.g. 243001')}
+                      value={pincode}
+                      onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-900 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 7. District * & 8. State * */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
                     {tr('ज़िला (District) *', 'ضلع (District) *', 'District *')}
@@ -919,25 +938,24 @@ export default function SignUpPage() {
                     />
                   </div>
                 </div>
-              </div>
 
-              {/* 7. State */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                  {tr('राज्य (State) *', 'ریاست (State) *', 'State *')}
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <MapPin className="w-4 h-4" />
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    {tr('राज्य (State) *', 'ریاست (State) *', 'State *')}
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      placeholder={tr('उदा. उत्तर प्रदेश', 'مثال: اتر پردیش', 'e.g. Uttar Pradesh')}
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-900 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 transition-all"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    required
-                    placeholder={tr('उदा. उत्तर प्रदेश', 'مثال: اتر پردیش', 'e.g. Uttar Pradesh')}
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-900 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 transition-all"
-                  />
                 </div>
               </div>
 
