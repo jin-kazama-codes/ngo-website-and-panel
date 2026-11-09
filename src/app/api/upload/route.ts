@@ -1,17 +1,21 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
-    const folder = (formData.get('folder') as string) || 'campaigns';
+    const folder = (formData.get('folder') as string) || 'users';
 
     if (!file) {
       return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 });
     }
 
-    const ext = file.name.split('.').pop() || 'jpg';
+    const rawExt = file.name ? file.name.split('.').pop() || 'jpg' : 'jpg';
+    const ext = rawExt.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
     const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
     const arrayBuffer = await file.arrayBuffer();
@@ -26,7 +30,7 @@ export async function POST(request: Request) {
 
     if (error) {
       console.warn('Supabase storage upload error:', error.message);
-      // Fallback: create base64 data URL if storage bucket fails/not created
+      // Fallback: create base64 data URL if storage bucket fails
       const base64 = buffer.toString('base64');
       const dataUrl = `data:${file.type || 'image/jpeg'};base64,${base64}`;
       return NextResponse.json({ success: true, url: dataUrl, warning: error.message });
