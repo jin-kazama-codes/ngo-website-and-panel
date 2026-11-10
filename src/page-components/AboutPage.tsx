@@ -3,28 +3,27 @@
 import React from 'react';
 import {
   ShieldCheck,
-  Users,
-  Award,
   Sparkles,
   Quote,
   HeartHandshake,
   Scale,
-  Heart,
-  CheckCircle2,
   Building2,
-  Compass,
-  ArrowRight,
   HandHeart,
-  UserCheck
+  GraduationCap,
+  Stethoscope,
+  Users,
+  LifeBuoy,
+  Wallet,
+  Landmark,
+  ClipboardList,
 } from 'lucide-react';
 import { MembershipBanner } from '../components/MembershipBanner';
 import { useLanguage } from '../context/LanguageContext';
-import { useAppState } from '../providers/AppStateProvider';
-import Link from 'next/link';
 
 export const AboutPage: React.FC = () => {
-  const { t, isHindi, isUrdu } = useLanguage();
-  const { handleOpenRegister, handleOpenDonate } = useAppState();
+  const { t, isHindi } = useLanguage();
+  const aboutText = (key: string, english: string, hindi: string) =>
+    isHindi ? hindi : t(key, english);
 
   return (
     <div className="min-h-screen bg-[#fbf9f4] text-slate-800 pb-20 animate-fade-in">
@@ -472,6 +471,170 @@ export const AboutPage: React.FC = () => {
           </div>
         </div>
 
+
+        {/* ── 3. MFCT's Areas of Work ── */}
+        <section className="space-y-6 pt-4" aria-labelledby="about-areas-title">
+          <div className="max-w-3xl mx-auto text-center space-y-3">
+            <span
+              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border"
+              style={{
+                background: 'rgba(200, 168, 75, 0.12)',
+                color: 'var(--mfct-gold-dark)',
+                borderColor: 'rgba(200, 168, 75, 0.3)',
+              }}
+            >
+              {aboutText('about.areas_eyebrow', 'OUR AREAS OF WORK', 'हमारे कार्यक्षेत्र')}
+            </span>
+            <h2 id="about-areas-title" className="text-2xl sm:text-3xl font-black text-slate-900">
+              {aboutText('about.areas_title', 'Where MFCT Focuses Its Efforts', 'MFCT के प्रमुख कार्यक्षेत्र')}
+            </h2>
+            <p className="text-sm sm:text-base leading-relaxed text-slate-600">
+              {aboutText(
+                'about.areas_intro',
+                'MFCT focuses on six areas of community support. Activities and assistance are organized according to identified needs, available resources, and the purpose of each initiative.',
+                'MFCT समुदाय की सहायता के लिए छह प्रमुख क्षेत्रों में काम करता है। प्रत्येक गतिविधि और सहायता की योजना स्थानीय जरूरतों, उपलब्ध संसाधनों और संबंधित पहल के उद्देश्य को ध्यान में रखकर बनाई जाती है।'
+              )}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              {
+                key: 'education',
+                icon: GraduationCap,
+                title: aboutText('about.area_education_title', 'Education Support', 'शिक्षा सहायता'),
+                description: aboutText('about.area_education_desc', 'Support related to learning opportunities and educational needs.', 'शिक्षा के अवसरों और शैक्षिक जरूरतों से संबंधित सहायता।'),
+              },
+              {
+                key: 'healthcare',
+                icon: Stethoscope,
+                title: aboutText('about.area_healthcare_title', 'Healthcare Support', 'स्वास्थ्य सहायता'),
+                description: aboutText('about.area_healthcare_desc', 'Support for healthcare-related needs and access to medical assistance.', 'स्वास्थ्य संबंधी जरूरतों और चिकित्सा सहायता तक पहुँच बनाने में सहयोग।'),
+              },
+              {
+                key: 'social',
+                icon: HeartHandshake,
+                title: aboutText('about.area_social_title', 'Social Welfare', 'सामाजिक कल्याण'),
+                description: aboutText('about.area_social_desc', 'Community welfare initiatives designed around local needs.', 'स्थानीय जरूरतों के अनुसार समुदाय के कल्याण के लिए पहल।'),
+              },
+              {
+                key: 'community',
+                icon: Users,
+                title: aboutText('about.area_community_title', 'Community Development', 'सामुदायिक विकास'),
+                description: aboutText('about.area_community_desc', 'Encouraging participation, cooperation, and stronger local communities.', 'लोगों की भागीदारी, आपसी सहयोग और मजबूत स्थानीय समुदायों को प्रोत्साहित करना।'),
+              },
+              {
+                key: 'emergency',
+                icon: LifeBuoy,
+                title: aboutText('about.area_emergency_title', 'Emergency Assistance', 'आपातकालीन सहायता'),
+                description: aboutText('about.area_emergency_desc', 'Helping coordinate support for people facing urgent and difficult situations.', 'कठिन और आपातकालीन परिस्थितियों का सामना कर रहे लोगों के लिए सहायता का समन्वय करना।'),
+              },
+              {
+                key: 'marriage',
+                icon: HandHeart,
+                title: aboutText('about.area_marriage_title', 'Marriage Assistance', 'विवाह सहायता'),
+                description: aboutText('about.area_marriage_desc', 'Support initiatives for eligible individuals and families, based on the trust’s process and available resources.', 'ट्रस्ट की प्रक्रिया और उपलब्ध संसाधनों के अनुसार पात्र व्यक्तियों और परिवारों के लिए सहायता पहल।'),
+              },
+            ].map(({ key, icon: Icon, title, description }) => (
+              <article
+                key={key}
+                className="h-full p-5 sm:p-6 bg-white rounded-2xl border shadow-sm transition-shadow hover:shadow-md"
+                style={{ borderColor: 'rgba(200, 168, 75, 0.25)' }}
+              >
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: 'rgba(26, 60, 44, 0.09)', color: 'var(--mfct-dark-green)' }}
+                >
+                  <Icon className="w-5 h-5" aria-hidden="true" />
+                </div>
+                <h3 className="font-extrabold text-slate-900 text-base mb-2">{title}</h3>
+                <p className="text-sm text-slate-600 leading-relaxed">{description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* ── 4. How Donations Currently Work ── */}
+        <section
+          className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch pt-2"
+          aria-labelledby="about-donations-title"
+        >
+          <div
+            className="lg:col-span-7 rounded-3xl p-6 sm:p-8 text-white shadow-lg"
+            style={{ background: 'linear-gradient(135deg, #0f3322 0%, #061910 100%)' }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-white/10 text-amber-300">
+                <Wallet className="w-5 h-5" aria-hidden="true" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-300">
+                {aboutText('about.donations_eyebrow', 'DONATION INFORMATION', 'दान संबंधी जानकारी')}
+              </span>
+            </div>
+            <h2 id="about-donations-title" className="text-2xl sm:text-3xl font-black mb-3">
+              {aboutText('about.donations_title', 'How You Can Contribute', 'आप किस प्रकार योगदान दे सकते हैं')}
+            </h2>
+            <p className="text-sm sm:text-base text-slate-200 leading-relaxed mb-5">
+              {aboutText(
+                'about.donations_intro',
+                'At present, donations are received through manual methods. Supporters can contribute in person or through a bank transfer, using the instructions shared by the trust.',
+                'वर्तमान में दान मैनुअल तरीकों से स्वीकार किया जाता है। समर्थक ट्रस्ट द्वारा साझा किए गए निर्देशों के अनुसार व्यक्तिगत रूप से या बैंक ट्रांसफर के माध्यम से योगदान दे सकते हैं।'
+              )}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
+                <div className="flex items-center gap-2 text-amber-300 font-bold mb-2">
+                  <HandHeart className="w-5 h-5" aria-hidden="true" />
+                  {aboutText('about.donation_manual_title', 'Manual Donation', 'मैनुअल दान')}
+                </div>
+                <p className="text-sm text-slate-200 leading-relaxed">
+                  {aboutText('about.donation_manual_desc', 'Donors can follow the manual donation instructions shared by the trust. Please contact the trust if you need help confirming the available method or acknowledgement process.', 'दाता ट्रस्ट द्वारा साझा किए गए मैनुअल दान के निर्देशों का पालन कर सकते हैं। उपलब्ध तरीके या दान की रसीद/पुष्टि के बारे में जानकारी के लिए कृपया ट्रस्ट से संपर्क करें।')}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
+                <div className="flex items-center gap-2 text-amber-300 font-bold mb-2">
+                  <Landmark className="w-5 h-5" aria-hidden="true" />
+                  {aboutText('about.donation_bank_title', 'Bank Transfer', 'बैंक ट्रांसफर')}
+                </div>
+                <p className="text-sm text-slate-200 leading-relaxed">
+                  {aboutText('about.donation_bank_desc', 'Supporters can use the trust’s bank-transfer details and should retain the transaction reference for follow-up.', 'समर्थक ट्रस्ट के बैंक ट्रांसफर विवरण का उपयोग कर सकते हैं। आगे की पुष्टि के लिए लेन-देन का रेफरेंस नंबर सुरक्षित रखें।')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <aside
+            className="lg:col-span-5 rounded-3xl border bg-white p-6 sm:p-8 flex flex-col justify-center"
+            style={{ borderColor: 'rgba(200, 168, 75, 0.35)' }}
+          >
+            <div
+              className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
+              style={{ background: 'rgba(200, 168, 75, 0.14)', color: 'var(--mfct-gold-dark)' }}
+            >
+              <ClipboardList className="w-5 h-5" aria-hidden="true" />
+            </div>
+            <h3 className="text-xl font-black text-slate-900 mb-3">
+              {aboutText('about.donation_transparency_title', 'Donation Records and Transparency', 'दान का रिकॉर्ड और पारदर्शिता')}
+            </h3>
+            <p className="text-sm text-slate-600 leading-relaxed mb-4">
+              {aboutText(
+                'about.donation_transparency_desc',
+                'The trust is working to strengthen the way donation information and fund use are documented and communicated. Supporters should refer to the acknowledgement and information provided by the trust for their contribution.',
+                'ट्रस्ट दान और उसके उपयोग से संबंधित जानकारी का रिकॉर्ड रखने और उसे बेहतर तरीके से साझा करने की प्रक्रिया को मजबूत कर रहा है। दान के संबंध में ट्रस्ट द्वारा दी गई रसीद और जानकारी को संदर्भ के रूप में सुरक्षित रखें।'
+              )}
+            </p>
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm font-semibold text-amber-950 leading-relaxed">
+                {aboutText(
+                  'about.payment_gateway_notice',
+                  'Online payment gateway payments are not available on this website yet. Please use the current donation instructions shared directly by the trust.',
+                  'इस वेबसाइट पर ऑनलाइन पेमेंट गेटवे की सुविधा अभी उपलब्ध नहीं है। कृपया फिलहाल ट्रस्ट द्वारा सीधे साझा किए गए दान संबंधी निर्देशों का उपयोग करें।'
+                )}
+              </p>
+            </div>
+          </aside>
+        </section>
+
         {/* ── 3. Four Core Values (संस्था के 4 मूल स्तंभ) ── */}
         <div className="space-y-6 pt-4">
           <div className="text-center space-y-2">
@@ -508,7 +671,7 @@ export const AboutPage: React.FC = () => {
               <p className="text-xs text-slate-600 leading-relaxed">
                 {t(
                   'about.val_service_desc',
-                  'मानवीय गरिमा के साथ जरूरतमंदों की मदद और आपातकालीन परिस्थितियों में तुरंत सहायता पहुंचाना।'
+                  'मानवीय गरिमा का सम्मान करते हुए जरूरतमंद लोगों और परिवारों की सहायता के प्रयास करना।'
                 )}
               </p>
             </div>
@@ -525,12 +688,12 @@ export const AboutPage: React.FC = () => {
                 <ShieldCheck className="w-6 h-6 text-white" />
               </div>
               <h4 className="font-extrabold text-slate-900 text-base">
-                {t('about.val_transparency_title', '100% पारदर्शिता (Escrow Transparency)')}
+                {t('about.val_transparency_title', 'जिम्मेदार वित्तीय प्रबंधन (Responsible Financial Practices)')}
               </h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 {t(
                   'about.val_transparency_desc',
-                  'प्रत्येक दान का पाई-पाई हिसाब, अस्पतालों और आपूर्तिकर्ताओं को सीधा भुगतान, बिना किसी बिचौलिए के।'
+                  'दान से संबंधित जानकारी और उसके उपयोग का स्पष्ट रिकॉर्ड रखने तथा उसे बेहतर तरीके से साझा करने की दिशा में निरंतर सुधार करना।'
                 )}
               </p>
             </div>
@@ -581,7 +744,7 @@ export const AboutPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ── 4. Core Transparency Pillars ── */}
+        {/* ── 4. Additional Transparency Information (not currently displayed) ── */}
         {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
           <div
             className="p-6 bg-white rounded-3xl border shadow-sm space-y-3"
