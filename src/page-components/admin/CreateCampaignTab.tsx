@@ -62,6 +62,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
   });
 
   const [communities, setCommunities] = useState<Community[]>([]);
+  const [communitiesLoading, setCommunitiesLoading] = useState<boolean>(true);
   const [selectedCommunityId, setSelectedCommunityId] = useState(initialCampaign?.communityId || '');
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
@@ -72,11 +73,21 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
   };
 
   useEffect(() => {
-    getCommunities().then((data) => {
-      if (data && data.length > 0) {
-        setCommunities(data);
-      }
-    }).catch(console.error);
+    let isMounted = true;
+    setCommunitiesLoading(true);
+    getCommunities()
+      .then((data) => {
+        if (isMounted && data && data.length > 0) {
+          setCommunities(data);
+        }
+      })
+      .catch(console.error)
+      .finally(() => {
+        if (isMounted) setCommunitiesLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Active user's city scope
@@ -84,6 +95,9 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
 
   // Filter communities: only show community belonging to active user's city
   const displayedCommunities = useMemo(() => {
+    if (communitiesLoading) {
+      return [];
+    }
     if (!userCity) {
       return communities.length > 0 ? communities : [];
     }
@@ -117,7 +131,7 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
       coverImage: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80',
     };
     return [cityChapter];
-  }, [communities, userCity, activeUser]);
+  }, [communities, communitiesLoading, userCity, activeUser]);
 
   useEffect(() => {
     if (displayedCommunities.length > 0) {
@@ -129,8 +143,15 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
     }
   }, [displayedCommunities, selectedCommunityId, initialCampaign]);
 
-  const activeCommunity = displayedCommunities.find((c) => c.id === selectedCommunityId) || displayedCommunities[0];
+  const activeCommunity: Community | undefined =
+    displayedCommunities.find((c) => c.id === selectedCommunityId) || displayedCommunities[0];
   const campaignCity = userCity || activeCommunity?.city || activeUser?.city || '';
+  const communityDisplayName =
+    activeCommunity?.name ||
+    initialCampaign?.communityName ||
+    activeUser?.communityName ||
+    '';
+  const communityDisplayCity = activeCommunity?.city || campaignCity;
 
   // Refs for file inputs — avoids label double-trigger issue in some browsers
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -179,6 +200,12 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
     }
     if (!docUploaded && docFiles.length === 0) {
       showToast(tr('कृपया कम से कम एक दस्तावेज़ या अनुमान संलग्न करें।', 'براہ کرم کم از कम ایک دستاویز منسلک کریں۔', 'Please attach at least one medical estimate or document.'), 'error');
+      return;
+    }
+    const resolvedCommunityId = activeCommunity?.id || initialCampaign?.communityId || activeUser?.communityId || '';
+    const resolvedCommunityName = activeCommunity?.name || initialCampaign?.communityName || activeUser?.communityName || '';
+    if (communitiesLoading && !resolvedCommunityId) {
+      showToast(tr('कृपया समुदाय लोड होने तक प्रतीक्षा करें।', 'براہ کرم کمیونٹی لوڈ ہونے کا انتظار کریں۔', 'Please wait for communities to finish loading.'), 'error');
       return;
     }
     setSubmitting(true);
@@ -232,8 +259,8 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
         const updateData: Partial<Campaign> = {
           title,
           category,
-          communityId: activeCommunity.id,
-          communityName: activeCommunity.name,
+          communityId: resolvedCommunityId,
+          communityName: resolvedCommunityName,
           city: campaignCity,
           beneficiaryName,
           beneficiaryRelation,
@@ -262,8 +289,8 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
         const newCamp: Omit<Campaign, 'id'> = {
           title,
           category,
-          communityId: activeCommunity.id,
-          communityName: activeCommunity.name,
+          communityId: resolvedCommunityId,
+          communityName: resolvedCommunityName,
           city: campaignCity,
           beneficiaryName,
           beneficiaryRelation,
@@ -512,26 +539,44 @@ export const CreateCampaignTab: React.FC<CreateCampaignTabProps> = ({ onClose, o
           <select
             value={selectedCommunityId}
             onChange={(e) => setSelectedCommunityId(e.target.value)}
-            className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+            disabled={displayedCommunities.length === 0}
+            className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer disabled:opacity-60"
           >
-            {displayedCommunities.map((c) => (
-              <option key={c.id} value={c.id}>
-                {translateCommunityName(c.name, language)} ({translateCity(c.city || campaignCity, language)})
+            {displayedCommunities.length === 0 ? (
+              <option value="">
+                {communitiesLoading
+                  ? tr('समुदाय लोड हो रहे हैं...', 'کمیونٹیز لوڈ ہو رہی ہیں...', 'Loading communities...')
+                  : tr('कोई समुदाय उपलब्ध नहीं', 'کوئی کمیونٹی دستیاب نہیں', 'No community available')}
               </option>
-            ))}
+            ) : (
+              displayedCommunities.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {translateCommunityName(c.name, language)}
+                  {(c.city || campaignCity) ? ` (${translateCity(c.city || campaignCity, language)})` : ''}
+                </option>
+              ))
+            )}
           </select>
 
           {/* Community Location display */}
-          <div className="mt-2.5 flex items-center justify-between px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80 text-xs">
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 min-w-0">
-              <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span className="font-semibold truncate">{translateCommunityName(activeCommunity.name, language)}</span>
+          {(communityDisplayName || communityDisplayCity || communitiesLoading) && (
+            <div className="mt-2.5 flex items-center justify-between gap-2 px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80 text-xs">
+              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 min-w-0">
+                <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="font-semibold truncate">
+                  {communityDisplayName
+                    ? translateCommunityName(communityDisplayName, language)
+                    : tr('समुदाय लोड हो रहा है...', 'کمیونٹی لوڈ ہو رہی ہے...', 'Loading community...')}
+                </span>
+              </div>
+              {communityDisplayCity && (
+                <div className="flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/80 px-2.5 py-1 rounded-lg shrink-0">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>{tr('स्थान:', 'مقام:', 'Location:')} {translateCity(communityDisplayCity, language)}</span>
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/80 px-2.5 py-1 rounded-lg shrink-0">
-              <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span>{tr('स्थान:', 'مقام:', 'Location:')} {translateCity(activeCommunity.city || campaignCity, language)}</span>
-            </div>
-          </div>
+          )}
         </div>
 
         <div>
