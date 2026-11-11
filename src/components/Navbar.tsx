@@ -4,14 +4,15 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { User, UserRole } from '../types';
-import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, ChevronDown, Award, LayoutDashboard, Calculator, LogIn, LogOut, User as UserIcon, Clock, AlertCircle, ShieldCheck, KeyRound, Copy, Check } from 'lucide-react';
+import { Heart, UserPlus, Menu, X, Shield, Sparkles, Building2, UserCheck, ChevronDown, Award, LayoutDashboard, Calculator, LogIn, LogOut, User as UserIcon, Clock, AlertCircle, ShieldCheck, KeyRound, Copy, Check, Calendar } from 'lucide-react';
 import { FaFacebookF, FaInstagram, FaWhatsapp } from 'react-icons/fa6';
 import { useLanguage } from '../context/LanguageContext';
 import { LanguageSelector } from './LanguageSelector';
 import { translateDistrictRole } from '../lib/translateEntity';
 import { KycUpdateModal } from './KycUpdateModal';
 import { ChangePasswordModal } from './ChangePasswordModal';
-import { MonthlyPaymentToggle } from './MonthlyPaymentToggle';
+import { updateUser } from '../services/userService';
+import { isMonthlyOptedIn } from '../lib/monthlyPaymentUtils';
 
 interface NavbarProps {
   currentPage: string;
@@ -44,6 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [kycUpdateOpen, setKycUpdateOpen] = useState(false);
+  const [updatingMonthly, setUpdatingMonthly] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [membershipIdCopyStatus, setMembershipIdCopyStatus] = useState<'copied' | 'error' | null>(null);
   const { t, isHindi, language } = useLanguage();
@@ -122,6 +124,32 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
 
     window.setTimeout(() => setMembershipIdCopyStatus(null), 2000);
+  };
+
+  const isUserMonthlyOn = isMonthlyOptedIn(
+    currentUser?.monthly_payment ?? currentUser?.monthlyPayment
+  );
+
+  const handleToggleUserMonthly = async () => {
+    if (!currentUser?.id || updatingMonthly) return;
+    const nextVal: 'yes' | 'no' = isUserMonthlyOn ? 'no' : 'yes';
+    setUpdatingMonthly(true);
+    try {
+      await updateUser(currentUser.id, {
+        monthlyPayment: nextVal,
+        monthly_payment: nextVal,
+      });
+      window.dispatchEvent(
+        new CustomEvent('mfct:user-updated', {
+          detail: { id: currentUser.id, monthlyPayment: nextVal, monthly_payment: nextVal },
+        })
+      );
+      window.dispatchEvent(new CustomEvent('mfct:donations-updated'));
+    } catch (err) {
+      console.error('Failed to toggle user monthly payment:', err);
+    } finally {
+      setUpdatingMonthly(false);
+    }
   };
 
   useEffect(() => {
@@ -461,15 +489,37 @@ export const Navbar: React.FC<NavbarProps> = ({
                             <span>{t('nav.changePassword', 'Change Password')}</span>
                           </button>
 
-                          {/* Monthly Payment Preference & Details */}
-                          <div className="pt-1">
-                            <MonthlyPaymentToggle
-                              user={currentUser}
-                              onOpenDonate={() => {
-                                setProfileMenuOpen(false);
-                                onOpenDonate();
-                              }}
-                            />
+                          {/* User Monthly Payment Opt-In Toggle */}
+                          <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Calendar className="w-4 h-4 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
+                              <div className="min-w-0">
+                                <div className="text-[11px] font-bold text-white truncate">
+                                  {language === 'hi' ? 'मासिक शुल्क (₹100)' : language === 'ur' ? 'ماہانہ فیس (₹100)' : 'Monthly Fee (₹100)'}
+                                </div>
+                                <div className="text-[9px] text-white/60">
+                                  {isUserMonthlyOn
+                                    ? language === 'hi' ? 'चालू (हाँ)' : language === 'ur' ? 'فعال (ہاں)' : 'Enabled (Yes)'
+                                    : language === 'hi' ? 'बंद (नहीं)' : language === 'ur' ? 'بند (نہیں)' : 'Disabled (No)'}
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-checked={isUserMonthlyOn}
+                              disabled={updatingMonthly}
+                              onClick={handleToggleUserMonthly}
+                              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors disabled:opacity-50 ${
+                                isUserMonthlyOn ? 'bg-emerald-500' : 'bg-slate-600'
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                                  isUserMonthlyOn ? 'translate-x-4' : 'translate-x-0'
+                                }`}
+                              />
+                            </button>
                           </div>
 
                           <div className="my-1 border-t" style={{ borderColor: 'rgba(200,168,75,0.15)' }} />
@@ -694,19 +744,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span>{t('nav.changePassword', 'Change Password')}</span>
                   </button>
                 </>
-              )}
-
-              {/* Monthly Payment in mobile drawer */}
-              {onLogout && (
-                <div className="pt-1">
-                  <MonthlyPaymentToggle
-                    user={currentUser}
-                    onOpenDonate={() => {
-                      setMobileMenuOpen(false);
-                      onOpenDonate();
-                    }}
-                  />
-                </div>
               )}
 
               {isInitialized && !onLogout && (

@@ -11,6 +11,7 @@ import { CheckCircle, XCircle, X, Search, FileText, Image as ImageIcon, AlertTri
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
 import { translateCategory } from '../../lib/translateEntity';
+import { formatBillingMonthLabel, isMonthlyFeeRecord, parseMonthlyBreakdown } from '../../lib/monthlyPaymentUtils';
 
 interface UtrAuditTabProps {
   activeUser?: User;
@@ -159,6 +160,9 @@ const DonationAuditRow: React.FC<{
   const displayDonorName = useDynamicTranslatedText(donation.donorName, language);
   const displayCampaign = useDynamicTranslatedText(donation.campaignTitle, language);
   const displayCategory = translateCategory(donation.category, language) || useDynamicTranslatedText(donation.category, language);
+  const isMonthly = isMonthlyFeeRecord(donation);
+  const breakdown = parseMonthlyBreakdown(donation.monthlyBreakdown ?? donation.monthly_breakdown);
+  const billingMonthLabel = donation.billingMonth ? formatBillingMonthLabel(donation.billingMonth, language) : '';
 
   return (
     <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
@@ -177,10 +181,24 @@ const DonationAuditRow: React.FC<{
         </div>
       </td>
       <td className="px-4 py-4">
-        <div className="text-slate-900 dark:text-white max-w-[200px] truncate text-xs font-semibold" title={donation.campaignTitle}>
+        <div className="text-slate-900 dark:text-white max-w-[220px] truncate text-xs font-semibold" title={donation.campaignTitle}>
           {displayCampaign}
         </div>
-        <div className="text-[11px] text-slate-500">{displayCategory}</div>
+        {isMonthly ? (
+          <div className="flex flex-wrap items-center gap-1 mt-0.5">
+            <span className="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[9px] font-bold">
+              {tr('मासिक शुल्क', 'ماہانہ فیس', 'Monthly Fee')}
+              {billingMonthLabel ? ` • ${billingMonthLabel}` : ''}
+            </span>
+            {breakdown && breakdown.map((b) => (
+              <span key={b.targetId} className="text-[10px] text-slate-500 dark:text-slate-400">
+                {b.name}: ₹{b.amountINR}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div className="text-[11px] text-slate-500">{displayCategory}</div>
+        )}
       </td>
       <td className="px-4 py-4 whitespace-nowrap">
         {donation.status === 'verified' ? (
@@ -931,6 +949,43 @@ export const UtrAuditTab: React.FC<UtrAuditTabProps> = ({ activeUser: propActive
                   </span>
                   <span className="text-sm font-medium text-slate-900 dark:text-slate-200">{selectedDonation.campaignTitle}</span>
                 </div>
+                {(() => {
+                  const selBreakdown = parseMonthlyBreakdown(
+                    selectedDonation.monthlyBreakdown ?? selectedDonation.monthly_breakdown
+                  );
+                  if (!isMonthlyFeeRecord(selectedDonation) && !selBreakdown) return null;
+                  return (
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl col-span-2 space-y-1.5">
+                      <div className="flex items-center justify-between text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-300">
+                        <span>{tr('मासिक शुल्क विवरण', 'ماہانہ فیس تفصیلات', 'Monthly Fee Breakdown')}</span>
+                        {selectedDonation.billingMonth && (
+                          <span>{formatBillingMonthLabel(selectedDonation.billingMonth, language)}</span>
+                        )}
+                      </div>
+                      {selBreakdown && selBreakdown.length > 0 ? (
+                        <div className="space-y-1">
+                          {selBreakdown.map((item) => (
+                            <div key={item.targetId} className="flex items-center justify-between text-xs text-slate-800 dark:text-slate-200">
+                              <span>
+                                <strong>{item.name}</strong>{' '}
+                                <span className="text-[11px] text-slate-500">
+                                  ({item.targetType === 'primary' ? tr('मुख्य सदस्य', 'بنیادی رکن', 'Primary') : item.relation || tr('महिला सदस्य', 'خاتون رکن', 'Female Member')})
+                                </span>
+                              </span>
+                              <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                                ₹{item.amountINR}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : selectedDonation.femaleMemberName ? (
+                        <div className="text-xs text-slate-700 dark:text-slate-300">
+                          {tr('महिला सदस्य:', 'خاتون رکن:', 'Female Member(s):')} <strong>{selectedDonation.femaleMemberName}</strong>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div>

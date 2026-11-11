@@ -1,4 +1,4 @@
-import { Donation, DonationCategory, UserRole, WakalahInformation } from '../types';
+import { Donation, DonationCategory, MonthlyPaymentBreakdownItem, UserRole, WakalahInformation } from '../types';
 
 function parseWakalahInfo(val: unknown): WakalahInformation[] | undefined {
   if (!val) return undefined;
@@ -16,9 +16,26 @@ function parseWakalahInfo(val: unknown): WakalahInformation[] | undefined {
   return undefined;
 }
 
+function parseMonthlyBreakdown(val: unknown): MonthlyPaymentBreakdownItem[] | undefined {
+  if (!val) return undefined;
+  let arr: unknown = val;
+  if (typeof val === 'string') {
+    try {
+      arr = JSON.parse(val);
+    } catch {
+      return undefined;
+    }
+  }
+  if (!Array.isArray(arr)) return undefined;
+  return arr.length > 0 ? (arr as MonthlyPaymentBreakdownItem[]) : undefined;
+}
+
 function mapRow(row: Record<string, unknown>): Donation {
   const wakalahArray = parseWakalahInfo(
     row.wakalahInformation ?? row.wakalah_information
+  );
+  const breakdownArray = parseMonthlyBreakdown(
+    row.monthlyBreakdown ?? row.monthly_breakdown
   );
 
   return {
@@ -44,6 +61,16 @@ function mapRow(row: Record<string, unknown>): Donation {
     receiptNumber: (row.receiptNumber || row.receipt_number) as string,
     district: (row.district) as string | undefined,
     wakalahInformation: wakalahArray,
+    paymentType: (row.paymentType || row.payment_type) as string | undefined,
+    payment_type: (row.payment_type || row.paymentType) as string | undefined,
+    femaleMemberId: (row.femaleMemberId || row.female_member_id) as string | undefined,
+    female_member_id: (row.female_member_id || row.femaleMemberId) as string | undefined,
+    femaleMemberName: (row.femaleMemberName || row.female_member_name) as string | undefined,
+    female_member_name: (row.female_member_name || row.femaleMemberName) as string | undefined,
+    billingMonth: (row.billingMonth || row.billing_month) as string | undefined,
+    billing_month: (row.billing_month || row.billingMonth) as string | undefined,
+    monthlyBreakdown: breakdownArray,
+    monthly_breakdown: breakdownArray,
   };
 }
 
@@ -69,11 +96,12 @@ export function sortDonationsByLatest(donations: Donation[]): Donation[] {
   });
 }
 
-export async function getDonations(donorId?: string, campaignId?: string): Promise<Donation[]> {
+export async function getDonations(donorId?: string, campaignId?: string, limit?: number): Promise<Donation[]> {
   try {
     const params = new URLSearchParams();
     if (donorId) params.append('donorId', donorId);
     if (campaignId) params.append('campaignId', campaignId);
+    if (limit) params.append('limit', String(limit));
     const res = await fetch(`/api/donations?${params.toString()}`);
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const json = await res.json();
