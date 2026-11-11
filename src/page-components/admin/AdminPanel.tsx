@@ -53,7 +53,8 @@ import {
 
 import { KycUpdateModal } from '../../components/KycUpdateModal';
 import { ChangePasswordModal } from '../../components/ChangePasswordModal';
-import { MonthlyPaymentToggle } from '../../components/MonthlyPaymentToggle';
+import { MonthlyPaymentStatusCard } from '../../components/MonthlyPaymentStatusCard';
+import type { DonateModalOptions } from '../../providers/AppStateProvider';
 
 import { MemberDashboard } from '../dashboards/MemberDashboard';
 import { CommunityAdminDashboard } from '../dashboards/CommunityAdminDashboard';
@@ -93,7 +94,12 @@ interface AdminPanelProps {
   onRoleChange: (role: UserRole) => void;
   activeUser: User;
   campaignsList: Campaign[];
-  onOpenDonate: (campaign?: Campaign) => void;
+  onOpenDonate: (
+    campaign?: Campaign,
+    amount?: number,
+    category?: 'Zakat',
+    options?: DonateModalOptions
+  ) => void;
   onOpenRegister: () => void;
   onOpenMembershipCard: () => void;
   onSelectDonationReceipt: (donation: Donation) => void;
@@ -121,16 +127,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
     return 'overview';
   });
-
-  const [currentUser, setCurrentUser] = useState<User>(activeUser);
-  useEffect(() => { setCurrentUser(activeUser); }, [activeUser]);
-
-  const isMonthlyOn = Boolean(
-    currentUser?.monthlyPayment === 'yes' ||
-    currentUser?.monthly_payment === 'yes' ||
-    currentUser?.monthlyPayment === true ||
-    currentUser?.monthly_payment === true
-  );
 
   const [editingCampaign, setEditingCampaign] = useState<Campaign | undefined>(undefined);
   const [desktopSidebarExpanded, setDesktopSidebarExpanded] = useState<boolean>(true);
@@ -507,7 +503,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (validTabIds.length > 0 && !validTabIds.includes(activeTab)) {
       setActiveTab(validTabIds[0]);
     }
-  }, [normalizedRole, isMonthlyOn]);
+  }, [normalizedRole]);
 
   const roleBadge = roleBadges[normalizedRole] || roleBadges.member;
 
@@ -696,43 +692,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   );
                 })}
 
-                {/* Monthly Payment Details in Portal Sidebar (Only shown when monthly payment is ON) */}
-                {isMonthlyOn && (
-                  desktopSidebarExpanded ? (
-                    <div className="pt-2 px-1">
-                      <MonthlyPaymentToggle
-                        user={currentUser}
-                        showSwitch={false}
-                        onOpenDonate={() => {
-                          onOpenDonate();
-                          setMobileNavOpen(false);
-                        }}
-                        onUserUpdated={(updated) => {
-                          setCurrentUser(updated);
-                          if (typeof window !== 'undefined') {
-                            try {
-                              const stored = localStorage.getItem('mfct_active_user');
-                              if (stored) {
-                                const parsed = JSON.parse(stored);
-                                localStorage.setItem('mfct_active_user', JSON.stringify({ ...parsed, ...updated }));
-                              }
-                            } catch {}
-                          }
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex justify-center pt-2" title={t('admin.monthlyPayment', 'Monthly Payment')}>
-                      <button
-                        type="button"
-                        onClick={() => setDesktopSidebarExpanded(true)}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-colors"
-                        style={{ background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.2)' }}
-                      >
-                        <Calendar className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
-                      </button>
-                    </div>
-                  )
+                {/* Monthly Fee Summary in Portal Sidebar (Primary + Female Family Members) */}
+                {desktopSidebarExpanded ? (
+                  <div className="pt-2 px-1">
+                    <MonthlyPaymentStatusCard
+                      user={activeUser}
+                      onOpenMonthlyPay={(preselectedTargetIds) => {
+                        onOpenDonate(undefined, undefined, undefined, {
+                          mode: 'monthly_fee',
+                          preselectedTargetIds,
+                        });
+                        setMobileNavOpen(false);
+                      }}
+                      onViewDetails={() => {
+                        selectTab(isSuperOrExecGroup ? 'female_family_members' : 'overview');
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex justify-center pt-2" title={t('admin.monthlyPayment', 'Monthly Payment')}>
+                    <button
+                      type="button"
+                      onClick={() => setDesktopSidebarExpanded(true)}
+                      className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-colors"
+                      style={{ background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.2)' }}
+                    >
+                      <Calendar className="w-4 h-4" style={{ color: 'var(--mfct-gold)' }} />
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -1076,31 +1063,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           <span>{t('nav.changePassword', 'Change Password')}</span>
                         </button>
 
-                        {/* Monthly Payment Preference & Details */}
-                        <div className="pt-1">
-                          <MonthlyPaymentToggle
-                            user={currentUser}
-                            onOpenDonate={() => {
-                              setProfileMenuOpen(false);
-                              onOpenDonate();
-                            }}
-                            onUserUpdated={(updated) => {
-                              setCurrentUser(updated);
-                              if (typeof window !== 'undefined') {
-                                try {
-                                  const stored = localStorage.getItem('mfct_active_user');
-                                  if (stored) {
-                                    const parsed = JSON.parse(stored);
-                                    localStorage.setItem('mfct_active_user', JSON.stringify({ ...parsed, ...updated }));
-                                  }
-                                } catch {}
-                              }
-                            }}
-                          />
-                        </div>
-
-
-
                         <div className="my-1 border-t" style={{ borderColor: 'rgba(200,168,75,0.15)' }} />
 
                         {/* Logout Button */}
@@ -1133,6 +1095,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <MemberDashboard
                     user={activeUser}
                     onOpenDonate={() => onOpenDonate()}
+                    onOpenMonthlyPay={(preselectedTargetIds) =>
+                      onOpenDonate(undefined, undefined, undefined, {
+                        mode: 'monthly_fee',
+                        preselectedTargetIds,
+                      })
+                    }
+                    onNavigateTab={(tab) => selectTab(tab)}
                     onOpenMembershipCard={onOpenMembershipCard}
                     onSelectDonationReceipt={onSelectDonationReceipt}
                   />
@@ -1247,7 +1216,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <MemberBankDetailsTab activeUser={activeUser} />
             )}
             {activeTab === 'female_family_members' && (
-              <FemaleMembersTab activeUser={activeUser} />
+              <FemaleMembersTab
+                activeUser={activeUser}
+                onOpenMonthlyPay={(femaleMemberId) =>
+                  onOpenDonate(undefined, undefined, undefined, {
+                    mode: 'monthly_fee',
+                    preselectedTargetIds: [femaleMemberId],
+                  })
+                }
+              />
             )}
             {activeTab === 'meetings_manage' && (
               <MeetingsTab activeUser={activeUser} currentRole={normalizedRole} />

@@ -144,6 +144,7 @@ export async function POST(request: Request) {
       payment_utr: payment_utr?.trim() || '',
       payment_screenshot_url: payment_screenshot_url || '',
       status: status || 'pending',
+      monthly_payment: body.monthly_payment === 'yes' || body.monthly_payment === true ? 'yes' : 'no',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -161,6 +162,9 @@ export async function POST(request: Request) {
     if (insertResult.error && (insertResult.error.message.includes('column') || insertResult.error.code === '42703')) {
       delete record.aadhaar_front_url;
       delete record.aadhaar_back_url;
+      if (insertResult.error.message.includes('monthly_payment')) {
+        delete record.monthly_payment;
+      }
       insertResult = await supabaseAdmin
         .from('member_female_family')
         .insert(record)
@@ -221,6 +225,10 @@ export async function PUT(request: Request) {
       'payment_screenshot_url',
       'status',
       'rejection_reason',
+      'monthly_payment',
+      'monthly_payment_date',
+      'monthly_payment_amount',
+      'last_monthly_utr',
     ];
 
     const payload: Record<string, any> = { updated_at: new Date().toISOString() };
@@ -254,6 +262,12 @@ export async function PUT(request: Request) {
     if (updateResult.error && (updateResult.error.message.includes('column') || updateResult.error.code === '42703')) {
       delete payload.aadhaar_front_url;
       delete payload.aadhaar_back_url;
+      if (updateResult.error.message.includes('monthly_payment')) {
+        delete payload.monthly_payment;
+        delete payload.monthly_payment_date;
+        delete payload.monthly_payment_amount;
+        delete payload.last_monthly_utr;
+      }
       updateResult = await supabaseAdmin
         .from('member_female_family')
         .update(payload)

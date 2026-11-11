@@ -70,6 +70,7 @@ export default function SignUpPage() {
   const [isMalikENisab, setIsMalikENisab] = useState<boolean | null>(null);
   const [helpType, setHelpType] = useState<'Zakat' | 'Sadaka' | 'Fitra' | 'Other' | ''>('');
   const [helpDetails, setHelpDetails] = useState('');
+  const [monthlyPayment, setMonthlyPayment] = useState<'yes' | 'no'>('no');
   const [communities, setCommunities] = useState<Community[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState('');
   const [aadhaarFrontFile, setAadhaarFrontFile] = useState<File | null>(null);
@@ -406,6 +407,8 @@ export default function SignUpPage() {
         help_type: religion === 'Muslim' && isMalikENisab === false ? helpType || undefined : undefined,
         helpDetails: religion === 'Muslim' && isMalikENisab === false && helpType === 'Other' ? helpDetails || undefined : undefined,
         help_details: religion === 'Muslim' && isMalikENisab === false && helpType === 'Other' ? helpDetails || undefined : undefined,
+        monthlyPayment,
+        monthly_payment: monthlyPayment,
       };
 
       const created = await createUser(newMember);
@@ -1235,6 +1238,55 @@ export default function SignUpPage() {
                     </label>
                   </div>
                 ))}
+              </div>
+
+              {/* Monthly Payment Opt-In Toggle (Default: No) */}
+              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/80 flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-extrabold text-slate-900">
+                      {tr(
+                        'मासिक ट्रस्ट सहयोग (₹100/माह)',
+                        'ماہانہ ٹرسٹ تعاون (₹100/ماہ)',
+                        'Monthly Trust Fee Contribution (₹100/month)'
+                      )}
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        monthlyPayment === 'yes'
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                          : 'bg-slate-200 text-slate-600'
+                      }`}
+                    >
+                      {monthlyPayment === 'yes'
+                        ? tr('हाँ (Yes)', 'ہاں (Yes)', 'Yes')
+                        : tr('नहीं (No)', 'نہیں (No)', 'No')}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    {tr(
+                      'यदि आप हर महीने ₹100 का नियमित योगदान देना चाहते हैं तो इसे चालू करें (वैकल्पिक, डिफ़ॉल्ट: नहीं)।',
+                      'اگر آپ ہر ماہ ₹100 کا باقاعدہ تعاون کرنا چاہتے ہیں تو اسے آن کریں (اختیاری، ڈیفالٹ: نہیں)۔',
+                      'Turn this ON if you wish to participate in monthly ₹100 fee tracking (Optional, default: No).'
+                    )}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={monthlyPayment === 'yes'}
+                  onClick={() => setMonthlyPayment((prev) => (prev === 'yes' ? 'no' : 'yes'))}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                    monthlyPayment === 'yes' ? 'bg-emerald-600' : 'bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${
+                      monthlyPayment === 'yes' ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
 
               <button

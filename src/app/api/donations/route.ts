@@ -1,12 +1,26 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
+function extractMissingDonationColumn(error: any): string | null {
+  if (!error) return null;
+  const msg = [error.message, error.details, error.hint].filter(Boolean).join(' ');
+  const postgrestMatch = msg.match(/Could not find the '([^']+)' column/i);
+  if (postgrestMatch?.[1]) return postgrestMatch[1];
+  const schemaMatch = msg.match(/Could not find the column '([^']+)'/i);
+  if (schemaMatch?.[1]) return schemaMatch[1];
+  const relMatch = msg.match(/column "([^"]+)" of relation/i);
+  if (relMatch?.[1]) return relMatch[1];
+  const colMatch = msg.match(/column "([^"]+)" does not exist/i);
+  if (colMatch?.[1]) return colMatch[1];
+  return null;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const donorId = searchParams.get('donorId');
   const campaignId = searchParams.get('campaignId');
   const limitStr = searchParams.get('limit');
-  const limit = limitStr ? parseInt(limitStr, 10) : 50;
+  const limit = limitStr ? parseInt(limitStr, 10) : (donorId ? 200 : 100);
 
   try {
     let query = supabaseAdmin.from('donations').select('*').order('created_at', { ascending: false }).limit(limit);
@@ -113,6 +127,12 @@ export async function POST(request: Request) {
     const campaignId = (!rawCampaignId || rawCampaignId === 'general') ? null : rawCampaignId;
     const donorId = (!rawDonorId || rawDonorId === 'anonymous') ? null : rawDonorId;
 
+    const rawPaymentType = body.paymentType || body.payment_type || 'donation';
+    const rawFemaleMemberId = body.femaleMemberId || body.female_member_id || null;
+    const rawFemaleMemberName = body.femaleMemberName || body.female_member_name || null;
+    const rawBillingMonth = body.billingMonth || body.billing_month || null;
+    const rawMonthlyBreakdown = body.monthlyBreakdown || body.monthly_breakdown || null;
+
     const newDonation: Record<string, any> = {
       id: body.id || `don_${Date.now()}`,
       transaction_id: body.transactionId || body.transaction_id || `TXN${Date.now()}`,
@@ -134,6 +154,11 @@ export async function POST(request: Request) {
       created_at: nowIso,
       receipt_number: body.receiptNumber || body.receipt_number || `RCP-${Date.now().toString().slice(-6)}`,
       district: body.district || null,
+      payment_type: rawPaymentType,
+      female_member_id: rawFemaleMemberId,
+      female_member_name: rawFemaleMemberName,
+      billing_month: rawBillingMonth,
+      monthly_breakdown: rawMonthlyBreakdown,
       wakalahInformation: body.wakalahInformation || (
         body.zakatGuardianName ? [{
           donorName: body.donorName || 'Anonymous',
@@ -147,82 +172,72 @@ export async function POST(request: Request) {
       ),
     };
 
-    let { data, error } = await supabaseAdmin.from('donations').insert(newDonation).select().single();
-    if (error) {
-      console.error('Supabase error inserting donation:', error);
+    const optionalFieldsToKeep = {
+      payment_type: rawPaymentType,
+      female_member_id: rawFemaleMemberId,
+      female_member_name: rawFemaleMemberName,
+      billing_month: rawBillingMonth,
+      monthly_breakdown: rawMonthlyBreakdown,
+    };
 
-      // 1. If error is foreign key violation on campaign_id, set campaign_id = null and retry
-      if (error.message?.includes('donations_campaign_id_fkey') || error.message?.includes('campaign_id')) {
+    let data: any = null;
+    let error: any = null;
+
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const res = await supabaseAdmin.from('donations').insert(newDonation).select().single();
+      if (!res.error) {
+        data = res.data;
+        error = null;
+        break;
+      }
+
+      error = res.error;
+
+      // 1. Foreign key violation on campaign_id
+      if (error.message?.includes('donations_campaign_id_fkey') || (error.message?.includes('campaign_id') && error.message?.includes('foreign key'))) {
         newDonation.campaign_id = null;
-        const retryRes = await supabaseAdmin.from('donations').insert(newDonation).select().single();
-        if (!retryRes.error) {
-          data = retryRes.data;
-          error = null;
-        } else {
-          error = retryRes.error;
-        }
+        continue;
       }
 
-      // 2. If error is foreign key violation on donor_id, set donor_id = null and retry
-      if (error && (error.message?.includes('donations_donor_id_fkey') || error.message?.includes('donor_id'))) {
+      // 2. Foreign key violation on donor_id
+      if (error.message?.includes('donations_donor_id_fkey') || (error.message?.includes('donor_id') && error.message?.includes('foreign key'))) {
         newDonation.donor_id = null;
-        const retryRes = await supabaseAdmin.from('donations').insert(newDonation).select().single();
-        if (!retryRes.error) {
-          data = retryRes.data;
-          error = null;
-        } else {
-          error = retryRes.error;
-        }
+        continue;
       }
 
-      // 2b. If error is not-null on utr_number, retry with empty string
-      if (error && (error.message?.includes('utr_number') || error.message?.includes('null value in column "utr_number"'))) {
+      // 3. Not-null on utr_number
+      if (error.message?.includes('utr_number') || error.message?.includes('null value in column "utr_number"')) {
         newDonation.utr_number = '';
-        const retryRes = await supabaseAdmin.from('donations').insert(newDonation).select().single();
-        if (!retryRes.error) {
-          data = retryRes.data;
-          error = null;
-        } else {
-          error = retryRes.error;
-        }
+        continue;
       }
 
-      // 3. If error is about is_outside_community column missing, retry without it
-      if (error && error.message?.includes('is_outside_community')) {
-        delete (newDonation as any).is_outside_community;
-        const retryRes = await supabaseAdmin.from('donations').insert(newDonation).select().single();
-        if (!retryRes.error) {
-          data = retryRes.data;
-          error = null;
-        } else {
-          error = retryRes.error;
-        }
+      // 4. Missing optional column (e.g. before Supabase migration runs)
+      const missingCol = extractMissingDonationColumn(error);
+      if (missingCol && missingCol in newDonation) {
+        delete newDonation[missingCol];
+        continue;
       }
 
-      // 4. If error is related to json vs text format for wakalahInformation, retry with JSON string
-      if (error && newDonation.wakalahInformation && typeof newDonation.wakalahInformation !== 'string') {
-        try {
-          const retryDonation = {
-            ...newDonation,
-            wakalahInformation: JSON.stringify(newDonation.wakalahInformation)
-          };
-          const retryRes = await supabaseAdmin.from('donations').insert(retryDonation).select().single();
-          if (!retryRes.error) {
-            data = retryRes.data;
-            error = null;
-          } else {
-            error = retryRes.error;
-          }
-        } catch { }
+      // 5. JSON vs text format for wakalahInformation or monthly_breakdown
+      if (newDonation.wakalahInformation && typeof newDonation.wakalahInformation !== 'string' && error.message?.toLowerCase().includes('wakalah')) {
+        newDonation.wakalahInformation = JSON.stringify(newDonation.wakalahInformation);
+        continue;
+      }
+      if (newDonation.monthly_breakdown && typeof newDonation.monthly_breakdown !== 'string' && error.message?.toLowerCase().includes('monthly_breakdown')) {
+        newDonation.monthly_breakdown = JSON.stringify(newDonation.monthly_breakdown);
+        continue;
       }
 
-      if (error) {
-        console.error('All retry attempts failed to insert donation:', error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-      }
+      break;
+    }
+
+    if (error) {
+      console.error('All retry attempts failed to insert donation:', error);
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
     const returnData = {
+      ...optionalFieldsToKeep,
       ...(data || newDonation),
       campaignId: (data?.campaign_id || rawCampaignId || 'general'),
       campaign_id: (data?.campaign_id || rawCampaignId || 'general'),
@@ -268,26 +283,45 @@ export async function PATCH(request: Request) {
       campaign_id: string | null;
       donor_id: string | null;
       amount_inr: number;
+      utr_number?: string | null;
+      created_at?: string | null;
+      payment_type?: string | null;
+      female_member_id?: string | null;
+      monthly_breakdown?: any;
     } | null = null;
     if (body.status === 'verified') {
-      const { data: previousDonation, error: previousDonationError } = await supabaseAdmin
+      let prevRes = await supabaseAdmin
         .from('donations')
-        .select('status, campaign_id, donor_id, amount_inr')
+        .select('status, campaign_id, donor_id, amount_inr, utr_number, created_at, payment_type, female_member_id, monthly_breakdown')
         .eq('id', id)
         .single();
 
-      if (previousDonationError) {
+      if (prevRes.error && extractMissingDonationColumn(prevRes.error)) {
+        prevRes = await supabaseAdmin
+          .from('donations')
+          .select('status, campaign_id, donor_id, amount_inr, utr_number, created_at')
+          .eq('id', id)
+          .single();
+      }
+
+      if (prevRes.error) {
         return NextResponse.json(
-          { success: false, error: previousDonationError.message },
+          { success: false, error: prevRes.error.message },
           { status: 500 }
         );
       }
 
-      if (previousDonation.status !== 'verified' && previousDonation.campaign_id) {
+      const previousDonation: any = prevRes.data;
+      if (previousDonation.status !== 'verified') {
         newlyVerifiedDonation = {
           campaign_id: previousDonation.campaign_id,
           donor_id: previousDonation.donor_id,
           amount_inr: Number(previousDonation.amount_inr || 0),
+          utr_number: previousDonation.utr_number,
+          created_at: previousDonation.created_at,
+          payment_type: previousDonation.payment_type,
+          female_member_id: previousDonation.female_member_id,
+          monthly_breakdown: previousDonation.monthly_breakdown,
         };
       }
     }
@@ -320,7 +354,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
-    if (newlyVerifiedDonation && newlyVerifiedDonation.amount_inr > 0) {
+    if (newlyVerifiedDonation && newlyVerifiedDonation.campaign_id && newlyVerifiedDonation.amount_inr > 0) {
       try {
         const { data: campaign } = await supabaseAdmin
           .from('campaigns')
@@ -365,6 +399,73 @@ export async function PATCH(request: Request) {
         }
       } catch (cErr) {
         console.error('Error updating verified donation campaign stats:', cErr);
+      }
+    }
+
+    // Sync monthly payment snapshot onto users & member_female_family when verified
+    if (newlyVerifiedDonation) {
+      try {
+        const paidAt = newlyVerifiedDonation.created_at || new Date().toISOString();
+        let breakdown: any[] = [];
+        if (Array.isArray(newlyVerifiedDonation.monthly_breakdown)) {
+          breakdown = newlyVerifiedDonation.monthly_breakdown;
+        } else if (typeof newlyVerifiedDonation.monthly_breakdown === 'string') {
+          try {
+            const parsed = JSON.parse(newlyVerifiedDonation.monthly_breakdown);
+            if (Array.isArray(parsed)) breakdown = parsed;
+          } catch {}
+        }
+
+        const primaryItem = breakdown.find((b) => b?.targetType === 'primary');
+        const pType = newlyVerifiedDonation.payment_type;
+        if (
+          newlyVerifiedDonation.donor_id &&
+          (primaryItem || pType === 'member_monthly' || pType === 'combined_monthly')
+        ) {
+          const primaryAmount = Number(primaryItem?.amountINR || newlyVerifiedDonation.amount_inr || 0);
+          await supabaseAdmin
+            .from('users')
+            .update({
+              monthly_payment: 'yes',
+              monthly_payment_date: paidAt,
+              monthly_payment_amount: primaryAmount,
+            })
+            .eq('id', newlyVerifiedDonation.donor_id);
+        }
+
+        const femaleItems = breakdown.filter((b) => b?.targetType === 'female' && b?.targetId);
+        if (femaleItems.length > 0) {
+          for (const item of femaleItems) {
+            await supabaseAdmin
+              .from('member_female_family')
+              .update({
+                monthly_payment: 'yes',
+                monthly_payment_date: paidAt,
+                monthly_payment_amount: Number(item.amountINR || 50),
+                last_monthly_utr: newlyVerifiedDonation.utr_number || '',
+              })
+              .eq('id', item.targetId);
+          }
+        } else if (newlyVerifiedDonation.female_member_id) {
+          const ids = String(newlyVerifiedDonation.female_member_id)
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+          const perMemberAmount = ids.length > 0 ? Math.round(newlyVerifiedDonation.amount_inr / ids.length) : newlyVerifiedDonation.amount_inr;
+          for (const fId of ids) {
+            await supabaseAdmin
+              .from('member_female_family')
+              .update({
+                monthly_payment: 'yes',
+                monthly_payment_date: paidAt,
+                monthly_payment_amount: perMemberAmount,
+                last_monthly_utr: newlyVerifiedDonation.utr_number || '',
+              })
+              .eq('id', fId);
+          }
+        }
+      } catch (mErr) {
+        console.warn('Could not sync monthly payment columns (SQL migration may not have run yet):', mErr);
       }
     }
 

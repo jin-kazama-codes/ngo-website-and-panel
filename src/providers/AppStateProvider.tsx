@@ -15,13 +15,24 @@ import { ZakatCalculatorModal } from '../components/ZakatCalculatorModal';
 
 // ─── Context Types ───────────────────────────────────────────────────────────
 
+export interface DonateModalOptions {
+  mode?: 'donation' | 'monthly_fee';
+  preselectedTargetIds?: string[];
+  billingMonth?: string;
+}
+
 interface AppStateContextType {
   isInitialized: boolean;
   isAuthenticated: boolean;
   currentRole: UserRole;
   activeUser: User;
   campaignsList: Campaign[];
-  handleOpenDonate: (campaign?: Campaign, amount?: number, category?: 'Zakat') => void;
+  handleOpenDonate: (
+    campaign?: Campaign,
+    amount?: number,
+    category?: 'Zakat',
+    options?: DonateModalOptions
+  ) => void;
   handleOpenRegister: () => void;
   handleOpenMembershipCard: () => void;
   handleOpenZakatCalc: () => void;
@@ -130,6 +141,20 @@ export function AppStateProvider({
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleUserUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<Partial<User>>)?.detail;
+      if (!detail) return;
+      setActiveUser((prev) => {
+        if (detail.id && prev.id && detail.id !== prev.id) return prev;
+        return { ...prev, ...detail };
+      });
+    };
+    window.addEventListener('mfct:user-updated', handleUserUpdated);
+    return () => window.removeEventListener('mfct:user-updated', handleUserUpdated);
+  }, []);
+
   // Guard: If authenticated and status is pending, prevent access to common website and redirect to /under-review
   useEffect(() => {
     if (!isInitialized || !isAuthenticated) return;
@@ -156,6 +181,7 @@ export function AppStateProvider({
   const [selectedDonateCampaign, setSelectedDonateCampaign] = useState<Campaign | undefined>(undefined);
   const [presetDonateAmount, setPresetDonateAmount] = useState<number | undefined>(undefined);
   const [presetDonateCategory, setPresetDonateCategory] = useState<'Zakat' | undefined>(undefined);
+  const [donateModalOptions, setDonateModalOptions] = useState<DonateModalOptions | undefined>(undefined);
   const [showZakatModal, setShowZakatModal] = useState(false);
   const [showMembershipCardModal, setShowMembershipCardModal] = useState(false);
   const [selectedReceiptDonation, setSelectedReceiptDonation] = useState<Donation | null>(null);
@@ -225,14 +251,24 @@ export function AppStateProvider({
     }
   };
 
-  const handleOpenDonate = (campaign?: Campaign, amount?: number, category?: 'Zakat') => {
+  const handleOpenDonate = (
+    campaign?: Campaign,
+    amount?: number,
+    category?: 'Zakat',
+    options?: DonateModalOptions
+  ) => {
     setSelectedDonateCampaign(campaign);
     setPresetDonateAmount(amount);
     setPresetDonateCategory(category);
+    setDonateModalOptions(options);
     setShowDonateModal(true);
   };
 
   const handleDonationSuccess = (newDonation: Donation) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('mfct:donations-updated', { detail: newDonation }));
+    }
+
     if (newDonation.status !== 'verified') return;
 
     setCampaignsList((prev) =>
@@ -354,6 +390,9 @@ export function AppStateProvider({
           campaign={selectedDonateCampaign}
           initialAmount={presetDonateAmount}
           initialCategory={presetDonateCategory}
+          initialMode={donateModalOptions?.mode}
+          preselectedTargetIds={donateModalOptions?.preselectedTargetIds}
+          initialBillingMonth={donateModalOptions?.billingMonth}
           currentUser={isAuthenticated && activeUser && activeUser.name !== 'No User' ? activeUser : undefined}
           isAuthenticated={isAuthenticated}
           onClose={() => {
@@ -361,6 +400,7 @@ export function AppStateProvider({
             setSelectedDonateCampaign(undefined);
             setPresetDonateAmount(undefined);
             setPresetDonateCategory(undefined);
+            setDonateModalOptions(undefined);
           }}
           onDonationSuccess={handleDonationSuccess}
         />
