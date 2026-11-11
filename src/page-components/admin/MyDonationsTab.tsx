@@ -7,6 +7,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText } from '../../lib/autoTranslate';
 import { translateCommunityName } from '../../lib/translateEntity';
 import { downloadDonationPaymentSlip } from '../../lib/donationPaymentSlip';
+import { formatBillingMonthLabel, isMonthlyFeeRecord, parseMonthlyBreakdown } from '../../lib/monthlyPaymentUtils';
 
 interface MyDonationsTabProps {
   activeUser: User;
@@ -31,6 +32,9 @@ const DonationRow: React.FC<{
 
   const displayCampaign = useDynamicTranslatedText(don.campaignTitle || '', language);
   const displayCommunity = translateCommunityName(don.communityName || '', language);
+  const isMonthly = isMonthlyFeeRecord(don);
+  const breakdown = parseMonthlyBreakdown(don.monthlyBreakdown ?? don.monthly_breakdown);
+  const billingMonthLabel = don.billingMonth ? formatBillingMonthLabel(don.billingMonth, language) : '';
 
   const statusStyle =
     don.status === 'verified'
@@ -81,9 +85,22 @@ const DonationRow: React.FC<{
 
         {/* Campaign */}
         <td className="px-3 py-3 min-w-[140px]">
-          <span className="block font-bold text-xs text-slate-900 dark:text-white truncate max-w-[200px]">
+          <span className="block font-bold text-xs text-slate-900 dark:text-white truncate max-w-[220px]">
             {displayCampaign}
           </span>
+          {isMonthly && (
+            <div className="flex flex-wrap items-center gap-1 mt-0.5">
+              <span className="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[9px] font-bold">
+                {tr('मासिक शुल्क', 'ماہانہ فیس', 'Monthly Fee')}
+                {billingMonthLabel ? ` • ${billingMonthLabel}` : ''}
+              </span>
+              {breakdown && breakdown.map((b) => (
+                <span key={b.targetId} className="text-[9px] text-slate-500 dark:text-slate-400">
+                  {b.name} (₹{b.amountINR})
+                </span>
+              ))}
+            </div>
+          )}
           <span className="block text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[200px]">
             {displayCommunity}
           </span>

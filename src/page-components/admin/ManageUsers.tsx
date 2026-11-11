@@ -1,17 +1,25 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { User, UserRole, Community, MemberNominee, MemberBankDetails } from '../../types';
+import { User, UserRole, Community, MemberNominee, MemberBankDetails, FemaleFamilyMember, Donation } from '../../types';
 import { getUsers, createUser, deleteUser, updateUser } from '../../services/userService';
-import { getMemberNominees, getMemberBankDetails } from '../../services/memberService';
+import { getMemberNominees, getMemberBankDetails, getFemaleFamilyMembers } from '../../services/memberService';
+import { getDonations } from '../../services/donationService';
 import { getCommunities } from '../../services/communityService';
 import { uploadImage } from '../../lib/storage';
 import { hashPassword } from '../../lib/auth';
-import { PlusCircle, Edit2, X, Users, CheckCircle2, Search, Upload, Trash2, Mail, Phone, MapPin, Award, Eye, ShieldCheck, FileText, Building2, Calendar, ExternalLink, Lock, Filter, HeartHandshake, Building, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlusCircle, Edit2, X, Users, CheckCircle2, Search, Upload, Trash2, Mail, Phone, MapPin, Award, Eye, ShieldCheck, FileText, Building2, Calendar, ExternalLink, Lock, Filter, HeartHandshake, Building, CreditCard, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDynamicTranslatedText, autoTranslateText } from '../../lib/autoTranslate';
 import { translateReligion, translateHelpType, translateDistrictRole } from '../../lib/translateEntity';
 import { STANDARD_DISTRICTS } from '../../data/districtsData';
+import {
+  formatBillingMonthLabel,
+  formatShortDate,
+  getMonthlySummary,
+  PRIMARY_MONTHLY_FEE_INR,
+  FEMALE_MONTHLY_FEE_INR,
+} from '../../lib/monthlyPaymentUtils';
 
 const TablePagination: React.FC<{
   currentPage: number;
@@ -466,18 +474,24 @@ export const ManageUsers: React.FC = () => {
   const [viewUser, setViewUser] = useState<User | null>(null);
   const [viewNominees, setViewNominees] = useState<MemberNominee[]>([]);
   const [viewBankDetails, setViewBankDetails] = useState<MemberBankDetails[]>([]);
+  const [viewFemaleMembers, setViewFemaleMembers] = useState<FemaleFamilyMember[]>([]);
+  const [viewUserDonations, setViewUserDonations] = useState<Donation[]>([]);
   const [loadingUserExtra, setLoadingUserExtra] = useState(false);
 
   useEffect(() => {
     if (viewUser?.id) {
       setLoadingUserExtra(true);
       Promise.all([
-        getMemberNominees(viewUser.id),
-        getMemberBankDetails(viewUser.id),
+        getMemberNominees(viewUser.id).catch(() => []),
+        getMemberBankDetails(viewUser.id).catch(() => []),
+        getFemaleFamilyMembers(viewUser.id).catch(() => []),
+        getDonations(viewUser.id, undefined, 200).catch(() => []),
       ])
-        .then(([noms, banks]) => {
+        .then(([noms, banks, fams, dons]) => {
           setViewNominees(noms);
           setViewBankDetails(banks);
+          setViewFemaleMembers(fams);
+          setViewUserDonations(dons);
         })
         .finally(() => {
           setLoadingUserExtra(false);
@@ -485,6 +499,8 @@ export const ManageUsers: React.FC = () => {
     } else {
       setViewNominees([]);
       setViewBankDetails([]);
+      setViewFemaleMembers([]);
+      setViewUserDonations([]);
     }
   }, [viewUser?.id]);
 
@@ -557,6 +573,7 @@ export const ManageUsers: React.FC = () => {
     state: '',
     plainPassword: '',
     communityId: '',
+    monthlyPayment: 'no',
     paymentUtr: '',
     religion: '',
     isMalikENisab: undefined,
@@ -628,6 +645,7 @@ export const ManageUsers: React.FC = () => {
       isMalikENisab: user.isMalikENisab,
       helpType: user.helpType || '',
       helpDetails: user.helpDetails || '',
+      monthlyPayment: user.monthly_payment === 'yes' || user.monthlyPayment === 'yes' ? 'yes' : 'no',
     });
     setAvatarFile(null);
     setDocumentFile(null);
@@ -712,6 +730,8 @@ export const ManageUsers: React.FC = () => {
           help_type: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpType || undefined) : undefined,
           helpDetails: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpDetails || undefined) : undefined,
           help_details: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpDetails || undefined) : undefined,
+          monthlyPayment: formData.monthlyPayment === 'yes' ? 'yes' : 'no',
+          monthly_payment: formData.monthlyPayment === 'yes' ? 'yes' : 'no',
         };
         if (formData.plainPassword) {
           patch.passwordHash = await hashPassword(formData.plainPassword);
@@ -748,6 +768,8 @@ export const ManageUsers: React.FC = () => {
           help_type: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpType || undefined) : undefined,
           helpDetails: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpDetails || undefined) : undefined,
           help_details: (formData.religion === 'Muslim' && formData.isMalikENisab === false) ? (formData.helpDetails || undefined) : undefined,
+          monthlyPayment: formData.monthlyPayment === 'yes' ? 'yes' : 'no',
+          monthly_payment: formData.monthlyPayment === 'yes' ? 'yes' : 'no',
         };
         await createUser(newUser);
         showToast(tr('नया उपयोगकर्ता सुरक्षित हो गया', 'نیا صارف کامیابی سے محفوظ ہو گیا', 'User created successfully'), 'success');
@@ -1476,6 +1498,53 @@ export const ManageUsers: React.FC = () => {
                     </label>
                   </div>
                 </div>
+
+                {/* User Monthly Fee Contribution Toggle (Default: No) */}
+                <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
+                        {tr('मासिक शुल्क (₹100/माह)', 'ماہانہ فیس (₹100/ماہ)', 'Monthly Fee Participation (₹100/mo)')}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          formData.monthlyPayment === 'yes'
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                            : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                        }`}
+                      >
+                        {formData.monthlyPayment === 'yes' ? tr('हाँ', 'ہاں', 'Yes') : tr('नहीं', 'نہیں', 'No')}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {tr(
+                        'क्या यह सदस्य ₹100 मासिक शुल्क में भाग लेता है? (डिफ़ॉल्ट: नहीं)',
+                        'کیا یہ رکن ₹100 ماہانہ فیس میں شامل ہے؟ (ڈیفالٹ: نہیں)',
+                        'Enable monthly ₹100 fee tracking for this member (Default: No).'
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={formData.monthlyPayment === 'yes'}
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        monthlyPayment: prev.monthlyPayment === 'yes' ? 'no' : 'yes',
+                      }))
+                    }
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                      formData.monthlyPayment === 'yes' ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
+                        formData.monthlyPayment === 'yes' ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
               </form>
             </div>
 
@@ -1701,6 +1770,138 @@ export const ManageUsers: React.FC = () => {
                     <p className="text-slate-400 italic">{tr('कोई बैंक खाता दर्ज नहीं है', 'کوئی بینک درج نہیں ہے', 'No bank details saved yet')}</p>
                   )}
                 </div>
+
+                {/* Monthly Fee & Female Family Members Section */}
+                {(() => {
+                  const summary = getMonthlySummary(viewUser, viewFemaleMembers, viewUserDonations);
+                  const monthLabel = formatBillingMonthLabel(summary.currentMonthKey, language);
+
+                  const renderStatusChip = (status: string) => {
+                    if (status === 'not_opted_in') {
+                      return (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                          {tr('बंद (No)', 'بند (No)', 'Off (No)')}
+                        </span>
+                      );
+                    }
+                    if (status === 'paid') {
+                      return (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                          {tr('पूर्ण ✓', 'مکمل ✓', 'Paid ✓')}
+                        </span>
+                      );
+                    }
+                    if (status === 'pending_verification') {
+                      return (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                          {tr('सत्यापन शेष', 'زیر تصدیق', 'Pending Audit')}
+                        </span>
+                      );
+                    }
+                    if (status === 'kyc_pending') {
+                      return (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                          {tr('KYC लंबित', 'کے وائی سی باقی', 'Awaiting KYC')}
+                        </span>
+                      );
+                    }
+                    if (status === 'rejected') {
+                      return (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                          {tr('अस्वीकृत', 'مسترد', 'Rejected')}
+                        </span>
+                      );
+                    }
+                    return (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        {tr('बाकी', 'واجب الادا', 'Due')}
+                      </span>
+                    );
+                  };
+
+                  return (
+                    <>
+                      {/* Primary Monthly Payment Status */}
+                      <div className="col-span-2 p-3.5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40">
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className="text-[10px] font-extrabold text-amber-900 dark:text-amber-300 uppercase flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-amber-600" />
+                            {tr(`मासिक शुल्क स्थिति (${monthLabel})`, `ماہانہ فیس (${monthLabel})`, `Monthly Fee Status (${monthLabel})`)}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                            {summary.totalPaidCount}/{summary.totalEligibleCount} {tr('पूर्ण', 'مکمل', 'Paid')}
+                          </span>
+                        </div>
+                        {loadingUserExtra ? (
+                          <p className="text-slate-400 italic">Loading monthly payment details...</p>
+                        ) : (
+                          <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-amber-100 dark:border-amber-900 flex items-center justify-between gap-2">
+                            <div>
+                              <p className="font-bold text-slate-900 dark:text-white">
+                                {tr('मुख्य सदस्य शुल्क', 'بنیادی رکن فیس', 'Primary Member Monthly Fee')} (₹{PRIMARY_MONTHLY_FEE_INR})
+                              </p>
+                              <p className="text-[11px] text-slate-500">
+                                {summary.primary.latestDate
+                                  ? `${tr('अंतिम रिकॉर्ड:', 'آخری ریکارڈ:', 'Last Record:')} ${formatShortDate(summary.primary.latestDate, language)}${summary.primary.latestAmount > 0 ? ` • ₹${summary.primary.latestAmount}` : ''}${summary.primary.latestUtr ? ` • UTR: ${summary.primary.latestUtr}` : ''}`
+                                  : tr('कोई मासिक भुगतान रिकॉर्ड नहीं', 'کوئی ریکارڈ نہیں', 'No monthly payment recorded yet')}
+                              </p>
+                            </div>
+                            {renderStatusChip(summary.primary.status)}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Female Family Members & Monthly Fees */}
+                      <div className="col-span-2 p-3.5 rounded-2xl bg-pink-50/50 dark:bg-pink-950/20 border border-pink-200/60 dark:border-pink-800/40">
+                        <span className="text-[10px] font-extrabold text-pink-800 dark:text-pink-300 uppercase flex items-center gap-1.5 mb-2">
+                          <Heart className="w-3.5 h-3.5 text-pink-600" />
+                          {tr('महिला पारिवारिक सदस्य एवं मासिक शुल्क', 'خواتین خاندانی ارکان اور ماہانہ فیس', 'Female Family Members & Monthly Fees')}
+                        </span>
+                        {loadingUserExtra ? (
+                          <p className="text-slate-400 italic">Loading female family members...</p>
+                        ) : summary.femaleStatuses.length > 0 ? (
+                          <div className="space-y-2">
+                            {summary.femaleStatuses.map(({ member: fm, status, latestDate, latestAmount }) => (
+                              <div
+                                key={fm.id}
+                                className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-pink-100 dark:border-pink-900 flex items-center justify-between gap-2"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  {fm.photo_url ? (
+                                    <img
+                                      src={fm.photo_url}
+                                      alt={fm.name}
+                                      className="w-8 h-8 rounded-lg object-cover shrink-0 border border-pink-200"
+                                    />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-lg bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300 flex items-center justify-center font-bold text-xs shrink-0">
+                                      {fm.name.charAt(0).toUpperCase()}
+                                    </div>
+                                  )}
+                                  <div className="min-w-0">
+                                    <p className="font-bold text-slate-900 dark:text-white truncate">
+                                      {fm.name} ({fm.relation})
+                                      {fm.age ? ` • ${fm.age}y` : ''}
+                                    </p>
+                                    <p className="text-[11px] text-slate-500 font-mono truncate">
+                                      KYC: {fm.status} • {tr('शुल्क:', 'فیس:', 'Monthly:')} ₹{FEMALE_MONTHLY_FEE_INR}
+                                      {latestDate ? ` • ${formatShortDate(latestDate, language)}${latestAmount > 0 ? ` (₹${latestAmount})` : ''}` : ''}
+                                    </p>
+                                  </div>
+                                </div>
+                                {renderStatusChip(status)}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-slate-400 italic">
+                            {tr('कोई महिला पारिवारिक सदस्य दर्ज नहीं है', 'کوئی خاتون رکن درج نہیں ہے', 'No female family members enrolled yet')}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
 

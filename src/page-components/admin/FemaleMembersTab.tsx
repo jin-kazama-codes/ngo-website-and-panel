@@ -1,18 +1,26 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { User, FemaleFamilyMember, AccountDetails } from '../../types';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { User, FemaleFamilyMember, AccountDetails, Donation } from '../../types';
 import {
   getFemaleFamilyMembers,
   saveFemaleFamilyMember,
   updateFemaleFamilyMember,
   deleteFemaleFamilyMember,
 } from '../../services/memberService';
+import { getDonations } from '../../services/donationService';
 import { getAccountDetails } from '../../services/adminService';
 import { uploadImage } from '../../lib/storage';
 import { useLanguage } from '../../context/LanguageContext';
 import { MFCT_LOGO_BASE64 } from '../../lib/mfctLogoBase64';
 import { FemaleMemberCardSkeleton } from '../../components/Skeletons';
+import {
+  FEMALE_MONTHLY_FEE_INR,
+  formatBillingMonthLabel,
+  formatShortDate,
+  getBillingMonthKey,
+  getFemaleMemberMonthlyStatus,
+} from '../../lib/monthlyPaymentUtils';
 import {
   Heart,
   UserCheck,
@@ -42,10 +50,12 @@ import {
   Camera,
   Eye,
   XCircle,
+  Clock,
 } from 'lucide-react';
 
 interface FemaleMembersTabProps {
   activeUser: User;
+  onOpenMonthlyPay?: (femaleMemberId: string) => void;
 }
 
 const FEMALE_RELATION_OPTIONS = [
@@ -53,9 +63,10 @@ const FEMALE_RELATION_OPTIONS = [
   { value: 'Sister', labelEn: 'Sister', labelHi: 'बहन', labelUr: 'بہن' },
 ];
 
-export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }) => {
+export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser, onOpenMonthlyPay }) => {
   const { language } = useLanguage();
   const [members, setMembers] = useState<FemaleFamilyMember[]>([]);
+  const [donations, setDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [editingMember, setEditingMember] = useState<FemaleFamilyMember | null>(null);
@@ -87,6 +98,8 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
 
   // Fee & Payment State (Fixed ₹50)
   const feeAmount = 50;
+  const [monthlyPayment, setMonthlyPayment] = useState<'yes' | 'no'>('no');
+  const [updatingMonthlyId, setUpdatingMonthlyId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'Bank Transfer'>('UPI');
   const [paymentUtr, setPaymentUtr] = useState('');
   const [paymentScreenshotUrl, setPaymentScreenshotUrl] = useState('');
@@ -119,21 +132,25 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!activeUser?.id) return;
     setLoading(true);
     try {
-      const isSuperOrExec = activeUser.role === 'super_admin' || activeUser.role === 'executive_admin';
+      const superOrExec = activeUser.role === 'super_admin' || activeUser.role === 'executive_admin';
       // If super/exec admin, can view all, otherwise only their own
-      const data = await getFemaleFamilyMembers(isSuperOrExec ? undefined : activeUser.id);
+      const [data, donData] = await Promise.all([
+        getFemaleFamilyMembers(superOrExec ? undefined : activeUser.id),
+        getDonations(superOrExec ? undefined : activeUser.id, undefined, superOrExec ? 500 : 200).catch(() => []),
+      ]);
       setMembers(data);
+      setDonations(donData || []);
     } catch (err: any) {
       console.error('Error loading female family members:', err);
       showToast(err.message || 'Failed to load female members', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeUser?.id, activeUser?.role]);
 
   useEffect(() => {
     loadData();
@@ -144,7 +161,27 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
         }
       })
       .catch(console.error);
-  }, [activeUser?.id]);
+  }, [loadData]);
+
+  useEffect(() => {
+    const handleDonationsUpdated = () => {
+      loadData();
+    };
+    window.addEventListener('mfct:donations-updated', handleDonationsUpdated);
+    return () => {
+      window.removeEventListener('mfct:donations-updated', handleDonationsUpdated);
+    };
+  }, [loadData]);
+
+  const currentMonthKey = getBillingMonthKey();
+  const currentMonthLabel = formatBillingMonthLabel(currentMonthKey, language);
+  const monthlyStatusMap = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getFemaleMemberMonthlyStatus>>();
+    members.forEach((m) => {
+      map.set(m.id, getFemaleMemberMonthlyStatus(m, donations));
+    });
+    return map;
+  }, [members, donations]);
 
   const userOwnMembers = members.filter((m) => m.user_id === activeUser?.id);
   const isLimitReached = userOwnMembers.length >= 2;
@@ -172,6 +209,7 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
     setPhotoUrl('');
     setAadhaarFrontUrl('');
     setAadhaarBackUrl('');
+    setMonthlyPayment('no');
     setPaymentMethod('UPI');
     setPaymentUtr('');
     setPaymentScreenshotUrl('');
@@ -191,6 +229,7 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
     setPhotoUrl(member.photo_url || '');
     setAadhaarFrontUrl(member.aadhaar_front_url || '');
     setAadhaarBackUrl(member.aadhaar_back_url || '');
+    setMonthlyPayment(member.monthly_payment === 'yes' ? 'yes' : 'no');
     setPaymentMethod((member.payment_method as any) || 'UPI');
     setPaymentUtr(member.payment_utr || '');
     setPaymentScreenshotUrl(member.payment_screenshot_url || '');
@@ -371,6 +410,7 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
           photo_url: photoUrl,
           aadhaar_front_url: aadhaarFrontUrl,
           aadhaar_back_url: aadhaarBackUrl,
+          monthly_payment: monthlyPayment,
           payment_method: paymentMethod,
           payment_utr: paymentUtr.trim(),
           payment_screenshot_url: paymentScreenshotUrl,
@@ -392,6 +432,7 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
           aadhaar_front_url: aadhaarFrontUrl,
           aadhaar_back_url: aadhaarBackUrl,
           fee_amount: feeAmount,
+          monthly_payment: monthlyPayment,
           payment_method: paymentMethod,
           payment_utr: paymentUtr.trim(),
           payment_screenshot_url: paymentScreenshotUrl,
@@ -403,6 +444,7 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
       }
       setModalOpen(false);
       await loadData();
+      window.dispatchEvent(new CustomEvent('mfct:female-members-updated'));
     } catch (err: any) {
       console.error('Save female member error:', err);
       setModalError(err.message || 'Failed to save female member');
@@ -418,11 +460,35 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
       showToast(tr('महिला सदस्य हटा दिया गया', 'خاتون رکن ہٹا دیا گیا', 'Female member deleted successfully'));
       setDeleteConfirmId(null);
       await loadData();
+      window.dispatchEvent(new CustomEvent('mfct:female-members-updated'));
     } catch (err: any) {
       console.error('Delete error:', err);
       showToast(err.message || 'Failed to delete female member', 'error');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleToggleFemaleMonthly = async (member: FemaleFamilyMember) => {
+    if (updatingMonthlyId) return;
+    const nextVal: 'yes' | 'no' = member.monthly_payment === 'yes' ? 'no' : 'yes';
+    setUpdatingMonthlyId(member.id);
+    try {
+      await updateFemaleFamilyMember(member.id, { monthly_payment: nextVal });
+      setMembers((prev) =>
+        prev.map((m) => (m.id === member.id ? { ...m, monthly_payment: nextVal } : m))
+      );
+      showToast(
+        nextVal === 'yes'
+          ? tr('मासिक शुल्क सक्रिय किया गया', 'ماہانہ فیس فعال ہو گئی', 'Monthly fee enabled for female member')
+          : tr('मासिक शुल्क बंद किया गया', 'ماہانہ فیس بند کر دی گئی', 'Monthly fee disabled for female member')
+      );
+      window.dispatchEvent(new CustomEvent('mfct:female-members-updated'));
+    } catch (err: any) {
+      console.error('Toggle female monthly error:', err);
+      showToast(err.message || 'Failed to update monthly fee preference', 'error');
+    } finally {
+      setUpdatingMonthlyId(null);
     }
   };
 
@@ -441,6 +507,7 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
           : tr('स्थिति समीक्षाधीन पर सेट की गई', 'حیثیت زیر جائزہ پر سیٹ کی گئی', 'Status set back to pending review')
       );
       await loadData();
+      window.dispatchEvent(new CustomEvent('mfct:female-members-updated'));
     } catch (err: any) {
       console.error('Update female member status error:', err);
       showToast(err.message || 'Failed to update member status', 'error');
@@ -889,6 +956,113 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
                           </span>
                         </div>
                       )}
+
+                      {/* Monthly Fee Opt-In Toggle & Status Row */}
+                      {(() => {
+                        const mStatus = monthlyStatusMap.get(member.id);
+                        const canToggle = isSuperOrExec || member.user_id === activeUser?.id;
+                        const isOptedIn = member.monthly_payment === 'yes';
+
+                        return (
+                          <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800 space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                                <Calendar className="w-3 h-3 text-emerald-600" />
+                                {tr('मासिक शुल्क (₹50/माह)', 'ماہانہ فیس (₹50/ماہ)', 'Monthly Fee (₹50/mo)')}
+                              </span>
+
+                              {canToggle ? (
+                                <button
+                                  type="button"
+                                  role="switch"
+                                  aria-checked={isOptedIn}
+                                  disabled={updatingMonthlyId === member.id}
+                                  onClick={() => handleToggleFemaleMonthly(member)}
+                                  className={`inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50`}
+                                  title={tr('मासिक शुल्क चालू/बंद करें', 'ماہانہ فیس آن/آف کریں', 'Toggle monthly fee')}
+                                >
+                                  <span className={`text-[10px] font-extrabold ${isOptedIn ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400'}`}>
+                                    {isOptedIn ? tr('हाँ', 'ہاں', 'Yes') : tr('नहीं', 'نہیں', 'No')}
+                                  </span>
+                                  <span
+                                    className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors ${
+                                      isOptedIn ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
+                                    }`}
+                                  >
+                                    <span
+                                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                                        isOptedIn ? 'translate-x-4' : 'translate-x-0'
+                                      }`}
+                                    />
+                                  </span>
+                                </button>
+                              ) : (
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isOptedIn ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                                  {isOptedIn ? tr('हाँ', 'ہاں', 'Yes') : tr('नहीं', 'نہیں', 'No')}
+                                </span>
+                              )}
+                            </div>
+
+                            {isOptedIn && mStatus && mStatus.status !== 'not_opted_in' && (
+                              <>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                                    {currentMonthLabel}
+                                  </span>
+                                  {mStatus.status === 'paid' ? (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                      {tr('पूर्ण ✓', 'مکمل ✓', 'Paid ✓')}
+                                    </span>
+                                  ) : mStatus.status === 'pending_verification' ? (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                                      {tr('सत्यापन शेष', 'زیر تصدیق', 'Pending Audit')}
+                                    </span>
+                                  ) : mStatus.status === 'kyc_pending' ? (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                      {tr('KYC लंबित', 'کے وائی سی باقی', 'Awaiting KYC')}
+                                    </span>
+                                  ) : mStatus.status === 'rejected' ? (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                                      {tr('अस्वीकृत', 'مسترد', 'Rejected')}
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                      {tr('बाकी', 'واجب الادا', 'Due')}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {mStatus.latestDate && mStatus.status !== 'kyc_pending' && mStatus.status !== 'rejected' && (
+                                  <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                                    <span>{tr('अंतिम मासिक भुगतान:', 'آخری ماہانہ ادائیگی:', 'Last Monthly Paid:')}</span>
+                                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                                      {formatShortDate(mStatus.latestDate, language)}
+                                      {mStatus.latestAmount > 0 ? ` • ₹${mStatus.latestAmount}` : ''}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {mStatus.status === 'due' && member.user_id === activeUser?.id && onOpenMonthlyPay && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onOpenMonthlyPay(member.id)}
+                                    className="w-full mt-1 py-1.5 px-3 rounded-lg text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                                  >
+                                    <Heart className="w-3 h-3" />
+                                    <span>
+                                      {tr(
+                                        `मासिक शुल्क जमा करें (₹${FEMALE_MONTHLY_FEE_INR})`,
+                                        `ماہانہ فیس ادا کریں (₹${FEMALE_MONTHLY_FEE_INR})`,
+                                        `Pay Monthly Fee (₹${FEMALE_MONTHLY_FEE_INR})`
+                                      )}
+                                    </span>
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {(member.aadhaar_front_url || member.aadhaar_back_url) && (
                         <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800 space-y-1.5">
@@ -1430,6 +1604,51 @@ export const FemaleMembersTab: React.FC<FemaleMembersTabProps> = ({ activeUser }
                       </label>
                     </div>
                   </div>
+                </div>
+
+                {/* Female Member Monthly Fee Toggle (Default: No) */}
+                <div className="p-3.5 rounded-2xl border border-pink-200 dark:border-pink-800/60 bg-pink-50/50 dark:bg-pink-950/20 flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-extrabold text-slate-900 dark:text-white">
+                        {tr('महिला सदस्य मासिक शुल्क (₹50/माह)', 'خاتون رکن ماہانہ فیس (₹50/ماہ)', 'Female Monthly Fee (₹50/month)')}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          monthlyPayment === 'yes'
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                            : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                        }`}
+                      >
+                        {monthlyPayment === 'yes'
+                          ? tr('हाँ (Yes)', 'ہاں (Yes)', 'Yes')
+                          : tr('नहीं (No)', 'نہیں (No)', 'No')}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {tr(
+                        'क्या इस महिला सदस्य का ₹50/माह नियमित मासिक शुल्क चालू रखना है? (डिफ़ॉल्ट: नहीं)',
+                        'کیا اس خاتون رکن کی ₹50 ماہانہ فیس آن رکھنی ہے؟ (ڈیفالٹ: نہیں)',
+                        'Enable regular ₹50/month welfare fee tracking for this female member (Default: No).'
+                      )}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={monthlyPayment === 'yes'}
+                    onClick={() => setMonthlyPayment((prev) => (prev === 'yes' ? 'no' : 'yes'))}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                      monthlyPayment === 'yes' ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${
+                        monthlyPayment === 'yes' ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
                 </div>
               </div>
 
