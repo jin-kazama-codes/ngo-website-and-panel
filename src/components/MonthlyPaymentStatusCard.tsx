@@ -202,27 +202,27 @@ export const MonthlyPaymentStatusCard: React.FC<MonthlyPaymentStatusCardProps> =
   const overallBadgeStyle =
     summary.totalEligibleCount === 0
       ? {
-          background: 'rgba(255, 255, 255, 0.08)',
-          color: 'rgba(255, 255, 255, 0.75)',
-          border: '1px solid rgba(255, 255, 255, 0.18)',
-        }
+        background: 'rgba(255, 255, 255, 0.08)',
+        color: 'rgba(255, 255, 255, 0.75)',
+        border: '1px solid rgba(255, 255, 255, 0.18)',
+      }
       : summary.totalDueCount === 0 && summary.totalPendingCount === 0
         ? {
-            background: 'rgba(16, 185, 129, 0.2)',
-            color: '#6ee7b7',
-            border: '1px solid rgba(16, 185, 129, 0.4)',
-          }
+          background: 'rgba(16, 185, 129, 0.2)',
+          color: '#6ee7b7',
+          border: '1px solid rgba(16, 185, 129, 0.4)',
+        }
         : summary.totalDueCount === 0
           ? {
-              background: 'rgba(56, 189, 248, 0.18)',
-              color: '#7dd3fc',
-              border: '1px solid rgba(56, 189, 248, 0.35)',
-            }
+            background: 'rgba(56, 189, 248, 0.18)',
+            color: '#7dd3fc',
+            border: '1px solid rgba(56, 189, 248, 0.35)',
+          }
           : {
-              background: 'rgba(245, 158, 11, 0.2)',
-              color: '#fcd34d',
-              border: '1px solid rgba(245, 158, 11, 0.4)',
-            };
+            background: 'rgba(245, 158, 11, 0.2)',
+            color: '#fcd34d',
+            border: '1px solid rgba(245, 158, 11, 0.4)',
+          };
 
   const overallBadgeText =
     summary.totalEligibleCount === 0
@@ -248,7 +248,7 @@ export const MonthlyPaymentStatusCard: React.FC<MonthlyPaymentStatusCardProps> =
           <Calendar className="w-4 h-4 shrink-0" style={{ color: 'var(--mfct-gold)' }} />
           <div className="min-w-0">
             <div className="text-xs font-bold text-white leading-tight truncate">
-              {tr('मासिक शुल्क', 'ماہانہ فیس', 'Monthly Fee')}
+              {tr('मासिक सहयोग', 'ماہانہ چندہ', 'Monthly Contribution')}
             </div>
             <div className="text-[10px] text-white/60 leading-tight truncate">{monthLabel}</div>
           </div>
@@ -290,14 +290,12 @@ export const MonthlyPaymentStatusCard: React.FC<MonthlyPaymentStatusCardProps> =
                 disabled={updatingToggle}
                 onClick={handleTogglePrimaryMonthly}
                 title={tr('मासिक शुल्क चालू/बंद करें', 'ماہانہ فیس آن/آف کریں', 'Toggle monthly fee')}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors disabled:opacity-50 ${
-                  summary.primary.isOptedIn ? 'bg-emerald-500' : 'bg-white/20'
-                }`}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors disabled:opacity-50 ${summary.primary.isOptedIn ? 'bg-emerald-500' : 'bg-white/20'
+                  }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                    summary.primary.isOptedIn ? 'translate-x-4' : 'translate-x-0'
-                  }`}
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${summary.primary.isOptedIn ? 'translate-x-4' : 'translate-x-0'
+                    }`}
                 />
               </button>
             </div>
